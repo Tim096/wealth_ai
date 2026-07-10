@@ -1,0 +1,30 @@
+{
+  "filing_id": "beta_10k",
+  "source": "data/sec_eval/fixtures/beta_10k.html",
+  "labeling": "manual (synthetic fixture, ground truth by construction)",
+  "items": {
+    "1":  {"status": "partial", "heading": "ITEMS 1 AND 2. BUSINESS AND PROPERTIES", "body_contains": "master limited partnership", "combined_with": "2"},
+    "1A": {"status": "pass", "heading": "ITEM 1A. RISK FACTORS", "body_contains": "Commodity price volatility", "body_excludes": "....."},
+    "1B": {"status": "missing"},
+    "1C": {"status": "missing"},
+    "2":  {"status": "partial", "heading": "ITEMS 1 AND 2. BUSINESS AND PROPERTIES", "body_contains": "rights of way and easements", "combined_with": "1"},
+    "3":  {"status": "pass", "heading": "ITEM 3. LEGAL PROCEEDINGS", "body_contains": "legal proceedings incidental"},
+    "4":  {"status": "pass", "heading": "ITEM 4. MINE SAFETY DISCLOSURES", "body_contains": "Mine Safety and Health Administration"},
+    "5":  {"status": "missing"},
+    "6":  {"status": "reserved"},
+    "7":  {"status": "pass", "heading": "ITEM 7. MANAGEMENT'S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS", "body_contains": "Adjusted EBITDA for 2025 was $612 million", "body_excludes": "duly caused this report to be signed"},
+    "7A": {"status": "missing"},
+    "8":  {"status": "missing"},
+    "9":  {"status": "missing"},
+    "9A": {"status": "missing"},
+    "9B": {"status": "missing"},
+    "9C": {"status": "missing"},
+    "10": {"status": "missing"},
+    "11": {"status": "missing"},
+    "12": {"status": "missing"},
+    "13": {"status": "missing"},
+    "14": {"status": "missing"},
+    "15": {"status": "missing"},
+    "16": {"status": "missing"}
+  }
+}

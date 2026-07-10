@@ -1,0 +1,30 @@
+{
+  "filing_id": "alpha_10k",
+  "source": "data/sec_eval/fixtures/alpha_10k.html",
+  "labeling": "manual (synthetic fixture, ground truth by construction)",
+  "items": {
+    "1":  {"status": "pass", "heading": "Item 1. Business", "body_contains": "three reportable segments", "body_excludes": ".........."},
+    "1A": {"status": "pass", "heading": "Item 1A. Risk Factors", "body_contains": "Supply chain disruption", "body_excludes": ".........."},
+    "1B": {"status": "pass", "heading": "Item 1B. Unresolved Staff Comments", "body_contains": "no unresolved comments"},
+    "1C": {"status": "missing"},
+    "2":  {"status": "pass", "heading": "Item 2. Properties", "body_contains": "450,000 square feet"},
+    "3":  {"status": "pass", "heading": "Item 3. Legal Proceedings", "body_contains": "patent infringement suit"},
+    "4":  {"status": "pass", "heading": "Item 4. Mine Safety Disclosures", "body_contains": "Not applicable"},
+    "5":  {"status": "pass", "heading": "Item 5. Market for Registrant's Common Equity, Related Stockholder Matters and Issuer Purchases of Equity Securities", "body_contains": "Nasdaq Global Select Market"},
+    "6":  {"status": "reserved"},
+    "7":  {"status": "pass", "heading": "Item 7. Management's Discussion and Analysis of Financial Condition and Results of Operations", "body_contains": "Net revenue for fiscal 2025 was $4.2 billion", "body_excludes": "must never be extracted"},
+    "7A": {"status": "pass", "heading": "Item 7A. Quantitative and Qualitative Disclosures About Market Risk", "body_contains": "hypothetical 10% adverse movement"},
+    "8":  {"status": "pass", "heading": "Item 8. Financial Statements and Supplementary Data", "body_contains": "Total assets were $8.4 billion"},
+    "9":  {"status": "pass", "heading": "Item 9. Changes in and Disagreements with Accountants on Accounting and Financial Disclosure", "body_contains": "no changes in or disagreements"},
+    "9A": {"status": "pass", "heading": "Item 9A. Controls and Procedures", "body_contains": "disclosure controls and procedures"},
+    "9B": {"status": "pass", "heading": "Item 9B. Other Information", "body_contains": "Rule 10b5-1 trading arrangement"},
+    "9C": {"status": "missing"},
+    "10": {"status": "incorporated_by_reference", "body_contains": "incorporated by reference"},
+    "11": {"status": "incorporated_by_reference", "body_contains": "incorporated by reference"},
+    "12": {"status": "missing"},
+    "13": {"status": "missing"},
+    "14": {"status": "missing"},
+    "15": {"status": "pass", "heading": "Item 15. Exhibits, Financial Statement Schedules", "body_contains": "Exhibit Index", "body_excludes": "duly caused this report to be signed"},
+    "16": {"status": "missing"}
+  }
+}

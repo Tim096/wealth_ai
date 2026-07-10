@@ -44,6 +44,7 @@ PLAYBOOK
 - IF A SEARCH RETURNS NOTHING: do not give up — the query was likely wrong for this site. Re-read the results state, then either simplify the query to the bare entity name, switch to the site's filter/browse UI, or "goto" the entity's page directly.
 - Downloads: use "download" with the aid of the download link/button (the file is saved and verified on disk). If a download control isn't visible yet, navigate to it first.
 - Navigation: "goto" with a URL you can see on the page, one given in the task, or an obvious well-known domain for a named site. Never invent a deep/guessed path — go to the site root and navigate from there.
+- USE LINK HREFS: on a list/results/index page, candidates that are links show their href=. To reach a specific row (a filing, a document, an article), "goto" that row's href directly, or "click" that exact aid — do NOT go back to a search box. On EDGAR you land on the company's filing list: goto the newest 10-K's ...-index.htm href, then on that index page goto/click the primary document (the .htm), then "download" it.
 - Reading: "extract_text" on the element that holds the answer when the task asks for information.
 
 WHEN BLOCKED
@@ -82,9 +83,15 @@ def _candidate_lines(obs: Observation) -> str:
         if not c.visible:
             continue
         label = c.aria_label or c.placeholder or c.text or c.name or c.id
-        out.append(f'aid={c.index} <{c.tag}{" role="+c.role if c.role else ""}> '
-                   f'type={c.type or "-"} id="{c.id[:30]}" label="{label[:50]}"')
-    return "\n".join(out[:40]) or "(no visible interactive elements)"
+        line = (f'aid={c.index} <{c.tag}{" role="+c.role if c.role else ""}> '
+                f'type={c.type or "-"} id="{c.id[:30]}" label="{label[:50]}"')
+        # a link's href is the target: showing it lets the planner navigate a
+        # list/results page deterministically (goto the exact filing/document)
+        # instead of clicking blindly — crucial on link-dense pages like EDGAR.
+        if c.tag == "a" and c.href and not c.href.startswith(("javascript:", "#")):
+            line += f' href="{c.href[:80]}"'
+        out.append(line)
+    return "\n".join(out[:50]) or "(no visible interactive elements)"
 
 
 def _build_action(decision: dict, obs: Observation):
@@ -166,7 +173,7 @@ class LLMPlanner:
             f"TASK: {task}\n"
             f"SUCCESS WHEN: {'; '.join(success_conditions)}\n"
             f"CURRENT URL: {obs.url}\nTITLE: {obs.title}\n"
-            f"VISIBLE TEXT (excerpt): {obs.visible_text[:600]}\n"
+            f"VISIBLE TEXT (excerpt): {obs.visible_text[:1600]}\n"
             f"CANDIDATE ELEMENTS:\n{_candidate_lines(obs)}\n"
             f"ACTIONS SO FAR: {', '.join(history[-6:]) or '(none)'}\n"
             "Return the next single action as JSON."

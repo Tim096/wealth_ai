@@ -38,7 +38,7 @@ def test_transient_llm_error_is_noop_not_crash():
         def available(self):
             return True
 
-        def complete_json(self, system, user):
+        def complete_json(self, system, user, image_path=None):
             raise httpx.ReadTimeout("timed out")
 
     obs = Observation(url="u", title="t", visible_text="", candidates=[])
@@ -310,6 +310,57 @@ def test_preflight_parses_and_validates():
     assert plan["steps"] == ["goto finlab.tw", "找定價連結"]
 
 
+def test_planner_sends_the_screenshot_to_a_vision_model(tmp_path):
+    # when an image is provided, the planner must attach it (multimodal content)
+    # and tell the model a Set-of-Marks screenshot is available.
+    img = tmp_path / "som.png"
+    img.write_bytes(b"\x89PNG\r\n\x1a\n" + b"0" * 64)
+    seen = {}
+
+    class _Rec:
+        def available(self):
+            return True
+
+        def complete_json(self, system, user, image_path=None):
+            seen["image_path"] = image_path
+            seen["user"] = user
+            return {"action": "done", "reason": "ok"}, None
+
+    obs = Observation(url="u", title="t", visible_text="", candidates=[])
+    LLMPlanner(_Rec()).next_action("task", [], obs, [], image_path=str(img))
+    assert seen["image_path"] == str(img)
+    assert "SCREENSHOT" in seen["user"]
+
+
+def test_client_attaches_image_as_multimodal_content(tmp_path, monkeypatch):
+    from llm_core.openai_client import OpenAIClient
+
+    img = tmp_path / "s.png"
+    img.write_bytes(b"\x89PNG\r\n\x1a\nabc")
+    captured = {}
+
+    class _Resp:
+        status_code = 200
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"choices": [{"message": {"content": "{}"}}], "usage": {}}
+
+    def _fake_post(url, headers=None, json=None, timeout=None):
+        captured["body"] = json
+        return _Resp()
+
+    import httpx
+    monkeypatch.setattr(httpx, "post", _fake_post)
+    OpenAIClient(api_key="k").complete_json("sys", "user text", image_path=str(img))
+    content = captured["body"]["messages"][1]["content"]
+    assert isinstance(content, list)
+    assert any(b.get("type") == "image_url" and "data:image/png;base64," in b["image_url"]["url"]
+               for b in content)
+
+
 def test_plan_steps_are_fed_back_to_the_planner():
     # the preflight route must reach the per-step planner so a hard multi-step
     # task follows its own roadmap — not just be shown to the user.
@@ -317,7 +368,7 @@ def test_plan_steps_are_fed_back_to_the_planner():
 
     class _Rec:
         def available(self): return True
-        def complete_json(self, system, user):
+        def complete_json(self, system, user, image_path=None):
             captured["user"] = user
             return {"action": "goto", "value": "https://x"}, None
 

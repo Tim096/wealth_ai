@@ -21,6 +21,7 @@ from browser_core.actions import (
 )
 from browser_agent.capability import screen_action, screen_task
 from browser_agent.executor import ActionExecutor, ActionOutcome
+from browser_agent.marks import set_of_marks
 from browser_agent.memory_store import MemoryStore
 from browser_agent.observer import PageObserver
 from browser_agent.repair import diagnose_failure, repair_target
@@ -177,6 +178,11 @@ class BrowserAgent:
         self.artifact_dir = Path(artifact_dir) if artifact_dir else None
         if self.artifact_dir:
             self.artifact_dir.mkdir(parents=True, exist_ok=True)
+        # opt-in vision channel: only send Set-of-Marks screenshots to the
+        # planner when explicitly enabled (it costs image tokens and needs a
+        # multimodal model, e.g. the gpt-5.5 default behind the codex gateway)
+        import os as _os
+        self._vision = _os.environ.get("AGENT_VISION", "") == "1"
 
     def _emit_evidence(self, run_id: str, task_id: str, run: "TaskRun") -> None:
         """Route the browser run through the SAME EvidenceRecord contract the SEC
@@ -434,10 +440,18 @@ class BrowserAgent:
             if verdict.status == "pass":
                 break
             _emit("💭 看畫面、決定下一步…")
+            # Vision channel (opt-in): render a Set-of-Marks screenshot so a
+            # multimodal model can SEE the page and ground a coordinate click.
+            # Gated by env + an artifact dir so the default text path is unchanged.
+            image_path = None
+            if self._vision and self.artifact_dir:
+                somp = self.artifact_dir / f"som-{len(trace)}.png"
+                if set_of_marks(self.page, str(somp)):
+                    image_path = str(somp)
             decision = planner.next_action(
                 contract.natural_language_task,
                 [f"{c.type}:{c.value}" for c in contract.success_conditions], obs, history,
-                plan_steps=plan_steps)
+                plan_steps=plan_steps, image_path=image_path)
             if decision.llm is not None:
                 llm_cost += decision.llm.cost_usd
             # a malformed/unusable action is recoverable — give the model another

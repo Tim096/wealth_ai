@@ -60,19 +60,35 @@ class OpenAIClient:
     def available(self) -> bool:
         return bool(self.api_key.strip())
 
-    def complete_json(self, system: str, user: str) -> tuple[dict, LLMResponse]:
+    def complete_json(self, system: str, user: str,
+                      image_path: str | None = None) -> tuple[dict, LLMResponse]:
         """Ask the model for a single JSON object. Raises LLMConfigError if no
-        key is configured (callers should fall back to a deterministic path)."""
+        key is configured (callers should fall back to a deterministic path).
+
+        If `image_path` is given, the user turn is sent as multimodal content
+        (text + the image as a data: URI) so a vision-capable model — e.g. the
+        gpt-5.5 default behind the Codex gateway, which accepts `codex exec -i` —
+        can look at a Set-of-Marks screenshot and pick an element by its number."""
         if not self.available():
             raise LLMConfigError(
                 "no OPENAI_API_KEY configured; set it (and OPENAI_BASE_URL for a gateway) to use Agent Mode")
         import httpx  # local import keeps llm_core import-light
 
         prompt = system + "\n\n" + user
+        user_content: object = user
+        if image_path:
+            import base64
+            with open(image_path, "rb") as fh:
+                b64 = base64.b64encode(fh.read()).decode("ascii")
+            user_content = [
+                {"type": "text", "text": user},
+                {"type": "image_url",
+                 "image_url": {"url": f"data:image/png;base64,{b64}"}},
+            ]
         body = {
             "model": self.model,
             "messages": [{"role": "system", "content": system},
-                         {"role": "user", "content": user}],
+                         {"role": "user", "content": user_content}],
             "response_format": {"type": "json_object"},
             "temperature": 0,
         }

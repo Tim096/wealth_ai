@@ -82,8 +82,49 @@ def _extract_json_object(text: str) -> str:
     return text
 
 
+def split_messages(msgs: list) -> tuple[str, str, str]:
+    """Flatten chat messages to (system_text, user_text, image_data_uri).
+    Content may be a plain string OR multimodal blocks (text + image_url); the
+    first image on the user turn is extracted so a vision backend can attach it."""
+    sys_parts, user_parts, image = [], [], ""
+    for m in msgs:
+        role, content = m.get("role"), m.get("content")
+        bucket = sys_parts if role == "system" else user_parts if role == "user" else None
+        if bucket is None:
+            continue
+        if isinstance(content, str):
+            bucket.append(content)
+        elif isinstance(content, list):
+            for blk in content:
+                if not isinstance(blk, dict):
+                    continue
+                if blk.get("type") == "text":
+                    bucket.append(blk.get("text", ""))
+                elif blk.get("type") == "image_url" and role == "user" and not image:
+                    image = (blk.get("image_url") or {}).get("url", "")
+    return "\n".join(sys_parts), "\n".join(user_parts), image
+
+
+def data_uri_to_temp(uri: str) -> str | None:
+    """Decode a data:image/...;base64 URI to a temp .png; return its path (the
+    caller unlinks it). Returns None if the URI isn't a base64 data image."""
+    if not uri.startswith("data:") or ";base64," not in uri:
+        return None
+    import base64
+    header, b64 = uri.split(";base64,", 1)
+    ext = ".png" if "png" in header else (".jpg" if "jp" in header else ".img")
+    try:
+        raw = base64.b64decode(b64)
+    except Exception:  # noqa: BLE001
+        return None
+    fd, path = tempfile.mkstemp(suffix=ext)
+    with os.fdopen(fd, "wb") as fh:
+        fh.write(raw)
+    return path
+
+
 class Backend:
-    def complete(self, system: str, user: str) -> str:
+    def complete(self, system: str, user: str, image_path: str | None = None) -> str:
         raise NotImplementedError
 
 
@@ -105,7 +146,7 @@ class MockBackend(Backend):
         m = re.search(r"for '([^']+)'|for \"([^\"]+)\"", user)
         return (m.group(1) or m.group(2)) if m else "widget"
 
-    def complete(self, system: str, user: str) -> str:
+    def complete(self, system: str, user: str, image_path: str | None = None) -> str:
         self._n += 1
         cands = [(int(a), tag, (role or ""), typ, cid.lower(), label.lower())
                  for a, tag, role, typ, cid, label in _CAND_LINE.findall(user)]
@@ -161,7 +202,7 @@ class CodexBackend(Backend):
         self.timeout_s = timeout_s
         self.codex = find_codex() or "codex"
 
-    def complete(self, system: str, user: str) -> str:
+    def complete(self, system: str, user: str, image_path: str | None = None) -> str:
         # instruction goes as the prompt arg; page state is piped via stdin
         # (codex treats piped content as additional context) — this keeps the
         # large/quoted page text out of argv entirely.
@@ -173,6 +214,10 @@ class CodexBackend(Backend):
             schema_path = f.name
         args = [self.codex, "exec", "--sandbox", "read-only", "--skip-git-repo-check",
                 "--output-schema", schema_path, *self.extra_args]
+        # attach a Set-of-Marks screenshot so the (multimodal) account default
+        # gpt-5.5 can pick an element by its number — the vision channel.
+        if image_path and os.path.exists(image_path):
+            args += ["--image", image_path]
         # ChatGPT-account Codex rejects explicit --model for the codex-* names;
         # omit it to use the account default (e.g. gpt-5.5). Pass one only if
         # the operator set a concrete non-sentinel model.
@@ -201,7 +246,7 @@ class OpenAIBackend(Backend):
     def __init__(self, model: str) -> None:
         self.model = model
 
-    def complete(self, system: str, user: str) -> str:
+    def complete(self, system: str, user: str, image_path: str | None = None) -> str:
         import httpx
         key = os.environ.get("OPENAI_API_KEY", "")
         base = os.environ.get("OPENAI_UPSTREAM_URL", "https://api.openai.com/v1")
@@ -244,13 +289,19 @@ def make_handler(backend: Backend, model: str, backend_name: str = ""):
             length = int(self.headers.get("Content-Length", 0))
             req = json.loads(self.rfile.read(length) or b"{}")
             msgs = req.get("messages", [])
-            system = "\n".join(m["content"] for m in msgs if m.get("role") == "system")
-            user = "\n".join(m["content"] for m in msgs if m.get("role") == "user")
+            system, user, image_uri = split_messages(msgs)
+            image_path = data_uri_to_temp(image_uri) if image_uri else None
             try:
-                content = backend.complete(system, user)
+                content = backend.complete(system, user, image_path=image_path)
             except Exception as e:  # noqa: BLE001
                 self._send(502, {"error": {"message": f"backend failed: {type(e).__name__}: {e}"}})
                 return
+            finally:
+                if image_path:
+                    try:
+                        os.unlink(image_path)
+                    except OSError:
+                        pass
             self._send(200, {
                 "id": f"chatcmpl-{int(time.time())}", "object": "chat.completion",
                 "model": req.get("model", model),

@@ -80,7 +80,8 @@ class PlannerDecision:
 class Planner(Protocol):
     def next_action(self, task: str, success_conditions: list[str],
                     obs: Observation, history: list[str],
-                    plan_steps: list[str] | None = None) -> PlannerDecision: ...
+                    plan_steps: list[str] | None = None,
+                    image_path: str | None = None) -> PlannerDecision: ...
 
 
 def _candidate_lines(obs: Observation) -> str:
@@ -218,16 +219,23 @@ class LLMPlanner:
 
     def next_action(self, task: str, success_conditions: list[str],
                     obs: Observation, history: list[str],
-                    plan_steps: list[str] | None = None) -> PlannerDecision:
+                    plan_steps: list[str] | None = None,
+                    image_path: str | None = None) -> PlannerDecision:
         route = ("PLANNED ROUTE (your own preflight plan — follow it, but adapt to "
                  "the live page and re-plan if a step is blocked or already done):\n"
                  + "\n".join(f"  {i+1}. {s}" for i, s in enumerate(plan_steps)) + "\n"
                  if plan_steps else "")
+        shot = ("SCREENSHOT: attached — a Set-of-Marks image where each interactive "
+                "element is boxed and labelled with its aid number. Use it to see "
+                "the layout and pick the right aid; for a widget with no usable aid, "
+                'read its box centre and emit "mouse" with those x,y.\n'
+                if image_path else "")
         user = (
             f"TASK: {task}\n"
             f"{route}"
             f"SUCCESS WHEN: {'; '.join(success_conditions)}\n"
             f"CURRENT URL: {obs.url}\nTITLE: {obs.title}\n"
+            f"{shot}"
             f"VISIBLE TEXT (excerpt): {obs.visible_text[:1600]}\n"
             f"CANDIDATE ELEMENTS:\n{_candidate_lines(obs)}\n"
             f"ACTIONS SO FAR: {', '.join(history[-6:]) or '(none)'}\n"
@@ -235,7 +243,7 @@ class LLMPlanner:
         )
         import httpx  # local: only browser Agent Mode pays for this import
         try:
-            decision, rec = self.client.complete_json(_SYSTEM, user)
+            decision, rec = self.client.complete_json(_SYSTEM, user, image_path=image_path)
         except LLMConfigError:
             raise
         except httpx.HTTPError as e:
@@ -291,7 +299,8 @@ class MockPlanner:
 
     def next_action(self, task: str, success_conditions: list[str],
                     obs: Observation, history: list[str],
-                    plan_steps: list[str] | None = None) -> PlannerDecision:
+                    plan_steps: list[str] | None = None,
+                    image_path: str | None = None) -> PlannerDecision:
         self._step += 1
         if self._step == 1:
             box = self._find(obs, {"input", "textarea", "searchbox", "textbox"},

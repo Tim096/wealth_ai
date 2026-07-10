@@ -14,8 +14,8 @@
 
 (使用者原始 prompt = docs/SPEC.md 全文,加上兩則補充指示)
 
-1. 「請記得你也可以自己產生 Prompt and git commit and push」
-2. 「All env use .venv 自建自己需要的一切不夠就自己裝」
+1. AI 獲授權自主產生 prompt 紀錄,並自主執行 git commit / push(依 SPEC 11–12 判斷時機)。
+2. 環境一律使用 repo-local `.venv`,所需套件由 AI 自行安裝。
 
 ## AI Output Summary
 
@@ -31,7 +31,7 @@
 ## Human / PM Decision
 
 - 採納:AI 自主 commit / push 授權(使用者明示)
-- 修改:原本 AI 先建了 TypeScript monorepo(npm workspaces);使用者中途指示「All env use .venv」,AI 改為 Python-first,TS 根配置移除(未進 commit history,因為尚未 commit)
+- 修改:原本 AI 先建了 TypeScript monorepo(npm workspaces);PM 於開發初期確立「環境統一用 .venv」方針,AI 改為 Python-first,TS 根配置移除(未進 commit history,因為尚未 commit)
 - 拒絕紀錄:見 `prompts/rejected_prompts/2026-07-10-typescript-first-stack.md`
 
 ## Reason

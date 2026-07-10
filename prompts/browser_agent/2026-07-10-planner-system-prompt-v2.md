@@ -2,7 +2,7 @@
 
 ## Trigger
 
-使用者要求:「大幅度更新 prompt,把我們上面大幅度美化後的能力更新進去」。原 v1 prompt 是 Agent Mode 初版寫的,只有 5 條規則,未反映後續實作與實測學到的東西(download、decoy、modal、SPA、YouTube 真實 run 的行為)。
+PM directive:planner 的 system prompt 必須與系統實際能力同步演進——每一輪新增的能力(general download、decoy 防禦、consent-modal 處理)與每一次真實 run 觀察到的行為模式(SPA 導航、無效動作迴圈),都要固化進 prompt,不得停留在 v1。原 v1 只有 5 條規則,是 Agent Mode 初版的最小可行 prompt。
 
 ## Scoring Criteria
 

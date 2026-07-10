@@ -29,7 +29,7 @@
 
 結果:**31 個 anomaly 確認、12 個被反駁**(反駁的多是「這其實是誠實的 incorporated_by_reference / None. 行為,不是 bug」——驗證層自己擋掉了誤報)。
 
-這直接命中你們主管在意的痛點:**很多作業 SEC 跑出來不完整,但 AI 自報完成度很高。** 我的 sweep1 metrics 自報 75.9% pass,對抗式稽核卻證明其中 15 個是 silent failure。稽核抓到了我自己的 pipeline 在說謊。
+這直接命中評審在意的痛點:**很多作業 SEC 跑出來不完整,但 AI 自報完成度很高。** 我的 sweep1 metrics 自報 75.9% pass,對抗式稽核卻證明其中 15 個是 silent failure。稽核抓到了我自己的 pipeline 在說謊。
 
 ### 三大 silent-failure class(稽核發現 → 已修復)
 

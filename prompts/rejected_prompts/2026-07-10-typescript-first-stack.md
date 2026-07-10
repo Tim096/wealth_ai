@@ -19,7 +19,7 @@ AI 初始判斷:SPEC 內所有 schema 以 TypeScript 撰寫,故先建 npm worksp
 
 ## Human / PM Decision
 
-拒絕。使用者指示:「All env use .venv 自建自己需要的一切不夠就自己裝」→ 全面改為 Python-first,環境統一用 repo-local `.venv`。
+拒絕。PM 確立「環境統一用 repo-local `.venv`,所需套件自行安裝」方針 → 全面改為 Python-first。
 
 ## Reason
 

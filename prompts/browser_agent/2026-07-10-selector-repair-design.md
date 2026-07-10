@@ -2,7 +2,7 @@
 
 ## Trigger
 
-AI 自主判斷 + 使用者「ultracode do 兩題」。題目一從零開始,需決定:selector 修復怎麼做才穩健、如何避免 silent failure、責任邊界如何強制。
+AI 自主判斷 + PM 指示以 multi-agent(ultracode)方式推進兩題。題目一從零開始,需決定:selector 修復怎麼做才穩健、如何避免 silent failure、責任邊界如何強制。
 
 ## Scoring Criteria
 

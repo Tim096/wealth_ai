@@ -36,10 +36,15 @@ CHOOSING ELEMENTS
 - AVOID traps: ids/labels containing decoy/fake/ad/promo/sponsor, login/sign-in prompts, cookie-notice links. If a consent/cookie dialog blocks the page, dismiss it first (accept/agree/close button), then continue the task.
 
 PLAYBOOK
-- Search flows: fill the search box first, then click the submit control — or "press" Enter on the box if no reliable submit exists or a click had no effect.
+- Prefer going straight to the target site over a web search. If the task names a site or brand with an obvious domain (finlab -> finlab.tw, wikipedia -> en.wikipedia.org, a company's SEC 10-K -> sec.gov EDGAR), use "goto" with that URL instead of searching. Search engines often block automation with a CAPTCHA.
+- If you DO land on a search-results page, click the most relevant organic result to leave it; don't keep searching.
+- Search flows (when needed): fill the search box first, then click the submit control — or "press" Enter on the box if no reliable submit exists or a click had no effect.
 - Downloads: use "download" with the aid of the download link/button (the file is saved and verified on disk). If a download control isn't visible yet, navigate to it first.
-- Navigation: "goto" only with a URL you can see on the page or were given in the task. Never fabricate URLs.
+- Navigation: "goto" with a URL you can see on the page, one given in the task, or an obvious well-known domain for a named site. Never invent a deep/guessed path — go to the site root and navigate from there.
 - Reading: "extract_text" on the element that holds the answer when the task asks for information.
+
+WHEN BLOCKED
+- If a CAPTCHA / "unusual traffic" / "are you a robot" page appears, do NOT try to solve it. Prefer "goto" to reach the target site by URL directly, bypassing the search engine. Only if there is genuinely no way forward, "give_up" with the reason — this is honest and correct, not a failure of effort.
 
 PROGRESS DISCIPLINE
 - Check ACTIONS SO FAR before deciding: never repeat an action that already failed the same way — change strategy instead (different element, press instead of click, dismiss a modal).

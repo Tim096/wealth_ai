@@ -155,7 +155,9 @@ def _ensure_gateway(base_url: str) -> str:
     return ""
 
 
-DEFAULT_START = "https://www.bing.com"
+# DuckDuckGo's HTML endpoint doesn't gate automation with a CAPTCHA the way
+# Google/Bing do — a friendlier default when the task needs a web search.
+DEFAULT_START = "https://duckduckgo.com/html/"
 
 
 def agent_submit(task: str, url: str, success: str) -> dict:

@@ -19,7 +19,7 @@ python -m venv .venv
 ```powershell
 # 一次性:codex login(ChatGPT OAuth)
 # 終端機 A:啟動 gateway
-.venv\Scripts\python tools\codex_gateway.py --model gpt-5.3-codex
+.venv\Scripts\python tools\codex_gateway.py --model default
 # 終端機 B:agent 已預設指向 gateway,不需設 env
 .venv\Scripts\python tools\browser_agent_live.py --headed `
   --url "https://en.wikipedia.org/wiki/Main_Page" `

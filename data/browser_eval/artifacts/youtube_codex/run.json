@@ -1,0 +1,57 @@
+{
+  "task_id": "live",
+  "site": "live",
+  "status": "pass",
+  "confidence": 1.0,
+  "repairs": 0,
+  "total_latency_ms": 25493.8,
+  "verifier": {
+    "status": "pass",
+    "reason": "all conditions observed and satisfied",
+    "observed": [
+      "url_contains:watch"
+    ],
+    "missing": []
+  },
+  "steps": [
+    {
+      "step": "planner",
+      "action": "fill",
+      "ok": true,
+      "mode": "agent",
+      "detail": "\u5728\u641c\u5c0b\u6846\u8f38\u5165\u6307\u5b9a\u95dc\u9375\u5b57\u3002",
+      "diagnosis": "",
+      "repair_considered": [],
+      "repair_chosen": "",
+      "selector_used": "[data-aid=\"3\"]",
+      "latency_ms": 22.6,
+      "screenshot": "E:\\Side_Project\\wealth\\runs\\agent_live\\shots\\agent-0.png"
+    },
+    {
+      "step": "planner",
+      "action": "click",
+      "ok": true,
+      "mode": "agent",
+      "detail": "\u9001\u51fa\u76ee\u524d\u7684 YouTube \u641c\u5c0b\u67e5\u8a62\u3002",
+      "diagnosis": "",
+      "repair_considered": [],
+      "repair_chosen": "",
+      "selector_used": "[data-aid=\"6\"]",
+      "latency_ms": 73.7,
+      "screenshot": "E:\\Side_Project\\wealth\\runs\\agent_live\\shots\\agent-1.png"
+    },
+    {
+      "step": "planner",
+      "action": "click",
+      "ok": true,
+      "mode": "agent",
+      "detail": "\u9ede\u64ca\u7b2c\u4e00\u500b\u5f71\u7247\u7d50\u679c\u3002",
+      "diagnosis": "",
+      "repair_considered": [],
+      "repair_chosen": "",
+      "selector_used": "[data-aid=\"99\"]",
+      "latency_ms": 65.6,
+      "screenshot": "E:\\Side_Project\\wealth\\runs\\agent_live\\shots\\agent-2.png"
+    }
+  ]
+}

@@ -26,8 +26,10 @@ codex login
 
 **終端機 A — 啟動 gateway:**
 ```powershell
-.venv\Scripts\python tools\codex_gateway.py --model gpt-5.3-codex
-#   Plus 訂閱可用 gpt-5.3-codex;較低方案用 gpt-5-codex-mini
+.venv\Scripts\python tools\codex_gateway.py --model default
+#   重要:ChatGPT OAuth 會拒絕明確的 codex-* model 名(gpt-5.3-codex / gpt-5-codex-mini
+#   都會回 "model is not supported when using Codex with a ChatGPT account")。
+#   用 --model default = 帳號預設(實測為 gpt-5.5)。明確 model 名只在用 API key 時有效。
 #   看到 "listening on http://127.0.0.1:8791/v1" 即就緒
 ```
 

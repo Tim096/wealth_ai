@@ -43,7 +43,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 ACTION_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["action"],
+    # OpenAI strict structured-output requires every property in `required`
+    "required": ["action", "aid", "value", "reason"],
     "properties": {
         "action": {"enum": ["fill", "click", "press", "goto", "extract_text", "done", "give_up"]},
         "aid": {"type": ["integer", "null"]},
@@ -127,21 +128,41 @@ class MockBackend(Backend):
 
 
 class CodexBackend(Backend):
-    def __init__(self, model: str, extra_args: list[str]) -> None:
+    def __init__(self, model: str, extra_args: list[str], timeout_s: int = 180) -> None:
         self.model = model
         self.extra_args = extra_args
+        self.timeout_s = timeout_s
+        import shutil
+        self.codex = shutil.which("codex") or "codex"
 
     def complete(self, system: str, user: str) -> str:
-        prompt = (system + "\n\n" + user +
-                  "\n\nRespond with ONLY the JSON object, no prose.")
+        # instruction goes as the prompt arg; page state is piped via stdin
+        # (codex treats piped content as additional context) — this keeps the
+        # large/quoted page text out of argv entirely.
+        instruction = ("Choose the next browser action for the task using the page state on stdin. "
+                       "Return ONLY a JSON object matching the output schema, no prose.")
+        context = system + "\n\n" + user
         with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as f:
             json.dump(ACTION_SCHEMA, f)
             schema_path = f.name
-        cmd = ["codex", "exec", "--sandbox", "read-only", "--skip-git-repo-check",
-               "--model", self.model, "--output-schema", schema_path, *self.extra_args, prompt]
+        args = [self.codex, "exec", "--sandbox", "read-only", "--skip-git-repo-check",
+                "--output-schema", schema_path, *self.extra_args]
+        # ChatGPT-account Codex rejects explicit --model for the codex-* names;
+        # omit it to use the account default (e.g. gpt-5.5). Pass one only if
+        # the operator set a concrete non-sentinel model.
+        if self.model and self.model.lower() not in ("default", "auto", ""):
+            args += ["--model", self.model]
+        args.append(instruction)
+        # on Windows, codex resolves to a .CMD which CreateProcess can't launch
+        # directly — go through the command interpreter.
+        if os.name == "nt" and self.codex.lower().endswith((".cmd", ".bat")):
+            args = [os.environ.get("COMSPEC", "cmd.exe"), "/c", *args]
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
-            out = proc.stdout or proc.stderr
+            proc = subprocess.run(args, input=context, capture_output=True, text=True,
+                                  timeout=self.timeout_s, encoding="utf-8", errors="replace")
+            out = proc.stdout or proc.stderr or ""
+        except subprocess.TimeoutExpired:
+            out = '{"action":"give_up","reason":"codex exec timed out"}'
         finally:
             try:
                 os.unlink(schema_path)
@@ -224,7 +245,9 @@ def build_backend(name: str, model: str) -> Backend:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8791)
-    ap.add_argument("--model", default=os.environ.get("CODEX_MODEL", "gpt-5.3-codex"))
+    ap.add_argument("--model", default=os.environ.get("CODEX_MODEL", "default"),
+                    help="'default' = account default (recommended for ChatGPT OAuth, which "
+                         "rejects explicit codex-* model names); or e.g. gpt-5.3-codex on an API key")
     ap.add_argument("--backend", choices=["codex", "mock", "openai"], default="codex")
     args = ap.parse_args()
     backend = build_backend(args.backend, args.model)

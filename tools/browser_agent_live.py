@@ -1,4 +1,4 @@
-"""Agent Mode live runner — drive the browser agent with an LLM on any site.
+r"""Agent Mode live runner — drive the browser agent with an LLM on any site.
 
 MANUAL TEST (you supply your own credentials — this tool never stores a key):
 

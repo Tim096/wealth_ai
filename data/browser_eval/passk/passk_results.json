@@ -1,0 +1,167 @@
+{
+  "repeat": 3,
+  "note": "Script Mode is deterministic by construction (memory cleared each pass, no LLM), so pass@1 == pass@k and flaky_rate == 0 is the expected, reportable property. Non-trivial flakiness needs a live LLM planner (Agent Mode, gateway); the offline MockPlanner shown here is also deterministic.",
+  "script_mode": {
+    "summary": {
+      "k": 3,
+      "n_tasks": 5,
+      "n_solvable": 4,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "verdict_consistency": 1.0,
+      "flaky_rate": 0.0,
+      "flaky_tasks": [],
+      "deterministic": true
+    },
+    "per_task": [
+      {
+        "task_id": "search-v1-widget",
+        "expected": "pass",
+        "statuses": [
+          "pass",
+          "pass",
+          "pass"
+        ],
+        "n": 3,
+        "consistent": true,
+        "distinct_statuses": [
+          "pass"
+        ],
+        "success_count": 3,
+        "pass_at_1": 1.0,
+        "solved_at_k": true
+      },
+      {
+        "task_id": "search-v2-widget-drift",
+        "expected": "pass",
+        "statuses": [
+          "pass",
+          "pass",
+          "pass"
+        ],
+        "n": 3,
+        "consistent": true,
+        "distinct_statuses": [
+          "pass"
+        ],
+        "success_count": 3,
+        "pass_at_1": 1.0,
+        "solved_at_k": true
+      },
+      {
+        "task_id": "search-v2-gizmo-drift",
+        "expected": "pass",
+        "statuses": [
+          "pass",
+          "pass",
+          "pass"
+        ],
+        "n": 3,
+        "consistent": true,
+        "distinct_statuses": [
+          "pass"
+        ],
+        "success_count": 3,
+        "pass_at_1": 1.0,
+        "solved_at_k": true
+      },
+      {
+        "task_id": "search-v1-nonexistent",
+        "expected": "fail",
+        "statuses": [
+          "fail",
+          "fail",
+          "fail"
+        ],
+        "n": 3,
+        "consistent": true,
+        "distinct_statuses": [
+          "fail"
+        ]
+      },
+      {
+        "task_id": "search-v3-heldout",
+        "expected": "pass",
+        "statuses": [
+          "pass",
+          "pass",
+          "pass"
+        ],
+        "n": 3,
+        "consistent": true,
+        "distinct_statuses": [
+          "pass"
+        ],
+        "success_count": 3,
+        "pass_at_1": 1.0,
+        "solved_at_k": true
+      }
+    ]
+  },
+  "agent_mode_mock": {
+    "summary": {
+      "k": 3,
+      "n_tasks": 3,
+      "n_solvable": 3,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "verdict_consistency": 1.0,
+      "flaky_rate": 0.0,
+      "flaky_tasks": [],
+      "deterministic": true
+    },
+    "per_task": [
+      {
+        "task_id": "search-v1-widget",
+        "expected": "pass",
+        "statuses": [
+          "pass",
+          "pass",
+          "pass"
+        ],
+        "n": 3,
+        "consistent": true,
+        "distinct_statuses": [
+          "pass"
+        ],
+        "success_count": 3,
+        "pass_at_1": 1.0,
+        "solved_at_k": true
+      },
+      {
+        "task_id": "search-v2-widget-drift",
+        "expected": "pass",
+        "statuses": [
+          "pass",
+          "pass",
+          "pass"
+        ],
+        "n": 3,
+        "consistent": true,
+        "distinct_statuses": [
+          "pass"
+        ],
+        "success_count": 3,
+        "pass_at_1": 1.0,
+        "solved_at_k": true
+      },
+      {
+        "task_id": "search-v2-gizmo-drift",
+        "expected": "pass",
+        "statuses": [
+          "pass",
+          "pass",
+          "pass"
+        ],
+        "n": 3,
+        "consistent": true,
+        "distinct_statuses": [
+          "pass"
+        ],
+        "success_count": 3,
+        "pass_at_1": 1.0,
+        "solved_at_k": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,603 @@
+{
+  "generated_by": "tools/degradation_curve.py",
+  "sites_from": "tools/gen_mutation_sites.py -> data/mock_sites/mutations/",
+  "queries": [
+    "widget",
+    "gizmo",
+    "sprocket"
+  ],
+  "definitions": {
+    "success": "final verify_contract pass on the full contract (text_visible 'results for' + full product name; forbidden captcha)",
+    "checkpoint": "mid-task: query present in the REAL search field ([data-sb] ground-truth instrumentation, invisible to the agent's observer), verified via verify_contract(field_value_equals) with runner-collected evidence",
+    "fault_encountered": "any repair-mode step in the trace (incl. modal dismissal)",
+    "recovered": "fault_encountered AND final verdict pass (mid-task recovery)",
+    "determinism": "attempt-counter + input-event-anchored faults, no Math.random; fresh selector memory per probe"
+  },
+  "cells": {
+    "clean": {
+      "axis": "none",
+      "level": 0,
+      "level_name": "clean",
+      "n": 3,
+      "success_rate": 1.0,
+      "checkpoint_rate": 1.0,
+      "fault_encountered_rate": 0.0,
+      "recovery_rate": null,
+      "avg_repairs": 0.0,
+      "statuses": [
+        "pass"
+      ]
+    },
+    "perception-light": {
+      "axis": "perception",
+      "level": 1,
+      "level_name": "light",
+      "n": 3,
+      "success_rate": 1.0,
+      "checkpoint_rate": 1.0,
+      "fault_encountered_rate": 1.0,
+      "recovery_rate": 1.0,
+      "avg_repairs": 2.0,
+      "statuses": [
+        "pass"
+      ]
+    },
+    "perception-medium": {
+      "axis": "perception",
+      "level": 2,
+      "level_name": "medium",
+      "n": 3,
+      "success_rate": 1.0,
+      "checkpoint_rate": 1.0,
+      "fault_encountered_rate": 1.0,
+      "recovery_rate": 1.0,
+      "avg_repairs": 2.0,
+      "statuses": [
+        "pass"
+      ]
+    },
+    "perception-heavy": {
+      "axis": "perception",
+      "level": 3,
+      "level_name": "heavy",
+      "n": 3,
+      "success_rate": 0.0,
+      "checkpoint_rate": 0.0,
+      "fault_encountered_rate": 1.0,
+      "recovery_rate": 0.0,
+      "avg_repairs": 2.0,
+      "statuses": [
+        "fail"
+      ]
+    },
+    "action-light": {
+      "axis": "action",
+      "level": 1,
+      "level_name": "light",
+      "n": 3,
+      "success_rate": 1.0,
+      "checkpoint_rate": 1.0,
+      "fault_encountered_rate": 1.0,
+      "recovery_rate": 1.0,
+      "avg_repairs": 2.0,
+      "statuses": [
+        "pass"
+      ]
+    },
+    "action-medium": {
+      "axis": "action",
+      "level": 2,
+      "level_name": "medium",
+      "n": 3,
+      "success_rate": 1.0,
+      "checkpoint_rate": 1.0,
+      "fault_encountered_rate": 1.0,
+      "recovery_rate": 1.0,
+      "avg_repairs": 2.0,
+      "statuses": [
+        "pass"
+      ]
+    },
+    "action-heavy": {
+      "axis": "action",
+      "level": 3,
+      "level_name": "heavy",
+      "n": 3,
+      "success_rate": 0.0,
+      "checkpoint_rate": 1.0,
+      "fault_encountered_rate": 1.0,
+      "recovery_rate": 0.0,
+      "avg_repairs": 2.0,
+      "statuses": [
+        "fail"
+      ]
+    },
+    "execution-light": {
+      "axis": "execution",
+      "level": 1,
+      "level_name": "light",
+      "n": 3,
+      "success_rate": 1.0,
+      "checkpoint_rate": 1.0,
+      "fault_encountered_rate": 0.0,
+      "recovery_rate": null,
+      "avg_repairs": 0.0,
+      "statuses": [
+        "pass"
+      ]
+    },
+    "execution-medium": {
+      "axis": "execution",
+      "level": 2,
+      "level_name": "medium",
+      "n": 3,
+      "success_rate": 1.0,
+      "checkpoint_rate": 1.0,
+      "fault_encountered_rate": 1.0,
+      "recovery_rate": 1.0,
+      "avg_repairs": 1.0,
+      "statuses": [
+        "pass"
+      ]
+    },
+    "execution-heavy": {
+      "axis": "execution",
+      "level": 3,
+      "level_name": "heavy",
+      "n": 3,
+      "success_rate": 0.0,
+      "checkpoint_rate": 1.0,
+      "fault_encountered_rate": 1.0,
+      "recovery_rate": 0.0,
+      "avg_repairs": 1.0,
+      "statuses": [
+        "fail"
+      ]
+    }
+  },
+  "curves": {
+    "perception": {
+      "points": [
+        {
+          "intensity": 0,
+          "cell": "clean",
+          "success_rate": 1.0,
+          "checkpoint_rate": 1.0,
+          "recovery_rate": null,
+          "avg_repairs": 0.0
+        },
+        {
+          "intensity": 1,
+          "cell": "perception-light",
+          "success_rate": 1.0,
+          "checkpoint_rate": 1.0,
+          "recovery_rate": 1.0,
+          "avg_repairs": 2.0
+        },
+        {
+          "intensity": 2,
+          "cell": "perception-medium",
+          "success_rate": 1.0,
+          "checkpoint_rate": 1.0,
+          "recovery_rate": 1.0,
+          "avg_repairs": 2.0
+        },
+        {
+          "intensity": 3,
+          "cell": "perception-heavy",
+          "success_rate": 0.0,
+          "checkpoint_rate": 0.0,
+          "recovery_rate": 0.0,
+          "avg_repairs": 2.0
+        }
+      ],
+      "monotone_non_increasing_success": true
+    },
+    "action": {
+      "points": [
+        {
+          "intensity": 0,
+          "cell": "clean",
+          "success_rate": 1.0,
+          "checkpoint_rate": 1.0,
+          "recovery_rate": null,
+          "avg_repairs": 0.0
+        },
+        {
+          "intensity": 1,
+          "cell": "action-light",
+          "success_rate": 1.0,
+          "checkpoint_rate": 1.0,
+          "recovery_rate": 1.0,
+          "avg_repairs": 2.0
+        },
+        {
+          "intensity": 2,
+          "cell": "action-medium",
+          "success_rate": 1.0,
+          "checkpoint_rate": 1.0,
+          "recovery_rate": 1.0,
+          "avg_repairs": 2.0
+        },
+        {
+          "intensity": 3,
+          "cell": "action-heavy",
+          "success_rate": 0.0,
+          "checkpoint_rate": 1.0,
+          "recovery_rate": 0.0,
+          "avg_repairs": 2.0
+        }
+      ],
+      "monotone_non_increasing_success": true
+    },
+    "execution": {
+      "points": [
+        {
+          "intensity": 0,
+          "cell": "clean",
+          "success_rate": 1.0,
+          "checkpoint_rate": 1.0,
+          "recovery_rate": null,
+          "avg_repairs": 0.0
+        },
+        {
+          "intensity": 1,
+          "cell": "execution-light",
+          "success_rate": 1.0,
+          "checkpoint_rate": 1.0,
+          "recovery_rate": null,
+          "avg_repairs": 0.0
+        },
+        {
+          "intensity": 2,
+          "cell": "execution-medium",
+          "success_rate": 1.0,
+          "checkpoint_rate": 1.0,
+          "recovery_rate": 1.0,
+          "avg_repairs": 1.0
+        },
+        {
+          "intensity": 3,
+          "cell": "execution-heavy",
+          "success_rate": 0.0,
+          "checkpoint_rate": 1.0,
+          "recovery_rate": 0.0,
+          "avg_repairs": 1.0
+        }
+      ],
+      "monotone_non_increasing_success": true
+    }
+  },
+  "runs": [
+    {
+      "cell": "clean",
+      "query": "widget",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 0,
+      "fault_encountered": false,
+      "recovered": false,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 962.5
+    },
+    {
+      "cell": "clean",
+      "query": "gizmo",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 0,
+      "fault_encountered": false,
+      "recovered": false,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 917.5
+    },
+    {
+      "cell": "clean",
+      "query": "sprocket",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 0,
+      "fault_encountered": false,
+      "recovered": false,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 907.7
+    },
+    {
+      "cell": "perception-light",
+      "query": "widget",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 979.0
+    },
+    {
+      "cell": "perception-light",
+      "query": "gizmo",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 968.1
+    },
+    {
+      "cell": "perception-light",
+      "query": "sprocket",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 985.7
+    },
+    {
+      "cell": "perception-medium",
+      "query": "widget",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 982.8
+    },
+    {
+      "cell": "perception-medium",
+      "query": "gizmo",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 969.7
+    },
+    {
+      "cell": "perception-medium",
+      "query": "sprocket",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 987.0
+    },
+    {
+      "cell": "perception-heavy",
+      "query": "widget",
+      "status": "fail",
+      "checkpoint": "fail",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": false,
+      "verifier_reason": "violated: text_visible:results for, text_visible:Widget Pro 3000",
+      "latency_ms": 1020.1
+    },
+    {
+      "cell": "perception-heavy",
+      "query": "gizmo",
+      "status": "fail",
+      "checkpoint": "fail",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": false,
+      "verifier_reason": "violated: text_visible:results for, text_visible:Gizmo Deluxe",
+      "latency_ms": 1025.7
+    },
+    {
+      "cell": "perception-heavy",
+      "query": "sprocket",
+      "status": "fail",
+      "checkpoint": "fail",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": false,
+      "verifier_reason": "violated: text_visible:results for, text_visible:Sprocket XL",
+      "latency_ms": 1027.4
+    },
+    {
+      "cell": "action-light",
+      "query": "widget",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 980.3
+    },
+    {
+      "cell": "action-light",
+      "query": "gizmo",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 988.0
+    },
+    {
+      "cell": "action-light",
+      "query": "sprocket",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 956.8
+    },
+    {
+      "cell": "action-medium",
+      "query": "widget",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 956.4
+    },
+    {
+      "cell": "action-medium",
+      "query": "gizmo",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 1000.6
+    },
+    {
+      "cell": "action-medium",
+      "query": "sprocket",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 1041.1
+    },
+    {
+      "cell": "action-heavy",
+      "query": "widget",
+      "status": "fail",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": false,
+      "verifier_reason": "violated: text_visible:results for, text_visible:Widget Pro 3000",
+      "latency_ms": 976.0
+    },
+    {
+      "cell": "action-heavy",
+      "query": "gizmo",
+      "status": "fail",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": false,
+      "verifier_reason": "violated: text_visible:results for, text_visible:Gizmo Deluxe",
+      "latency_ms": 1006.8
+    },
+    {
+      "cell": "action-heavy",
+      "query": "sprocket",
+      "status": "fail",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "fault_encountered": true,
+      "recovered": false,
+      "verifier_reason": "violated: text_visible:results for, text_visible:Sprocket XL",
+      "latency_ms": 998.4
+    },
+    {
+      "cell": "execution-light",
+      "query": "widget",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 0,
+      "fault_encountered": false,
+      "recovered": false,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 911.5
+    },
+    {
+      "cell": "execution-light",
+      "query": "gizmo",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 0,
+      "fault_encountered": false,
+      "recovered": false,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 907.5
+    },
+    {
+      "cell": "execution-light",
+      "query": "sprocket",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 0,
+      "fault_encountered": false,
+      "recovered": false,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 900.9
+    },
+    {
+      "cell": "execution-medium",
+      "query": "widget",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 1,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 931.6
+    },
+    {
+      "cell": "execution-medium",
+      "query": "gizmo",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 1,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 949.4
+    },
+    {
+      "cell": "execution-medium",
+      "query": "sprocket",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 1,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 961.4
+    },
+    {
+      "cell": "execution-heavy",
+      "query": "widget",
+      "status": "fail",
+      "checkpoint": "pass",
+      "repairs": 1,
+      "fault_encountered": true,
+      "recovered": false,
+      "verifier_reason": "violated: text_visible:results for, text_visible:Widget Pro 3000",
+      "latency_ms": 979.5
+    },
+    {
+      "cell": "execution-heavy",
+      "query": "gizmo",
+      "status": "fail",
+      "checkpoint": "pass",
+      "repairs": 1,
+      "fault_encountered": true,
+      "recovered": false,
+      "verifier_reason": "violated: text_visible:results for, text_visible:Gizmo Deluxe",
+      "latency_ms": 930.7
+    },
+    {
+      "cell": "execution-heavy",
+      "query": "sprocket",
+      "status": "fail",
+      "checkpoint": "pass",
+      "repairs": 1,
+      "fault_encountered": true,
+      "recovered": false,
+      "verifier_reason": "violated: text_visible:results for, text_visible:Sprocket XL",
+      "latency_ms": 937.1
+    }
+  ]
+}

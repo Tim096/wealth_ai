@@ -1,0 +1,117 @@
+{
+  "generated_by": "tools/gen_mutation_sites.py",
+  "basis": "StressWeb (arxiv 2604.16385) axes x intensity + clean reference; WebArena too-clean-environment flaw (arxiv 2407.01502)",
+  "determinism": "no Math.random; attempt-counter fault schedule; input-event-anchored mutations (setTimeout 0), not timer races",
+  "heldout_note": "cells derive only from the v1-style clean template; the held-out mock site is never read (locked by test)",
+  "cells": {
+    "clean": {
+      "axis": "none",
+      "level": 0,
+      "level_name": "clean",
+      "perturbations": [],
+      "design_intent": "clean reference (StressWeb): fallback selectors hit directly, 0 repairs expected",
+      "recoverable_in_principle": "n/a"
+    },
+    "perception-light": {
+      "axis": "perception",
+      "level": 1,
+      "level_name": "light",
+      "perturbations": [
+        "ids renamed (search-box->qf, search-btn->find-btn)",
+        "button text changed (Search->Find)"
+      ],
+      "design_intent": "fallback selectors miss; semantic attributes intact -> repair recovers",
+      "recoverable_in_principle": "yes — aria-label/placeholder/text still identify both targets"
+    },
+    "perception-medium": {
+      "axis": "perception",
+      "level": 2,
+      "level_name": "medium",
+      "perturbations": [
+        "input id removed",
+        "submit button icon-only (aria-label kept)",
+        "decoy 'Search' button that does nothing",
+        "layout shifted (clutter before the form)"
+      ],
+      "design_intent": "drift + deception; repair must pick the real control over the decoy",
+      "recoverable_in_principle": "yes — decoy is heuristically excludable, semantics intact"
+    },
+    "perception-heavy": {
+      "axis": "perception",
+      "level": 3,
+      "level_name": "heavy",
+      "perturbations": [
+        "cookie modal overlays the form",
+        "submit is div[role=button]+onclick",
+        "real search field has NO search semantics (generic placeholder)",
+        "visible 'Promo code' bait field placed before the form",
+        "hidden ghost input with the search aria-label"
+      ],
+      "design_intent": "a text/a11y-only matcher ties the bait field with the real one and fills the wrong field -> empty query -> honest fail",
+      "recoverable_in_principle": "yes — form proximity or visual grounding disambiguates"
+    },
+    "action-light": {
+      "axis": "action",
+      "level": 1,
+      "level_name": "light",
+      "perturbations": [
+        "ids renamed/removed",
+        "submit has zero attributes (text 'Go' only)"
+      ],
+      "design_intent": "thin a11y signal but still enumerable -> repair recovers",
+      "recoverable_in_principle": "yes"
+    },
+    "action-medium": {
+      "axis": "action",
+      "level": 2,
+      "level_name": "medium",
+      "perturbations": [
+        "stale snapshot: first input event rebuilds the form nodes (new ids sb1/btn1, observed data-aid handles die, value preserved)"
+      ],
+      "design_intent": "the DOM the agent observed no longer exists at click time -> re-observe + repair recovers",
+      "recoverable_in_principle": "yes — a fresh observation sees the rebuilt nodes"
+    },
+    "action-heavy": {
+      "axis": "action",
+      "level": 3,
+      "level_name": "heavy",
+      "perturbations": [
+        "a11y-tree omission: submit is a bare <span onclick> with no role — it never appears in the observer's candidate enumeration"
+      ],
+      "design_intent": "the submit control is invisible to an a11y-tree-only agent -> repair cannot find it -> honest fail",
+      "recoverable_in_principle": "yes — Enter in the single-input form implicit-submits"
+    },
+    "execution-light": {
+      "axis": "execution",
+      "level": 1,
+      "level_name": "light",
+      "perturbations": [
+        "results render 250ms late (simulated XHR delay, inside the agent's 400ms settle window)"
+      ],
+      "design_intent": "benign latency; success expected with 0 repairs",
+      "recoverable_in_principle": "n/a (non-destructive)"
+    },
+    "execution-medium": {
+      "axis": "execution",
+      "level": 2,
+      "level_name": "medium",
+      "perturbations": [
+        "mid-task element removal: after the query is typed, #search-btn is replaced by #resubmit (different id)",
+        "250ms result delay"
+      ],
+      "design_intent": "the planned click target vanished mid-task -> repair finds the replacement = measurable mid-task recovery",
+      "recoverable_in_principle": "yes — replacement button is enumerable"
+    },
+    "execution-heavy": {
+      "axis": "execution",
+      "level": 3,
+      "level_name": "heavy",
+      "perturbations": [
+        "mid-task element removal (as medium)",
+        "deterministic 500: first submit renders 'Server error (500)' and no results; retries would succeed (attempt counter, no randomness)"
+      ],
+      "design_intent": "selector recovery succeeds but the first submit 500s; Script Mode has no retry loop -> honest fail (checkpoint pass, success fail)",
+      "recoverable_in_principle": "yes — a single retry succeeds"
+    }
+  }
+}

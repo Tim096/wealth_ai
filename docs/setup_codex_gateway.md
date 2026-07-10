@@ -32,6 +32,18 @@ codex login
 ```
 
 **終端機 B — 跑 agent(已預設指向 gateway,無需設任何 env):**
+
+**互動模式(直接打自然語言,推薦):**
+```powershell
+.venv\Scripts\python tools\browser_agent_live.py         # 無參數 = 互動模式
+# 然後照提示輸入:
+#   任務 (自然語言) > 到 Wikipedia 搜尋 Reliability engineering 並打開那篇文章
+#   起始 URL [目前頁面] > https://en.wikipedia.org/wiki/Main_Page
+#   成功條件 (可留空自動推斷) > Reliability engineering
+# 會開瀏覽器視窗執行,結束後可再輸入下一個任務,'quit' 離開。
+```
+
+**一次性模式(用參數):**
 ```powershell
 .venv\Scripts\python tools\browser_agent_live.py --headed `
   --url "https://en.wikipedia.org/wiki/Main_Page" `

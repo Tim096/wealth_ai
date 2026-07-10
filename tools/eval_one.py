@@ -14,12 +14,14 @@ import json
 import sys
 from pathlib import Path
 
+from observability_core import EvidenceStore
 from sec_core.fetcher import EdgarFetcher
 from sec_core.main_doc import pick_main_document
 from sec_core.pipeline import extract_from_html
 from sec_core.resolver import FilingResolver
 
 ROOT = Path(__file__).resolve().parents[1]
+EVIDENCE = ROOT / "data" / "sec_eval" / "evidence"
 
 
 def run(ticker: str):
@@ -33,7 +35,11 @@ def run(ticker: str):
     resolver.load_files(ref)
     best = pick_main_document(ref)
     raw = fetcher.get(ref.file_url(best.name)).content.decode("utf-8", errors="replace")
-    result = extract_from_html(raw, filing_id=f"{ticker}-{ref.accession}")
+    # persist a replayable EvidenceRecord JSONL per run through the shared store
+    store = EvidenceStore(EVIDENCE)
+    run_id = f"sec-{ticker}-{ref.accession}"
+    result = extract_from_html(raw, filing_id=f"{ticker}-{ref.accession}",
+                               evidence_store=store, run_id=run_id)
     return ref, best, raw, result
 
 

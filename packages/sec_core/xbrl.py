@@ -97,3 +97,23 @@ def validate_span(span_text: str, key_facts: dict[str, int]) -> XbrlCheck:
         detail = f"only {n_true}/{len(key_facts)} XBRL figures found — partial"
     return XbrlCheck(available=True, facts=key_facts, corroborated=corroborated,
                      verdict=verdict, detail=detail)
+
+
+def certify_item8(result, fetcher, cik: int, accession: str) -> XbrlCheck:
+    """Run the oracle against a live ExtractionResult and WRITE the verdict back
+    onto the Item 8 segment (segment.xbrl_check). If the pipeline marked Item 8
+    `pass` but the oracle contradicts it, flip the segment to needs_review with
+    a warning — so the independent check actually gates the shipped status
+    instead of living only in a CLI print.
+    """
+    facts = key_facts_for_accession(fetch_company_facts(fetcher, cik), accession)
+    seg = next(s for s in result.segments if s.item_code == "8")
+    chk = validate_span(result.text_of("8"), facts)
+    seg.xbrl_check = f"{chk.verdict}: {chk.detail}"
+    if chk.verdict == "contradicted" and seg.status == "pass":
+        seg.needs_review = True
+        seg.warnings.append(
+            "XBRL oracle contradicts this pass: none of the reported revenue/net income/assets "
+            "appear in the extracted Item 8 span — likely a boundary error. Flagged needs_review."
+        )
+    return chk

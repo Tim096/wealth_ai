@@ -1,0 +1,219 @@
+{
+  "filings": 11,
+  "verdicts": {
+    "certified": 8,
+    "contradicted": 3,
+    "inconclusive": 0,
+    "unavailable": 0
+  },
+  "disagreements": [],
+  "records": [
+    {
+      "ticker": "AAPL",
+      "cik": 320193,
+      "accession": "0000320193-25-000079",
+      "item8_status": "pass",
+      "verdict": "certified",
+      "detail": "3/3 XBRL headline figures found in the span",
+      "facts": {
+        "revenue": 416161000000,
+        "net_income": 112010000000,
+        "total_assets": 364980000000
+      },
+      "corroborated": {
+        "revenue": true,
+        "net_income": true,
+        "total_assets": true
+      },
+      "agrees_with_pipeline": true
+    },
+    {
+      "ticker": "MSFT",
+      "cik": 789019,
+      "accession": "0000950170-25-100235",
+      "item8_status": "pass",
+      "verdict": "certified",
+      "detail": "3/3 XBRL headline figures found in the span",
+      "facts": {
+        "revenue": 281724000000,
+        "net_income": 101832000000,
+        "total_assets": 619003000000
+      },
+      "corroborated": {
+        "revenue": true,
+        "net_income": true,
+        "total_assets": true
+      },
+      "agrees_with_pipeline": true
+    },
+    {
+      "ticker": "NVDA",
+      "cik": 1045810,
+      "accession": "0001045810-26-000021",
+      "item8_status": "incorporated_by_reference",
+      "verdict": "contradicted",
+      "detail": "none of the XBRL headline figures appear in the span \u2014 the financial statements are not here (wrapper stub or boundary error)",
+      "facts": {
+        "revenue": 215938000000,
+        "net_income": 120067000000,
+        "total_assets": 206803000000
+      },
+      "corroborated": {
+        "revenue": false,
+        "net_income": false,
+        "total_assets": false
+      },
+      "agrees_with_pipeline": true
+    },
+    {
+      "ticker": "JPM",
+      "cik": 19617,
+      "accession": "0001628280-26-008131",
+      "item8_status": "incorporated_by_reference",
+      "verdict": "contradicted",
+      "detail": "none of the XBRL headline figures appear in the span \u2014 the financial statements are not here (wrapper stub or boundary error)",
+      "facts": {
+        "revenue": 182447000000,
+        "net_income": 58471000000,
+        "total_assets": 4424900000000
+      },
+      "corroborated": {
+        "revenue": false,
+        "net_income": false,
+        "total_assets": false
+      },
+      "agrees_with_pipeline": true
+    },
+    {
+      "ticker": "GS",
+      "cik": 886982,
+      "accession": "0000886982-26-000091",
+      "item8_status": "pass",
+      "verdict": "certified",
+      "detail": "2/2 XBRL headline figures found in the span",
+      "facts": {
+        "net_income": 17176000000,
+        "total_assets": 1809320000000
+      },
+      "corroborated": {
+        "net_income": true,
+        "total_assets": true
+      },
+      "agrees_with_pipeline": true
+    },
+    {
+      "ticker": "WMT",
+      "cik": 104169,
+      "accession": "0000104169-26-000055",
+      "item8_status": "pass",
+      "verdict": "certified",
+      "detail": "3/3 XBRL headline figures found in the span",
+      "facts": {
+        "revenue": 706413000000,
+        "net_income": 21893000000,
+        "total_assets": 284668000000
+      },
+      "corroborated": {
+        "revenue": true,
+        "net_income": true,
+        "total_assets": true
+      },
+      "agrees_with_pipeline": true
+    },
+    {
+      "ticker": "CAT",
+      "cik": 18230,
+      "accession": "0000018230-26-000008",
+      "item8_status": "pass",
+      "verdict": "certified",
+      "detail": "3/3 XBRL headline figures found in the span",
+      "facts": {
+        "revenue": 67589000000,
+        "net_income": 10788000000,
+        "total_assets": 98585000000
+      },
+      "corroborated": {
+        "revenue": true,
+        "net_income": true,
+        "total_assets": true
+      },
+      "agrees_with_pipeline": true
+    },
+    {
+      "ticker": "XOM",
+      "cik": 34088,
+      "accession": "0000034088-26-000045",
+      "item8_status": "incorporated_by_reference",
+      "verdict": "contradicted",
+      "detail": "none of the XBRL headline figures appear in the span \u2014 the financial statements are not here (wrapper stub or boundary error)",
+      "facts": {
+        "revenue": 349585000000,
+        "net_income": 36010000000,
+        "total_assets": 453475000000
+      },
+      "corroborated": {
+        "revenue": false,
+        "net_income": false,
+        "total_assets": false
+      },
+      "agrees_with_pipeline": true
+    },
+    {
+      "ticker": "NEM",
+      "cik": 1164727,
+      "accession": "0001164727-26-000010",
+      "item8_status": "pass",
+      "verdict": "certified",
+      "detail": "3/3 XBRL headline figures found in the span",
+      "facts": {
+        "revenue": 22669000000,
+        "net_income": 7085000000,
+        "total_assets": 57121000000
+      },
+      "corroborated": {
+        "revenue": true,
+        "net_income": true,
+        "total_assets": true
+      },
+      "agrees_with_pipeline": true
+    },
+    {
+      "ticker": "MRNA",
+      "cik": 1682852,
+      "accession": "0001682852-26-000033",
+      "item8_status": "pass",
+      "verdict": "certified",
+      "detail": "3/3 XBRL headline figures found in the span",
+      "facts": {
+        "revenue": 6848000000,
+        "net_income": -4714000000,
+        "total_assets": 14142000000
+      },
+      "corroborated": {
+        "revenue": true,
+        "net_income": true,
+        "total_assets": true
+      },
+      "agrees_with_pipeline": true
+    },
+    {
+      "ticker": "KO",
+      "cik": 21344,
+      "accession": "0001628280-26-010047",
+      "item8_status": "pass",
+      "verdict": "certified",
+      "detail": "3/3 XBRL headline figures found in the span",
+      "facts": {
+        "revenue": 47941000000,
+        "net_income": 13107000000,
+        "total_assets": 104816000000
+      },
+      "corroborated": {
+        "revenue": true,
+        "net_income": true,
+        "total_assets": true
+      },
+      "agrees_with_pipeline": true
+    }
+  ]
+}

@@ -235,6 +235,45 @@ def test_mouse_and_keyboard_drive_the_page(tmp_path):
     assert val == "hello world"
 
 
+def test_gateway_schema_allows_screen_level_actions():
+    # the codex strict output-schema must permit the new primitives or the real
+    # backend literally cannot return them (they'd be silently dropped).
+    import importlib.util
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location("codex_gateway", root / "tools" / "codex_gateway.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    enum = mod.ACTION_SCHEMA["properties"]["action"]["enum"]
+    assert "mouse" in enum and "keyboard" in enum
+    for k in ("x", "y", "keys"):
+        assert k in mod.ACTION_SCHEMA["properties"] and k in mod.ACTION_SCHEMA["required"]
+
+
+@pytest.mark.integration
+def test_set_of_marks_writes_a_numbered_screenshot(tmp_path):
+    # the vision-grounding image must be produced with one mark per stamped
+    # element, so a vision model can pick an element by its number.
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from browser_agent.marks import set_of_marks
+    from browser_agent.observer import PageObserver
+
+    html = "<button>One</button><a href='/x'>Two</a>"
+    with sync_playwright() as p:
+        b = p.chromium.launch(headless=True)
+        page = b.new_page()
+        page.set_content(html)
+        PageObserver(page).observe()          # stamps data-aid on both elements
+        out = tmp_path / "som.png"
+        n = set_of_marks(page, out)
+        b.close()
+    assert n == 2
+    assert out.exists() and out.stat().st_size > 1000
+
+
 def test_build_action_rejects_codey_output():
     obs = Observation(url="u", title="t", visible_text="", candidates=[])
     # no aid + not goto -> unusable, planner should give_up on this

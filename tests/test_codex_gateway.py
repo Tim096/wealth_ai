@@ -47,4 +47,8 @@ def test_extract_json_object_from_chatter():
 
 def test_action_schema_matches_planner_actions():
     assert set(gw.ACTION_SCHEMA["properties"]["action"]["enum"]) == {
-        "fill", "click", "press", "goto", "extract_text", "download", "done", "give_up"}
+        "fill", "click", "press", "goto", "extract_text", "download",
+        "mouse", "keyboard", "done", "give_up"}
+    # the screen-level fields must be declared (and required, for strict output)
+    for k in ("x", "y", "keys"):
+        assert k in gw.ACTION_SCHEMA["properties"] and k in gw.ACTION_SCHEMA["required"]

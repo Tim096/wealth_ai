@@ -43,13 +43,19 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 ACTION_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    # OpenAI strict structured-output requires every property in `required`
-    "required": ["action", "aid", "value", "reason"],
+    # OpenAI strict structured-output requires every property in `required`, so
+    # the screen-level fields (x/y/keys) are nullable and always present.
+    "required": ["action", "aid", "value", "x", "y", "keys", "reason"],
     "properties": {
         "action": {"enum": ["fill", "click", "press", "goto", "extract_text", "download",
-                            "done", "give_up"]},
+                            "mouse", "keyboard", "done", "give_up"]},
         "aid": {"type": ["integer", "null"]},
         "value": {"type": "string"},
+        # mouse: click coordinate (copy from a candidate's at=(x,y)); else null
+        "x": {"type": ["integer", "null"]},
+        "y": {"type": ["integer", "null"]},
+        # keyboard: a key/chord to press instead of typing value; else ""
+        "keys": {"type": "string"},
         "reason": {"type": "string"},
     },
 }

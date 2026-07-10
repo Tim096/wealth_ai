@@ -19,6 +19,7 @@ BLOCK_TAGS = {
 }
 BOLD_TAGS = {"b", "strong"}
 HEADING_TAGS = {"h1", "h2", "h3", "h4", "h5", "h6"}
+CELL_TAGS = {"td", "th"}  # table cells — separate so labels don't glue to values
 SKIP_TAGS = {"script", "style"}
 
 FLAG_BOLD = 1
@@ -158,6 +159,9 @@ class _Normalizer(HTMLParser):
             self._skip_depth = max(0, self._skip_depth - 1)
         elif tag in BLOCK_TAGS:
             self._emit_newline()
+        elif tag in CELL_TAGS:
+            # separate this cell from the next so "Cost of revenue$261" -> "... $261"
+            self._pending_space = True
         if tag in BOLD_TAGS:
             self._bold_depth = max(0, self._bold_depth - 1)
         if tag in HEADING_TAGS:

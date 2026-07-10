@@ -161,8 +161,13 @@ def _confidence(doc: NormalizedDocument, item: ResolvedItem, start: int, end: in
                    if item.rejected_toc else
                    ("no TOC interference" if not c.toc_reasons else "unresolved TOC-like signals"))),
         CC(name="boundary_length_sanity",
-           score=1.0 if 50 <= length <= 3_000_000 else 0.0, max_score=1.0,
-           reason=f"segment length {length} chars"),
+           # a legitimately short answer ("None." / combined / a reference stub)
+           # must not be penalised for being short — only abnormal lengths fail
+           score=1.0 if (content_kind in ("boilerplate_none", "combined", "reference_stub")
+                         or 50 <= length <= 3_000_000) else 0.0,
+           max_score=1.0,
+           reason=f"segment length {length} chars"
+                  + (" (short answer accepted)" if content_kind == "boilerplate_none" else "")),
         CC(name="cross_detector_agreement", score=min(detector_count, 3) / 3.0, max_score=1.0,
            reason=f"{detector_count} independent detectors agree"),
         CC(name="content_substantiveness", score=subst_score, max_score=2.0, reason=subst_reason),
@@ -275,6 +280,7 @@ def resolve_items(doc: NormalizedDocument, candidates: list[HeadingCandidate],
             )
         elif code == "6" and len(text.strip()) < 200 and _RESERVED_RE.search(text):
             status = "reserved"
+            content_kind = "boilerplate_none"  # "[Reserved]" is a complete short answer
         elif r.ambiguous:
             status = "ambiguous"
         elif verdict.status == "fail":

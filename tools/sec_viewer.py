@@ -64,6 +64,12 @@ class SecViewer:
         self.filebtn = tk.Button(top, text="開啟檔案 📁", command=self._open_file, bg="#243040",
                                  fg="#e7ecf2", relief=tk.FLAT, font=("Segoe UI", 10), padx=12)
         self.filebtn.pack(side=tk.LEFT, padx=(8, 0))
+        self.savebtn = tk.Button(top, text="下載原始 10-K 💾", command=self._save_raw, bg="#243040",
+                                 fg="#e7ecf2", relief=tk.FLAT, font=("Segoe UI", 10), padx=12,
+                                 state=tk.DISABLED)
+        self.savebtn.pack(side=tk.LEFT, padx=(8, 0))
+        self._raw_html = None
+        self._raw_name = "filing.htm"
         self.status = tk.Label(top, text="輸入代號(INTC/AAPL/XOM)按 Enter,或「開啟檔案」丟自己的 10-K",
                                bg="#0f141b", fg="#93a0b0")
         self.status.pack(side=tk.LEFT, padx=12)
@@ -110,6 +116,7 @@ class SecViewer:
                     self._populate(payload)
                     self.btn.configure(state=tk.NORMAL, text="抽取 ▶")
                     self.filebtn.configure(state=tk.NORMAL, text="開啟檔案 📁")
+                    self.savebtn.configure(state=(tk.NORMAL if self._raw_html else tk.DISABLED))
                 elif kind == "error":
                     self.status.configure(text="✗ " + payload)
                     self.btn.configure(state=tk.NORMAL, text="抽取 ▶")
@@ -128,6 +135,17 @@ class SecViewer:
         self._set_status(f"抓取 {q} 最新 10-K…")
         threading.Thread(target=self._work, args=(q,), daemon=True).start()
 
+    def _save_raw(self) -> None:
+        if not self._raw_html:
+            return
+        path = filedialog.asksaveasfilename(
+            title="下載原始 10-K 到本地", defaultextension=".htm",
+            initialfile=self._raw_name, filetypes=[("HTML", "*.htm *.html"), ("所有檔案", "*.*")])
+        if not path:
+            return
+        Path(path).write_text(self._raw_html, encoding="utf-8")
+        self._set_status(f"已下載原始 10-K → {path}")
+
     def _open_file(self) -> None:
         path = filedialog.askopenfilename(
             title="選一份 10-K(HTML 或 TXT)",
@@ -142,6 +160,8 @@ class SecViewer:
     def _work_file(self, path: str) -> None:
         try:
             raw = Path(path).read_text(encoding="utf-8", errors="replace")
+            self._raw_html = raw
+            self._raw_name = Path(path).name
             result = extract_from_html(raw, Path(path).stem)
             self.result = result
 
@@ -170,6 +190,8 @@ class SecViewer:
             best = pick_main_document(ref)
             self._set_status(f"抽取 {q} {ref.accession}…")
             raw = fetcher.get(ref.file_url(best.name)).content.decode("utf-8", errors="replace")
+            self._raw_html = raw
+            self._raw_name = f"{q}-10K-{ref.report_date or ref.accession}.htm"
             result = extract_from_html(raw, f"{q}-{ref.accession}")
             xbrl = ""
             item8 = next((s for s in result.segments if s.item_code == "8"), None)
@@ -216,7 +238,8 @@ class SecViewer:
                 f"offset=[{seg.start_offset},{seg.end_offset}]  sha256={seg.text_sha256[:16]}\n"
                 f"xbrl_check: {seg.xbrl_check or '-'}\n"
                 f"topic_check: {seg.topic_check or '-'}\n"
-                + (("warnings: " + " | ".join(seg.warnings)) if seg.warnings else "") + "\n"
+                + (("warnings: " + " | ".join(seg.warnings) + "\n") if seg.warnings else "")
+                + "註:表格數字已保留(cell 以空白分隔);圖片/圖表為影像,純文字抽取不含。\n"
                 + "─" * 60 + "\n")
         self.txt.delete("1.0", tk.END)
         self.txt.insert(tk.END, head + body[:20000])

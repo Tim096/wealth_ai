@@ -100,6 +100,25 @@ def extract_from_html(
                 f"topic-consistency oracle: extracted span has no canonical "
                 f"'{seg.canonical_title}' language — possible mislabel/mis-boundary; needs_review")
 
+    # Discoverability: when Item 8 is only a pointer stub, tell the reader WHERE
+    # the financial statements actually are (often Item 15) instead of leaving
+    # them to hunt — the financials are extracted, just under another item.
+    item8 = next((s for s in segments if s.item_code == "8"), None)
+    if item8 is not None and item8.status == "incorporated_by_reference":
+        fin_markers = ("consolidated balance sheet", "consolidated statements of income",
+                       "consolidated statements of operations", "report of independent registered")
+        best_code, best_len = None, 0
+        for s in segments:
+            if s.item_code == "8" or s.end_offset <= s.start_offset:
+                continue
+            low = doc.slice(s.start_offset, min(s.end_offset, s.start_offset + 20000)).lower()
+            if any(m in low for m in fin_markers) and (s.end_offset - s.start_offset) > best_len:
+                best_code, best_len = s.item_code, s.end_offset - s.start_offset
+        if best_code:
+            item8.warnings.append(
+                f"Item 8 here is a pointer; the actual financial statements are extracted under "
+                f"Item {best_code} of this filing ({best_len:,} chars) — look there for the tables.")
+
     latency_ms = (time.perf_counter() - t0) * 1000
     result = ExtractionResult(
         filing_id=filing_id,

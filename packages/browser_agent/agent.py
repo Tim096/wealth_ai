@@ -265,11 +265,17 @@ class BrowserAgent:
         raise ValueError(f"unknown step kind {step.kind}")
 
     def run_agentic(self, task_id: str, contract: BrowserTaskContract, planner,
-                    max_steps: int = 8) -> TaskRun:
+                    max_steps: int = 8, on_step=None) -> TaskRun:
         """Agent Mode (SPEC 6.2): an LLM planner chooses actions from the
         controlled schema; each is capability-screened and executed; the
         verifier — not the LLM — decides the outcome. Falls back cleanly if the
-        planner has no credentials."""
+        planner has no credentials. `on_step(text)` is called live per step."""
+        def _emit(text):
+            if on_step:
+                try:
+                    on_step(text)
+                except Exception:  # noqa: BLE001 — a UI callback must never break the run
+                    pass
         t0 = time.perf_counter()
         cap = screen_task(contract.natural_language_task)
         if not cap.allowed:
@@ -282,11 +288,13 @@ class BrowserAgent:
         llm_cost = 0.0
         self._dismiss_modal_if_present(trace)
         verdict = VerifierResult(status="unknown", reason="no steps taken")
+        _emit(f"🧠 想任務:{contract.natural_language_task}")
         for _ in range(max_steps):
             obs = self.observer.observe()
             verdict = verify_contract(contract, obs, {})
             if verdict.status == "pass":
                 break
+            _emit("💭 看畫面、決定下一步…")
             decision = planner.next_action(
                 contract.natural_language_task,
                 [f"{c.type}:{c.value}" for c in contract.success_conditions], obs, history)
@@ -296,12 +304,14 @@ class BrowserAgent:
                 history.append(f"{decision.kind}({decision.reason})")
                 trace.append(StepTrace(step="planner", action=decision.kind, ok=decision.kind == "done",
                                        mode="agent", detail=decision.reason))
+                _emit(f"✅ {decision.kind}:{decision.reason}")
                 break
             action = decision.action
             ascreen = screen_action(action)
             if not ascreen.allowed:
                 trace.append(StepTrace(step="planner", action=action.type, ok=False, mode="agent",
                                        diagnosis="capability_refused", detail=ascreen.reason))
+                _emit(f"🛑 拒絕(責任邊界):{ascreen.reason}")
                 break
             out = self.executor.execute(action)
             history.append(f"{action.type}:{'ok' if out.ok else 'fail'}")
@@ -310,6 +320,7 @@ class BrowserAgent:
                                        getattr(action, "target", None), "selector", ""),
                                    latency_ms=out.latency_ms,
                                    screenshot=self._screenshot(f"agent-{len(trace)}")))
+            _emit(f"{'👉' if out.ok else '⚠️'} {action.type}:{decision.reason}")
             self.page.wait_for_timeout(300)
         obs = self.observer.observe()
         verdict = verify_contract(contract, obs, {})

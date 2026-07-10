@@ -60,6 +60,12 @@ def screen_action(action) -> CapabilityDecision:
     if at in ("fill", "press") and _FORBIDDEN_VALUE.search(value):
         return CapabilityDecision(False, "sensitive_input",
                                   f"action would enter sensitive/credential data ('{value[:20]}...') — refused")
+    # the raw keyboard channel must not become a hole in the credential boundary
+    if at == "keyboard":
+        typed = f"{getattr(action, 'text', '') or ''} {getattr(action, 'keys', '') or ''}"
+        if _FORBIDDEN_VALUE.search(typed):
+            return CapabilityDecision(False, "sensitive_input",
+                                      f"keyboard would enter sensitive/credential data ('{typed.strip()[:20]}...') — refused")
     if at in ("click", "download") and _FORBIDDEN_TARGET_WORDS.search(target_blob):
         return CapabilityDecision(False, "irreversible_action",
                                   f"action targets an irreversible control ('{target_blob.strip()[:40]}') — refused")

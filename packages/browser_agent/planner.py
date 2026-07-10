@@ -17,7 +17,8 @@ from typing import Protocol
 
 from browser_core import ElementTarget
 from browser_core.actions import (
-    ClickAction, DownloadAction, ExtractTextAction, FillAction, GotoAction, PressAction,
+    ClickAction, DownloadAction, ExtractTextAction, FillAction, GotoAction,
+    KeyboardAction, MouseAction, PressAction,
 )
 from browser_agent.observer import Observation
 from llm_core.openai_client import LLMConfigError, LLMResponse, OpenAIClient
@@ -25,9 +26,11 @@ from llm_core.openai_client import LLMConfigError, LLMResponse, OpenAIClient
 _SYSTEM = """You are the planner of a verified browser agent. Each turn you see the current page state (URL, title, visible text excerpt, candidate elements) and must return EXACTLY ONE JSON object choosing the next action. You never write code and never invent CSS selectors — you target an element ONLY by its numeric "aid" from the candidate list. An external verifier — not you — decides task success, so be truthful.
 
 OUTPUT (one JSON object, nothing else):
-  "action": "fill" | "click" | "press" | "goto" | "extract_text" | "download" | "done" | "give_up"
-  "aid":    integer aid from the candidate list, or null (goto/done/give_up, and download, may omit it)
-  "value":  fill text / key like "Enter" / goto URL / a URL to download; else ""
+  "action": "fill" | "click" | "press" | "goto" | "extract_text" | "download" | "mouse" | "keyboard" | "done" | "give_up"
+  "aid":    integer aid from the candidate list, or null (goto/done/give_up/mouse/keyboard, and download, may omit it)
+  "value":  fill text / key like "Enter" / goto URL / a URL to download / text to type for keyboard; else ""
+  "x","y":  integers — required ONLY for "mouse" (the click coordinate, taken from a candidate's at=(x,y))
+  "keys":   for "keyboard" only — a key/chord to press ("Enter","Tab","Escape","Control+A") instead of typing value
   "reason": one short sentence in the task's language
 
 CHOOSING ELEMENTS
@@ -47,6 +50,7 @@ PLAYBOOK
 - Navigation: "goto" with a URL you can see on the page, one given in the task, or an obvious well-known domain for a named site. Never invent a deep/guessed path — go to the site root and navigate from there.
 - USE LINK HREFS: on a list/results/index page, candidates that are links show their href=. To reach a specific row (a filing, a document, an article), "goto" that row's href directly, or "click" that exact aid — do NOT go back to a search box. On EDGAR you land on the company's filing list: goto the newest 10-K's ...-index.htm href, then on that index page goto/click the primary document (the .htm), then "download" it.
 - Reading: "extract_text" on the element that holds the answer when the task asks for information.
+- SCREEN-LEVEL FALLBACK (mouse / keyboard): prefer aid-based click/fill/press — they are precise and verifiable. Use "mouse" (with x,y copied from a candidate's at=(x,y)) ONLY when no aid can address the thing you must click: a custom widget, a canvas/image hit-area, an option the DOM doesn't expose as its own element. Use "keyboard" to type at the current focus (value) or press a key/chord (keys: "Enter"/"Tab"/"Escape") when a widget took focus from a click but offers no fillable target — e.g. Tab between fields, Enter to confirm. Do NOT invent coordinates; only use an at=(x,y) shown in the candidate list.
 
 WHEN BLOCKED
 - If a CAPTCHA / "unusual traffic" / "are you a robot" page appears, do NOT try to solve it. Prefer "goto" to reach the target site by URL directly, bypassing the search engine. Only if there is genuinely no way forward, "give_up" with the reason — this is honest and correct, not a failure of effort.
@@ -91,6 +95,11 @@ def _candidate_lines(obs: Observation) -> str:
         # ALREADY chosen so it won't click it again and toggle it back off.
         if c.checked in ("true", "false", "mixed"):
             line += f' checked={c.checked}'
+        # the element's on-screen centre: a REAL observed coordinate the planner
+        # can hand to a "mouse" action to click a widget the aid path can't drive
+        # (no hallucinated pixels — these come from the live layout).
+        if c.visible:
+            line += f' at=({c.x + 4},{c.y + 4})'
         # a link's href is the target: showing it lets the planner navigate a
         # list/results page deterministically (goto the exact filing/document)
         # instead of clicking blindly — crucial on link-dense pages like EDGAR.
@@ -124,6 +133,16 @@ def _build_action(decision: dict, obs: Observation):
         return DownloadAction(target=target, url=url)
     if action == "goto" and value:
         return GotoAction(url=value)
+    if action == "mouse":
+        x, y = decision.get("x"), decision.get("y")
+        if isinstance(x, (int, float)) and isinstance(y, (int, float)):
+            clicks = decision.get("clicks") or 1
+            button = decision.get("button") if decision.get("button") in ("left", "right") else "left"
+            return MouseAction(x=int(x), y=int(y), button=button, clicks=int(clicks))
+        return None
+    if action == "keyboard":
+        keys = str(decision.get("keys", "") or "")
+        return KeyboardAction(text="" if keys else value, keys=keys)
     return None
 
 

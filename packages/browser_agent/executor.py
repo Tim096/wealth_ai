@@ -267,6 +267,25 @@ class ActionExecutor:
                 return ActionOutcome(ok=False, action_type=at, error=f"timeout: {c.kind}:{c.value}",
                                      url_before=url_before, url_after=self.page.url)
 
+        if at == "mouse":
+            # screen-level click at a viewport coordinate — no selector needed
+            self.page.mouse.click(action.x, action.y, button=action.button,
+                                  click_count=action.clicks)
+            return ActionOutcome(ok=True, action_type=at, url_before=url_before,
+                                 url_after=self.page.url,
+                                 detail=f"mouse {action.button} x{action.clicks} @({action.x},{action.y})")
+
+        if at == "keyboard":
+            # type at the current focus, or press a key/chord — element-agnostic
+            if action.keys:
+                self.page.keyboard.press(action.keys)
+                detail = f"press {action.keys}"
+            else:
+                self.page.keyboard.type(action.text)
+                detail = f"type {len(action.text)} chars"
+            return ActionOutcome(ok=True, action_type=at, url_before=url_before,
+                                 url_after=self.page.url, detail=detail)
+
         if at == "scroll":
             self.page.mouse.wheel(0, action.amount if action.direction == "down" else -action.amount)
             return ActionOutcome(ok=True, action_type=at, url_before=url_before, url_after=self.page.url)

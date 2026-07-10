@@ -80,6 +80,32 @@ def test_build_action_supports_download():
     assert act.type == "download" and act.target.selector == '[data-aid="5"]'
 
 
+def test_build_action_mouse_and_keyboard():
+    obs = Observation(url="u", title="t", visible_text="", candidates=[])
+    m = _build_action({"action": "mouse", "x": 120, "y": 44, "clicks": 2}, obs)
+    assert m.type == "mouse" and (m.x, m.y, m.clicks) == (120, 44, 2)
+    # mouse without coordinates is unusable -> None (planner re-plans, no crash)
+    assert _build_action({"action": "mouse", "x": None, "y": None}, obs) is None
+    k1 = _build_action({"action": "keyboard", "value": "hello"}, obs)
+    assert k1.type == "keyboard" and k1.text == "hello" and k1.keys == ""
+    k2 = _build_action({"action": "keyboard", "keys": "Enter", "value": "ignored"}, obs)
+    assert k2.type == "keyboard" and k2.keys == "Enter" and k2.text == ""
+
+
+def test_candidate_line_shows_coordinate():
+    from browser_agent.planner import _candidate_lines
+    obs = Observation(url="u", title="t", visible_text="",
+                      candidates=[cand(index=1, tag="canvas", x=100, y=200)])
+    assert "at=(104,204)" in _candidate_lines(obs)
+
+
+def test_keyboard_cannot_bypass_credential_boundary():
+    from browser_agent.capability import screen_action
+    from browser_core.actions import KeyboardAction
+    d = screen_action(KeyboardAction(text="my password is hunter2"))
+    assert not d.allowed and d.category == "sensitive_input"
+
+
 def test_build_action_download_current_page_and_url():
     obs = Observation(url="u", title="t", visible_text="", candidates=[])
     # aid=null, no value -> download the CURRENT page (no dead-end on inline docs)
@@ -176,6 +202,37 @@ def test_download_falls_back_to_saving_inline_document(tmp_path):
     assert out.ok
     assert ex.last_download_path and Path(ex.last_download_path).exists()
     assert "Risk Factors" in Path(ex.last_download_path).read_text(encoding="utf-8", errors="replace")
+
+
+@pytest.mark.integration
+def test_mouse_and_keyboard_drive_the_page(tmp_path):
+    # the screen-level hands must work with NO selector: click by coordinate and
+    # type at the current focus — the generality escape hatch.
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from browser_agent.executor import ActionExecutor
+    from browser_core.actions import KeyboardAction, MouseAction
+
+    html = (
+        "<input id='box' style='position:absolute;left:0;top:0;width:300px;height:40px'>"
+        "<div id='hit' style='position:absolute;left:0;top:60px;width:200px;height:40px'"
+        " onclick=\"document.title='HIT'\">click me</div>"
+    )
+    with sync_playwright() as p:
+        b = p.chromium.launch(headless=True)
+        page = b.new_page()
+        page.set_content(html)
+        ex = ActionExecutor(page)
+        # click the div purely by coordinate (its centre ~ 100,80)
+        assert ex.execute(MouseAction(x=100, y=80)).ok
+        assert page.title() == "HIT"
+        # focus the input by coordinate, then type + press with the keyboard
+        ex.execute(MouseAction(x=150, y=20))
+        ex.execute(KeyboardAction(text="hello world"))
+        val = page.eval_on_selector("#box", "el => el.value")
+        b.close()
+    assert val == "hello world"
 
 
 def test_build_action_rejects_codey_output():

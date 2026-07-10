@@ -80,6 +80,29 @@ class DownloadAction(BaseModel):
     url: str = ""
 
 
+class MouseAction(BaseModel):
+    """Screen-level click by viewport coordinate — no selector. The hybrid
+    fallback for anything the DOM enumeration can't address (a canvas hit-area,
+    an image-map, a custom widget, an option only known by its pixel box). The
+    verifier still judges the outcome, so a mis-aimed click cannot fake success."""
+
+    type: Literal["mouse"] = "mouse"
+    x: int
+    y: int
+    button: Literal["left", "right"] = "left"
+    clicks: int = 1  # 2 => double-click
+
+
+class KeyboardAction(BaseModel):
+    """Screen-level keyboard, not scoped to an element: type text at the current
+    focus, or press a key/chord ("Enter", "Tab", "Escape", "Control+A"). Lets the
+    agent drive a widget that took focus by click but exposes no fillable target."""
+
+    type: Literal["keyboard"] = "keyboard"
+    text: str = ""  # literal text to type at the current focus
+    keys: str = ""  # a key or chord to press instead, e.g. "Enter" / "Control+A"
+
+
 class SnapshotAction(BaseModel):
     type: Literal["snapshot"] = "snapshot"
 
@@ -99,6 +122,8 @@ BrowserAction = Annotated[
         WaitForAction,
         ExtractTextAction,
         DownloadAction,
+        MouseAction,
+        KeyboardAction,
         SnapshotAction,
         BackAction,
     ],

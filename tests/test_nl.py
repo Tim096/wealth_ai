@@ -26,3 +26,17 @@ def test_unsegmented_chinese_prose_returns_nothing():
     # no boundaries, no confident phrase -> [] (the caller runs anyway and the
     # verifier reports unknown; we never invent a garbage condition)
     assert derive_success("幫我找最熱門的財經節目") == []
+
+
+def test_google_form_submit_uses_response_landing_not_url_token():
+    # the reported false FAIL: the form id from the URL was mined as a
+    # text_visible needle. A form submit must verify the POST-SUBMIT landing.
+    task = ("https://docs.google.com/forms/d/e/1FAIpQLSePoJMCt8LpgVpS-3NKotq2Eh"
+            "zXWKPhiWokpcI5NUx-wwfXdQ/viewform?usp=dialog 去填寫")
+    assert derive_success(task) == ["url_contains:formResponse"]
+
+
+def test_url_token_is_never_a_text_visible_needle():
+    # a token inside a URL must not become the success phrase
+    got = derive_success("開 https://example.com/FAIpQLSePoJMCt8Long 這個連結")
+    assert got == [] or all("FAIpQLSe" not in c for c in got)

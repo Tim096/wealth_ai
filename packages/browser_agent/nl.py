@@ -38,13 +38,24 @@ def derive_success(task: str) -> list[str]:
     sentence regex-matches as one 'word' — so rather than produce a garbage
     condition (e.g. text_visible:<half the task sentence>), return [] and let
     the caller ask the operator for an explicit condition. Honest > guessy."""
-    phrase = _target_phrase(task)
+    # A token INSIDE a URL (e.g. a Google-Form id FAIpQLSe…) is never page-visible
+    # text — mining it as a text_visible needle guarantees a false FAIL even when
+    # the task succeeded. Strip URLs before picking a phrase.
+    clean = re.sub(r"https?://\S+", " ", task)
+    phrase = _target_phrase(clean)
     if re.search(r"download|下載|下载|存檔|save file", task, re.I):
         # A download task that also names a section ("…and find Risk Factors")
         # must VERIFY the saved file contains it — a bare download_exists would
         # rubber-stamp any file, which is exactly the false pass we were told
         # about. Carry the phrase so the verifier reads the bytes.
         return [f"download_exists:{phrase}"] if phrase else ["download_exists:"]
+    # Form fill/submit: completion is the POST-SUBMIT landing page, not a phrase
+    # from the prompt. Google Forms navigates to …/formResponse on submit, which
+    # is true only when actually done — the correct, non-garbage condition.
+    if re.search(r"填寫|填答|填表|送出|提交|submit|fill (in|out)|complete the form", task, re.I):
+        if re.search(r"docs\.google\.com/forms|/forms/", task):
+            return ["url_contains:formResponse"]
+        return [f"text_visible:{phrase}"] if phrase else []
     if phrase:
         return [f"text_visible:{phrase}"]
     return []

@@ -28,6 +28,82 @@ from browser_agent.verifier import verify_contract
 from observability_core import EvidenceRecord, EvidenceStore, VerifierResult, sha256_text
 
 
+# Popups appear on ANY site with ANY class name, so we detect a blocking
+# overlay by GEOMETRY/BEHAVIOUR, not a class allow-list: a positioned, visible
+# layer with a high stacking order that covers the viewport centre. The same
+# pass stamps a close control (by label OR by top-right position) so we can
+# click it; if it survives, a second routine neutralises it outright.
+_OVERLAY_DETECT_JS = r"""
+() => {
+  const vw = innerWidth, vh = innerHeight, area = vw * vh || 1;
+  const cands = [];
+  for (const el of document.querySelectorAll('body *')) {
+    const cs = getComputedStyle(el);
+    if (!['fixed','absolute','sticky'].includes(cs.position)) continue;
+    if (cs.visibility === 'hidden' || cs.display === 'none' || parseFloat(cs.opacity || '1') < 0.1) continue;
+    if (cs.pointerEvents === 'none') continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 40 || r.height < 40) continue;
+    const z = parseInt(cs.zIndex) || 0;
+    const coversCentre = r.left <= vw/2 && r.right >= vw/2 && r.top <= vh/2 && r.bottom >= vh/2;
+    const frac = (r.width * r.height) / area;
+    // a translucent full-viewport dim layer is the tell-tale of a modal backdrop
+    // and is independent of z-index (real modals use z as low as 10)
+    const mm = (cs.backgroundColor || '').match(/rgba?\(([^)]+)\)/);
+    const alpha = mm ? (mm[1].split(',').map(parseFloat)[3] ?? 1) : 1;
+    const backdrop = mm && alpha > 0.05 && alpha < 0.98 && frac > 0.6;
+    if (!coversCentre || frac <= 0.12) continue;
+    // modal if it has real stacking OR looks like a dim backdrop
+    if (z >= 50 || backdrop) cands.push({el, z, frac, backdrop});
+  }
+  if (!cands.length) return {present:false};
+  cands.sort((a,b) => (b.backdrop - a.backdrop) || b.z - a.z || b.frac - a.frac);
+  const top = cands[0].el;
+  top.setAttribute('data-ovl','1');
+  const closeRe = /\b(close|dismiss|no thanks|not now|skip|cancel|accept|agree|got it|ok|allow)\b|[×✕✖✗╳]/i;
+  let close = null;
+  for (const c of top.querySelectorAll('button,a,[role=button],[aria-label],[title]')) {
+    const lbl = ((c.getAttribute('aria-label')||'') + ' ' + (c.getAttribute('title')||'') + ' ' + (c.textContent||'')).trim();
+    if (lbl.length <= 30 && closeRe.test(lbl)) { close = c; break; }
+  }
+  if (!close) {                       // common case: an unlabeled × at the top-right corner
+    const r = top.getBoundingClientRect(); let best = null, bestD = 1e9;
+    for (const c of top.querySelectorAll('button,a,[role=button],svg,span,i')) {
+      const cr = c.getBoundingClientRect();
+      if (cr.width > 0 && cr.width < 64 && cr.height < 64) {
+        const d = Math.hypot(cr.right - r.right, cr.top - r.top);
+        if (d < bestD && d < 90) { bestD = d; best = c; }
+      }
+    }
+    close = best;
+  }
+  let closeSel = '';
+  if (close) { close.setAttribute('data-ovl-close','1'); closeSel = '[data-ovl-close]'; }
+  return {present:true, closeSel, z:cands[0].z, frac:Math.round(cands[0].frac*100)/100};
+}
+"""
+
+_OVERLAY_HIDE_JS = r"""
+() => {
+  let n = 0;
+  const vw = innerWidth, vh = innerHeight;
+  for (const el of document.querySelectorAll('[data-ovl]')) {
+    el.style.setProperty('display','none','important'); n++;
+  }
+  for (const el of document.querySelectorAll('body *')) {   // also kill full-screen backdrops
+    const cs = getComputedStyle(el);
+    if (cs.position !== 'fixed') continue;
+    const r = el.getBoundingClientRect();
+    if (r.width >= vw*0.9 && r.height >= vh*0.9 && (parseInt(cs.zIndex)||0) >= 50) {
+      el.style.setProperty('display','none','important'); n++;
+    }
+  }
+  document.documentElement.style.overflow = ''; document.body.style.overflow = '';   // restore scroll
+  return n;
+}
+"""
+
+
 @dataclass
 class Step:
     purpose: str          # search_box / submit_button / ...
@@ -145,6 +221,44 @@ class BrowserAgent:
             return str(p)
         except Exception:
             return ""
+
+    def _dismiss_overlay(self, trace: list[StepTrace]) -> bool:
+        """General, class-agnostic popup handling: detect a blocking overlay by
+        geometry, click its close control, else press Escape, else neutralise
+        it in the DOM. Works on any site because it never depends on a known
+        popup class. Returns True if it acted."""
+        try:
+            info = self.page.evaluate(_OVERLAY_DETECT_JS)
+        except Exception:  # noqa: BLE001
+            return False
+        if not info or not info.get("present"):
+            return False
+        acted = False
+        if info.get("closeSel"):
+            try:
+                self.page.locator(info["closeSel"]).first.click(timeout=1500)
+                acted = True
+            except Exception:  # noqa: BLE001
+                pass
+        if not acted:
+            try:
+                self.page.keyboard.press("Escape")
+            except Exception:  # noqa: BLE001
+                pass
+        # if the overlay is still blocking, remove it outright so the task can proceed
+        hidden = 0
+        try:
+            still = self.page.evaluate(_OVERLAY_DETECT_JS)
+            if still and still.get("present"):
+                hidden = self.page.evaluate(_OVERLAY_HIDE_JS)
+        except Exception:  # noqa: BLE001
+            pass
+        trace.append(StepTrace(
+            step="dismiss_overlay", action="click" if acted else ("hide" if hidden else "escape"),
+            ok=True, mode="repair", diagnosis="modal_blocking",
+            detail=f"cleared blocking overlay (z={info.get('z')}, frac={info.get('frac')}, hidden={hidden})",
+            screenshot=self._screenshot("overlay-cleared")))
+        return True
 
     def _dismiss_modal_if_present(self, trace: list[StepTrace]) -> None:
         obs = self.observer.observe()
@@ -299,19 +413,18 @@ class BrowserAgent:
         trace: list[StepTrace] = []
         history: list[str] = []
         llm_cost = 0.0
-        self._dismiss_modal_if_present(trace)
+        self._dismiss_overlay(trace)
         verdict = VerifierResult(status="unknown", reason="no steps taken")
         _emit(f"🧠 想任務:{contract.natural_language_task}")
         for _ in range(max_steps):
+            # A popup/interstitial can appear AFTER any navigation on ANY site
+            # (this is the "跳出一個頁面 agent 點不掉" failure). Detect it by
+            # geometry — not a class allow-list — and clear it every step, so the
+            # next action is never eaten by an overlay the planner can't see.
+            if self._dismiss_overlay(trace):
+                _emit("🧹 偵測到彈出視窗,已清除")
+                self.page.wait_for_timeout(200)
             obs = self.observer.observe()
-            # A popup/interstitial can appear AFTER any navigation (this is the
-            # "跳出一個頁面 agent 點不掉" failure): auto-dismiss it every step,
-            # not just once at the start, so the following action isn't eaten
-            # by an overlay the planner can't see well.
-            if obs.modal_present:
-                _emit("🧹 偵測到彈出視窗,先關掉…")
-                self._dismiss_modal_if_present(trace)
-                obs = self.observer.observe()
             verdict = verify_contract(contract, obs, {})
             if verdict.status == "pass":
                 break

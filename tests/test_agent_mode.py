@@ -30,6 +30,43 @@ def test_build_action_supports_download():
 
 
 @pytest.mark.integration
+@pytest.mark.parametrize("with_close_button", [False, True])
+def test_dismiss_overlay_clears_classless_popup(tmp_path, with_close_button):
+    # A real-world popup can appear on ANY site with ANY (or no) class name.
+    # This overlay has NO telltale class/id/role — a class allow-list would
+    # miss it — so it proves the geometry-based detector + neutraliser.
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from browser_agent.agent import BrowserAgent, _OVERLAY_DETECT_JS
+    from browser_agent.memory_store import MemoryStore
+
+    close_btn = ('<button aria-label="Close" onclick="this.closest(\'div\').remove()" '
+                 'style="position:absolute;top:0;right:0">x</button>') if with_close_button else ""
+    html = (
+        "<p>main page content</p>"
+        "<div style='position:fixed;top:0;left:0;width:100%;height:100%;"
+        "background:rgba(0,0,0,.6);z-index:9999'>"
+        f"<div style='position:absolute;top:25%;left:25%;width:50%;height:50%;background:#fff'>"
+        f"Subscribe to our newsletter!{close_btn}</div></div>"
+    )
+    with sync_playwright() as p:
+        b = p.chromium.launch(headless=True)
+        ctx = b.new_context(viewport={"width": 1200, "height": 800})
+        page = ctx.new_page()
+        page.set_content(html)
+        agent = BrowserAgent(page, MemoryStore(tmp_path / "m.json"), "web", "agentic")
+        before = bool(page.evaluate(_OVERLAY_DETECT_JS).get("present"))
+        trace = []
+        acted = agent._dismiss_overlay(trace)
+        after = bool(page.evaluate(_OVERLAY_DETECT_JS).get("present"))
+        b.close()
+    assert before is True          # the overlay was blocking
+    assert acted is True           # we detected and acted on it
+    assert after is False          # ...and it is no longer blocking the centre
+
+
+@pytest.mark.integration
 def test_agent_downloads_a_real_file(tmp_path):
     pytest.importorskip("playwright.sync_api")
     from playwright.sync_api import sync_playwright

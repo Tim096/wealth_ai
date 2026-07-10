@@ -12,3 +12,8 @@ coverage/
 data/raw_filings/
 data/artifacts/
 runs/
+
+# session/tool junk that must never enter the repo
+.claude/
+AppData/
+CLAUDE.md

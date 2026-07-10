@@ -121,9 +121,12 @@ def _build_action(decision: dict, obs: Observation):
     return None
 
 
-_PREFLIGHT_SYSTEM = """You plan the opening of a verified browser task. Given ONE natural-language task (any language), decide the best page to start on and the conditions that will prove success — BEFORE any browsing. An external verifier checks these conditions literally, so make them observable and true only when the task is actually done.
+_PREFLIGHT_SYSTEM = """You plan the opening of a verified browser task. Given ONE natural-language task (any language), FIRST think it through like a dynamic workflow — what is the real goal, what obstacles are likely, what is the step-by-step route — THEN decide the best page to start on and the conditions that will prove success. All BEFORE any browsing. An external verifier checks the conditions literally, so make them observable and true only when the task is actually done.
 
 Return EXACTLY ONE JSON object, nothing else:
+  "analysis": one short sentence naming the concrete goal (what the user actually wants to reach/obtain), in the task's language.
+  "obstacles": 1-3 short strings of anticipated difficulties for THIS task (e.g. "搜尋引擎可能出現 CAPTCHA","SEC 對自動化會回 403 封鎖頁,需用宣告 UA 下載","目標文件是 inline 開啟、沒有下載鈕"). Be specific to the task, not generic.
+  "steps": 2-5 short imperative strings — the planned route from the start page to done (e.g. "goto EDGAR 依 ticker 列出 10-K","開最新一份的 index 再開主文件","download 目前頁面","確認含 Risk Factors"). These guide the agent; it still re-plans per live page.
   "start_url": a full https:// URL to open first. Go STRAIGHT to the target and land as DEEP as a URL you can construct reliably lets you, so the agent has the fewest hops left:
      - A US company's SEC filing: use the plain-HTML EDGAR browse endpoint keyed by the ticker, which lists that one company's filings of a type directly — https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=<TICKER>&type=10-K&dateb=&owner=include&count=10 (e.g. CIK=INTC&type=10-K). Do NOT use the efts.sec.gov full-text search SPA — it renders results via JavaScript and is unreliable to drive.
      - A named site/brand: its real domain (finlab -> https://finlab.tw, Wikipedia article -> https://en.wikipedia.org/wiki/<Topic>).
@@ -148,13 +151,16 @@ class LLMPlanner:
     def available(self) -> bool:
         return self.client.available()
 
-    def plan_preflight(self, task: str) -> tuple[str, list[str]]:
-        """Ask the model, once, for a start URL and verifiable success
-        conditions derived from the task. Returns (start_url, ["type:value"…]).
-        Raises LLMConfigError if the model is unavailable so the caller can
-        fall back to heuristics. The values are validated, never trusted blindly:
-        a non-http start_url or an empty/oversized condition is dropped."""
-        user = (f"TASK: {task}\nPlan the start_url and success_conditions as JSON.")
+    def plan_preflight(self, task: str) -> tuple[str, list[str], dict]:
+        """Ask the model, once, to think the task through (goal / obstacles /
+        steps — a dynamic workflow) and pick a start URL plus verifiable success
+        conditions. Returns (start_url, ["type:value"…], plan) where plan =
+        {analysis, obstacles:[…], steps:[…]}. Raises LLMConfigError if the model
+        is unavailable so the caller can fall back to heuristics. Every value is
+        validated, never trusted blindly: a non-http start_url or an
+        empty/oversized condition is dropped, plan strings are bounded."""
+        user = (f"TASK: {task}\nThink it through, then return the JSON "
+                "(analysis, obstacles, steps, start_url, success_conditions).")
         decision, _ = self.client.complete_json(_PREFLIGHT_SYSTEM, user)
         start = str(decision.get("start_url", "") or "").strip()
         if not start.lower().startswith(("http://", "https://")):
@@ -170,7 +176,20 @@ class LLMPlanner:
             if t != "download_exists" and not (0 < len(v) <= 120):
                 continue
             conds.append(f"{t}:{v}")
-        return start, conds[:3]
+
+        def _clean_list(key: str, cap: int) -> list[str]:
+            out = []
+            for s in decision.get(key, []) or []:
+                s = str(s).strip()
+                if s:
+                    out.append(s[:160])
+                if len(out) >= cap:
+                    break
+            return out
+        plan = {"analysis": str(decision.get("analysis", "") or "").strip()[:200],
+                "obstacles": _clean_list("obstacles", 3),
+                "steps": _clean_list("steps", 5)}
+        return start, conds[:3], plan
 
     def next_action(self, task: str, success_conditions: list[str],
                     obs: Observation, history: list[str]) -> PlannerDecision:

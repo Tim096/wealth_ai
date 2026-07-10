@@ -146,6 +146,9 @@ class _FakeClient:
 
 def test_preflight_parses_and_validates():
     p = LLMPlanner(_FakeClient({
+        "analysis": "看 finlab 的訂閱價格頁",
+        "obstacles": ["可能要捲動到方案區", "", "x" * 500],
+        "steps": ["goto finlab.tw", "找定價連結"],
         "start_url": "https://finlab.tw",
         "success_conditions": [
             {"type": "text_visible", "value": "訂閱方案"},
@@ -154,16 +157,20 @@ def test_preflight_parses_and_validates():
             {"type": "text_visible", "value": ""},      # dropped: empty value
         ],
     }))
-    url, conds = p.plan_preflight("看 finlab 訂閱價格")
+    url, conds, plan = p.plan_preflight("看 finlab 訂閱價格")
     assert url == "https://finlab.tw"
     assert conds == ["text_visible:訂閱方案", "url_contains:/pricing"]
+    assert plan["analysis"] == "看 finlab 的訂閱價格頁"
+    assert plan["obstacles"] == ["可能要捲動到方案區", "x" * 160]   # empty dropped, long clipped
+    assert plan["steps"] == ["goto finlab.tw", "找定價連結"]
 
 
 def test_preflight_drops_non_http_start_url():
     p = LLMPlanner(_FakeClient({"start_url": "javascript:alert(1)",
                                 "success_conditions": [{"type": "download_exists", "value": ""}]}))
-    url, conds = p.plan_preflight("下載檔案")
+    url, conds, plan = p.plan_preflight("下載檔案")
     assert url == "" and conds == ["download_exists:"]
+    assert plan == {"analysis": "", "obstacles": [], "steps": []}
 
 
 def test_mock_planner_fills_then_clicks_then_done():

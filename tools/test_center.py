@@ -110,7 +110,10 @@ def _items_payload(result, meta: dict, exhibits: list[dict] | None = None) -> di
         where = (f"Item {g.after_code} → {g.before_code}" if g.after_code and g.before_code
                  else (f"Item {g.after_code} 之後" if g.after_code else f"Item {g.before_code} 之前"))
         gaps.append({"code": f"gap:{g.start}-{g.end}", "title": f"未分類內容 ({where})",
-                     "chars": g.chars, "preview": g.preview})
+                     "chars": g.chars, "preview": g.preview,
+                     # document position, so the UI can slot this row BETWEEN the
+                     # items it falls between (Item 2→3) instead of at the bottom
+                     "after": g.after_code, "before": g.before_code, "start": g.start})
     exs = [{"code": e["code"], "title": e["title"], "file": e["file"], "chars": len(e["text"])}
            for e in (exhibits or [])]
     meta = {**meta, "coverage": round(coverage_ratio(result.doc.text, result.segments), 4)}
@@ -428,11 +431,21 @@ def _agent_worker() -> None:
                 # any browsing. Heuristics (DuckDuckGo start, word-split
                 # derive_success) are only the offline fallback.
                 if not url or conds is None:
-                    p_url, p_conds = "", []
+                    p_url, p_conds, p_plan = "", [], {}
                     try:
-                        p_url, p_conds = planner.plan_preflight(task)
+                        p_url, p_conds, p_plan = planner.plan_preflight(task)
                     except Exception:  # noqa: BLE001 — model unavailable → fall back
                         pass
+                    # Dynamic-workflow preamble: show the model's goal analysis,
+                    # anticipated obstacles and planned steps BEFORE browsing, so
+                    # the run opens with a thought-through route, not a blind hop.
+                    if p_plan.get("analysis"):
+                        rec["steps"].append(f"🎯 目標分析:{p_plan['analysis']}")
+                    if p_plan.get("obstacles"):
+                        rec["steps"].append("⚠ 預判困難:" + " · ".join(p_plan["obstacles"]))
+                    if p_plan.get("steps"):
+                        rec["steps"].append("📋 規畫步驟:" + " → ".join(
+                            f"{i+1}) {s}" for i, s in enumerate(p_plan["steps"])))
                     if not url:
                         # a deterministic EDGAR deep-link (when the task clearly
                         # names a ticker + SEC filing) beats the LLM's guess

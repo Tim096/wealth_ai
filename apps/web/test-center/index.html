@@ -231,7 +231,7 @@ function renderSec(d){
     ${cov}
     <span>parse <b>${m.latency_ms} ms</b></span>`;
   const tb=$('#sTable tbody');tb.innerHTML='';
-  d.items.forEach(it=>{
+  const itemRow=(it)=>{
     const tr=document.createElement('tr');
     tr.dataset.code=it.code;
     tr.innerHTML=`<td class="mono">Item ${it.code}${it.needs_review?' ⚠':''}</td>
@@ -241,9 +241,8 @@ function renderSec(d){
       <td class="mono">${it.chars.toLocaleString()}</td>`;
     tr.onclick=()=>{selectRow(it.code);showItem(it.code);};
     tb.appendChild(tr);
-  });
-  // completeness rows: uncovered gaps, so nothing in the filing is unreachable
-  (d.gaps||[]).forEach(g=>{
+  };
+  const gapRow=(g)=>{
     const tr=document.createElement('tr');
     tr.dataset.code=g.code;
     tr.innerHTML=`<td class="mono" style="color:var(--muted)">未分類</td>
@@ -253,9 +252,18 @@ function renderSec(d){
       <td class="mono">${g.chars.toLocaleString()}</td>`;
     tr.onclick=()=>{selectRow(g.code);showItem(g.code);};
     tb.appendChild(tr);
-  });
+  };
+  // Completeness rows are slotted at their DOCUMENT POSITION: a gap between two
+  // items renders right after the item it follows (Item 2→3 gap sits under
+  // Item 2), not dumped at the bottom. Head gaps (after="") come first.
+  const gaps=(d.gaps||[]).slice();
+  const byAfter={};gaps.forEach(g=>{(byAfter[g.after||'']=byAfter[g.after||'']||[]).push(g);});
+  (byAfter['']||[]).forEach(gapRow);          // before Item 1
+  const placed=new Set(['']);
+  d.items.forEach(it=>{ itemRow(it); (byAfter[it.code]||[]).forEach(gapRow); placed.add(it.code); });
+  gaps.forEach(g=>{ if(!placed.has(g.after||'')) gapRow(g); });   // safety: any orphan gap
   // filing exhibits (List of Subsidiaries, Certifications…) — separate files,
-  // now fetched so "everything is there" and searchable
+  // so they legitimately belong at the end
   (d.exhibits||[]).forEach(e=>{
     const tr=document.createElement('tr');
     tr.dataset.code=e.code;

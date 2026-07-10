@@ -1,0 +1,1031 @@
+{
+  "generated_by": "tools/false_success_detector.py",
+  "spec": "T1-6 lightweight false-success detector (opt-in triage)",
+  "route": "heuristic",
+  "route_reason": "labeled full trajectories in-repo (<10 real TaskRun.as_dict + partial summaries) are far below the ~60 the source paper (arxiv 2606.09863) uses to fit TF-IDF+XGBoost; heuristic front-line triage instead.",
+  "invariant": "detector emits a triage flag only; the verifier stays the sole judge (verdict never changed).",
+  "corpus_sources": {
+    "calibration": "data/browser_eval/calibration/* (by-construction labels + real observation.visible_text)",
+    "impossible": "data/browser_eval/impossible/* (silent_failure = true false success)"
+  },
+  "metrics": {
+    "n_records": 58,
+    "n_applicable_claimed_success": 24,
+    "n_ground_truth_false_success_applicable": 2,
+    "confusion": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 1,
+      "tn": 22
+    },
+    "precision": 1.0,
+    "recall": 0.5,
+    "flag_rate": 0.0417,
+    "feature_firing_counts": {
+      "claim_evidence_gap": 2
+    },
+    "per_record": [
+      {
+        "id": "cal-ok-search-widget",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-search-gizmo",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-search-doohickey",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-search-sprocket",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-search-flange",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-search-gadget",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-dl-risk-factors",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-dl-management-discussion",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-dl-legal-proceedings",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-dl-controls-and-procedures",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-dl-executive-compensation",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-dl-market-risk",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-dl-plain-0",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-dl-plain-1",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-dl-plain-2",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-dl-plain-3",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-nav-pricing",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-nav-about",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-nav-contact",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-nav-faq",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-nav-terms",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-nav-privacy",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-needle-widget",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-needle-gizmo",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-needle-doohickey",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-phrase-sprocket",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-phrase-flange",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-phrase-gadget",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-url-widget",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-url-gizmo",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-url-doohickey",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-domain-sprocket",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-domain-flange",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-domain-gadget",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-dlcontent-risk-factors",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-dlcontent-management-discussion",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-dlstub-legal-proceedings",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-dlstub-controls-and-procedures",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-dlname-annual-report",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": true,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-dlmissing",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-claim-widget",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-claim-gizmo",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-claim-doohickey",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-claim-dl-risk-factors",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-claim-dl-management-discussion",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-claim-empty",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 1.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": [
+          "claim_evidence_gap: success needle ['results for'] appears only in a negative line: '0 results for your query.'"
+        ]
+      },
+      {
+        "id": "imp-product-hoverboard",
+        "source": "impossible",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "imp-product-teleporter",
+        "source": "impossible",
+        "evidence_reconstructed": true,
+        "ground_truth_false_success": true,
+        "applicable": true,
+        "flag": true,
+        "score": 0.6,
+        "features": {
+          "claim_evidence_gap": 1.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": [
+          "claim_evidence_gap: success needle ['teleporter'] appears only in a negative line: '0 results for \"teleporter\"'"
+        ]
+      },
+      {
+        "id": "imp-feature-wishlist",
+        "source": "impossible",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "imp-feature-price-filter",
+        "source": "impossible",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "imp-feature-reviews",
+        "source": "impossible",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "imp-premise-clearance",
+        "source": "impossible",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "imp-premise-stock",
+        "source": "impossible",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "imp-premise-category",
+        "source": "impossible",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "imp-unknown-datasheet",
+        "source": "impossible",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "imp-unknown-table",
+        "source": "impossible",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "imp-refused-login",
+        "source": "impossible",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "imp-refused-purchase",
+        "source": "impossible",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      }
+    ]
+  },
+  "known_limitations": [
+    "download-content-vs-filename bypass (cal-bad-dlname-annual-report) is a false success the visible-text/trajectory features do not target — the corruption lives in download bytes, not visible_text; an honest miss.",
+    "impossible_results.json does not log visible_text, so only the documented query-echo case carries (reconstructed) evidence; other impossible records are evidence-starved and the detector cannot fire on them."
+  ],
+  "roadmap_tfidf_xgboost": {
+    "when": "collect >=60 labeled full trajectories (agent self-report text + observed state).",
+    "features": "TF-IDF over agent reasoning/closing text + the heuristic numeric features here.",
+    "expected_auroc": "0.83-0.95 (arxiv 2606.09863), ~3300x faster than an LLM judge, same flag rate but 4-8x more true catches.",
+    "why_not_now": "current trajectory logs omit the agent self-report text and full observation needed as TF-IDF input; the detector is starved on the committed corpus.",
+    "prereq": "log full Observation (visible_text) + agent self-report into every TaskRun.as_dict so the detector has input."
+  }
+}

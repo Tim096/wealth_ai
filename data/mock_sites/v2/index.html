@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MockShop — Search</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; }
+  .cookie-modal { position:fixed; inset:0; background:rgba(0,0,0,.5); display:flex;
+    align-items:center; justify-content:center; z-index:10; }
+  .cookie-modal .box { background:#fff; padding:2rem; border-radius:8px; }
+  #results li { margin:.4rem 0; }
+  header { border-bottom:2px solid #333; padding-bottom:.5rem; }
+  .decoy { color:#999; }
+</style>
+</head>
+<body>
+<header><h1>MockShop</h1></header>
+
+<!-- v2: DELIBERATE UI DRIFT vs v1 (SPEC 6.10)
+     - #search-box id removed; now identified only by aria-label / placeholder
+     - button text "Search" -> icon; id changed
+     - a cookie modal overlays and intercepts clicks until dismissed
+     - a decoy "Search" button that does nothing (deceptive)
+     - results render lazily (200ms) -->
+
+<div class="cookie-modal" id="cookie">
+  <div class="box">
+    <p>We use cookies.</p>
+    <button id="accept-cookies" onclick="document.getElementById('cookie').remove()">Accept</button>
+  </div>
+</div>
+
+<button class="decoy" id="fake-search" onclick="void 0">Search</button>
+
+<form id="lookup" onsubmit="return doSearch(event)">
+  <input name="query" type="text" placeholder="Search products" aria-label="Search products">
+  <button id="go" type="submit" aria-label="Search">🔍</button>
+</form>
+
+<ul id="results"></ul>
+
+<script>
+const CATALOG = [
+  "Widget Pro 3000", "Widget Mini", "Gizmo Deluxe", "Gadget Standard",
+  "Sprocket XL", "Cog Basic", "Widget Ultra", "Bolt Pack"
+];
+function doSearch(e) {
+  e.preventDefault();
+  const box = document.querySelector('#lookup input[name=query]');
+  const q = box.value.toLowerCase();
+  setTimeout(function() {  // lazy render
+    const hits = CATALOG.filter(x => x.toLowerCase().includes(q));
+    const ul = document.getElementById('results');
+    ul.innerHTML = '';
+    hits.forEach(function(name) {
+      const li = document.createElement('li');
+      li.className = 'result-item';
+      li.textContent = name;
+      ul.appendChild(li);
+    });
+    const status = document.createElement('div');
+    status.id = 'result-status';
+    status.textContent = hits.length + ' results for "' + q + '"';
+    ul.parentNode.insertBefore(status, ul);
+  }, 200);
+  return false;
+}
+</script>
+</body>
+</html>

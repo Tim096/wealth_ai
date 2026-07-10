@@ -1,0 +1,116 @@
+"""Browser agent tests. Pure logic (verifier / repair / diagnosis) runs without
+a browser; one integration test drives the real v1->v2 killer-demo flow."""
+
+import pytest
+
+from browser_core import BrowserTaskContract, ForbiddenCondition, SuccessCondition
+from browser_agent.executor import ActionOutcome
+from browser_agent.observer import ElementCandidate, Observation
+from browser_agent.repair import diagnose_failure, repair_target
+from browser_agent.verifier import verify_contract
+
+
+def cand(**kw):
+    base = dict(index=0, tag="input", type="text", id="", name="", role="", aria_label="",
+                placeholder="", text="", href="", visible=True, x=0, y=0)
+    base.update(kw)
+    return ElementCandidate(**base)
+
+
+def obs(cands, url="http://site/results", text="3 results for widget: Widget Pro", modal=False):
+    return Observation(url=url, title="t", visible_text=text, candidates=cands, modal_present=modal)
+
+
+# --- verifier three-state ---
+def test_verifier_pass_when_conditions_met():
+    c = BrowserTaskContract(task_id="t", natural_language_task="x", expected_outcome="x",
+                            success_conditions=[SuccessCondition(type="text_visible", value="results for")])
+    assert verify_contract(c, obs([])).status == "pass"
+
+
+def test_verifier_fail_on_forbidden():
+    c = BrowserTaskContract(task_id="t", natural_language_task="x", expected_outcome="x",
+                            success_conditions=[SuccessCondition(type="text_visible", value="results for")],
+                            forbidden_conditions=[ForbiddenCondition(type="error_text_visible", value="no results")])
+    assert verify_contract(c, obs([], text="no results found")).status == "fail"
+
+
+def test_verifier_unknown_when_unobservable():
+    c = BrowserTaskContract(task_id="t", natural_language_task="x", expected_outcome="x",
+                            success_conditions=[SuccessCondition(type="screenshot_region_changed", value="x")])
+    assert verify_contract(c, obs([])).status == "unknown"
+
+
+# --- repair ---
+def test_repair_finds_search_box_by_aria_label():
+    cands = [cand(tag="input", name="query", aria_label="Search products", placeholder="Search products")]
+    rr = repair_target("search_box", obs(cands), want_value="widget")
+    assert rr.ok and "query" in rr.new_target.selector
+
+
+def test_repair_avoids_decoy_button():
+    cands = [
+        cand(tag="button", id="fake-search", type="button", text="Search"),  # decoy
+        cand(tag="button", id="go", type="submit", aria_label="Search", text="🔍"),  # real
+    ]
+    rr = repair_target("submit_button", obs(cands))
+    assert rr.ok
+    assert "go" in rr.new_target.selector
+    assert "fake-search" not in rr.new_target.selector
+
+
+def test_repair_skips_invisible_and_returns_reasons():
+    cands = [cand(tag="input", aria_label="Search", visible=False)]
+    rr = repair_target("search_box", obs(cands))
+    assert not rr.ok
+    assert rr.considered  # explainable even on failure
+
+
+# --- diagnosis ---
+def test_diagnose_selector_not_found():
+    out = ActionOutcome(ok=False, action_type="fill", matched_count=0, error="selector matched no element")
+    d = diagnose_failure(out, obs([]), url_changed=False)
+    assert d.failure_type == "selector_not_found" and d.repairable
+
+
+def test_diagnose_click_no_effect():
+    out = ActionOutcome(ok=True, action_type="click", matched_count=1)
+    d = diagnose_failure(out, obs([]), url_changed=False)
+    assert d.failure_type == "click_no_effect"
+
+
+def test_diagnose_silent_failure_is_not_repairable():
+    out = ActionOutcome(ok=False, action_type="fill", matched_count=1, error="weird")
+    d = diagnose_failure(out, obs([]), url_changed=False)
+    assert d.failure_type == "silent_failure_risk" and not d.repairable
+
+
+# --- integration: the killer demo flow ---
+@pytest.mark.integration
+def test_killer_demo_v1_pass_v2_repairs_and_passes(tmp_path):
+    pytest.importorskip("playwright.sync_api")
+    from pathlib import Path
+
+    from playwright.sync_api import sync_playwright
+
+    from browser_agent.agent import BrowserAgent
+    from browser_agent.memory_store import MemoryStore
+    import tools.browser_killer_demo as demo  # noqa: E402
+
+    root = Path(__file__).resolve().parents[1]
+    if not (root / "data" / "mock_sites" / "v2" / "index.html").exists():
+        pytest.skip("mock sites not present")
+    mem = MemoryStore(tmp_path / "mem.json")
+    with sync_playwright() as p:
+        b = p.chromium.launch(headless=True)
+        page = b.new_page()
+        page.goto(demo.site_uri("v1"))
+        steps, contract = demo.search_task("v1")
+        r1 = BrowserAgent(page, mem, "mockshop", "search").run("v1", steps, contract)
+        page.goto(demo.site_uri("v2"))
+        steps2, contract2 = demo.search_task("v2")
+        r2 = BrowserAgent(page, mem, "mockshop", "search").run("v2", steps2, contract2)
+        b.close()
+    assert r1.status == "pass"
+    assert r2.status == "pass"
+    assert r2.repairs >= 2  # both selectors drifted + modal

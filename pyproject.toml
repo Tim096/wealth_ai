@@ -33,6 +33,9 @@ where = ["packages"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "integration: tests that drive a real browser (Playwright)",
+]
 
 [tool.ruff]
 line-length = 100

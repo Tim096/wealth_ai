@@ -40,6 +40,7 @@ PLAYBOOK
 - Prefer going straight to the target site over a web search. If the task names a site or brand with an obvious domain (finlab -> finlab.tw, wikipedia -> en.wikipedia.org, a company's SEC 10-K -> sec.gov EDGAR), use "goto" with that URL instead of searching. Search engines often block automation with a CAPTCHA.
 - If you DO land on a search-results page, click the most relevant organic result to leave it; don't keep searching.
 - Search flows (when needed): fill the search box first, then click the submit control — or "press" Enter on the box if no reliable submit exists or a click had no effect.
+- CHOICE QUESTIONS (radio / checkbox / a Google Form's multiple-choice options): these are NOT text inputs — you cannot "fill" them. Each option is its own candidate with role=radio/checkbox and the option text as its label; "click" the option whose label matches the intended answer. A candidate showing checked=true is ALREADY selected — do NOT click it again (that unselects it). On a form, fill every text field AND select every required choice FIRST, and only submit once nothing required is left unanswered.
 - SITE-SEARCH SEMANTICS: type what the site indexes, not the kind of document you want. A company/registry/database search wants the ENTITY name or ticker (e.g. "Intel" or "INTC"), NOT a document-type label like "10-K risk factor" — stuffing the type into the free-text box returns nothing. Enter the entity to reach its page, then use the site's own filters/facets/links (a form-type filter, a document list, a section link) to narrow to the specific document or section.
 - IF A SEARCH RETURNS NOTHING: do not give up — the query was likely wrong for this site. Re-read the results state, then either simplify the query to the bare entity name, switch to the site's filter/browse UI, or "goto" the entity's page directly.
 - Downloads: three forms — (a) "download" with the aid of a download link/button; (b) "download" with aid=null and value=<a document URL you can see> to save that file directly; (c) "download" with aid=null and value="" to save the CURRENT page. A document that renders INLINE (e.g. an SEC .htm opened in the viewer) has NO download button — do NOT hunt for one and do NOT give up: just emit download with the file's URL, or download the current page. The file is saved and verified on disk.
@@ -86,6 +87,10 @@ def _candidate_lines(obs: Observation) -> str:
         label = c.aria_label or c.placeholder or c.text or c.name or c.id
         line = (f'aid={c.index} <{c.tag}{" role="+c.role if c.role else ""}> '
                 f'type={c.type or "-"} id="{c.id[:30]}" label="{label[:50]}"')
+        # selection state of a choice control: tells the planner an option is
+        # ALREADY chosen so it won't click it again and toggle it back off.
+        if c.checked in ("true", "false", "mixed"):
+            line += f' checked={c.checked}'
         # a link's href is the target: showing it lets the planner navigate a
         # list/results page deterministically (goto the exact filing/document)
         # instead of clicking blindly — crucial on link-dense pages like EDGAR.
@@ -209,10 +214,18 @@ class LLMPlanner:
             f"ACTIONS SO FAR: {', '.join(history[-6:]) or '(none)'}\n"
             "Return the next single action as JSON."
         )
+        import httpx  # local: only browser Agent Mode pays for this import
         try:
             decision, rec = self.client.complete_json(_SYSTEM, user)
         except LLMConfigError:
             raise
+        except httpx.HTTPError as e:
+            # A transient timeout / 5xx / dropped connection on ONE turn must not
+            # crash a run that has already made progress (this is the observed
+            # "ERROR — ReadTimeout"). Re-plan next turn, exactly like a malformed
+            # action; the loop is still bounded by max_steps.
+            return PlannerDecision(kind="noop",
+                                   reason=f"LLM 連線逾時或失敗({type(e).__name__}),重試")
         kind = decision.get("action", "give_up")
         if kind in ("done", "give_up"):
             return PlannerDecision(kind=kind, reason=decision.get("reason", ""), llm=rec, raw=decision)

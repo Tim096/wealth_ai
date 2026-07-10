@@ -19,6 +19,55 @@ def cand(**kw):
     return ElementCandidate(**base)
 
 
+def test_candidate_line_shows_choice_state():
+    # a radio option must reach the planner as a clickable candidate WITH its
+    # selection state, so the model clicks the right answer and never re-toggles.
+    from browser_agent.planner import _candidate_lines
+
+    c = cand(index=2, tag="div", type="", role="radio", aria_label="40 公克", checked="false")
+    obs = Observation(url="u", title="t", visible_text="", candidates=[c])
+    line = _candidate_lines(obs)
+    assert "role=radio" in line and "40 公克" in line and "checked=false" in line
+
+
+def test_transient_llm_error_is_noop_not_crash():
+    # a one-off ReadTimeout on a single turn must NOT crash the whole run
+    import httpx
+
+    class _Boom:
+        def available(self):
+            return True
+
+        def complete_json(self, system, user):
+            raise httpx.ReadTimeout("timed out")
+
+    obs = Observation(url="u", title="t", visible_text="", candidates=[])
+    d = LLMPlanner(_Boom()).next_action("fill the form", [], obs, [])
+    assert d.kind == "noop"
+
+
+@pytest.mark.integration
+def test_observer_surfaces_radio_and_checkbox():
+    # Google-Form-style choice options are <div role=radio/checkbox>; the
+    # observer must enumerate them or the planner can't answer a choice question.
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from browser_agent.observer import PageObserver
+
+    html = ('<div role="radio" aria-label="Option A"></div>'
+            '<div role="checkbox" aria-label="Agree"></div>'
+            '<input type="text" aria-label="Name">')
+    with sync_playwright() as p:
+        b = p.chromium.launch(headless=True)
+        page = b.new_page()
+        page.set_content(html)
+        obs = PageObserver(page).observe()
+        b.close()
+    labels = {c.aria_label for c in obs.candidates}
+    assert "Option A" in labels and "Agree" in labels and "Name" in labels
+
+
 def test_build_action_targets_by_aid_only():
     obs = Observation(url="u", title="t", visible_text="", candidates=[cand(index=3)])
     act = _build_action({"action": "fill", "aid": 3, "value": "hi"}, obs)

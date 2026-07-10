@@ -16,7 +16,14 @@ from typing import Any
 # `mmid` DOM-distillation idea — MIT-licensed; see docs/ATTRIBUTION.md.)
 _ENUMERATE_JS = r"""
 () => {
-  const sel = 'input,button,a,select,textarea,[role=button],[role=link],[role=searchbox],[role=textbox]';
+  // Native controls PLUS ARIA choice controls: radio/checkbox/option/switch/tab
+  // are how custom widgets (e.g. a Google Form's single/multiple-choice answers,
+  // rendered as <div role=radio>) expose their clickable options. Without these
+  // the planner literally cannot see — or click — a choice question and loops.
+  const sel = 'input,button,a,select,textarea,'
+    + '[role=button],[role=link],[role=searchbox],[role=textbox],'
+    + '[role=radio],[role=checkbox],[role=switch],[role=option],'
+    + '[role=menuitemradio],[role=menuitemcheckbox],[role=tab]';
   const els = Array.from(document.querySelectorAll(sel));
   return els.slice(0, 200).map((el, i) => {
     el.setAttribute('data-aid', String(i));
@@ -34,6 +41,9 @@ _ENUMERATE_JS = r"""
       placeholder: el.getAttribute('placeholder') || '',
       text: (el.textContent || '').trim().slice(0, 80),
       href: el.getAttribute('href') || '',
+      // selection state for a choice control, so the planner knows which option
+      // is ALREADY chosen and does not click it again (that would unselect it)
+      checked: el.getAttribute('aria-checked') || (el.checked === true ? 'true' : ''),
       visible: visible,
       x: Math.round(r.x), y: Math.round(r.y)
     };
@@ -57,6 +67,7 @@ class ElementCandidate:
     visible: bool
     x: int
     y: int
+    checked: str = ""       # aria-checked / .checked for radio/checkbox options
 
     def css(self) -> str:
         """A durable selector to REMEMBER this element across runs — prefers a

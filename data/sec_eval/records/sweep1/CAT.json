@@ -1,0 +1,190 @@
+﻿{
+ "ticker": "CAT",
+ "cik": 18230,
+ "accession": "0000018230-26-000008",
+ "form": "10-K",
+ "filing_date": "2026-02-13",
+ "report_date": "2025-12-31",
+ "main_document": "cat-20251231.htm",
+ "main_document_score": 3.0,
+ "raw_chars": 6100469,
+ "latency_ms": 1115.7,
+ "candidates": 46,
+ "toc_rejected": 23,
+ "pipeline_warnings": [],
+ "items": {
+  "1": {
+   "status": "pass",
+   "confidence": 0.951,
+   "heading": "Item 1.Business.",
+   "span_chars": 39207,
+   "warnings": []
+  },
+  "1A": {
+   "status": "pass",
+   "confidence": 0.953,
+   "heading": "Item 1A.Risk Factors.",
+   "span_chars": 53426,
+   "warnings": []
+  },
+  "1B": {
+   "status": "pass",
+   "confidence": 0.831,
+   "heading": "Item 1B.Unresolved Staff Comments.",
+   "span_chars": 41,
+   "warnings": []
+  },
+  "1C": {
+   "status": "pass",
+   "confidence": 0.954,
+   "heading": "Item 1C. Cybersecurity.",
+   "span_chars": 10207,
+   "warnings": []
+  },
+  "2": {
+   "status": "pass",
+   "confidence": 0.952,
+   "heading": "Item 2.Properties.",
+   "span_chars": 5997,
+   "warnings": []
+  },
+  "3": {
+   "status": "pass",
+   "confidence": 0.955,
+   "heading": "Item 3.Legal Proceedings.",
+   "span_chars": 327,
+   "warnings": []
+  },
+  "4": {
+   "status": "pass",
+   "confidence": 0.956,
+   "heading": "Item 4.Mine Safety Disclosures.",
+   "span_chars": 56,
+   "warnings": []
+  },
+  "5": {
+   "status": "pass",
+   "confidence": 0.958,
+   "heading": "Item 5.Market for Registrant's Common Equity, Related Stockholder Matters and Issuer Purchases of Equity Securities.",
+   "span_chars": 2553,
+   "warnings": []
+  },
+  "6": {
+   "status": "reserved",
+   "confidence": 0.833,
+   "heading": "Item 6.[Reserved]",
+   "span_chars": 39,
+   "warnings": []
+  },
+  "7": {
+   "status": "pass",
+   "confidence": 0.958,
+   "heading": "Item 7.Management's Discussion and Analysis of Financial Condition and Results of Operations.",
+   "span_chars": 102429,
+   "warnings": []
+  },
+  "7A": {
+   "status": "pass",
+   "confidence": 0.957,
+   "heading": "Item 7A.Quantitative and Qualitative Disclosures About Market Risk.",
+   "span_chars": 674,
+   "warnings": []
+  },
+  "8": {
+   "status": "pass",
+   "confidence": 0.957,
+   "heading": "Item 8.Financial Statements and Supplementary Data.",
+   "span_chars": 176402,
+   "warnings": []
+  },
+  "9": {
+   "status": "pass",
+   "confidence": 0.958,
+   "heading": "Item 9.Changes in and Disagreements with Accountants on Accounting and Financial Disclosure.",
+   "span_chars": 109,
+   "warnings": []
+  },
+  "9A": {
+   "status": "pass",
+   "confidence": 0.956,
+   "heading": "Item 9A.Controls and Procedures.",
+   "span_chars": 1532,
+   "warnings": []
+  },
+  "9B": {
+   "status": "pass",
+   "confidence": 0.955,
+   "heading": "Item 9B.Other Information.",
+   "span_chars": 1862,
+   "warnings": []
+  },
+  "9C": {
+   "status": "pass",
+   "confidence": 0.957,
+   "heading": "Item 9C. Disclosure Regarding Foreign Jurisdictions that Prevent Inspections.",
+   "span_chars": 107,
+   "warnings": []
+  },
+  "10": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.957,
+   "heading": "Item 10. Directors, Executive Officers and Corporate Governance.",
+   "span_chars": 2372,
+   "warnings": [
+    "content incorporated by reference to proxy statement; span is the reference text only"
+   ]
+  },
+  "11": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.956,
+   "heading": "Item 11. Executive Compensation.",
+   "span_chars": 149,
+   "warnings": [
+    "content incorporated by reference to proxy statement; span is the reference text only"
+   ]
+  },
+  "12": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.833,
+   "heading": "Item 12. Security Ownership of Certain Beneficial Owners and Management and Related Stockholder Matters.",
+   "span_chars": 1003,
+   "warnings": [
+    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 18 chars before this line; dense_cluster: 4 other item headings within 1500 chars (3 after) \u2014 heading list, not body; kept despite TOC signals: no later candidate exists for this item",
+    "content incorporated by reference to proxy statement; span is the reference text only"
+   ]
+  },
+  "13": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.832,
+   "heading": "Item 13. Certain Relationships and Related Transactions, and Director Independence.",
+   "span_chars": 178,
+   "warnings": [
+    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 1021 chars before this line; dense_cluster: 4 other item headings within 1500 chars (2 after) \u2014 heading list, not body; short_section: only 95 chars before the next item heading \u2014 no real section body; kept despite TOC signals: no later candidate exists for this item",
+    "content incorporated by reference to proxy statement; span is the reference text only"
+   ]
+  },
+  "14": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.957,
+   "heading": "Item 14. Principal Accountant Fees and Services.",
+   "span_chars": 291,
+   "warnings": [
+    "content incorporated by reference to proxy statement; span is the reference text only"
+   ]
+  },
+  "15": {
+   "status": "pass",
+   "confidence": 0.949,
+   "heading": "Item 15. Exhibits and Financial Statement Schedules.",
+   "span_chars": 22175,
+   "warnings": []
+  },
+  "16": {
+   "status": "pass",
+   "confidence": 0.955,
+   "heading": "Item 16. Form 10-K Summary.",
+   "span_chars": 66,
+   "warnings": []
+  }
+ }
+}

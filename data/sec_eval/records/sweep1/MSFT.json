@@ -1,0 +1,188 @@
+﻿{
+ "ticker": "MSFT",
+ "cik": 789019,
+ "accession": "0000950170-25-100235",
+ "form": "10-K",
+ "filing_date": "2025-07-30",
+ "report_date": "2025-06-30",
+ "main_document": "msft-20250630.htm",
+ "main_document_score": 3.0,
+ "raw_chars": 8158067,
+ "latency_ms": 1047.1,
+ "candidates": 144,
+ "toc_rejected": 25,
+ "pipeline_warnings": [],
+ "items": {
+  "1": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 1. BUSINESS",
+   "span_chars": 48665,
+   "warnings": []
+  },
+  "1A": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 1A. RISK FACTORS",
+   "span_chars": 68963,
+   "warnings": []
+  },
+  "1B": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 1B. UNRESOLVED STAFF COMMENTS",
+   "span_chars": 271,
+   "warnings": []
+  },
+  "1C": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 1C. CYBERSECURITY",
+   "span_chars": 9198,
+   "warnings": []
+  },
+  "2": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 2. PROPERTIES",
+   "span_chars": 1351,
+   "warnings": []
+  },
+  "3": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 3. LEGAL PROCEEDINGS",
+   "span_chars": 202,
+   "warnings": []
+  },
+  "4": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 4. MINE SAFETY DISCLOSURES",
+   "span_chars": 74,
+   "warnings": []
+  },
+  "5": {
+   "status": "pass",
+   "confidence": 0.999,
+   "heading": "ITEM 5. MARKET FOR REGISTRANT'S COMMON EQUITY, RELATED STOCKHOLDER MATTERS, AND ISSUER PURCHASES OF EQUITY SECURITIES",
+   "span_chars": 2451,
+   "warnings": []
+  },
+  "6": {
+   "status": "reserved",
+   "confidence": 0.875,
+   "heading": "ITEM 6. [RESERVED]",
+   "span_chars": 37,
+   "warnings": []
+  },
+  "7": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 7. MANAGEMENT'S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+   "span_chars": 47899,
+   "warnings": []
+  },
+  "7A": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 7A. QUANTITATIVE AND QUALITATIVE DISCLOSURES ABOUT MARKET RISK",
+   "span_chars": 1939,
+   "warnings": []
+  },
+  "8": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 8. FINANCIAL STATEMENTS AND SUPPLEMENTARY DATA",
+   "span_chars": 99735,
+   "warnings": []
+  },
+  "9": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 9. CHANGES IN AND DISAGREEMENTS WITH ACCOUNTANTS ON ACCOUNTING AND FINANCIAL DISCLOSURE",
+   "span_chars": 109,
+   "warnings": []
+  },
+  "9A": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 9A. CONTROLS AND PROCEDURES",
+   "span_chars": 6672,
+   "warnings": []
+  },
+  "9B": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 9B. OTHER INFORMATION",
+   "span_chars": 359,
+   "warnings": []
+  },
+  "9C": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 9C. DISCLOSURE REGARDING FOREIGN JURISDICTIONS THAT PREVENT INSPECTIONS",
+   "span_chars": 102,
+   "warnings": []
+  },
+  "10": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.999,
+   "heading": "ITEM 10. DIRECTORS, EXECUTIVE OFFICERS, AND CORPORATE GOVERNANCE",
+   "span_chars": 1608,
+   "warnings": [
+    "content incorporated by reference to proxy statement; span is the reference text only"
+   ]
+  },
+  "11": {
+   "status": "incorporated_by_reference",
+   "confidence": 1.0,
+   "heading": "ITEM 11. EXECUTIVE COMPENSATION",
+   "span_chars": 316,
+   "warnings": [
+    "content incorporated by reference to proxy statement; span is the reference text only"
+   ]
+  },
+  "12": {
+   "status": "incorporated_by_reference",
+   "confidence": 1.0,
+   "heading": "ITEM 12. SECURITY OWNERSHIP OF CERTAIN BENEFICIAL OWNERS AND MANAGEMENT AND RELATED STOCKHOLDER MATTERS",
+   "span_chars": 309,
+   "warnings": [
+    "content incorporated by reference to proxy statement; span is the reference text only"
+   ]
+  },
+  "13": {
+   "status": "incorporated_by_reference",
+   "confidence": 1.0,
+   "heading": "ITEM 13. CERTAIN RELATIONSHIPS AND RELATED TRANSACTIONS, AND DIRECTOR INDEPENDENCE",
+   "span_chars": 285,
+   "warnings": [
+    "content incorporated by reference to proxy statement; span is the reference text only"
+   ]
+  },
+  "14": {
+   "status": "incorporated_by_reference",
+   "confidence": 1.0,
+   "heading": "ITEM 14. PRINCIPAL ACCOUNTANT FEES AND SERVICES",
+   "span_chars": 433,
+   "warnings": [
+    "content incorporated by reference to proxy statement; span is the reference text only"
+   ]
+  },
+  "15": {
+   "status": "pass",
+   "confidence": 0.991,
+   "heading": "ITEM 15. EXHIBIT AND FINANCIAL STATEMENT SCHEDULES",
+   "span_chars": 12861,
+   "warnings": []
+  },
+  "16": {
+   "status": "pass",
+   "confidence": 0.875,
+   "heading": "ITEM 16. FORM 10-K SUMMARY",
+   "span_chars": 37,
+   "warnings": []
+  }
+ }
+}

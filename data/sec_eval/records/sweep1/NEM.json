@@ -1,0 +1,186 @@
+﻿{
+ "ticker": "NEM",
+ "cik": 1164727,
+ "accession": "0001164727-26-000010",
+ "form": "10-K",
+ "filing_date": "2026-02-19",
+ "report_date": "2025-12-31",
+ "main_document": "nem-20251231.htm",
+ "main_document_score": 5.0,
+ "raw_chars": 9143706,
+ "latency_ms": 1720.2,
+ "candidates": 46,
+ "toc_rejected": 23,
+ "pipeline_warnings": [],
+ "items": {
+  "1": {
+   "status": "pass",
+   "confidence": 0.856,
+   "heading": "ITEM 1. BUSINESS (dollars in millions, except per share, per ounce and per pound amounts)",
+   "span_chars": 53639,
+   "warnings": []
+  },
+  "1A": {
+   "status": "pass",
+   "confidence": 0.864,
+   "heading": "ITEM 1A. RISK FACTORS (dollars in millions, except per share, per ounce and per pound amounts)",
+   "span_chars": 218843,
+   "warnings": []
+  },
+  "1B": {
+   "status": "pass",
+   "confidence": 0.875,
+   "heading": "ITEM 1B. UNRESOLVED STAFF COMMENTS",
+   "span_chars": 41,
+   "warnings": []
+  },
+  "1C": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 1C. CYBERSECURITY",
+   "span_chars": 8062,
+   "warnings": []
+  },
+  "2": {
+   "status": "pass",
+   "confidence": 0.86,
+   "heading": "ITEM 2. PROPERTIES (dollars in millions, except per share, per ounce and per pound amounts)",
+   "span_chars": 130924,
+   "warnings": []
+  },
+  "3": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 3. LEGAL PROCEEDINGS",
+   "span_chars": 397,
+   "warnings": []
+  },
+  "4": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 4. MINE SAFETY DISCLOSURES",
+   "span_chars": 3317,
+   "warnings": []
+  },
+  "5": {
+   "status": "pass",
+   "confidence": 0.761,
+   "heading": "ITEM 5. MARKET FOR REGISTRANT'S COMMON EQUITY, RELATED STOCKHOLDER MATTERS AND ISSUER PURCHASE OF EQUITY SECURITIES (dollars in millions, except share, stockholders, and per share data)",
+   "span_chars": 3047,
+   "warnings": []
+  },
+  "6": {
+   "status": "reserved",
+   "confidence": 0.861,
+   "heading": "ITEM 6. RESERVED",
+   "span_chars": 44,
+   "warnings": []
+  },
+  "7": {
+   "status": "pass",
+   "confidence": 0.75,
+   "heading": "ITEM 7. MANAGEMENT'S DISCUSSION AND ANALYSIS OF CONSOLIDATED FINANCIAL CONDITION AND RESULTS OF OPERATIONS (dollars in millions, except per share, per ounce and per pound amounts)",
+   "span_chars": 149727,
+   "warnings": []
+  },
+  "7A": {
+   "status": "pass",
+   "confidence": 0.748,
+   "heading": "ITEM 7A. QUANTITATIVE AND QUALITATIVE DISCLOSURES ABOUT MARKET RISK (dollars in millions, except per ounce and per pound amounts)",
+   "span_chars": 10304,
+   "warnings": []
+  },
+  "8": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 8. FINANCIAL STATEMENTS AND SUPPLEMENTARY DATA",
+   "span_chars": 252110,
+   "warnings": []
+  },
+  "9": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 9. CHANGES IN AND DISAGREEMENTS WITH ACCOUNTANTS ON ACCOUNTING AND FINANCIAL DISCLOSURE",
+   "span_chars": 99,
+   "warnings": []
+  },
+  "9A": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 9A. CONTROLS AND PROCEDURES",
+   "span_chars": 9644,
+   "warnings": []
+  },
+  "9B": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 9B. OTHER INFORMATION",
+   "span_chars": 4491,
+   "warnings": []
+  },
+  "9C": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 9C. DISCLOSURE REGARDING FOREIGN JURISDICTIONS THAT PREVENT INSPECTIONS",
+   "span_chars": 124,
+   "warnings": []
+  },
+  "10": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 10. DIRECTORS, EXECUTIVE OFFICERS AND CORPORATE GOVERNANCE",
+   "span_chars": 11990,
+   "warnings": []
+  },
+  "11": {
+   "status": "incorporated_by_reference",
+   "confidence": 1.0,
+   "heading": "ITEM 11. EXECUTIVE COMPENSATION",
+   "span_chars": 658,
+   "warnings": [
+    "content incorporated by reference to proxy statement; span is the reference text only"
+   ]
+  },
+  "12": {
+   "status": "incorporated_by_reference",
+   "confidence": 1.0,
+   "heading": "ITEM 12. SECURITY OWNERSHIP OF CERTAIN BENEFICIAL OWNERS AND MANAGEMENT AND RELATED STOCKHOLDER MATTERS",
+   "span_chars": 1876,
+   "warnings": [
+    "content incorporated by reference to proxy statement; span is the reference text only"
+   ]
+  },
+  "13": {
+   "status": "incorporated_by_reference",
+   "confidence": 1.0,
+   "heading": "ITEM 13. CERTAIN RELATIONSHIPS AND RELATED TRANSACTIONS, AND DIRECTOR INDEPENDENCE",
+   "span_chars": 564,
+   "warnings": [
+    "content incorporated by reference to proxy statement; span is the reference text only"
+   ]
+  },
+  "14": {
+   "status": "incorporated_by_reference",
+   "confidence": 1.0,
+   "heading": "ITEM 14. PRINCIPAL ACCOUNTANT FEES AND SERVICES",
+   "span_chars": 387,
+   "warnings": [
+    "content incorporated by reference to proxy statement; span is the reference text only"
+   ]
+  },
+  "15": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 15. EXHIBITS, FINANCIAL STATEMENT SCHEDULES",
+   "span_chars": 22476,
+   "warnings": []
+  },
+  "16": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 16. FORM 10-K SUMMARY",
+   "span_chars": 55,
+   "warnings": []
+  }
+ }
+}

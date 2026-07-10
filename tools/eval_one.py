@@ -53,17 +53,21 @@ def main() -> None:
         "form": ref.form,
         "filing_date": ref.filing_date,
         "report_date": ref.report_date,
+        "filing_class": result.filing_class,
         "main_document": best.name,
         "main_document_score": best.score,
         "raw_chars": len(raw),
         "latency_ms": round(result.latency_ms, 1),
         "candidates": len(result.candidates),
         "toc_rejected": sum(1 for c in result.candidates if c.toc_rejected),
+        "needs_review_items": [s.item_code for s in result.segments if s.needs_review],
         "pipeline_warnings": result.warnings,
         "items": {
             seg.item_code: {
                 "status": seg.status,
                 "confidence": round(seg.confidence, 3),
+                "provenance": seg.provenance,
+                "needs_review": seg.needs_review,
                 "heading": seg.extracted_heading,
                 "span_chars": (seg.end_offset - seg.start_offset)
                 if seg.status not in ("missing", "reserved") or seg.text_sha256 else 0,

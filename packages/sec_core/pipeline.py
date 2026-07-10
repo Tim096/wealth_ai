@@ -11,6 +11,11 @@ from dataclasses import dataclass, field
 from observability_core import EvidenceRecord, EvidenceStore, VerifierResult, sha256_text
 from sec_core.boundary import resolve_items
 from sec_core.confidence import ConfidenceBreakdown
+from sec_core.cross_ref import (
+    build_cross_reference_segments,
+    detect_cross_reference_index,
+    scan_bare_index,
+)
 from sec_core.headings import HeadingCandidate, detect_candidates
 from sec_core.items import ItemSegment
 from sec_core.normalize import NormalizedDocument, normalize_html
@@ -24,6 +29,7 @@ class ExtractionResult:
     confidence: dict[str, ConfidenceBreakdown]
     doc: NormalizedDocument
     candidates: list[HeadingCandidate]
+    filing_class: str = "standard"  # standard | cross_reference_index | non_10k
     latency_ms: float = 0.0
     warnings: list[str] = field(default_factory=list)
 
@@ -46,7 +52,20 @@ def extract_from_html(
     doc = normalize_html(raw_html)
     candidates = detect_candidates(doc)
     assess_toc(doc, candidates)
-    segments, breakdowns = resolve_items(doc, candidates, filing_id)
+
+    # Cross-reference-index filings (Intel / Citi / GE class): the main document
+    # is a pointer index into a bound annual report, not the report body. Detect
+    # it and classify honestly rather than emitting tiny ambiguous fragments.
+    xref = detect_cross_reference_index(doc, candidates)
+    if not xref.detected and len(candidates) < 8:
+        # no "Item"-prefixed headings — try the bare '<code>.<title>' index form (Citi)
+        xref = scan_bare_index(doc)
+    if xref.detected:
+        segments, breakdowns = build_cross_reference_segments(doc, xref, filing_id)
+        filing_class = "cross_reference_index"
+    else:
+        segments, breakdowns = resolve_items(doc, candidates, filing_id)
+        filing_class = "standard" if candidates else "non_10k"
 
     latency_ms = (time.perf_counter() - t0) * 1000
     result = ExtractionResult(
@@ -55,8 +74,14 @@ def extract_from_html(
         confidence=breakdowns,
         doc=doc,
         candidates=candidates,
+        filing_class=filing_class,
         latency_ms=latency_ms,
     )
+    if xref.detected:
+        result.warnings.append(
+            f"cross-reference-index 10-K detected: {xref.reason}. Items are pointers into the "
+            f"annual report (needs_review); body resolution is a documented next step."
+        )
     if not candidates:
         result.warnings.append("no item heading candidates found — unsupported or non-10-K document")
 

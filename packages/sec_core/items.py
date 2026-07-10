@@ -54,6 +54,13 @@ CANONICAL_ITEM_TITLES: dict[str, str] = {
 }
 
 
+Provenance = Literal[
+    "offset_exact_span",        # body is a source-exact span addressed by offsets (normal path)
+    "cross_reference_pointer",  # only a pointer into an annual report / another section was found
+    "unresolved",               # no addressable content found
+]
+
+
 class ItemSegment(BaseModel):
     filing_id: str
     item_code: ItemCode
@@ -66,3 +73,7 @@ class ItemSegment(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
     warnings: list[str] = Field(default_factory=list)
     evidence: list[BoundaryEvidence] = Field(default_factory=list)
+    # --- trustworthiness surface (matches what strong submissions expose) ---
+    provenance: Provenance = "offset_exact_span"
+    needs_review: bool = False  # true => do not trust status without human/oracle check
+    xbrl_check: str = ""        # independent-oracle result, set by xbrl cross-validation

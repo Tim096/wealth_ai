@@ -3,3 +3,11 @@
 .env
 .venv/
 node_modules/
+dist/
+*.tsbuildinfo
+coverage/
+
+# runtime artifacts (evidence blobs are large; JSONL indexes are committed selectively)
+data/raw_filings/
+data/artifacts/
+runs/

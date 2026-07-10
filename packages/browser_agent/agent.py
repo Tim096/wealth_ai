@@ -19,6 +19,7 @@ from browser_core import BrowserTaskContract, ElementTarget, RepairEvent
 from browser_core.actions import (
     ClickAction, FillAction, PressAction, WaitForAction, WaitCondition,
 )
+from browser_agent.capability import screen_action, screen_task
 from browser_agent.executor import ActionExecutor, ActionOutcome
 from browser_agent.memory_store import MemoryStore
 from browser_agent.observer import PageObserver
@@ -54,15 +55,17 @@ class StepTrace:
 class TaskRun:
     task_id: str
     site: str
-    status: str                     # pass | fail | unknown
+    status: str                     # pass | fail | unknown | refused
     verifier: VerifierResult
     steps: list[StepTrace] = field(default_factory=list)
     repairs: int = 0
     total_latency_ms: float = 0.0
+    confidence: float = 0.0         # numeric, derived from verifier + repair cost
 
     def as_dict(self) -> dict[str, Any]:
         return {
             "task_id": self.task_id, "site": self.site, "status": self.status,
+            "confidence": round(self.confidence, 3),
             "repairs": self.repairs, "total_latency_ms": round(self.total_latency_ms, 1),
             "verifier": {
                 "status": self.verifier.status, "reason": self.verifier.reason,
@@ -130,6 +133,13 @@ class BrowserAgent:
         selector = remembered or step.fallback_selector
         target = ElementTarget(selector=selector, selector_type="css", description=step.purpose)
         action = self._build_action(step, target)
+        # action-level capability guard: never enter credentials / hit irreversible controls
+        ascreen = screen_action(action)
+        if not ascreen.allowed:
+            trace.append(StepTrace(step=step.purpose, action=step.kind, ok=False, mode="script",
+                                   diagnosis="capability_refused", detail=ascreen.reason,
+                                   selector_used=selector))
+            return ActionOutcome(ok=False, action_type=step.kind, error="refused: " + ascreen.reason)
         url_before = self.page.url
         out = self.executor.execute(action)
 
@@ -143,13 +153,34 @@ class BrowserAgent:
                                    screenshot=self._screenshot(f"{step.purpose}-ok")))
             return out
 
-        # Repair Mode: diagnose, then search the accessibility tree
+        # Repair Mode: diagnose FIRST, then dispatch a strategy by failure type
         obs = self.observer.observe()
         self._dismiss_modal_if_present(trace)
         obs = self.observer.observe()
         diag = diagnose_failure(out, obs, url_before != self.page.url)
         self.memory.record(self.site, self.task_type, step.purpose, selector,
                            self._now(), success=False)
+
+        # diagnosis-driven, not one-size-fits-all retry (SPEC 6.8)
+        if diag.failure_type == "click_no_effect":
+            # try pressing Enter on the field instead of clicking the button
+            alt = PressAction(target=ElementTarget(selector=selector, selector_type="css"), key="Enter")
+            out_alt = self.executor.execute(alt)
+            trace.append(StepTrace(step=step.purpose, action="press", ok=out_alt.ok, mode="repair",
+                                   diagnosis=diag.failure_type,
+                                   detail="click had no effect -> pressed Enter",
+                                   selector_used=selector, latency_ms=out_alt.latency_ms,
+                                   screenshot=self._screenshot(f"{step.purpose}-enter")))
+            return out_alt
+        if diag.failure_type == "empty_result":
+            # not a selector problem — no evidence of success; refuse to repair-into-success
+            trace.append(StepTrace(step=step.purpose, action=step.kind, ok=False, mode="repair",
+                                   diagnosis=diag.failure_type,
+                                   detail="empty result set — not repairable by selector; left for verifier",
+                                   selector_used=selector,
+                                   screenshot=self._screenshot(f"{step.purpose}-empty")))
+            return out
+        # selector_not_found / multiple_candidates / wrong_page -> a11y-tree search
         rr = repair_target(step.purpose, obs, want_value=step.value)
         considered = rr.considered
         if not rr.ok or rr.new_target is None:
@@ -189,6 +220,17 @@ class BrowserAgent:
 
     def run(self, task_id: str, steps: list[Step], contract: BrowserTaskContract) -> TaskRun:
         t0 = time.perf_counter()
+        # capability guard (SPEC 6.3/6.4): refuse out-of-scope tasks in code
+        cap = screen_task(contract.natural_language_task)
+        if not cap.allowed:
+            return TaskRun(
+                task_id=task_id, site=self.site, status="refused",
+                verifier=VerifierResult(status="unknown", reason=cap.reason,
+                                        required_evidence=[], observed_evidence=[],
+                                        missing_evidence=["task refused by capability guard"]),
+                steps=[], repairs=0, confidence=0.0,
+                total_latency_ms=(time.perf_counter() - t0) * 1000,
+            )
         trace: list[StepTrace] = []
         self._dismiss_modal_if_present(trace)
         repairs = 0
@@ -202,7 +244,10 @@ class BrowserAgent:
         extracted: dict[str, str] = {}
         verdict = verify_contract(contract, obs, extracted)
         self.memory.save()
+        base = {"pass": 1.0, "unknown": 0.4, "fail": 0.0}[verdict.status]
+        confidence = max(0.0, base - 0.1 * repairs) if verdict.status == "pass" else base
         return TaskRun(
             task_id=task_id, site=self.site, status=verdict.status, verifier=verdict,
-            steps=trace, repairs=repairs, total_latency_ms=(time.perf_counter() - t0) * 1000,
+            steps=trace, repairs=repairs, confidence=confidence,
+            total_latency_ms=(time.perf_counter() - t0) * 1000,
         )

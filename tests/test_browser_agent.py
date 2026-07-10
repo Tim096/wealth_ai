@@ -3,7 +3,9 @@ a browser; one integration test drives the real v1->v2 killer-demo flow."""
 
 import pytest
 
-from browser_core import BrowserTaskContract, ForbiddenCondition, SuccessCondition
+from browser_core import BrowserTaskContract, ElementTarget, ForbiddenCondition, SuccessCondition
+from browser_core.actions import ClickAction, FillAction
+from browser_agent.capability import screen_action, screen_task
 from browser_agent.executor import ActionOutcome
 from browser_agent.observer import ElementCandidate, Observation
 from browser_agent.repair import diagnose_failure, repair_target
@@ -83,6 +85,35 @@ def test_diagnose_silent_failure_is_not_repairable():
     out = ActionOutcome(ok=False, action_type="fill", matched_count=1, error="weird")
     d = diagnose_failure(out, obs([]), url_changed=False)
     assert d.failure_type == "silent_failure_risk" and not d.repairable
+
+
+def test_diagnose_empty_result():
+    out = ActionOutcome(ok=True, action_type="click", matched_count=1)
+    d = diagnose_failure(out, obs([], text="0 results for zzz", url="http://site/results"), url_changed=True)
+    assert d.failure_type == "empty_result"
+
+
+def test_diagnose_wrong_page():
+    out = ActionOutcome(ok=True, action_type="click", matched_count=1)
+    d = diagnose_failure(out, obs([], url="http://site/error"), url_changed=True,
+                         expected_url_fragment="/results")
+    assert d.failure_type == "wrong_page"
+
+
+# --- capability guard (honest boundary, code-enforced) ---
+def test_screen_task_refuses_login_and_purchase():
+    assert not screen_task("Log in to my bank account").allowed
+    assert not screen_task("Buy the first product and checkout").allowed
+    assert screen_task("Search for widgets and read the results").allowed
+
+
+def test_screen_action_refuses_password_and_checkout():
+    pw = FillAction(target=ElementTarget(selector="#pw"), value="hunter2 password")
+    assert not screen_action(pw).allowed
+    buy = ClickAction(target=ElementTarget(selector="#place-order", description="checkout"))
+    assert not screen_action(buy).allowed
+    ok = FillAction(target=ElementTarget(selector="#q"), value="widget")
+    assert screen_action(ok).allowed
 
 
 # --- integration: the killer demo flow ---

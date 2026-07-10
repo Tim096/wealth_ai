@@ -9,6 +9,7 @@ ElementTarget that is verified in a small step before the task resumes.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from browser_core import ElementTarget
@@ -37,12 +38,12 @@ class Diagnosis:
     detail: str
 
 
+_RESULT_CONTAINER_HINT = re.compile(r"\b0\s+results?\b|no results|nothing found", re.I)
+
+
 def diagnose_failure(outcome: ActionOutcome, obs: Observation,
-                     url_changed: bool) -> Diagnosis:
+                     url_changed: bool, expected_url_fragment: str = "") -> Diagnosis:
     spec = FAILURE_TAXONOMY
-    if outcome.action_type in ("click",) and outcome.ok and not url_changed:
-        return Diagnosis("click_no_effect", spec["click_no_effect"].repairable,
-                         "click succeeded but URL/DOM did not change")
     if obs.modal_present and not outcome.ok:
         return Diagnosis("modal_blocking", spec["modal_blocking"].repairable,
                          "a modal/cookie banner is intercepting interaction")
@@ -54,6 +55,15 @@ def diagnose_failure(outcome: ActionOutcome, obs: Observation,
                          f"selector matched {outcome.matched_count} elements")
     if "timeout" in outcome.error.lower():
         return Diagnosis("timeout", spec["timeout"].repairable, outcome.error)
+    if expected_url_fragment and expected_url_fragment not in obs.url:
+        return Diagnosis("wrong_page", spec["wrong_page"].repairable,
+                         f"URL {obs.url} does not contain expected fragment {expected_url_fragment!r}")
+    if outcome.action_type == "click" and outcome.ok and not url_changed:
+        return Diagnosis("click_no_effect", spec["click_no_effect"].repairable,
+                         "click succeeded but URL/DOM did not change")
+    if _RESULT_CONTAINER_HINT.search(obs.visible_text):
+        return Diagnosis("empty_result", spec["empty_result"].repairable,
+                         "result container present but reports zero results")
     return Diagnosis("silent_failure_risk", spec["silent_failure_risk"].repairable,
                      "insufficient evidence to classify — refuse to claim success")
 

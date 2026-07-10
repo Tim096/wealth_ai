@@ -79,3 +79,4 @@ class ItemSegment(BaseModel):
     needs_review: bool = False  # true => do not trust status without human/oracle check
     xbrl_check: str = ""        # independent-oracle result, set by xbrl cross-validation
     topic_check: str = ""       # per-item lexical topic-consistency verdict (all items)
+    engine_check: str = ""      # third-engine (edgartools) triangulation verdict

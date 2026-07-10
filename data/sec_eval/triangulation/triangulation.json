@@ -1,0 +1,2995 @@
+{
+  "engine": "edgartools 5.42.0",
+  "filings": 11,
+  "verdict_totals": {
+    "agree": 240,
+    "disagree": 12,
+    "engine_unavailable": 1
+  },
+  "disagreements": {
+    "AAPL": [
+      "11",
+      "16"
+    ],
+    "NVDA": [
+      "16"
+    ],
+    "JPM": [
+      "7",
+      "8"
+    ],
+    "WMT": [
+      "16"
+    ],
+    "CAT": [
+      "16"
+    ],
+    "XOM": [
+      "7",
+      "8",
+      "16"
+    ],
+    "NEM": [
+      "16"
+    ],
+    "MRNA": [
+      "16"
+    ]
+  },
+  "records": [
+    {
+      "ticker": "AAPL",
+      "cik": 320193,
+      "accession": "0000320193-25-000079",
+      "filing_class": "standard",
+      "engine_parsed": true,
+      "engine_items": [
+        "1",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "1A",
+        "1B",
+        "1C",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "7A",
+        "8",
+        "9",
+        "9A",
+        "9B",
+        "9C"
+      ],
+      "verdicts": {
+        "agree": 21,
+        "disagree": 2,
+        "engine_unavailable": 0
+      },
+      "items": {
+        "1": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 2396,
+          "engine_words": 2403,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "1A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 10088,
+          "engine_words": 10088,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "1B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 6,
+          "engine_words": 6,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "1C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 383,
+          "engine_words": 383,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "2": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.92",
+          "our_words": 79,
+          "engine_words": 86,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "3": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 864,
+          "engine_words": 864,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "4": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.44",
+          "our_words": 7,
+          "engine_words": 16,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "5": {
+          "verdict": "agree",
+          "detail": "84% shingle containment, length ratio 0.96",
+          "our_words": 451,
+          "engine_words": 434,
+          "overlap": 0.841,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "6": {
+          "verdict": "agree",
+          "detail": "same content; length delta 7w is within page-furniture slack",
+          "our_words": 3,
+          "engine_words": 10,
+          "overlap": 1.0,
+          "our_status": "reserved",
+          "confidence_after": 0.867,
+          "needs_review": false
+        },
+        "7": {
+          "verdict": "agree",
+          "detail": "94% shingle containment, length ratio 0.99",
+          "our_words": 2880,
+          "engine_words": 2848,
+          "overlap": 0.939,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "7A": {
+          "verdict": "agree",
+          "detail": "94% shingle containment, length ratio 0.99",
+          "our_words": 469,
+          "engine_words": 472,
+          "overlap": 0.943,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "8": {
+          "verdict": "agree",
+          "detail": "87% shingle containment, length ratio 0.98",
+          "our_words": 9892,
+          "engine_words": 9661,
+          "overlap": 0.866,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "9": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 14,
+          "engine_words": 14,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "9A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.99",
+          "our_words": 672,
+          "engine_words": 679,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "9B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 85,
+          "engine_words": 85,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "9C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.85",
+          "our_words": 11,
+          "engine_words": 13,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "10": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 62,
+          "engine_words": 62,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "11": {
+          "verdict": "disagree",
+          "detail": "boundary mismatch: same content but ours 24w vs edgartools 297w (ratio 0.08) \u2014 one engine's span runs long or cuts short",
+          "our_words": 24,
+          "engine_words": 297,
+          "overlap": 0.706,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.606,
+          "needs_review": true
+        },
+        "12": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 34,
+          "engine_words": 34,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "13": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 30,
+          "engine_words": 30,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "14": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.75",
+          "our_words": 27,
+          "engine_words": 36,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "15": {
+          "verdict": "agree",
+          "detail": "73% shingle containment, length ratio 0.95",
+          "our_words": 2289,
+          "engine_words": 2168,
+          "overlap": 0.726,
+          "our_status": "pass",
+          "confidence_after": 0.959,
+          "needs_review": false
+        },
+        "16": {
+          "verdict": "disagree",
+          "detail": "boundary mismatch: same content but ours 7w vs edgartools 329w (ratio 0.02) \u2014 one engine's span runs long or cuts short",
+          "our_words": 7,
+          "engine_words": 329,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.879,
+          "needs_review": true
+        }
+      }
+    },
+    {
+      "ticker": "MSFT",
+      "cik": 789019,
+      "accession": "0000950170-25-100235",
+      "filing_class": "standard",
+      "engine_parsed": true,
+      "engine_items": [
+        "1",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "1A",
+        "1B",
+        "1C",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "7A",
+        "8",
+        "9",
+        "9A",
+        "9B",
+        "9C"
+      ],
+      "verdicts": {
+        "agree": 23,
+        "disagree": 0,
+        "engine_unavailable": 0
+      },
+      "items": {
+        "1": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 0.99",
+          "our_words": 6999,
+          "engine_words": 6939,
+          "overlap": 0.988,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "1A": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 0.99",
+          "our_words": 10217,
+          "engine_words": 10146,
+          "overlap": 0.991,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "1B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 44,
+          "engine_words": 44,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "1C": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 1.00",
+          "our_words": 1283,
+          "engine_words": 1278,
+          "overlap": 0.994,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "2": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.99",
+          "our_words": 199,
+          "engine_words": 201,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "3": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 34,
+          "engine_words": 34,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "4": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.78",
+          "our_words": 7,
+          "engine_words": 9,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "5": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 415,
+          "engine_words": 415,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "6": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 3,
+          "engine_words": 3,
+          "overlap": 1.0,
+          "our_status": "reserved",
+          "confidence_after": 0.9,
+          "needs_review": false
+        },
+        "7": {
+          "verdict": "agree",
+          "detail": "98% shingle containment, length ratio 0.99",
+          "our_words": 7385,
+          "engine_words": 7315,
+          "overlap": 0.982,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "7A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 274,
+          "engine_words": 274,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "8": {
+          "verdict": "agree",
+          "detail": "98% shingle containment, length ratio 0.99",
+          "our_words": 16088,
+          "engine_words": 15869,
+          "overlap": 0.978,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 15,
+          "engine_words": 15,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9A": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 0.99",
+          "our_words": 970,
+          "engine_words": 965,
+          "overlap": 0.995,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 62,
+          "engine_words": 62,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.85",
+          "our_words": 11,
+          "engine_words": 13,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "10": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 252,
+          "engine_words": 252,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.999,
+          "needs_review": false
+        },
+        "11": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 38,
+          "engine_words": 38,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "12": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 40,
+          "engine_words": 40,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "13": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 34,
+          "engine_words": 34,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "14": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.97",
+          "our_words": 60,
+          "engine_words": 62,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "15": {
+          "verdict": "agree",
+          "detail": "97% shingle containment, length ratio 0.99",
+          "our_words": 2371,
+          "engine_words": 2341,
+          "overlap": 0.974,
+          "our_status": "pass",
+          "confidence_after": 0.993,
+          "needs_review": false
+        },
+        "16": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 7,
+          "engine_words": 7,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        }
+      }
+    },
+    {
+      "ticker": "NVDA",
+      "cik": 1045810,
+      "accession": "0001045810-26-000021",
+      "filing_class": "standard",
+      "engine_parsed": true,
+      "engine_items": [
+        "1",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "1A",
+        "1B",
+        "1C",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "7A",
+        "8",
+        "9",
+        "9A",
+        "9B",
+        "9C"
+      ],
+      "verdicts": {
+        "agree": 22,
+        "disagree": 1,
+        "engine_unavailable": 0
+      },
+      "items": {
+        "1": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 0.99",
+          "our_words": 7257,
+          "engine_words": 7219,
+          "overlap": 0.987,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "1A": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 1.00",
+          "our_words": 17360,
+          "engine_words": 17298,
+          "overlap": 0.992,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "1B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 6,
+          "engine_words": 6,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "1C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 564,
+          "engine_words": 564,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "2": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.98",
+          "our_words": 143,
+          "engine_words": 146,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "3": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 36,
+          "engine_words": 36,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "4": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.78",
+          "our_words": 7,
+          "engine_words": 9,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "5": {
+          "verdict": "agree",
+          "detail": "92% shingle containment, length ratio 0.98",
+          "our_words": 905,
+          "engine_words": 887,
+          "overlap": 0.92,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "6": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 3,
+          "engine_words": 3,
+          "overlap": 1.0,
+          "our_status": "reserved",
+          "confidence_after": 0.867,
+          "needs_review": false
+        },
+        "7": {
+          "verdict": "agree",
+          "detail": "95% shingle containment, length ratio 0.99",
+          "our_words": 5386,
+          "engine_words": 5335,
+          "overlap": 0.952,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "7A": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 0.99",
+          "our_words": 676,
+          "engine_words": 672,
+          "overlap": 0.989,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "8": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 33,
+          "engine_words": 33,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "9": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 14,
+          "engine_words": 14,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "9A": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 0.99",
+          "our_words": 513,
+          "engine_words": 509,
+          "overlap": 0.988,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "9B": {
+          "verdict": "agree",
+          "detail": "68% shingle containment, length ratio 0.94",
+          "our_words": 126,
+          "engine_words": 118,
+          "overlap": 0.676,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "9C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 66,
+          "engine_words": 66,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "10": {
+          "verdict": "agree",
+          "detail": "98% shingle containment, length ratio 0.99",
+          "our_words": 400,
+          "engine_words": 396,
+          "overlap": 0.979,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "11": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 44,
+          "engine_words": 44,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "12": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 88,
+          "engine_words": 88,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.567,
+          "needs_review": false
+        },
+        "13": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 63,
+          "engine_words": 63,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.567,
+          "needs_review": false
+        },
+        "14": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.96",
+          "our_words": 43,
+          "engine_words": 45,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "15": {
+          "verdict": "agree",
+          "detail": "88% shingle containment, length ratio 0.97",
+          "our_words": 16886,
+          "engine_words": 16460,
+          "overlap": 0.882,
+          "our_status": "pass",
+          "confidence_after": 0.96,
+          "needs_review": false
+        },
+        "16": {
+          "verdict": "disagree",
+          "detail": "content mismatch: only 0% of the shorter span's text appears in the longer one (ours 8w vs edgartools 272w)",
+          "our_words": 8,
+          "engine_words": 272,
+          "overlap": 0.0,
+          "our_status": "pass",
+          "confidence_after": 0.879,
+          "needs_review": true
+        }
+      }
+    },
+    {
+      "ticker": "JPM",
+      "cik": 19617,
+      "accession": "0001628280-26-008131",
+      "filing_class": "standard",
+      "engine_parsed": true,
+      "engine_items": [
+        "1",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "1A",
+        "1B",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "7A",
+        "8",
+        "9",
+        "9A",
+        "9B",
+        "9C"
+      ],
+      "verdicts": {
+        "agree": 20,
+        "disagree": 2,
+        "engine_unavailable": 1
+      },
+      "items": {
+        "1": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 1.00",
+          "our_words": 6016,
+          "engine_words": 5988,
+          "overlap": 0.987,
+          "our_status": "pass",
+          "confidence_after": 0.961,
+          "needs_review": false
+        },
+        "1A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 15866,
+          "engine_words": 15861,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.963,
+          "needs_review": false
+        },
+        "1B": {
+          "verdict": "agree",
+          "detail": "same content; length delta 30w is within page-furniture slack",
+          "our_words": 6,
+          "engine_words": 36,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.965,
+          "needs_review": false
+        },
+        "1C": {
+          "verdict": "engine_unavailable",
+          "detail": "edgartools produced no item 1C; absence there is not evidence against our span",
+          "our_words": 26,
+          "engine_words": 0,
+          "overlap": 0.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.663,
+          "needs_review": false
+        },
+        "2": {
+          "verdict": "agree",
+          "detail": "98% shingle containment, length ratio 1.00",
+          "our_words": 373,
+          "engine_words": 372,
+          "overlap": 0.978,
+          "our_status": "pass",
+          "confidence_after": 0.962,
+          "needs_review": false
+        },
+        "3": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 18,
+          "engine_words": 18,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.664,
+          "needs_review": false
+        },
+        "4": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 7,
+          "engine_words": 7,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.965,
+          "needs_review": false
+        },
+        "5": {
+          "verdict": "agree",
+          "detail": "83% shingle containment, length ratio 0.98",
+          "our_words": 456,
+          "engine_words": 447,
+          "overlap": 0.831,
+          "our_status": "pass",
+          "confidence_after": 0.966,
+          "needs_review": false
+        },
+        "6": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 3,
+          "engine_words": 3,
+          "overlap": 1.0,
+          "our_status": "reserved",
+          "confidence_after": 0.756,
+          "needs_review": false
+        },
+        "7": {
+          "verdict": "disagree",
+          "detail": "content mismatch: only 0% of the shorter span's text appears in the longer one (ours 58w vs edgartools 65145w)",
+          "our_words": 58,
+          "engine_words": 65145,
+          "overlap": 0.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.515,
+          "needs_review": true
+        },
+        "7A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.88",
+          "our_words": 42,
+          "engine_words": 37,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.566,
+          "needs_review": false
+        },
+        "8": {
+          "verdict": "disagree",
+          "detail": "content mismatch: only 0% of the shorter span's text appears in the longer one (ours 55w vs edgartools 90470w)",
+          "our_words": 55,
+          "engine_words": 90470,
+          "overlap": 0.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.514,
+          "needs_review": true
+        },
+        "9": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 14,
+          "engine_words": 14,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.966,
+          "needs_review": false
+        },
+        "9A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 336,
+          "engine_words": 336,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.965,
+          "needs_review": false
+        },
+        "9B": {
+          "verdict": "agree",
+          "detail": "84% shingle containment, length ratio 0.96",
+          "our_words": 933,
+          "engine_words": 892,
+          "overlap": 0.838,
+          "our_status": "pass",
+          "confidence_after": 0.964,
+          "needs_review": false
+        },
+        "9C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 11,
+          "engine_words": 11,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.966,
+          "needs_review": false
+        },
+        "10": {
+          "verdict": "agree",
+          "detail": "85% shingle containment, length ratio 0.96",
+          "our_words": 636,
+          "engine_words": 610,
+          "overlap": 0.854,
+          "our_status": "pass",
+          "confidence_after": 0.966,
+          "needs_review": false
+        },
+        "11": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.67",
+          "our_words": 8,
+          "engine_words": 12,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.664,
+          "needs_review": false
+        },
+        "12": {
+          "verdict": "agree",
+          "detail": "88% shingle containment, length ratio 0.99",
+          "our_words": 204,
+          "engine_words": 201,
+          "overlap": 0.876,
+          "our_status": "pass",
+          "confidence_after": 0.966,
+          "needs_review": false
+        },
+        "13": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 14,
+          "engine_words": 14,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.666,
+          "needs_review": false
+        },
+        "14": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 11,
+          "engine_words": 11,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.66,
+          "needs_review": false
+        },
+        "15": {
+          "verdict": "agree",
+          "detail": "75% shingle containment, length ratio 0.93",
+          "our_words": 2661,
+          "engine_words": 2871,
+          "overlap": 0.753,
+          "our_status": "pass",
+          "confidence_after": 0.965,
+          "needs_review": false
+        },
+        "16": {
+          "verdict": "agree",
+          "detail": "both engines find no content for this item",
+          "our_words": 0,
+          "engine_words": 0,
+          "overlap": 0.0,
+          "our_status": "missing",
+          "confidence_after": 0.0,
+          "needs_review": false
+        }
+      }
+    },
+    {
+      "ticker": "GS",
+      "cik": 886982,
+      "accession": "0000886982-26-000091",
+      "filing_class": "standard",
+      "engine_parsed": true,
+      "engine_items": [
+        "1",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "1A",
+        "1B",
+        "1C",
+        "2",
+        "3",
+        "4",
+        "5",
+        "7",
+        "7A",
+        "8",
+        "9",
+        "9A",
+        "9B",
+        "9C"
+      ],
+      "verdicts": {
+        "agree": 23,
+        "disagree": 0,
+        "engine_unavailable": 0
+      },
+      "items": {
+        "1": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 23286,
+          "engine_words": 23286,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "1A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 21588,
+          "engine_words": 21595,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "1B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.85",
+          "our_words": 41,
+          "engine_words": 48,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "1C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 36,
+          "engine_words": 36,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "2": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 323,
+          "engine_words": 323,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "3": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 201,
+          "engine_words": 201,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "4": {
+          "verdict": "agree",
+          "detail": "same content; length delta 16w is within page-furniture slack",
+          "our_words": 7,
+          "engine_words": 23,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "5": {
+          "verdict": "agree",
+          "detail": "93% shingle containment, length ratio 0.94",
+          "our_words": 384,
+          "engine_words": 360,
+          "overlap": 0.926,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "6": {
+          "verdict": "agree",
+          "detail": "both engines find no content for this item",
+          "our_words": 0,
+          "engine_words": 0,
+          "overlap": 0.0,
+          "our_status": "reserved",
+          "confidence_after": 0.0,
+          "needs_review": false
+        },
+        "7": {
+          "verdict": "agree",
+          "detail": "93% shingle containment, length ratio 0.98",
+          "our_words": 47828,
+          "engine_words": 47061,
+          "overlap": 0.926,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "7A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.86",
+          "our_words": 44,
+          "engine_words": 51,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "8": {
+          "verdict": "agree",
+          "detail": "89% shingle containment, length ratio 0.98",
+          "our_words": 72654,
+          "engine_words": 71375,
+          "overlap": 0.893,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "9": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.82",
+          "our_words": 32,
+          "engine_words": 39,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "9A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 170,
+          "engine_words": 170,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "9B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 230,
+          "engine_words": 230,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "9C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.85",
+          "our_words": 11,
+          "engine_words": 13,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "10": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.97",
+          "our_words": 208,
+          "engine_words": 215,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "11": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.84",
+          "our_words": 37,
+          "engine_words": 44,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "12": {
+          "verdict": "agree",
+          "detail": "94% shingle containment, length ratio 0.99",
+          "our_words": 341,
+          "engine_words": 337,
+          "overlap": 0.941,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "13": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 37,
+          "engine_words": 37,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "14": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.94",
+          "our_words": 31,
+          "engine_words": 33,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "15": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.88",
+          "our_words": 2596,
+          "engine_words": 2958,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.959,
+          "needs_review": false
+        },
+        "16": {
+          "verdict": "agree",
+          "detail": "both engines find no content for this item",
+          "our_words": 0,
+          "engine_words": 0,
+          "overlap": 0.0,
+          "our_status": "missing",
+          "confidence_after": 0.0,
+          "needs_review": false
+        }
+      }
+    },
+    {
+      "ticker": "WMT",
+      "cik": 104169,
+      "accession": "0000104169-26-000055",
+      "filing_class": "standard",
+      "engine_parsed": true,
+      "engine_items": [
+        "1",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "1A",
+        "1B",
+        "1C",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "7A",
+        "8",
+        "9",
+        "9A",
+        "9B",
+        "9C"
+      ],
+      "verdicts": {
+        "agree": 22,
+        "disagree": 1,
+        "engine_unavailable": 0
+      },
+      "items": {
+        "1": {
+          "verdict": "agree",
+          "detail": "98% shingle containment, length ratio 1.00",
+          "our_words": 5658,
+          "engine_words": 5632,
+          "overlap": 0.979,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "1A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 13739,
+          "engine_words": 13739,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "1B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 6,
+          "engine_words": 6,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "1C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 1070,
+          "engine_words": 1070,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.9,
+          "needs_review": false
+        },
+        "2": {
+          "verdict": "agree",
+          "detail": "81% shingle containment, length ratio 0.97",
+          "our_words": 534,
+          "engine_words": 520,
+          "overlap": 0.809,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "3": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 931,
+          "engine_words": 931,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "4": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.70",
+          "our_words": 7,
+          "engine_words": 10,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "5": {
+          "verdict": "agree",
+          "detail": "85% shingle containment, length ratio 0.96",
+          "our_words": 504,
+          "engine_words": 483,
+          "overlap": 0.846,
+          "our_status": "pass",
+          "confidence_after": 0.9,
+          "needs_review": false
+        },
+        "6": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 3,
+          "engine_words": 3,
+          "overlap": 1.0,
+          "our_status": "reserved",
+          "confidence_after": 0.889,
+          "needs_review": false
+        },
+        "7": {
+          "verdict": "agree",
+          "detail": "94% shingle containment, length ratio 0.99",
+          "our_words": 9346,
+          "engine_words": 9258,
+          "overlap": 0.942,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "7A": {
+          "verdict": "agree",
+          "detail": "97% shingle containment, length ratio 0.99",
+          "our_words": 842,
+          "engine_words": 834,
+          "overlap": 0.966,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "8": {
+          "verdict": "agree",
+          "detail": "89% shingle containment, length ratio 0.98",
+          "our_words": 17251,
+          "engine_words": 16933,
+          "overlap": 0.89,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 14,
+          "engine_words": 14,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 584,
+          "engine_words": 584,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 188,
+          "engine_words": 188,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.79",
+          "our_words": 11,
+          "engine_words": 14,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "10": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 422,
+          "engine_words": 422,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "11": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 34,
+          "engine_words": 34,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "12": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 41,
+          "engine_words": 41,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "13": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 39,
+          "engine_words": 39,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "14": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.93",
+          "our_words": 37,
+          "engine_words": 40,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.695,
+          "needs_review": false
+        },
+        "15": {
+          "verdict": "agree",
+          "detail": "86% shingle containment, length ratio 0.99",
+          "our_words": 1873,
+          "engine_words": 1850,
+          "overlap": 0.864,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "16": {
+          "verdict": "disagree",
+          "detail": "content mismatch: only 0% of the shorter span's text appears in the longer one (ours 7w vs edgartools 3542w)",
+          "our_words": 7,
+          "engine_words": 3542,
+          "overlap": 0.0,
+          "our_status": "pass",
+          "confidence_after": 0.909,
+          "needs_review": true
+        }
+      }
+    },
+    {
+      "ticker": "CAT",
+      "cik": 18230,
+      "accession": "0000018230-26-000008",
+      "filing_class": "standard",
+      "engine_parsed": true,
+      "engine_items": [
+        "1",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "1A",
+        "1B",
+        "1C",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "7A",
+        "8",
+        "9",
+        "9A",
+        "9B",
+        "9C"
+      ],
+      "verdicts": {
+        "agree": 22,
+        "disagree": 1,
+        "engine_unavailable": 0
+      },
+      "items": {
+        "1": {
+          "verdict": "agree",
+          "detail": "98% shingle containment, length ratio 0.99",
+          "our_words": 5691,
+          "engine_words": 5653,
+          "overlap": 0.984,
+          "our_status": "pass",
+          "confidence_after": 0.961,
+          "needs_review": false
+        },
+        "1A": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 1.00",
+          "our_words": 7993,
+          "engine_words": 7961,
+          "overlap": 0.991,
+          "our_status": "pass",
+          "confidence_after": 0.963,
+          "needs_review": false
+        },
+        "1B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 6,
+          "engine_words": 6,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.965,
+          "needs_review": false
+        },
+        "1C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.76",
+          "our_words": 1450,
+          "engine_words": 1097,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.963,
+          "needs_review": false
+        },
+        "2": {
+          "verdict": "agree",
+          "detail": "95% shingle containment, length ratio 0.99",
+          "our_words": 789,
+          "engine_words": 783,
+          "overlap": 0.946,
+          "our_status": "pass",
+          "confidence_after": 0.962,
+          "needs_review": false
+        },
+        "3": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 51,
+          "engine_words": 51,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.664,
+          "needs_review": false
+        },
+        "4": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.78",
+          "our_words": 7,
+          "engine_words": 9,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.965,
+          "needs_review": false
+        },
+        "5": {
+          "verdict": "agree",
+          "detail": "82% shingle containment, length ratio 0.95",
+          "our_words": 448,
+          "engine_words": 424,
+          "overlap": 0.815,
+          "our_status": "pass",
+          "confidence_after": 0.966,
+          "needs_review": false
+        },
+        "6": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 3,
+          "engine_words": 3,
+          "overlap": 1.0,
+          "our_status": "reserved",
+          "confidence_after": 0.867,
+          "needs_review": false
+        },
+        "7": {
+          "verdict": "agree",
+          "detail": "92% shingle containment, length ratio 0.98",
+          "our_words": 16509,
+          "engine_words": 16252,
+          "overlap": 0.925,
+          "our_status": "pass",
+          "confidence_after": 0.966,
+          "needs_review": false
+        },
+        "7A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.97",
+          "our_words": 94,
+          "engine_words": 97,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.666,
+          "needs_review": false
+        },
+        "8": {
+          "verdict": "agree",
+          "detail": "87% shingle containment, length ratio 0.97",
+          "our_words": 28573,
+          "engine_words": 27775,
+          "overlap": 0.872,
+          "our_status": "pass",
+          "confidence_after": 0.966,
+          "needs_review": false
+        },
+        "9": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.83",
+          "our_words": 15,
+          "engine_words": 18,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.966,
+          "needs_review": false
+        },
+        "9A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 241,
+          "engine_words": 241,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.965,
+          "needs_review": false
+        },
+        "9B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 318,
+          "engine_words": 318,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.964,
+          "needs_review": false
+        },
+        "9C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.79",
+          "our_words": 11,
+          "engine_words": 14,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.966,
+          "needs_review": false
+        },
+        "10": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 363,
+          "engine_words": 363,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.966,
+          "needs_review": false
+        },
+        "11": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 18,
+          "engine_words": 18,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.664,
+          "needs_review": false
+        },
+        "12": {
+          "verdict": "agree",
+          "detail": "78% shingle containment, length ratio 0.97",
+          "our_words": 153,
+          "engine_words": 149,
+          "overlap": 0.78,
+          "our_status": "pass",
+          "confidence_after": 0.866,
+          "needs_review": false
+        },
+        "13": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 24,
+          "engine_words": 24,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.566,
+          "needs_review": false
+        },
+        "14": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.95",
+          "our_words": 36,
+          "engine_words": 38,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.665,
+          "needs_review": false
+        },
+        "15": {
+          "verdict": "agree",
+          "detail": "66% shingle containment, length ratio 0.97",
+          "our_words": 3752,
+          "engine_words": 3645,
+          "overlap": 0.66,
+          "our_status": "pass",
+          "confidence_after": 0.959,
+          "needs_review": false
+        },
+        "16": {
+          "verdict": "disagree",
+          "detail": "boundary mismatch: same content but ours 7w vs edgartools 251w (ratio 0.03) \u2014 one engine's span runs long or cuts short",
+          "our_words": 7,
+          "engine_words": 251,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.876,
+          "needs_review": true
+        }
+      }
+    },
+    {
+      "ticker": "XOM",
+      "cik": 34088,
+      "accession": "0000034088-26-000045",
+      "filing_class": "standard",
+      "engine_parsed": true,
+      "engine_items": [
+        "1",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "1A",
+        "1B",
+        "1C",
+        "2",
+        "3",
+        "4",
+        "5",
+        "7",
+        "7A",
+        "8",
+        "9",
+        "9A",
+        "9B",
+        "9C"
+      ],
+      "verdicts": {
+        "agree": 20,
+        "disagree": 3,
+        "engine_unavailable": 0
+      },
+      "items": {
+        "1": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 1.00",
+          "our_words": 985,
+          "engine_words": 981,
+          "overlap": 0.993,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "1A": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 0.99",
+          "our_words": 5220,
+          "engine_words": 5184,
+          "overlap": 0.992,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "1B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 6,
+          "engine_words": 6,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "1C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.98",
+          "our_words": 522,
+          "engine_words": 514,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "2": {
+          "verdict": "agree",
+          "detail": "75% shingle containment, length ratio 0.94",
+          "our_words": 5990,
+          "engine_words": 5651,
+          "overlap": 0.753,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "3": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 38,
+          "engine_words": 38,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "4": {
+          "verdict": "agree",
+          "detail": "75% shingle containment, length ratio 0.94",
+          "our_words": 511,
+          "engine_words": 480,
+          "overlap": 0.753,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "5": {
+          "verdict": "agree",
+          "detail": "86% shingle containment, length ratio 0.97",
+          "our_words": 301,
+          "engine_words": 293,
+          "overlap": 0.857,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "6": {
+          "verdict": "agree",
+          "detail": "both engines find no content for this item",
+          "our_words": 0,
+          "engine_words": 0,
+          "overlap": 0.0,
+          "our_status": "reserved",
+          "confidence_after": 0.0,
+          "needs_review": false
+        },
+        "7": {
+          "verdict": "disagree",
+          "detail": "content mismatch: only 21% of the shorter span's text appears in the longer one (ours 40w vs edgartools 19548w)",
+          "our_words": 40,
+          "engine_words": 19548,
+          "overlap": 0.214,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.636,
+          "needs_review": true
+        },
+        "7A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.88",
+          "our_words": 68,
+          "engine_words": 60,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.6,
+          "needs_review": false
+        },
+        "8": {
+          "verdict": "disagree",
+          "detail": "content mismatch: only 4% of the shorter span's text appears in the longer one (ours 96w vs edgartools 26152w)",
+          "our_words": 96,
+          "engine_words": 26152,
+          "overlap": 0.045,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.545,
+          "needs_review": true
+        },
+        "9": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 14,
+          "engine_words": 14,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.98",
+          "our_words": 321,
+          "engine_words": 313,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.88",
+          "our_words": 49,
+          "engine_words": 56,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.85",
+          "our_words": 11,
+          "engine_words": 13,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "10": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 205,
+          "engine_words": 205,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "11": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.82",
+          "our_words": 44,
+          "engine_words": 36,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "12": {
+          "verdict": "agree",
+          "detail": "84% shingle containment, length ratio 1.00",
+          "our_words": 315,
+          "engine_words": 316,
+          "overlap": 0.843,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "13": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 51,
+          "engine_words": 51,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "14": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.95",
+          "our_words": 37,
+          "engine_words": 39,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "15": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 34,
+          "engine_words": 34,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.693,
+          "needs_review": false
+        },
+        "16": {
+          "verdict": "disagree",
+          "detail": "boundary mismatch: same content but ours 7w vs edgartools 3436w (ratio 0.00) \u2014 one engine's span runs long or cuts short",
+          "our_words": 7,
+          "engine_words": 3436,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.909,
+          "needs_review": true
+        }
+      }
+    },
+    {
+      "ticker": "NEM",
+      "cik": 1164727,
+      "accession": "0001164727-26-000010",
+      "filing_class": "standard",
+      "engine_parsed": true,
+      "engine_items": [
+        "1",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "1A",
+        "1B",
+        "1C",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "7A",
+        "8",
+        "9",
+        "9A",
+        "9B",
+        "9C"
+      ],
+      "verdicts": {
+        "agree": 22,
+        "disagree": 1,
+        "engine_unavailable": 0
+      },
+      "items": {
+        "1": {
+          "verdict": "agree",
+          "detail": "97% shingle containment, length ratio 0.99",
+          "our_words": 8120,
+          "engine_words": 8024,
+          "overlap": 0.973,
+          "our_status": "pass",
+          "confidence_after": 0.885,
+          "needs_review": false
+        },
+        "1A": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 1.00",
+          "our_words": 33154,
+          "engine_words": 33053,
+          "overlap": 0.993,
+          "our_status": "pass",
+          "confidence_after": 0.891,
+          "needs_review": false
+        },
+        "1B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 6,
+          "engine_words": 6,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "1C": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 0.99",
+          "our_words": 1093,
+          "engine_words": 1085,
+          "overlap": 0.987,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "2": {
+          "verdict": "agree",
+          "detail": "76% shingle containment, length ratio 0.93",
+          "our_words": 24372,
+          "engine_words": 22635,
+          "overlap": 0.755,
+          "our_status": "pass",
+          "confidence_after": 0.888,
+          "needs_review": false
+        },
+        "3": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.95",
+          "our_words": 63,
+          "engine_words": 66,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "4": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 521,
+          "engine_words": 523,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "5": {
+          "verdict": "agree",
+          "detail": "93% shingle containment, length ratio 0.99",
+          "our_words": 508,
+          "engine_words": 504,
+          "overlap": 0.935,
+          "our_status": "pass",
+          "confidence_after": 0.808,
+          "needs_review": false
+        },
+        "6": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 4,
+          "engine_words": 4,
+          "overlap": 1.0,
+          "our_status": "reserved",
+          "confidence_after": 0.989,
+          "needs_review": false
+        },
+        "7": {
+          "verdict": "agree",
+          "detail": "94% shingle containment, length ratio 0.99",
+          "our_words": 24144,
+          "engine_words": 23846,
+          "overlap": 0.94,
+          "our_status": "pass",
+          "confidence_after": 0.8,
+          "needs_review": false
+        },
+        "7A": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 0.99",
+          "our_words": 1643,
+          "engine_words": 1634,
+          "overlap": 0.986,
+          "our_status": "pass",
+          "confidence_after": 0.799,
+          "needs_review": false
+        },
+        "8": {
+          "verdict": "agree",
+          "detail": "92% shingle containment, length ratio 0.98",
+          "our_words": 40158,
+          "engine_words": 39507,
+          "overlap": 0.924,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.82",
+          "our_words": 14,
+          "engine_words": 17,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9A": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 1.00",
+          "our_words": 1434,
+          "engine_words": 1430,
+          "overlap": 0.995,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 775,
+          "engine_words": 778,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.85",
+          "our_words": 11,
+          "engine_words": 13,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "10": {
+          "verdict": "agree",
+          "detail": "95% shingle containment, length ratio 0.99",
+          "our_words": 1850,
+          "engine_words": 1833,
+          "overlap": 0.954,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "11": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.97",
+          "our_words": 98,
+          "engine_words": 101,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "12": {
+          "verdict": "agree",
+          "detail": "92% shingle containment, length ratio 0.99",
+          "our_words": 298,
+          "engine_words": 295,
+          "overlap": 0.917,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "13": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 88,
+          "engine_words": 88,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "14": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.96",
+          "our_words": 54,
+          "engine_words": 56,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "15": {
+          "verdict": "agree",
+          "detail": "97% shingle containment, length ratio 0.99",
+          "our_words": 3800,
+          "engine_words": 3778,
+          "overlap": 0.971,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "16": {
+          "verdict": "disagree",
+          "detail": "content mismatch: only 0% of the shorter span's text appears in the longer one (ours 7w vs edgartools 19w)",
+          "our_words": 7,
+          "engine_words": 19,
+          "overlap": 0.0,
+          "our_status": "pass",
+          "confidence_after": 0.909,
+          "needs_review": true
+        }
+      }
+    },
+    {
+      "ticker": "MRNA",
+      "cik": 1682852,
+      "accession": "0001682852-26-000033",
+      "filing_class": "standard",
+      "engine_parsed": true,
+      "engine_items": [
+        "1",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "1A",
+        "1B",
+        "1C",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "7A",
+        "8",
+        "9",
+        "9A",
+        "9B",
+        "9C"
+      ],
+      "verdicts": {
+        "agree": 22,
+        "disagree": 1,
+        "engine_unavailable": 0
+      },
+      "items": {
+        "1": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 0.99",
+          "our_words": 24986,
+          "engine_words": 24839,
+          "overlap": 0.99,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "1A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 28493,
+          "engine_words": 28493,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "1B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 6,
+          "engine_words": 6,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "1C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 578,
+          "engine_words": 578,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "2": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 595,
+          "engine_words": 595,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "3": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 1794,
+          "engine_words": 1794,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "4": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.70",
+          "our_words": 7,
+          "engine_words": 10,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "5": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 519,
+          "engine_words": 519,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "6": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 3,
+          "engine_words": 3,
+          "overlap": 1.0,
+          "our_status": "reserved",
+          "confidence_after": 0.867,
+          "needs_review": false
+        },
+        "7": {
+          "verdict": "agree",
+          "detail": "97% shingle containment, length ratio 1.00",
+          "our_words": 7869,
+          "engine_words": 7831,
+          "overlap": 0.971,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "7A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 897,
+          "engine_words": 897,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "8": {
+          "verdict": "agree",
+          "detail": "92% shingle containment, length ratio 0.99",
+          "our_words": 20020,
+          "engine_words": 19730,
+          "overlap": 0.924,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "9": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 14,
+          "engine_words": 14,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "9A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 1386,
+          "engine_words": 1386,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "9B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 392,
+          "engine_words": 392,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "9C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.79",
+          "our_words": 11,
+          "engine_words": 14,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "10": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 69,
+          "engine_words": 69,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "11": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 65,
+          "engine_words": 65,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "12": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 75,
+          "engine_words": 75,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "13": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 71,
+          "engine_words": 71,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.667,
+          "needs_review": false
+        },
+        "14": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.97",
+          "our_words": 83,
+          "engine_words": 86,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.661,
+          "needs_review": false
+        },
+        "15": {
+          "verdict": "agree",
+          "detail": "98% shingle containment, length ratio 1.00",
+          "our_words": 1150,
+          "engine_words": 1148,
+          "overlap": 0.984,
+          "our_status": "pass",
+          "confidence_after": 0.967,
+          "needs_review": false
+        },
+        "16": {
+          "verdict": "disagree",
+          "detail": "boundary mismatch: same content but ours 7w vs edgartools 398w (ratio 0.02) \u2014 one engine's span runs long or cuts short",
+          "our_words": 7,
+          "engine_words": 398,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 0.879,
+          "needs_review": true
+        }
+      }
+    },
+    {
+      "ticker": "KO",
+      "cik": 21344,
+      "accession": "0001628280-26-010047",
+      "filing_class": "standard",
+      "engine_parsed": true,
+      "engine_items": [
+        "1",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "1A",
+        "1B",
+        "1C",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "7A",
+        "8",
+        "9",
+        "9A",
+        "9B",
+        "9C"
+      ],
+      "verdicts": {
+        "agree": 23,
+        "disagree": 0,
+        "engine_unavailable": 0
+      },
+      "items": {
+        "1": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 8299,
+          "engine_words": 8299,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "1A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 13670,
+          "engine_words": 13670,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "1B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 7,
+          "engine_words": 7,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "1C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 1102,
+          "engine_words": 1102,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "2": {
+          "verdict": "agree",
+          "detail": "87% shingle containment, length ratio 0.96",
+          "our_words": 366,
+          "engine_words": 350,
+          "overlap": 0.869,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "3": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 3578,
+          "engine_words": 3578,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "4": {
+          "verdict": "agree",
+          "detail": "91% shingle containment, length ratio 0.98",
+          "our_words": 1076,
+          "engine_words": 1056,
+          "overlap": 0.906,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "5": {
+          "verdict": "agree",
+          "detail": "84% shingle containment, length ratio 0.96",
+          "our_words": 596,
+          "engine_words": 573,
+          "overlap": 0.842,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "6": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 3,
+          "engine_words": 3,
+          "overlap": 1.0,
+          "our_status": "reserved",
+          "confidence_after": 0.889,
+          "needs_review": false
+        },
+        "7": {
+          "verdict": "agree",
+          "detail": "98% shingle containment, length ratio 1.00",
+          "our_words": 17042,
+          "engine_words": 16974,
+          "overlap": 0.982,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "7A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 937,
+          "engine_words": 937,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "8": {
+          "verdict": "agree",
+          "detail": "92% shingle containment, length ratio 0.99",
+          "our_words": 36640,
+          "engine_words": 36102,
+          "overlap": 0.915,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 15,
+          "engine_words": 15,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9A": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 215,
+          "engine_words": 215,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9B": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 58,
+          "engine_words": 58,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "9C": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.85",
+          "our_words": 11,
+          "engine_words": 13,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        },
+        "10": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 62,
+          "engine_words": 62,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "11": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 41,
+          "engine_words": 41,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "12": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 51,
+          "engine_words": 51,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "13": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 47,
+          "engine_words": 47,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "14": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 0.96",
+          "our_words": 44,
+          "engine_words": 46,
+          "overlap": 1.0,
+          "our_status": "incorporated_by_reference",
+          "confidence_after": 0.7,
+          "needs_review": false
+        },
+        "15": {
+          "verdict": "agree",
+          "detail": "99% shingle containment, length ratio 1.00",
+          "our_words": 8746,
+          "engine_words": 8741,
+          "overlap": 0.992,
+          "our_status": "pass",
+          "confidence_after": 0.994,
+          "needs_review": false
+        },
+        "16": {
+          "verdict": "agree",
+          "detail": "100% shingle containment, length ratio 1.00",
+          "our_words": 7,
+          "engine_words": 7,
+          "overlap": 1.0,
+          "our_status": "pass",
+          "confidence_after": 1.0,
+          "needs_review": false
+        }
+      }
+    }
+  ]
+}

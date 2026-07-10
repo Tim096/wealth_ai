@@ -24,6 +24,7 @@ sec = [
     "httpx>=0.27",
     "lxml>=5.0",
     "beautifulsoup4>=4.12",
+    "edgartools==5.42.0",  # third-engine triangulation (sec_core.third_engine)
 ]
 
 [tool.setuptools.packages.find]

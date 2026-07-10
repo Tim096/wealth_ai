@@ -17,10 +17,14 @@ from sec_core.confidence import ConfidenceComponent as CC
 from sec_core.headings import VALID_CODES, HeadingCandidate
 from sec_core.items import CANONICAL_ITEM_TITLES, ItemSegment
 from sec_core.normalize import NormalizedDocument
+from sec_core.refine import (
+    classify_reference_stub,
+    detect_appended_section_cut,
+    is_boilerplate_none,
+    trim_trailing_furniture,
+)
 
 _SIGNATURES_RE = re.compile(r"^\s*signatures?\s*$", re.IGNORECASE | re.MULTILINE)
-_INCORPORATED_RE = re.compile(r"incorporated\s+(?:herein\s+)?by\s+reference", re.IGNORECASE)
-_CROSS_REF_RE = re.compile(r"(?:refer\s+to|see)\s+item\s+\d{1,2}[a-cA-C]?\b", re.IGNORECASE)
 _RESERVED_RE = re.compile(r"\breserved\b", re.IGNORECASE)
 
 AMBIGUITY_MARGIN = 0.85  # runner-up score / winner score above this => ambiguous
@@ -126,11 +130,23 @@ def _evidence_for(doc: NormalizedDocument, item: ResolvedItem) -> list[BoundaryE
 
 
 def _confidence(doc: NormalizedDocument, item: ResolvedItem, start: int, end: int,
-                verifier_pass: bool) -> ConfidenceBreakdown:
+                verifier_pass: bool, content_kind: str) -> ConfidenceBreakdown:
     c = item.chosen
     assert c is not None
     length = end - start
     detector_count = len(c.detectors)
+    # A reference stub captured a pointer, not the item's content — it must not
+    # score like a clean pass. This is what makes confidence discriminate
+    # (the audit found a flat ~0.958 regardless of stub vs full content).
+    subst_score, subst_reason = {
+        "substantive": (2.0, "body is substantive item content"),
+        "boilerplate_none": (2.0, "body is a complete 'None.'/'Not applicable.' answer"),
+        "combined": (1.2, "two items share one combined span"),
+        "reference_stub": (0.0, "body is only a pointer to content located elsewhere"),
+    }[content_kind]
+    # A stub trivially satisfies the machine checks (heading present, nonempty),
+    # so 'verifier pass' is not evidence of real content for a stub.
+    verifier_score = 1.0 if (verifier_pass and content_kind != "reference_stub") else 0.0
     comps = [
         CC(name="heading_strength", score=2.0 if "strict_regex" in c.detectors else 1.0,
            max_score=2.0,
@@ -149,8 +165,11 @@ def _confidence(doc: NormalizedDocument, item: ResolvedItem, start: int, end: in
            reason=f"segment length {length} chars"),
         CC(name="cross_detector_agreement", score=min(detector_count, 3) / 3.0, max_score=1.0,
            reason=f"{detector_count} independent detectors agree"),
-        CC(name="verifier_result", score=1.0 if verifier_pass else 0.0, max_score=1.0,
-           reason="verifier pass" if verifier_pass else "verifier did not pass"),
+        CC(name="content_substantiveness", score=subst_score, max_score=2.0, reason=subst_reason),
+        CC(name="verifier_result", score=verifier_score, max_score=1.0,
+           reason="verifier pass" if verifier_score else
+           ("stub body: verifier pass not counted as real content" if content_kind == "reference_stub"
+            else "verifier did not pass")),
     ]
     return ConfidenceBreakdown(components=comps)
 
@@ -165,11 +184,23 @@ def resolve_items(doc: NormalizedDocument, candidates: list[HeadingCandidate],
     # min-over-later (not "next in list") so combined items sharing one start
     # both get the full shared span instead of a zero-length one.
     all_starts = sorted({r.chosen.start for _, r in chosen_items})  # type: ignore[union-attr]
+    terminal_code = chosen_items[-1][0] if chosen_items else None
     ends: dict[str, int] = {}
+    appended_excluded: dict[str, tuple[int, int]] = {}  # code -> (cut_end, raw_end)
     for code, r in chosen_items:
         assert r.chosen is not None
         later = [s for s in all_starts if s > r.chosen.start]
-        ends[code] = later[0] if later else _end_of_document_body(doc, r.chosen.end)
+        raw_end = later[0] if later else _end_of_document_body(doc, r.chosen.end)
+        # Terminal-item runaway guard: a filing may bind an appended Financial
+        # Section / annual report after the last item heading (the JPM/XOM
+        # "wrapper 10-K" pattern). Cut it off so the terminal item does not
+        # swallow ~300K-1M chars of misattributed financial statements.
+        if code == terminal_code:
+            cut = detect_appended_section_cut(doc, r.chosen.start, raw_end)
+            if cut is not None:
+                appended_excluded[code] = (cut, raw_end)
+                raw_end = cut
+        ends[code] = raw_end
 
     segments: list[ItemSegment] = []
     breakdowns: dict[str, ConfidenceBreakdown] = {}
@@ -190,8 +221,24 @@ def resolve_items(doc: NormalizedDocument, candidates: list[HeadingCandidate],
             continue
 
         start, end = r.chosen.start, ends[code]
+        # strip trailing page furniture (PART dividers, page numbers, running
+        # headers) that would otherwise leak into the span end
+        end, trimmed = trim_trailing_furniture(doc, start, end)
         text = doc.slice(start, end)
         warnings = list(r.warnings)
+        if trimmed:
+            warnings.append(f"trimmed trailing page furniture: {', '.join(trimmed)}")
+        if code in appended_excluded:
+            cut, raw = appended_excluded[code]
+            warnings.append(
+                f"excluded {raw - cut} chars of an appended non-item section (bound financial "
+                f"statements / annual report) that followed this item's body; items that point "
+                f"into it are marked incorporated_by_reference"
+            )
+
+        # body = text after the heading line — what we classify
+        nl = text.find("\n")
+        body = text[nl + 1:].strip() if nl != -1 else ""
 
         # verifier: machine-checkable conditions, three-state
         checks = [
@@ -208,22 +255,23 @@ def resolve_items(doc: NormalizedDocument, candidates: list[HeadingCandidate],
         verdict = combine_checks(checks)
 
         status = "pass"
+        content_kind = "substantive"
+        ref_target = classify_reference_stub(body)
         if r.chosen.combined_with:
             warnings.append(
                 f"combined heading: items {code} and {r.chosen.combined_with} share one span"
             )
             status = "partial"
-        body_len = len(text) - len(r.chosen.heading_text)
-        if code in {"10", "11", "12", "13", "14"} and len(text) < 4000 and _INCORPORATED_RE.search(text):
+            content_kind = "combined"
+        elif ref_target is not None:
+            # Short body that only points elsewhere (proxy, another item, a
+            # financial-statement note, an appended section, a page range).
+            # Marking this pass would be a silent failure — SPEC 7.2 / 4.1.
             status = "incorporated_by_reference"
-            warnings.append("content incorporated by reference to proxy statement; span is the reference text only")
-        elif body_len < 600 and _CROSS_REF_RE.search(text):
-            # e.g. JPM Item 11: entire body is "Refer to Item 10." — a stub
-            # pointing at another item, not real content. Marking this pass
-            # would be a silent failure.
-            status = "incorporated_by_reference"
+            content_kind = "reference_stub"
             warnings.append(
-                "body is a cross-reference stub to another item; span is the reference text only"
+                f"body is a reference stub pointing to {ref_target}; the span is the pointer "
+                f"text only, not the referenced content"
             )
         elif code == "6" and len(text.strip()) < 200 and _RESERVED_RE.search(text):
             status = "reserved"
@@ -235,8 +283,10 @@ def resolve_items(doc: NormalizedDocument, candidates: list[HeadingCandidate],
         elif verdict.status == "unknown":
             status = "ambiguous"
             warnings.append(f"verifier: {verdict.reason}")
+        elif is_boilerplate_none(body):
+            content_kind = "boilerplate_none"
 
-        breakdown = _confidence(doc, r, start, end, verdict.status == "pass")
+        breakdown = _confidence(doc, r, start, end, verdict.status == "pass", content_kind)
         breakdowns[code] = breakdown
 
         segments.append(ItemSegment(

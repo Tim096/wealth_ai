@@ -25,6 +25,7 @@ class ConfidenceBreakdown(BaseModel):
         "toc_disambiguation",
         "boundary_length_sanity",
         "cross_detector_agreement",
+        "content_substantiveness",
         "verifier_result",
     )
 

@@ -40,16 +40,60 @@ from llm_core.config import load_llm_config             # noqa: E402
 from sec_core.coverage import compute_gaps, coverage_ratio  # noqa: E402
 from sec_core.fetcher import EdgarFetcher               # noqa: E402
 from sec_core.main_doc import pick_main_document        # noqa: E402
+from sec_core.normalize import normalize_html           # noqa: E402
 from sec_core.pipeline import extract_from_html         # noqa: E402
 from sec_core.resolver import FilingResolver            # noqa: E402
 from sec_core.xbrl import certify_item8                 # noqa: E402
 
 # ---------------------------------------------------------------- SEC side
+import re                                                # noqa: E402
 _SEC_LOCK = threading.Lock()
-_SEC_STATE: dict = {"result": None, "meta": None}
+_SEC_STATE: dict = {"result": None, "meta": None, "exhibits": []}
+
+# A 10-K FILING is more than its main document: the real exhibits (21.1 List
+# of Subsidiaries, 23.1 Consent, 31/32 Certifications, 97.1 Clawback) are
+# SEPARATE files. The user is right that "everything must be there" — so we
+# fetch those exhibit documents too and expose them as searchable regions,
+# instead of silently limiting the tool to the main htm.
+_EXHIBIT_RE = re.compile(r"-ex(\d+)\.htm?l?$", re.I)
+_EXHIBIT_NAMES = {"21": "List of Subsidiaries", "23": "Consent of Accountants",
+                  "31": "Certification (Sec. 302)", "32": "Certification (Sec. 906)",
+                  "24": "Power of Attorney", "97": "Clawback Policy", "10": "Material Contract",
+                  "4": "Instrument Defining Rights", "3": "Bylaws / Charter"}
+_MAX_EXHIBITS = 20
 
 
-def _items_payload(result, meta: dict) -> dict:
+def _exhibit_meta(name: str) -> tuple[str, str]:
+    m = _EXHIBIT_RE.search(name)
+    d = m.group(1) if m else ""
+    num = f"{d[:-1]}.{d[-1]}" if len(d) >= 3 else d      # 211 -> 21.1
+    friendly = _EXHIBIT_NAMES.get(d[:2], "") or _EXHIBIT_NAMES.get(d[:1], "")
+    title = f"Exhibit {num}" + (f" · {friendly}" if friendly else "")
+    return f"ex:{d}", title
+
+
+def _fetch_exhibits(fetcher, ref) -> list[dict]:
+    """Fetch + normalize the filing's real exhibit .htm files (not the R*.htm
+    XBRL render fragments), so their text is viewable and searchable."""
+    out = []
+    for fl in ref.files:
+        if len(out) >= _MAX_EXHIBITS:
+            break
+        if not _EXHIBIT_RE.search(fl.name) or re.match(r"R\d+\.htm", fl.name, re.I):
+            continue
+        try:
+            raw = fetcher.get(ref.file_url(fl.name)).content.decode("utf-8", errors="replace")
+            text = normalize_html(raw).text
+        except Exception:  # noqa: BLE001 — one bad exhibit must not fail the filing
+            continue
+        if text.strip():
+            code, title = _exhibit_meta(fl.name)
+            out.append({"code": code, "title": title, "file": fl.name, "text": text})
+    out.sort(key=lambda e: e["code"])
+    return out
+
+
+def _items_payload(result, meta: dict, exhibits: list[dict] | None = None) -> dict:
     items = []
     for s in result.segments:
         items.append({
@@ -67,8 +111,10 @@ def _items_payload(result, meta: dict) -> dict:
                  else (f"Item {g.after_code} 之後" if g.after_code else f"Item {g.before_code} 之前"))
         gaps.append({"code": f"gap:{g.start}-{g.end}", "title": f"未分類內容 ({where})",
                      "chars": g.chars, "preview": g.preview})
+    exs = [{"code": e["code"], "title": e["title"], "file": e["file"], "chars": len(e["text"])}
+           for e in (exhibits or [])]
     meta = {**meta, "coverage": round(coverage_ratio(result.doc.text, result.segments), 4)}
-    return {"ok": True, "meta": meta, "items": items, "gaps": gaps}
+    return {"ok": True, "meta": meta, "items": items, "gaps": gaps, "exhibits": exs}
 
 
 def sec_extract(query: str) -> dict:
@@ -91,11 +137,12 @@ def sec_extract(query: str) -> dict:
                 xbrl = certify_item8(result, fetcher, cik, ref.accession).verdict
             except Exception:  # noqa: BLE001 — certification is best-effort enrichment
                 xbrl = ""
+        exhibits = _fetch_exhibits(fetcher, ref)
         meta = {"source": query.upper(), "form": ref.form, "report_date": ref.report_date,
                 "accession": ref.accession, "filing_class": result.filing_class,
                 "xbrl_item8": xbrl, "latency_ms": round(result.latency_ms)}
-        _SEC_STATE.update(result=result, meta=meta)
-        return _items_payload(result, meta)
+        _SEC_STATE.update(result=result, meta=meta, exhibits=exhibits)
+        return _items_payload(result, meta, exhibits)
 
 
 def sec_upload(text: str, name: str) -> dict:
@@ -105,8 +152,8 @@ def sec_upload(text: str, name: str) -> dict:
         meta = {"source": name, "form": "upload", "report_date": "-", "accession": "-",
                 "filing_class": result.filing_class, "xbrl_item8": "",
                 "latency_ms": round(result.latency_ms)}
-        _SEC_STATE.update(result=result, meta=meta)
-        return _items_payload(result, meta)
+        _SEC_STATE.update(result=result, meta=meta, exhibits=[])
+        return _items_payload(result, meta, [])
 
 
 def _slice_body(text: str, full_chars: int) -> tuple[str, bool]:
@@ -138,6 +185,18 @@ def sec_item_text(code: str) -> dict:
                 "needs_review": True, "sha256": "", "offsets": [a, b],
                 "full_chars": len(body), "truncated": truncated,
                 "xbrl": "", "topic": "", "warnings": [], "text": text}
+    # ex:<digits> — a real exhibit document fetched from the filing (List of
+    # Subsidiaries, Certifications…), which lives in a SEPARATE file.
+    if code.startswith("ex:"):
+        ex = next((e for e in _SEC_STATE.get("exhibits", []) if e["code"] == code), None)
+        if ex is None:
+            return {"ok": False, "error": f"無 {code}"}
+        text, truncated = _slice_body(ex["text"], len(ex["text"]))
+        return {"ok": True, "code": code, "title": ex["title"], "status": "exhibit",
+                "confidence": 0.0, "provenance": "filing_exhibit", "needs_review": False,
+                "sha256": "", "offsets": [0, len(ex["text"])], "full_chars": len(ex["text"]),
+                "truncated": truncated, "xbrl": "", "topic": "",
+                "warnings": [f"獨立 exhibit 檔:{ex['file']}"], "text": text}
     seg = next((s for s in result.segments if s.item_code == code), None)
     if seg is None:
         return {"ok": False, "error": f"無 Item {code}"}
@@ -194,6 +253,15 @@ def sec_find(q: str) -> dict:
         hits.append({"code": code, "k": k})   # k-th occurrence within that region
         at = low.find(needle, at + max(1, len(needle)))
     total = low.count(needle)
+    # also search the filing's separate exhibit documents (subsidiaries etc.)
+    for e in _SEC_STATE.get("exhibits", []):
+        elow = e["text"].lower()
+        total += elow.count(needle)
+        p, k = elow.find(needle), 0
+        while p >= 0 and len(hits) < _FIND_MAX_HITS:
+            hits.append({"code": e["code"], "k": k})
+            k += 1
+            p = elow.find(needle, p + max(1, len(needle)))
     return {"ok": True, "found": bool(hits), "count": total, "hits": hits,
             "capped": total > len(hits)}
 
@@ -365,7 +433,7 @@ def _agent_worker() -> None:
                                      artifact_dir=OUT / "shots",
                                      evidence_store=EvidenceStore(OUT / "evidence"),
                                      downloads_dir=OUT / "downloads")
-                run = agent.run_agentic(run_id, contract, planner, max_steps=14,
+                run = agent.run_agentic(run_id, contract, planner, max_steps=18,
                                         on_step=lambda t: rec["steps"].append(t))
                 rec.update(status=run.status, confidence=run.confidence,
                            verifier=run.verifier.reason,

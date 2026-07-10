@@ -136,7 +136,7 @@
     <div class="meta" id="sMeta"></div>
     <div id="sFind" class="hidden" style="margin-top:.5rem;display:flex;gap:.5rem;align-items:center;
          background:var(--panel2);border:1px solid var(--accent);border-radius:8px;padding:.4rem .6rem">
-      <span class="mono" style="font-size:.72rem;color:var(--accent)">Ctrl+F 跳到 Item</span>
+      <span class="mono" style="font-size:.72rem;color:var(--accent)">搜尋全文</span>
       <input type="text" id="sFindQ" placeholder="打 item 代號或任何內文:1A · risk factor · 財報 · property, plant…"
              style="flex:1;min-width:0" autocomplete="off">
       <span class="mono sub" id="sFindInfo" style="white-space:nowrap"></span>
@@ -167,7 +167,7 @@ const PILL={pass:'p-pass',partial:'p-warn',incorporated_by_reference:'p-warn',am
   missing:'p-grey',reserved:'p-grey',unsupported:'p-fail',refused:'p-fail',fail:'p-fail',
   certified:'p-pass',contradicted:'p-fail',consistent:'p-pass',weak:'p-warn',
   inconsistent:'p-fail',boilerplate:'p-grey',unknown:'p-warn',error:'p-fail',running:'p-warn',
-  unclassified:'p-grey'};
+  unclassified:'p-grey',exhibit:'p-warn'};
 const pill=(t)=>`<span class="pill ${PILL[t]||'p-grey'}">${t}</span>`;
 
 // tabs
@@ -214,11 +214,13 @@ $('#aRun').onclick=async()=>{
 let SEC_ITEMS=[];          // last extracted item list (code/title/…) for find
 let SEC_DOC={head:'',text:''};  // last shown item body, for highlight re-render
 function renderSec(d){
-  $('#sFind').classList.add('hidden');SEC_SHOWN='';SEC_DOC={head:'',text:''};
+  $('#sFind').classList.add('hidden');SEC_SHOWN='';SEC_DOC={head:'',text:''};$('#sFindQ').value='';$('#sFindInfo').textContent='';
   if(!d.ok){SEC_ITEMS=[];$('#sMeta').innerHTML=`<span class="pill p-fail">錯誤</span> ${d.error}`;return;}
-  SEC_ITEMS=(d.items||[]).concat(d.gaps||[]);   // gaps are searchable/jumpable too
+  // gaps AND exhibits are searchable/jumpable regions too
+  SEC_ITEMS=(d.items||[]).concat(d.gaps||[]).concat(d.exhibits||[]);
+  $('#sFind').classList.remove('hidden');    // search + ▲▼ always available once loaded
   const m=d.meta;
-  const cov=m.coverage!=null?`<span>本文覆蓋 <b class="mono">${(m.coverage*100).toFixed(1)}%</b>${(d.gaps||[]).length?` · 未分類 ${d.gaps.length} 段`:''}</span>`:'';
+  const cov=m.coverage!=null?`<span>本文覆蓋 <b class="mono">${(m.coverage*100).toFixed(1)}%</b>${(d.gaps||[]).length?` · 未分類 ${d.gaps.length} 段`:''}${(d.exhibits||[]).length?` · 附件 ${d.exhibits.length} 份`:''}</span>`:'';
   $('#sMeta').innerHTML=`<span><b>${m.source}</b> · ${m.form} ${m.report_date}</span>
     <span>filing_class <b class="mono">${m.filing_class}</b></span>
     ${m.xbrl_item8?`<span>Item 8 XBRL ${pill(m.xbrl_item8)}</span>`:''}
@@ -248,11 +250,24 @@ function renderSec(d){
     tr.onclick=()=>{selectRow(g.code);showItem(g.code);};
     tb.appendChild(tr);
   });
+  // filing exhibits (List of Subsidiaries, Certifications…) — separate files,
+  // now fetched so "everything is there" and searchable
+  (d.exhibits||[]).forEach(e=>{
+    const tr=document.createElement('tr');
+    tr.dataset.code=e.code;
+    tr.innerHTML=`<td class="mono" style="color:var(--accent)">附件</td>
+      <td>${pill('exhibit')}</td><td class="mono sub">–</td>
+      <td class="sub" colspan="2">${e.title}</td>
+      <td class="mono">${e.chars.toLocaleString()}</td>`;
+    tr.onclick=()=>{selectRow(e.code);showItem(e.code);};
+    tb.appendChild(tr);
+  });
 }
 async function showItem(code,highlight){
   const d=await(await fetch('/api/sec/item?code='+encodeURIComponent(code))).json();
   if(!d.ok){$('#sDoc').textContent=d.error;return d;}
-  const head=`Item ${d.code}. ${d.title}\n`+
+  const label=(d.code.startsWith('gap:')||d.code.startsWith('ex:'))?d.title:`Item ${d.code}. ${d.title}`;
+  const head=`${label}\n`+
     `status=${d.status}  conf=${d.confidence}  provenance=${d.provenance}  needs_review=${d.needs_review}\n`+
     `offset=[${d.offsets}]  sha256=${d.sha256}  chars=${(d.full_chars??0).toLocaleString()}\n`+
     (d.xbrl?`xbrl: ${d.xbrl}\n`:'')+(d.topic?`topic: ${d.topic}\n`:'')+
@@ -326,9 +341,10 @@ async function gotoHit(idx,r){
   const h=SEC_HITS[SEC_HIT];
   if(h.code!==SEC_SHOWN){selectRow(h.code);await showItem(h.code, SEC_HIT_Q);SEC_SHOWN=h.code;}
   focusMark(h.k);
-  const where=String(h.code).startsWith('gap:')?'未分類':('Item '+h.code);
-  const total=(r&&r.count)||SEC_HITS.length;
-  $('#sFindInfo').textContent=`第 ${SEC_HIT+1}/${total} 處 · ${where}`+((r&&r.capped)?' (前 500)':'');
+  const c=String(h.code);
+  const where=c.startsWith('gap:')?'未分類':(c.startsWith('ex:')?'附件':('Item '+h.code));
+  $('#sFindInfo').textContent=`第 ${SEC_HIT+1}/${SEC_HITS.length} 處 · ${where}`
+    +((r&&r.capped)?` (全文共 ${r.count},顯示前 ${SEC_HITS.length})`:'');
 }
 function stepHit(d){if(SEC_HITS.length)gotoHit(SEC_HIT+d,null);}
 $('#sFindNext').onclick=()=>stepHit(1);
@@ -337,9 +353,11 @@ $('#sFindQ').addEventListener('input',e=>secJump(e.target.value));
 $('#sFindQ').addEventListener('keydown',e=>{
   if(e.key==='Escape'){closeFind();}
   else if(e.key==='Enter'){e.preventDefault();stepHit(e.shiftKey?-1:1);}});
-$('#sFindX').onclick=()=>closeFind();
+$('#sFindX').onclick=()=>clearFind();
 function openFind(){$('#sFind').classList.remove('hidden');const q=$('#sFindQ');q.focus();q.select();}
-function closeFind(){$('#sFind').classList.add('hidden');$('#sFindInfo').textContent='';renderDoc();}
+// the bar is persistent once a filing loads; ✕/Esc clears the query + marks
+function clearFind(){$('#sFindQ').value='';$('#sFindInfo').textContent='';SEC_HITS=[];renderDoc();$('#sFindQ').focus();}
+function closeFind(){clearFind();}
 document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='f'&&!$('#tab-sec').classList.contains('hidden')){
     e.preventDefault();openFind();}

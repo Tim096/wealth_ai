@@ -6,12 +6,13 @@
 
 | 目錄 | 內容 |
 |---|---|
-| `browser_agent/` | planner / repair / capability routing prompts |
-| `sec_extractor/` | boundary adjudicator prompts |
-| `eval_design/` | eval set 設計 prompts |
-| `failure_triage/` | failure 診斷 prompts |
-| `rejected_prompts/` | 被拒絕的設計與其理由 |
-| `project/` | 專案層級決策 prompts(架構、stack、流程) |
+| `browser_agent/` | browser agent 設計 / repair / capability 決策 |
+| `eval_design/` | eval set 設計、對抗式稽核、XBRL 決策 |
+| `failure_triage/` | failure 診斷(如 JPM cross-ref stub) |
+| `rejected_prompts/` | 被拒絕的設計與理由(TS-first stack、vision-model repair) |
+| `project/` | 專案層級決策(SPEC 導入、commit 粒度) |
+
+> `sec_extractor/` 的 boundary/adjudicator 決策目前併在 `eval_design/` 與 `failure_triage/`(SEC 尚未觸發 LLM adjudicator);待 adjudicator 實際啟用再獨立成目錄。
 
 ## 格式
 

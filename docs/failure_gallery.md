@@ -107,6 +107,27 @@
 
 FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 加上一層**外部 oracle**:Item 8 對照 SEC XBRL companyfacts 的營收/淨利/總資產。11 家 sweep:7 家 pass 全被 XBRL `certified`、3 家 wrapper stub 被 `contradicted`,**pipeline 分類與獨立 oracle 零分歧**。這回答主管的核心問題「如何確保 status 可信」——不是 AI 自述,是對照結構化事實。詳見 `prompts/eval_design/2026-07-10-xbrl-and-cross-ref.md`。
 
+## FG-BROWSER-001: v2 UI 漂移導致 selector 全失效 + decoy button 陷阱
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-BROWSER-001 |
+| App | browser_agent |
+| Input | mock site v2 上執行「搜尋 widget」;selector memory 帶著 v1 學到的 `#search-box` / `#search-btn` |
+| Expected | 找到搜尋框、送出、看到結果 |
+| Actual(修復前 / 無 repair) | `#search-box` 命中 0 元素(v2 移除該 id);cookie modal 攔截點擊;頁面有一個 text=「Search」的 **decoy button**(`#fake-search`)什麼都不做 |
+| Status | fixed(repair 迴圈處理)|
+| Failure Type | selector_not_found + modal_blocking + deceptive_button |
+| Evidence | `runs/browser_demo/trace.json`:step traces 含 diagnosis、considered candidates、chosen selector、screenshots |
+| Root Cause | UI 漂移:id 移除、button→icon(`#go` aria-label=Search)、cookie modal、decoy button、lazy render |
+| Repair Attempt | (1) 偵測 modal_blocking → 關閉;(2) selector_not_found → a11y 樹枚舉候選,依 purpose 評分:search_box 找到 `input[name=query]`(placeholder/aria 命中),submit_button 找到 `#go`(type=submit,score 5.5)**而非 decoy**(decoy score −1);(3) 小步驗證 → verifier pass;(4) 更新 selector memory |
+| Why It Still Failed | (已修復)|
+| Self-maintenance 證據 | 下一個 v2 task(gizmo)**0 repair**——memory 已學到新 selector,漂移成本攤平 |
+| Related Prompt | prompts/browser_agent/2026-07-10-selector-repair-design.md |
+| Related Commit | feat(browser): implement capability-aware agent with selector self-repair |
+
+**誠實邊界:** 這是 local mock site 的注入式漂移(可控、可重現);真實網站的漂移泛化尚未證明,列為 roadmap(WebArena/WebVoyager,見 prior_art)。
+
 ## 稽核方法本身(元層次)
 
 這四個 FG 都不是我「讀 code 想出來的」,而是 **56 個 agent 的對抗式稽核**跑真實 filing 跑出來的,且每個都經過獨立 verifier「盡力反駁」後才留下(12 個被反駁的 anomaly 沒進這裡)。這個「用 AI 對抗式驗證 AI 產出」的 harness 本身,就是 SPEC 17 想證明的「AI 時代最稀缺的是驗證能力」。詳見 `prompts/eval_design/2026-07-10-adversarial-audit-workflow.md`。

@@ -1,0 +1,19 @@
+{
+  "note": "Result summary of the adversarial-audit workflow (56 agents: 11 per-ticker auditors -> per-anomaly independent verifiers that try to REFUTE each finding). Full method: prompts/eval_design/2026-07-10-adversarial-audit-workflow.md. Confirmed anomalies became docs/failure_gallery.md FG-SEC-002..004 and were fixed. These counts are the real workflow output, not hand-entered estimates.",
+  "date": "2026-07-10",
+  "agents": 56,
+  "agents_completed": 54,
+  "agents_errored": 2,
+  "anomalies_confirmed": 31,
+  "anomalies_refuted": 12,
+  "confirmed_classes": [
+    "reference_stub_mislabeled_pass",
+    "trailing_furniture_leak",
+    "terminal_runaway (wrapper 10-K)"
+  ],
+  "silent_failures_before": 31,
+  "silent_failures_after": 0,
+  "pass_rate_before": 0.759,
+  "pass_rate_after": 0.700,
+  "source": "workflow run wf_1286d108-bf0"
+}

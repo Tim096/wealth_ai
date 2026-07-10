@@ -40,6 +40,16 @@
       "expect_repairs": 0,
       "success_text": ["Widget"],
       "note": "empty result: the success contract requires a real product to be visible; the agent must NOT fake pass on 0 results"
+    },
+    {
+      "task_id": "search-v3-heldout",
+      "layer": "held_out",
+      "site": "v3_heldout",
+      "query": "widget",
+      "expect_status": "pass",
+      "expect_repairs_min": 1,
+      "success_text": ["results for", "Widget"],
+      "note": "HELD-OUT: a never-before-seen structure (textarea role=searchbox, a role=button, table results). Tests whether the a11y-tree repair GENERALIZES, not whether it memorized v2 selectors"
     }
   ]
 }

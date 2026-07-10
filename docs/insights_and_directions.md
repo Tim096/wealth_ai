@@ -45,12 +45,12 @@
 
 **買 vs 建(data vendor)**:如果目標是「拿到乾淨的 10-K item 文字」,訂閱資料商(你提到的 massive 之類,或 Intrinio / S&P Capital IQ / Bloomberg)在**覆蓋率與維護成本**上會贏過自建 parser——尤其是 edge case 的長尾。自建的價值在:(a) 可控、可審計、無授權限制的 source-exact span;(b) 資料商沒有的 item-level boundary evidence 與 confidence。**實務決策**:核心財報數字買(XBRL 免費、深度數據訂閱),item-level 結構化文字自建(可驗證性是賣點)。這個 trade-off 本身應寫進 `cost_latency_report.md` 的 scalability 段。→ 如果團隊要走這條,我需要知道預算與授權立場(見文末問題)。
 
-## 4. Browser Agent:實務場景與 adaptation(Phase 2 尚未實作,先講清楚方向)
+## 4. Browser Agent:實務場景與 adaptation(已實作,含 killer demo + eval)
 
 現有設計(受控 action space、task contract verifier、selector memory、failure taxonomy)對應的真實場景:
 
 - **監控型爬蟲**(法遵、價格、政府公告):真實痛點不是「點得到」,是「網站改版後靜默壞掉沒人知道」。selector memory + DOM fingerprint + 對抗式 mock site 正是為此設計——UI 一變,repair 有 evidence,不是靜默回傳舊資料。
-- **RPA / 表單自動化**:企業內部系統。這裡「可逆、無登入、無金流」的邊界不是保守,是**責任邊界**——把不可逆操作擋在 capability router 外,是能不能上 production 的關鍵。
+- **RPA / 表單自動化**:企業內部系統。這裡「可逆、無登入、無金流」的邊界不是保守,是**責任邊界**——由 code-enforced capability guard(`packages/browser_agent/capability.py`:`screen_task` / `screen_action`)把 login/purchase/checkout/submit 擋在外,task 回 `refused`。這是能不能上 production 的關鍵,且已是程式強制,非文件宣示。
 - **Agent 評測基建**:更大的機會是把這套 verifier + evidence + 對抗式 eval 抽出來,當成「別人的 browser agent 的評測平台」。市面上 browser agent 很多,能證明它何時失敗的很少。
 
 **Killer demo 的意義**(mock site v1→v2、selector 故意失效、agent 用 accessibility tree 找候選、小步驗證、verifier pass、記憶更新):它證明的不是「能點網站」,是「網站變了我能自己修並拿出證據」。這是 production 可靠性的核心,也是 autonomous agent 最不會主動做的。

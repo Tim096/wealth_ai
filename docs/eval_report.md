@@ -79,16 +79,36 @@ Item 8 對照 SEC companyfacts 的營收/淨利/總資產(非 LLM,免費、可�
 
 | 判定 | 家數 | 對應 pipeline status |
 |---|---|---|
-| certified(2–3/3 數字命中)| 7(AAPL/MSFT/GS/WMT/CAT/NEM/MRNA/KO)| 全部 pass |
-| contradicted(0/3)| 3(NVDA/JPM/XOM)| 全部 incorporated_by_reference(wrapper)|
+| certified(2–3/3 數字命中)| **8**(AAPL/MSFT/NVDA*/GS/WMT/CAT/NEM/MRNA/KO 之中 status=pass 者)| 全部 pass |
+| contradicted(0/3)| 3(NVDA/JPM/XOM 的 Item 8 stub)| 全部 incorporated_by_reference(wrapper)|
 
-**pipeline 結構分類與獨立 XBRL oracle 零分歧。** 這是 high-confidence precision 的硬證據:被標 pass 的 Item 8,獨立事實源全數佐證。防禦是縱深的——若某結構 heuristic 未來誤標 Item 8 pass,XBRL 會抓到。
+> 數字為 `tools/certify.py` 實際輸出,committed 於 `data/sec_eval/certification/item8_certification.json`(可重跑)。certify 現在會把 verdict 寫回 `ItemSegment.xbrl_check`,並在 pipeline 標 pass 但 XBRL contradicted 時翻成 needs_review——oracle 真正 gate 輸出,不只 print。
+
+**pipeline 結構分類與獨立 XBRL oracle 零分歧(disagreements: none)。** 這是 high-confidence precision 的硬證據:被標 pass 的 Item 8,獨立事實源全數佐證。防禦是縱深的——若某結構 heuristic 未來誤標 Item 8 pass,XBRL 會抓到並降級。
+
+## Browser Agent(題目一)
+
+Eval set(`data/browser_eval/tasks.json`,4 tasks,分層,offline mock sites)+ runner(`tools/browser_eval.py`)。實測 metrics(`runs/browser_eval/results.json`):
+
+| Metric | 值 | 意義 |
+|---|---|---|
+| task success rate | 1.0 | 支援任務完成率 |
+| **verifier false-positive rate** | **0.0** | 空結果 task 正確判 fail,**不偽裝成功** |
+| repair success rate | 0.5 | 見下註 |
+| trace completeness | 1.0 | 每個 run 都有完整 trace + screenshots |
+| verdict accuracy | 1.0 | 判定與 ground truth 一致 |
+
+- **Killer demo(SPEC 15)**:v1 script mode pass(0 repair)→ v2 UI 漂移(id 移除、button→icon、cookie modal、decoy button、lazy render)→ 偵測 selector_not_found + modal_blocking → a11y-tree 修復(避開 decoy)→ verifier pass → memory 更新。trace 在 `runs/browser_demo/trace.json`。
+- **自我維護證據**:v2-gizmo task **0 repair**——selector memory 從前一個 v2 task 學到新 selector,漂移成本攤平。
+- **誠實邊界(code-enforced)**:capability guard 拒絕 login/purchase/checkout/submit(`packages/browser_agent/capability.py`),task 回 `refused`;非 docs-only。
+- repair success rate 0.5 的說明:2 個含 repair 的 task 中,v2-widget repair 後 pass;v1-nonexistent 的 repair 找到了元素(repair 本身成功),但任務因空結果**正確判 fail**——這裡 metric 定義偏保守(以 task 最終 pass 計),不是 repair 失敗。
+
+### Browser held-out / 真實網站(誠實邊界)
+
+目前 eval 為 local mock sites(可控 UI 漂移,offline 可重現)。真實網站廣度 + WebArena/WebVoyager 對標列為 roadmap(`docs/prior_art.md`)。這是刻意選擇:mock sites 讓 selector-repair 的 before/after 可重現且無 flakiness,但尚未證明真實網站泛化——如實揭露。
 
 ### 已知殘留(誠實邊界)
 
 1. **Wrapper / cross-reference-index 的真實內容尚未還原。** JPM/XOM/Intel/Citi 現在誠實標成 incorporated_by_reference / needs_review 指向 appended section 或年報,但 pipeline 還沒把那段 MD&A/財報「接回」對應 item。刻意不出貨脆弱的 title-based 猜測(Intel 正文無 emphasis 標記、標題重複當頁首,會出錯)——**錯的正文比誠實的指標更糟**。這需要 page-anchor resolution(第二遍),見 `insights_and_directions.md` §2。
 2. **golden boundary IoU 尚未量化。** 目前用 status-level golden labels(合成 fixtures)+ 真實 filing 的對抗式稽核 + XBRL oracle。真實 filing 的 token-level IoU 需 manual span 標註,列為 backlog。
-
-## Browser Agent
-
-Phase 2,尚未實作。實作後補 task success rate、verifier false positive rate、repair success rate、silent failure rate。
+3. **`data/sec_eval/records/sweep1` 是刻意保留的修復前 baseline**,其 Item 8 仍顯示舊的(錯誤)pass——用於 before/after 對照(見上方 metrics 表)。當前正確結果在 `sweep2`。

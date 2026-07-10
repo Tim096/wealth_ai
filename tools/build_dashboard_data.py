@@ -96,10 +96,13 @@ def sec_section() -> dict:
 
 
 def audit_section() -> dict:
-    # from the adversarial-audit workflow (docs/eval_report.md)
-    return {"agents": 56, "anomalies_confirmed": 31, "anomalies_refuted": 12,
-            "silent_failures_before": 31, "silent_failures_after": 0,
-            "pass_before": 0.759, "pass_after": 0.700}
+    # read the committed audit artifact — no hardcoded numbers
+    a = json.loads((ROOT / "data" / "audit" / "adversarial_audit_2026-07-10.json").read_text(encoding="utf-8"))
+    return {"agents": a["agents"], "anomalies_confirmed": a["anomalies_confirmed"],
+            "anomalies_refuted": a["anomalies_refuted"],
+            "silent_failures_before": a["silent_failures_before"],
+            "silent_failures_after": a["silent_failures_after"],
+            "pass_before": a["pass_rate_before"], "pass_after": a["pass_rate_after"]}
 
 
 def browser_section() -> dict:

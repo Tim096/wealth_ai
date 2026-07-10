@@ -97,11 +97,12 @@ def detect_cross_reference_index(
                    f"normal filing with a TOC, not a cross-reference index",
         )
 
-    clustered = [c for c in candidates if best_lo <= c.start <= best_hi]
+    clustered = sorted((c for c in candidates if best_lo <= c.start <= best_hi),
+                       key=lambda c: c.start)
     page_refs: dict[str, str] = {}
     entries: dict[str, str] = {}
     entry_span: dict[str, tuple[int, int]] = {}
-    for c in clustered:
+    for i, c in enumerate(clustered):
         nxt = _following_line(doc, c)
         entries.setdefault(c.code, nxt)
         # this item's OWN index entry: its heading line, extended to include the
@@ -114,13 +115,19 @@ def detect_cross_reference_index(
                     end = ln.end if _PAGE_REF_RE.match(ln.text.strip()) else c.end
                     break
             entry_span[c.code] = (c.start, end)
-        # the page ref may be glued to the title (Citi "1A.Risk Factors49-62")
-        trailing = re.search(r"(\d{1,4}(?:\s*[-–]\s*\d{1,4})?(?:\s*,\s*\d[\d\s,\-–]*)?)\s*$",
-                             c.heading_text)
-        if _PAGE_REF_RE.match(nxt):
-            page_refs.setdefault(c.code, nxt)
-        elif trailing and c.code not in page_refs:
-            page_refs.setdefault(c.code, trailing.group(1).strip())
+        # Gather ALL page references in this item's whole index sub-block
+        # (heading -> next item heading). An item's entry can list several
+        # sub-topics each with their own page ranges (Intel Item 1 / Item 7);
+        # reading only the first line misses most of them.
+        sub_end = clustered[i + 1].start if i + 1 < len(clustered) else min(best_hi + 1, len(doc.text))
+        sub = doc.text[c.end:sub_end]
+        refs = re.findall(r"pages?\s+\d[\d,\s\-–]*", sub, re.IGNORECASE)
+        if not refs:  # Citi form: page range glued to the title line
+            trailing = re.search(r"(\d{1,4}(?:\s*[-–]\s*\d{1,4})?)\s*$", c.heading_text)
+            if trailing:
+                refs = [trailing.group(1)]
+        if refs and c.code not in page_refs:
+            page_refs[c.code] = "; ".join(r.strip() for r in refs)
 
     ratio = len(page_refs) / max(1, len(best_codes))
     clustered_starts = sorted(c.start for c in clustered)

@@ -66,27 +66,27 @@ def build_page_map(doc: NormalizedDocument) -> PageMap:
 
 
 def resolve_page_ref(pm: PageMap, page_ref: str) -> tuple[int, int] | None:
-    """Map a page reference string ('Pages 37-51', '49-62', '11, 32') to a
-    (start_offset, end_offset) span, or None if it can't be resolved."""
+    """Map a page reference string to a (start_offset, end_offset) span. The
+    string may list several ranges/pages ("Pages 3-5, 18; Pages 3-24, 33"); we
+    resolve the LARGEST contiguous range as the item's primary span (the bulk
+    of its content), which the caller marks partial + needs_review because the
+    remaining scattered references are not included."""
     if not pm.ok:
         return None
-    m = _PAGE_RANGE.search(page_ref)
-    if m:
-        a, b = int(m.group(1)), int(m.group(2))
-    else:
+    # candidate (start_page, end_page) pairs: explicit ranges, then bare pages
+    ranges = [(int(m.group(1)), int(m.group(2))) for m in _PAGE_RANGE.finditer(page_ref)]
+    if not ranges:
         nums = [int(x) for x in _BARE_NUM.findall(page_ref)]
-        if not nums:
-            return None
-        a = b = nums[0]
-    if not (pm.lo_page <= a <= pm.hi_page):
+        ranges = [(n, n) for n in nums]
+    # keep only ranges that fall inside the recovered pagination, pick the widest
+    valid = [(a, min(b, pm.hi_page)) for a, b in ranges if pm.lo_page <= a <= pm.hi_page]
+    if not valid:
         return None
-    b = min(b, pm.hi_page)
+    a, b = max(valid, key=lambda r: r[1] - r[0])
     # content of page A begins just after the page-(A-1) footer (or at the run
     # start); content of page B ends at the page-B footer marker.
-    start = pm.marker_end.get(a - 1)
-    if start is None:
-        start = pm.marker_start.get(a)
-    end = pm.marker_start.get(b)
+    start = pm.marker_end.get(a - 1) or pm.marker_start.get(a)
+    end = pm.marker_start.get(b) or pm.marker_end.get(b)
     if start is None or end is None or end <= start:
         return None
     return start, end

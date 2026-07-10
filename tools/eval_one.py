@@ -19,6 +19,7 @@ from sec_core.fetcher import EdgarFetcher
 from sec_core.main_doc import pick_main_document
 from sec_core.pipeline import extract_from_html
 from sec_core.resolver import FilingResolver
+from sec_core.xbrl import certify_item8
 
 ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE = ROOT / "data" / "sec_eval" / "evidence"
@@ -40,6 +41,12 @@ def run(ticker: str):
     run_id = f"sec-{ticker}-{ref.accession}"
     result = extract_from_html(raw, filing_id=f"{ticker}-{ref.accession}",
                                evidence_store=store, run_id=run_id)
+    # apply the XBRL oracle so the SHIPPED record carries the gated Item 8 status
+    if result.filing_class == "standard":
+        try:
+            certify_item8(result, fetcher, cik, ref.accession)
+        except Exception:  # noqa: BLE001 — certification is best-effort enrichment
+            pass
     return ref, best, raw, result
 
 
@@ -74,6 +81,7 @@ def main() -> None:
                 "confidence": round(seg.confidence, 3),
                 "provenance": seg.provenance,
                 "needs_review": seg.needs_review,
+                "xbrl_check": seg.xbrl_check,
                 "heading": seg.extracted_heading,
                 "span_chars": (seg.end_offset - seg.start_offset)
                 if seg.status not in ("missing", "reserved") or seg.text_sha256 else 0,

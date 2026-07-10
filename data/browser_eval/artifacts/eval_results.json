@@ -1,0 +1,83 @@
+{
+  "metrics": {
+    "tasks": 5,
+    "verdict_accuracy": 1.0,
+    "task_success_rate": 1.0,
+    "verifier_false_positive_rate": 0.0,
+    "repair_success_rate": 0.667,
+    "trace_completeness": 1.0,
+    "avg_latency_ms": 625.9
+  },
+  "tasks": [
+    {
+      "task_id": "search-v1-widget",
+      "layer": "mock_baseline",
+      "site": "v1",
+      "status": "pass",
+      "expected": "pass",
+      "correct": true,
+      "confidence": 1.0,
+      "repairs": 0,
+      "false_positive": false,
+      "trace_complete": true,
+      "latency_ms": 614.4,
+      "verifier_reason": "all conditions observed and satisfied"
+    },
+    {
+      "task_id": "search-v2-widget-drift",
+      "layer": "mock_drift",
+      "site": "v2",
+      "status": "pass",
+      "expected": "pass",
+      "correct": true,
+      "confidence": 0.8,
+      "repairs": 2,
+      "false_positive": false,
+      "trace_complete": true,
+      "latency_ms": 679.2,
+      "verifier_reason": "all conditions observed and satisfied"
+    },
+    {
+      "task_id": "search-v2-gizmo-drift",
+      "layer": "mock_drift",
+      "site": "v2",
+      "status": "pass",
+      "expected": "pass",
+      "correct": true,
+      "confidence": 1.0,
+      "repairs": 0,
+      "false_positive": false,
+      "trace_complete": true,
+      "latency_ms": 619.5,
+      "verifier_reason": "all conditions observed and satisfied"
+    },
+    {
+      "task_id": "search-v1-nonexistent",
+      "layer": "adversarial_empty",
+      "site": "v1",
+      "status": "fail",
+      "expected": "fail",
+      "correct": true,
+      "confidence": 0.0,
+      "repairs": 2,
+      "false_positive": false,
+      "trace_complete": true,
+      "latency_ms": 612.7,
+      "verifier_reason": "violated: text_visible:Widget"
+    },
+    {
+      "task_id": "search-v3-heldout",
+      "layer": "held_out",
+      "site": "v3_heldout",
+      "status": "pass",
+      "expected": "pass",
+      "correct": true,
+      "confidence": 0.8,
+      "repairs": 2,
+      "false_positive": false,
+      "trace_complete": true,
+      "latency_ms": 603.5,
+      "verifier_reason": "all conditions observed and satisfied"
+    }
+  ]
+}

@@ -1,0 +1,236 @@
+{
+ "ticker": "INTC",
+ "accession": "0000050863-26-000011",
+ "filing_class": "cross_reference_index",
+ "needs_review_items": [
+  "1",
+  "1A",
+  "1B",
+  "1C",
+  "2",
+  "3",
+  "4",
+  "5",
+  "7",
+  "7A",
+  "8",
+  "9",
+  "9A",
+  "9B",
+  "9C",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16"
+ ],
+ "items": {
+  "1": {
+   "status": "incorporated_by_reference",
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "span_chars": 1664,
+   "warnings": [
+    "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
+   ]
+  },
+  "1A": {
+   "status": "incorporated_by_reference",
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "span_chars": 1664,
+   "warnings": [
+    "cross-reference-index 10-K: this item's body is NOT in an addressable Item section; the filing points to the bound annual report at page(s) Pages 37-51. Body resolution requires following the pointer into the annual-report exhibit (not yet implemented) \u2014 this is a pointer, not extracted content."
+   ]
+  },
+  "1B": {
+   "status": "missing",
+   "provenance": "unresolved",
+   "needs_review": true,
+   "span_chars": 0,
+   "warnings": [
+    "cross-reference index lists item 1B as 'None' \u2014 treated as no-content but not source-span verified; needs_review"
+   ]
+  },
+  "1C": {
+   "status": "incorporated_by_reference",
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "span_chars": 1664,
+   "warnings": [
+    "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
+   ]
+  },
+  "2": {
+   "status": "incorporated_by_reference",
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "span_chars": 1664,
+   "warnings": [
+    "cross-reference-index 10-K: this item's body is NOT in an addressable Item section; the filing points to the bound annual report at page(s) Pages 11, 32. Body resolution requires following the pointer into the annual-report exhibit (not yet implemented) \u2014 this is a pointer, not extracted content."
+   ]
+  },
+  "3": {
+   "status": "incorporated_by_reference",
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "span_chars": 1664,
+   "warnings": [
+    "cross-reference-index 10-K: this item's body is NOT in an addressable Item section; the filing points to the bound annual report at page(s) Pages 102-105. Body resolution requires following the pointer into the annual-report exhibit (not yet implemented) \u2014 this is a pointer, not extracted content."
+   ]
+  },
+  "4": {
+   "status": "missing",
+   "provenance": "unresolved",
+   "needs_review": true,
+   "span_chars": 0,
+   "warnings": [
+    "cross-reference index lists item 4 as 'None' \u2014 treated as no-content but not source-span verified; needs_review"
+   ]
+  },
+  "5": {
+   "status": "incorporated_by_reference",
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "span_chars": 1664,
+   "warnings": [
+    "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
+   ]
+  },
+  "6": {
+   "status": "reserved",
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "span_chars": 0,
+   "warnings": []
+  },
+  "7": {
+   "status": "incorporated_by_reference",
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "span_chars": 1664,
+   "warnings": [
+    "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
+   ]
+  },
+  "7A": {
+   "status": "incorporated_by_reference",
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "span_chars": 1664,
+   "warnings": [
+    "cross-reference-index 10-K: this item's body is NOT in an addressable Item section; the filing points to the bound annual report at page(s) Pages 33. Body resolution requires following the pointer into the annual-report exhibit (not yet implemented) \u2014 this is a pointer, not extracted content."
+   ]
+  },
+  "8": {
+   "status": "incorporated_by_reference",
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "span_chars": 1664,
+   "warnings": [
+    "cross-reference-index 10-K: this item's body is NOT in an addressable Item section; the filing points to the bound annual report at page(s) Pages 56-108. Body resolution requires following the pointer into the annual-report exhibit (not yet implemented) \u2014 this is a pointer, not extracted content."
+   ]
+  },
+  "9": {
+   "status": "missing",
+   "provenance": "unresolved",
+   "needs_review": true,
+   "span_chars": 0,
+   "warnings": [
+    "cross-reference index lists item 9 as 'None' \u2014 treated as no-content but not source-span verified; needs_review"
+   ]
+  },
+  "9A": {
+   "status": "incorporated_by_reference",
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "span_chars": 1664,
+   "warnings": [
+    "cross-reference-index 10-K: this item's body is NOT in an addressable Item section; the filing points to the bound annual report at page(s) Page 109. Body resolution requires following the pointer into the annual-report exhibit (not yet implemented) \u2014 this is a pointer, not extracted content."
+   ]
+  },
+  "9B": {
+   "status": "incorporated_by_reference",
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "span_chars": 1664,
+   "warnings": [
+    "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
+   ]
+  },
+  "9C": {
+   "status": "missing",
+   "provenance": "unresolved",
+   "needs_review": true,
+   "span_chars": 0,
+   "warnings": [
+    "cross-reference index lists item 9C as 'None' \u2014 treated as no-content but not source-span verified; needs_review"
+   ]
+  },
+  "10": {
+   "status": "incorporated_by_reference",
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "span_chars": 1664,
+   "warnings": [
+    "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
+   ]
+  },
+  "11": {
+   "status": "incorporated_by_reference",
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "span_chars": 1664,
+   "warnings": [
+    "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
+   ]
+  },
+  "12": {
+   "status": "incorporated_by_reference",
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "span_chars": 1664,
+   "warnings": [
+    "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
+   ]
+  },
+  "13": {
+   "status": "incorporated_by_reference",
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "span_chars": 1664,
+   "warnings": [
+    "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
+   ]
+  },
+  "14": {
+   "status": "incorporated_by_reference",
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "span_chars": 1664,
+   "warnings": [
+    "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
+   ]
+  },
+  "15": {
+   "status": "incorporated_by_reference",
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "span_chars": 1664,
+   "warnings": [
+    "cross-reference-index 10-K: this item's body is NOT in an addressable Item section; the filing points to the bound annual report at page(s) Pages 56-108, 110-115. Body resolution requires following the pointer into the annual-report exhibit (not yet implemented) \u2014 this is a pointer, not extracted content."
+   ]
+  },
+  "16": {
+   "status": "missing",
+   "provenance": "unresolved",
+   "needs_review": true,
+   "span_chars": 0,
+   "warnings": [
+    "cross-reference index lists item 16 as 'None' \u2014 treated as no-content but not source-span verified; needs_review"
+   ]
+  }
+ }
+}

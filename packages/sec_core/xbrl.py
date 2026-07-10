@@ -101,10 +101,14 @@ def validate_span(span_text: str, key_facts: dict[str, int]) -> XbrlCheck:
 
 def certify_item8(result, fetcher, cik: int, accession: str) -> XbrlCheck:
     """Run the oracle against a live ExtractionResult and WRITE the verdict back
-    onto the Item 8 segment (segment.xbrl_check). If the pipeline marked Item 8
-    `pass` but the oracle contradicts it, flip the segment to needs_review with
-    a warning — so the independent check actually gates the shipped status
-    instead of living only in a CLI print.
+    onto the Item 8 segment (segment.xbrl_check). If the segment is `pass` but
+    the oracle contradicts it, flip it to needs_review with a warning.
+
+    Gating happens wherever this is called: tools/eval_one.py runs it so the
+    committed eval records carry the gated status; tools/certify.py runs it for
+    the certification artifact. The core extract_from_html stays network-free
+    and deterministic by design — certification is a separate, opt-in pass so
+    the offline parser has no hidden network dependency.
     """
     facts = key_facts_for_accession(fetch_company_facts(fetcher, cik), accession)
     seg = next(s for s in result.segments if s.item_code == "8")

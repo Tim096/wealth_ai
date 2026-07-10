@@ -71,4 +71,4 @@ verified_score (0-10). Default to skepticism; raise only if code genuinely over-
 
 ## 為何保存
 
-這兩個 harness 本身就是 SPEC 17「AI 時代最稀缺的是驗證能力」的演出:用對抗式 AI 證偽 AI 產出。第一個抓到 15 個 silent failure(FG-SEC-002..004);第二個把作品從自報「完成」逼到誠實 7.5/10 並列出具體缺口。保存 prompt 讓評審能重跑、能檢視我們如何驗證。
+這兩個 harness 本身就是 SPEC 17「AI 時代最稀缺的是驗證能力」的演出:用對抗式 AI 證偽 AI 產出。第一個 workflow 確認 **31 個 anomaly**(反駁 12 個),其中的 silent-failure classes 導致 **15 個 item 被重新分類**(pass 192→177),對應 FG-SEC-002..004;第二個把作品從自報「完成」逐輪逼到誠實 6.5→7.5→7.9/10 並列出具體缺口。保存 prompt 讓評審能重跑、能檢視我們如何驗證。

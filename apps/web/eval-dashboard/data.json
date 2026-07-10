@@ -228,7 +228,7 @@
     "status": "pass",
     "confidence": 1.0,
     "repairs": 0,
-    "total_latency_ms": 627.1,
+    "total_latency_ms": 623.4,
     "verifier": {
      "status": "pass",
      "reason": "all conditions observed and satisfied",
@@ -251,7 +251,7 @@
       "repair_considered": [],
       "repair_chosen": "",
       "selector_used": "#search-box",
-      "latency_ms": 12.5,
+      "latency_ms": 13.5,
       "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v1\\search_box-ok.png"
      },
      {
@@ -264,7 +264,7 @@
       "repair_considered": [],
       "repair_chosen": "",
       "selector_used": "#search-btn",
-      "latency_ms": 47.8,
+      "latency_ms": 38.0,
       "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v1\\submit_button-ok.png"
      }
     ]
@@ -276,7 +276,7 @@
     "status": "pass",
     "confidence": 0.8,
     "repairs": 2,
-    "total_latency_ms": 676.7,
+    "total_latency_ms": 694.1,
     "verifier": {
      "status": "pass",
      "reason": "all conditions observed and satisfied",
@@ -299,7 +299,7 @@
       "repair_considered": [],
       "repair_chosen": "",
       "selector_used": "#accept-cookies",
-      "latency_ms": 38.3,
+      "latency_ms": 39.5,
       "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\modal-dismissed.png"
      },
      {
@@ -316,7 +316,7 @@
       ],
       "repair_chosen": "input[name=query] score=4.5: tag=input, purpose word match",
       "selector_used": "input[name=query]",
-      "latency_ms": 9.1,
+      "latency_ms": 7.9,
       "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\search_box-repaired.png"
      },
      {
@@ -333,7 +333,7 @@
       ],
       "repair_chosen": "#go score=5.5: tag=button, purpose word match, type=submit",
       "selector_used": "#go",
-      "latency_ms": 42.8,
+      "latency_ms": 32.7,
       "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\submit_button-repaired.png"
      }
     ]

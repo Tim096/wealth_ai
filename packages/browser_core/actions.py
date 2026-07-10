@@ -71,7 +71,13 @@ class ExtractTextAction(BaseModel):
 
 class DownloadAction(BaseModel):
     type: Literal["download"] = "download"
-    target: ElementTarget
+    # Download works three ways, in priority order: an explicit `url` (save
+    # that file directly — best for an inline-rendered document like an SEC
+    # .htm), else a clickable `target` element, else the CURRENT page. A
+    # document that renders inline has no download control, so element-only
+    # downloading would dead-end.
+    target: Optional[ElementTarget] = None
+    url: str = ""
 
 
 class SnapshotAction(BaseModel):

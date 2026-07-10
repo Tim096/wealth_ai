@@ -26,8 +26,8 @@ _SYSTEM = """You are the planner of a verified browser agent. Each turn you see 
 
 OUTPUT (one JSON object, nothing else):
   "action": "fill" | "click" | "press" | "goto" | "extract_text" | "download" | "done" | "give_up"
-  "aid":    integer aid from the candidate list, or null (only goto/done/give_up may omit it)
-  "value":  fill text / key like "Enter" / goto URL; else ""
+  "aid":    integer aid from the candidate list, or null (goto/done/give_up, and download, may omit it)
+  "value":  fill text / key like "Enter" / goto URL / a URL to download; else ""
   "reason": one short sentence in the task's language
 
 CHOOSING ELEMENTS
@@ -42,7 +42,7 @@ PLAYBOOK
 - Search flows (when needed): fill the search box first, then click the submit control — or "press" Enter on the box if no reliable submit exists or a click had no effect.
 - SITE-SEARCH SEMANTICS: type what the site indexes, not the kind of document you want. A company/registry/database search wants the ENTITY name or ticker (e.g. "Intel" or "INTC"), NOT a document-type label like "10-K risk factor" — stuffing the type into the free-text box returns nothing. Enter the entity to reach its page, then use the site's own filters/facets/links (a form-type filter, a document list, a section link) to narrow to the specific document or section.
 - IF A SEARCH RETURNS NOTHING: do not give up — the query was likely wrong for this site. Re-read the results state, then either simplify the query to the bare entity name, switch to the site's filter/browse UI, or "goto" the entity's page directly.
-- Downloads: use "download" with the aid of the download link/button (the file is saved and verified on disk). If a download control isn't visible yet, navigate to it first.
+- Downloads: three forms — (a) "download" with the aid of a download link/button; (b) "download" with aid=null and value=<a document URL you can see> to save that file directly; (c) "download" with aid=null and value="" to save the CURRENT page. A document that renders INLINE (e.g. an SEC .htm opened in the viewer) has NO download button — do NOT hunt for one and do NOT give up: just emit download with the file's URL, or download the current page. The file is saved and verified on disk.
 - Navigation: "goto" with a URL you can see on the page, one given in the task, or an obvious well-known domain for a named site. Never invent a deep/guessed path — go to the site root and navigate from there.
 - USE LINK HREFS: on a list/results/index page, candidates that are links show their href=. To reach a specific row (a filing, a document, an article), "goto" that row's href directly, or "click" that exact aid — do NOT go back to a search box. On EDGAR you land on the company's filing list: goto the newest 10-K's ...-index.htm href, then on that index page goto/click the primary document (the .htm), then "download" it.
 - Reading: "extract_text" on the element that holds the answer when the task asks for information.
@@ -110,8 +110,12 @@ def _build_action(decision: dict, obs: Observation):
         return PressAction(target=target, key=value or "Enter")
     if action == "extract_text" and target:
         return ExtractTextAction(target=target)
-    if action == "download" and target:
-        return DownloadAction(target=target)
+    if action == "download":
+        # download a URL (value), a clicked element (aid), or — with neither —
+        # the CURRENT page. An inline-rendered document (SEC .htm) has no
+        # download control, so this is how "save what I'm viewing" works.
+        url = value if value.startswith(("http://", "https://")) else ""
+        return DownloadAction(target=target, url=url)
     if action == "goto" and value:
         return GotoAction(url=value)
     return None

@@ -31,6 +31,16 @@ def test_build_action_supports_download():
     assert act.type == "download" and act.target.selector == '[data-aid="5"]'
 
 
+def test_build_action_download_current_page_and_url():
+    obs = Observation(url="u", title="t", visible_text="", candidates=[])
+    # aid=null, no value -> download the CURRENT page (no dead-end on inline docs)
+    a = _build_action({"action": "download", "aid": None, "value": ""}, obs)
+    assert a is not None and a.type == "download" and a.target is None and a.url == ""
+    # aid=null with a URL -> download that file directly
+    b = _build_action({"action": "download", "aid": None, "value": "https://x/y.htm"}, obs)
+    assert b.type == "download" and b.url == "https://x/y.htm"
+
+
 @pytest.mark.integration
 @pytest.mark.parametrize("with_close_button", [False, True])
 def test_dismiss_overlay_clears_classless_popup(tmp_path, with_close_button):

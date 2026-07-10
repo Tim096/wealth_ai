@@ -20,6 +20,7 @@ from sec_core.normalize import NormalizedDocument
 
 _SIGNATURES_RE = re.compile(r"^\s*signatures?\s*$", re.IGNORECASE | re.MULTILINE)
 _INCORPORATED_RE = re.compile(r"incorporated\s+(?:herein\s+)?by\s+reference", re.IGNORECASE)
+_CROSS_REF_RE = re.compile(r"(?:refer\s+to|see)\s+item\s+\d{1,2}[a-cA-C]?\b", re.IGNORECASE)
 _RESERVED_RE = re.compile(r"\breserved\b", re.IGNORECASE)
 
 AMBIGUITY_MARGIN = 0.85  # runner-up score / winner score above this => ambiguous
@@ -212,9 +213,18 @@ def resolve_items(doc: NormalizedDocument, candidates: list[HeadingCandidate],
                 f"combined heading: items {code} and {r.chosen.combined_with} share one span"
             )
             status = "partial"
+        body_len = len(text) - len(r.chosen.heading_text)
         if code in {"10", "11", "12", "13", "14"} and len(text) < 4000 and _INCORPORATED_RE.search(text):
             status = "incorporated_by_reference"
             warnings.append("content incorporated by reference to proxy statement; span is the reference text only")
+        elif body_len < 600 and _CROSS_REF_RE.search(text):
+            # e.g. JPM Item 11: entire body is "Refer to Item 10." — a stub
+            # pointing at another item, not real content. Marking this pass
+            # would be a silent failure.
+            status = "incorporated_by_reference"
+            warnings.append(
+                "body is a cross-reference stub to another item; span is the reference text only"
+            )
         elif code == "6" and len(text.strip()) < 200 and _RESERVED_RE.search(text):
             status = "reserved"
         elif r.ambiguous:

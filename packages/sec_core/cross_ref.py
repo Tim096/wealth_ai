@@ -51,6 +51,7 @@ class CrossRefIndex:
     index_end: int = 0
     page_refs: dict[str, str] = field(default_factory=dict)  # item code -> page range text
     entries: dict[str, str] = field(default_factory=dict)    # item code -> line following the heading
+    entry_span: dict[str, tuple[int, int]] = field(default_factory=dict)  # item code -> its own index-entry offsets
     reason: str = ""
 
 
@@ -99,9 +100,20 @@ def detect_cross_reference_index(
     clustered = [c for c in candidates if best_lo <= c.start <= best_hi]
     page_refs: dict[str, str] = {}
     entries: dict[str, str] = {}
+    entry_span: dict[str, tuple[int, int]] = {}
     for c in clustered:
         nxt = _following_line(doc, c)
         entries.setdefault(c.code, nxt)
+        # this item's OWN index entry: its heading line, extended to include the
+        # immediately-following page-ref line — so an unresolved pointer shows
+        # just its own entry, never the whole index block.
+        if c.code not in entry_span:
+            end = c.end
+            for ln in doc.lines:
+                if ln.start >= c.end and ln.text.strip():
+                    end = ln.end if _PAGE_REF_RE.match(ln.text.strip()) else c.end
+                    break
+            entry_span[c.code] = (c.start, end)
         # the page ref may be glued to the title (Citi "1A.Risk Factors49-62")
         trailing = re.search(r"(\d{1,4}(?:\s*[-–]\s*\d{1,4})?(?:\s*,\s*\d[\d\s,\-–]*)?)\s*$",
                              c.heading_text)
@@ -133,6 +145,7 @@ def detect_cross_reference_index(
         index_end=best_hi,
         page_refs=page_refs,
         entries=entries,
+        entry_span=entry_span,
         reason=(f"{len(best_codes)} item headings clustered within {best_hi - best_lo} chars; "
                 f"{trigger} — cross-reference index; item bodies are not in addressable Item "
                 f"sections of the main document"),
@@ -151,7 +164,7 @@ def scan_bare_index(doc: NormalizedDocument) -> CrossRefIndex:
     and confirmed by canonical-title similarity."""
     from difflib import SequenceMatcher
 
-    hits: list[tuple[int, str, str, str]] = []  # (line_start, code, title, pageref)
+    hits: list[tuple[int, str, str, str, int]] = []  # (line_start, code, title, pageref, line_end)
     for ln in doc.lines:
         m = _BARE_INDEX_RE.match(ln.text)
         if not m:
@@ -164,7 +177,7 @@ def scan_bare_index(doc: NormalizedDocument) -> CrossRefIndex:
                               CANONICAL_ITEM_TITLES[code].casefold()).ratio()
         if sim < 0.5:
             continue
-        hits.append((ln.start, code, title, (m.group(3) or "").strip()))
+        hits.append((ln.start, code, title, (m.group(3) or "").strip(), ln.end))
 
     if len({h[1] for h in hits}) < _MIN_CLUSTERED_ITEMS:
         return CrossRefIndex(detected=False, reason="no bare cross-reference index found")
@@ -178,8 +191,10 @@ def scan_bare_index(doc: NormalizedDocument) -> CrossRefIndex:
 
     entries: dict[str, str] = {}
     page_refs: dict[str, str] = {}
-    for _, code, title, pageref in window:
+    entry_span: dict[str, tuple[int, int]] = {}
+    for start, code, title, pageref, end in window:
         entries.setdefault(code, pageref or title)
+        entry_span.setdefault(code, (start, end))
         if pageref:
             page_refs.setdefault(code, pageref)
     return CrossRefIndex(
@@ -188,6 +203,7 @@ def scan_bare_index(doc: NormalizedDocument) -> CrossRefIndex:
         index_end=max(h[0] for h in window),
         page_refs=page_refs,
         entries=entries,
+        entry_span=entry_span,
         reason=(f"{len(set(h[1] for h in window))} bare item entries ('<code>. <title>') "
                 f"clustered, {len(page_refs)} with page references — cross-reference index "
                 f"without the word 'Item'; item bodies are in the bound annual report"),
@@ -242,10 +258,10 @@ def build_cross_reference_segments(
                    reason="item heading present in the cross-reference index"),
             ])
             breakdowns[code] = bd
+            es = index.entry_span.get(code, (index.index_start, index.index_start))
             segments.append(ItemSegment(
                 filing_id=filing_id, item_code=code, canonical_title=canonical,
-                extracted_heading=heading, start_offset=index.index_start,
-                end_offset=index.index_end, text_sha256="",
+                extracted_heading=heading, start_offset=es[0], end_offset=es[1], text_sha256="",
                 status="incorporated_by_reference", confidence=bd.total,
                 provenance="cross_reference_pointer", needs_review=True,
                 warnings=[
@@ -279,10 +295,10 @@ def build_cross_reference_segments(
                    reason="item heading present in the cross-reference index"),
             ])
             breakdowns[code] = bd
+            es = index.entry_span.get(code, (index.index_start, index.index_start))
             segments.append(ItemSegment(
                 filing_id=filing_id, item_code=code, canonical_title=canonical,
-                extracted_heading=heading, start_offset=index.index_start,
-                end_offset=index.index_end, text_sha256="",
+                extracted_heading=heading, start_offset=es[0], end_offset=es[1], text_sha256="",
                 status="incorporated_by_reference", confidence=bd.total,
                 provenance="cross_reference_pointer", needs_review=True,
                 warnings=["cross-reference-index 10-K: item body is not in an addressable Item "

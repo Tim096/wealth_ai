@@ -23,10 +23,24 @@ from sec_core.normalize import NormalizedDocument
 
 # --- 1. trailing furniture -------------------------------------------------
 _PART_RE = re.compile(r"^part\s+[ivxlcdm]+\.?$", re.IGNORECASE)
-_PAGE_RE = re.compile(r"^\d{1,4}$")
+_PAGE_RE = re.compile(r"^\d{1,4}\.?$")  # bare page number, optionally "24."
 _TOC_RE = re.compile(r"^table of contents$", re.IGNORECASE)
 _STRAY_ITEM_RE = re.compile(r"^item\s+\d{1,2}[a-c]?\.?$", re.IGNORECASE)
 _FORM10K_RE = re.compile(r"form\s+10-?k", re.IGNORECASE)
+# a running header/footer with a page number at either end, e.g.
+# "The Procter & Gamble Company 71"  or  "66 The Procter & Gamble Company"
+_RUNNING_HEADER_NUM_RE = re.compile(
+    r"^[A-Z0-9].{0,55}?[A-Za-z)]\s+\d{1,4}$|^\d{1,4}\s+[A-Z][A-Za-z0-9 .,&'()\-]{0,54}$")
+_ENTITY_WORD_RE = re.compile(r"\b(company|corporation|inc|corp|incorporated|report|"
+                             r"form\s?10-?k|subsidiaries|holdings|group|l\.?p\.?)\b", re.IGNORECASE)
+# financial-statement / table captions that precede a table (not item prose)
+_CAPTION_RE = re.compile(r"^\(?\s*(amounts?\s+(are\s+)?in|dollars?\s+in|in)\s+"
+                         r"(millions|thousands|billions)\b", re.IGNORECASE)
+# a bare company-name running header (any case), e.g. "AT&T Inc." / "Apple Inc."
+_COMPANY_LINE_RE = re.compile(
+    r"^[A-Z0-9][A-Za-z0-9 &.,'()\-]{0,45}\b"
+    r"(inc|corp|corporation|company|co|plc|ltd|limited|l\.?p\.?|holdings|group|n\.?v\.?)\.?$",
+    re.IGNORECASE)
 
 
 def _is_furniture(line: str) -> bool:
@@ -41,6 +55,19 @@ def _is_furniture(line: str) -> bool:
             and (line.rstrip(".").endswith(("SUBSIDIARIES", "INC", "CORP", "COMPANY"))
                  or "|" in line)):
         return True  # company running-header banner, e.g. 'THE GOLDMAN SACHS GROUP, INC. AND SUBSIDIARIES'
+    # mixed-case running header ending in a page number: short, ≤7 words, no
+    # sentence punctuation, and looks like an entity/report line — e.g.
+    # "The Procter & Gamble Company 71". Requires an entity cue so we never eat
+    # a real sentence that happens to end in a number.
+    if (len(line) < 60 and _RUNNING_HEADER_NUM_RE.match(line)
+            and len(line.split()) <= 7 and "," not in line
+            and "." not in line[:-3] and _ENTITY_WORD_RE.search(line)):
+        return True
+    if len(line) < 120 and _CAPTION_RE.match(line):
+        return True  # table caption ("Amounts in millions of dollars ...")
+    if (len(line) < 45 and len(line.split()) <= 5 and "," not in line
+            and _COMPANY_LINE_RE.match(line)):
+        return True  # bare company-name running header, e.g. "AT&T Inc."
     return False
 
 

@@ -50,6 +50,18 @@ def test_cross_reference_items_are_honest_pointers():
     assert s.text_sha256 == ""
 
 
+def test_pointers_show_own_entry_not_whole_index():
+    # each unresolved pointer must span only its own index entry, never the
+    # entire index block (which would make every pointer's text identical)
+    result = extract_from_html(XREF_INDEX, "synthetic-xref")
+    ptrs = [s for s in result.segments if s.provenance == "cross_reference_pointer"
+            and s.end_offset > s.start_offset]
+    spans = {(s.start_offset, s.end_offset) for s in ptrs}
+    assert len(spans) == len(ptrs), "pointers share a span → index-block dump"
+    for s in ptrs:
+        assert (s.end_offset - s.start_offset) < 200
+
+
 def test_bare_index_without_item_prefix_detected():
     doc = normalize_html(BARE_INDEX)
     cands = detect_candidates(doc)

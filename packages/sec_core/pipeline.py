@@ -94,7 +94,10 @@ def extract_from_html(
             body = ""
         tc = check_topic(seg.item_code, body)
         seg.topic_check = f"{tc.verdict}: {tc.detail}"
-        if tc.verdict == "inconsistent" and seg.status in ("pass", "partial"):
+        # only the normal offset-exact path can be "mislabelled" — a pointer or a
+        # page-anchor-resolved span is already needs_review, so don't double-flag.
+        if (tc.verdict == "inconsistent" and seg.status == "pass"
+                and seg.provenance == "offset_exact_span"):
             seg.needs_review = True
             seg.warnings.append(
                 f"topic-consistency oracle: extracted span has no canonical "

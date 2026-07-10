@@ -73,6 +73,30 @@ def test_trim_stops_at_real_content():
     assert "material lawsuit" in doc.text[start:new_end]
 
 
+def test_trim_running_headers_and_captions():
+    # patterns found across real filings: page# with period, number-prefix /
+    # -suffix company header, bare company line, statement caption
+    from sec_core.refine import _is_furniture
+    for junk in ["24.", "90", "The Procter & Gamble Company 71",
+                 "66 The Procter & Gamble Company", "AT&T Inc.", "Alphabet Inc.",
+                 "Amounts in millions of dollars except per share amounts.",
+                 "PART II", "Table of Contents"]:
+        assert _is_furniture(junk), junk
+    for keep in ["Not applicable.", "None.", "We are party to a lawsuit.",
+                 "Revenue grew to 391,035 in 2025.", "The company operates 24 plants"]:
+        assert not _is_furniture(keep), keep
+
+
+def test_trim_page_number_with_period():
+    html = "<p><b>Item 4. Mine Safety Disclosures</b></p><p>Not applicable.</p><div>24.</div><div>Alphabet Inc.</div>"
+    doc = normalize_html(html)
+    start = doc.text.index("Item 4")
+    new_end, trimmed = trim_trailing_furniture(doc, start, len(doc.text))
+    kept = doc.text[start:new_end]
+    assert kept.rstrip().endswith("Not applicable.")
+    assert "24." not in kept and "Alphabet" not in kept
+
+
 # --- appended section cut (FG-SEC-004) ------------------------------------
 def test_appended_financial_section_cut():
     filler = "".join("<p>financial data line for the appended section</p>" for _ in range(2000))

@@ -69,7 +69,8 @@
     height:min(62vh,640px);overflow-y:auto;font-family:var(--mono);font-size:.82rem;
     white-space:pre-wrap;word-break:break-word;line-height:1.6}
   .doc .head{color:var(--accent)}
-  .doc mark{background:var(--accent);color:#0b0f14;border-radius:2px;padding:0 1px}
+  .doc mark{background:#3a4a5e;color:#e8eef5;border-radius:2px;padding:0 1px}
+  .doc mark.cur{background:var(--accent);color:#0b0f14;outline:2px solid var(--accent)}
   #sTable tbody{max-height:min(62vh,640px)}
   .tbwrap{max-height:min(62vh,640px);overflow-y:auto;border:1px solid var(--line);border-radius:10px}
   .tbwrap table{border-collapse:separate}
@@ -136,9 +137,11 @@
     <div id="sFind" class="hidden" style="margin-top:.5rem;display:flex;gap:.5rem;align-items:center;
          background:var(--panel2);border:1px solid var(--accent);border-radius:8px;padding:.4rem .6rem">
       <span class="mono" style="font-size:.72rem;color:var(--accent)">Ctrl+F 跳到 Item</span>
-      <input type="text" id="sFindQ" placeholder="打 item 代號或標題:1A · 7 · risk factor · 財報…"
+      <input type="text" id="sFindQ" placeholder="打 item 代號或任何內文:1A · risk factor · 財報 · property, plant…"
              style="flex:1;min-width:0" autocomplete="off">
       <span class="mono sub" id="sFindInfo" style="white-space:nowrap"></span>
+      <button class="btn ghost" id="sFindPrev" title="上一處 (Shift+Enter)" style="padding:.2rem .55rem">▲</button>
+      <button class="btn ghost" id="sFindNext" title="下一處 (Enter)" style="padding:.2rem .55rem">▼</button>
       <button class="btn ghost" id="sFindX" style="padding:.2rem .6rem">✕</button>
     </div>
     <div class="grid2" style="margin-top:.6rem">
@@ -211,7 +214,7 @@ $('#aRun').onclick=async()=>{
 let SEC_ITEMS=[];          // last extracted item list (code/title/…) for find
 let SEC_DOC={head:'',text:''};  // last shown item body, for highlight re-render
 function renderSec(d){
-  $('#sFind').classList.add('hidden');
+  $('#sFind').classList.add('hidden');SEC_SHOWN='';SEC_DOC={head:'',text:''};
   if(!d.ok){SEC_ITEMS=[];$('#sMeta').innerHTML=`<span class="pill p-fail">錯誤</span> ${d.error}`;return;}
   SEC_ITEMS=(d.items||[]).concat(d.gaps||[]);   // gaps are searchable/jumpable too
   const m=d.meta;
@@ -255,25 +258,30 @@ async function showItem(code,highlight){
     (d.xbrl?`xbrl: ${d.xbrl}\n`:'')+(d.topic?`topic: ${d.topic}\n`:'')+
     (d.warnings.length?('warnings: '+d.warnings.join(' | ')+'\n'):'')+
     '─'.repeat(56)+'\n';
-  SEC_DOC={head,text:d.text};
+  SEC_DOC={head,text:d.text};SEC_SHOWN=d.code;
   renderDoc(highlight);
   return d;
 }
 // render the current item body, optionally wrapping matches of `q` in <mark>
 // and scrolling the first hit into view (used by the Ctrl+F item jump).
+let SEC_MARKS=[];  // <mark> nodes in the currently rendered body, in order
 function renderDoc(q){
   const el=$('#sDoc');el.innerHTML='<span class="head"></span>';
-  el.firstChild.textContent=SEC_DOC.head;
+  el.firstChild.textContent=SEC_DOC.head;SEC_MARKS=[];
   const body=SEC_DOC.text;
   if(!q){el.appendChild(document.createTextNode(body));return 0;}
-  const low=body.toLowerCase(),needle=q.toLowerCase();let i=0,from=0,first=null;
+  const low=body.toLowerCase(),needle=q.toLowerCase();let from=0;
   while(true){const at=low.indexOf(needle,from);if(at<0)break;
     if(at>from)el.appendChild(document.createTextNode(body.slice(from,at)));
     const mk=document.createElement('mark');mk.textContent=body.slice(at,at+q.length);
-    el.appendChild(mk);if(!first)first=mk;from=at+q.length;i++;}
+    el.appendChild(mk);SEC_MARKS.push(mk);from=at+q.length;}
   el.appendChild(document.createTextNode(body.slice(from)));
-  if(first)first.scrollIntoView({block:'center'});
-  return i;
+  return SEC_MARKS.length;
+}
+// highlight the k-th match in the current body as the "current" hit
+function focusMark(k){
+  SEC_MARKS.forEach(m=>m.classList.remove('cur'));
+  const m=SEC_MARKS[k];if(m){m.classList.add('cur');m.scrollIntoView({block:'center'});}
 }
 async function secBusy(on){$('#sBusy').innerHTML=on?'<span class="spin"></span>':'';
   $('#sGo').disabled=on;$('#sUpBtn').disabled=on;}
@@ -291,32 +299,44 @@ function selectRow(code){
   const tr=document.querySelector(`#sTable tbody tr[data-code="${code}"]`);
   if(tr){tr.classList.add('sel');tr.scrollIntoView({block:'nearest'});}
 }
-let secJumpSeq=0;
+let secJumpSeq=0, SEC_HITS=[], SEC_HIT=0, SEC_HIT_Q='', SEC_SHOWN='';
 async function secJump(q){
   q=q.trim();const info=$('#sFindInfo');
+  SEC_HITS=[];SEC_HIT=0;SEC_HIT_Q=q;
   if(!q){renderDoc();info.textContent='';return;}
-  // 1) exact item code (1a/7/9b) — jump to that Item, no body highlight needed
+  // exact item code (1a/7/9b) — jump to that Item, no hit-stepping needed
   const code=q.replace(/^item\s*/i,'').trim().toLowerCase();
   const byCode=SEC_ITEMS.find(it=>String(it.code).toLowerCase()===code);
-  if(byCode){selectRow(byCode.code);await showItem(byCode.code);
+  if(byCode){selectRow(byCode.code);await showItem(byCode.code);SEC_SHOWN=byCode.code;
     info.textContent=`→ Item ${byCode.code}`+(byCode.title?` · ${byCode.title}`:'');return;}
   if(q.length<2)return;
-  // 2) anything else: search the WHOLE document server-side and jump to the
-  //    region (item OR unclassified gap) that holds the text — even if the
-  //    current view is a different item.
+  // anything else: full-document search returns EVERY occurrence (with its
+  // region + within-region index) so ▲▼ can step across items/gaps.
   const seq=++secJumpSeq;
   const r=await(await fetch('/api/sec/find?q='+encodeURIComponent(q))).json();
-  if(seq!==secJumpSeq)return;               // a newer keystroke superseded us
+  if(seq!==secJumpSeq)return;                 // a newer keystroke superseded us
   if(!r.ok){info.textContent=r.error||'錯誤';return;}
   if(!r.found){info.textContent='全文查無此字串';return;}
-  selectRow(r.code);
-  await showItem(r.code, q);                 // loads the region + highlights q
-  if(seq!==secJumpSeq)return;
-  const where=r.code&&String(r.code).startsWith('gap:')?'未分類內容':('Item '+r.code+(r.title?' · '+r.title:''));
-  info.textContent=`→ ${where} · 全文 ${r.count} 處`;
+  SEC_HITS=(r.hits||[]).filter(h=>h.code!=='');
+  await gotoHit(0,r);
 }
+async function gotoHit(idx,r){
+  if(!SEC_HITS.length)return;
+  SEC_HIT=(idx+SEC_HITS.length)%SEC_HITS.length;   // wrap around
+  const h=SEC_HITS[SEC_HIT];
+  if(h.code!==SEC_SHOWN){selectRow(h.code);await showItem(h.code, SEC_HIT_Q);SEC_SHOWN=h.code;}
+  focusMark(h.k);
+  const where=String(h.code).startsWith('gap:')?'未分類':('Item '+h.code);
+  const total=(r&&r.count)||SEC_HITS.length;
+  $('#sFindInfo').textContent=`第 ${SEC_HIT+1}/${total} 處 · ${where}`+((r&&r.capped)?' (前 500)':'');
+}
+function stepHit(d){if(SEC_HITS.length)gotoHit(SEC_HIT+d,null);}
+$('#sFindNext').onclick=()=>stepHit(1);
+$('#sFindPrev').onclick=()=>stepHit(-1);
 $('#sFindQ').addEventListener('input',e=>secJump(e.target.value));
-$('#sFindQ').addEventListener('keydown',e=>{if(e.key==='Escape')closeFind();});
+$('#sFindQ').addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeFind();}
+  else if(e.key==='Enter'){e.preventDefault();stepHit(e.shiftKey?-1:1);}});
 $('#sFindX').onclick=()=>closeFind();
 function openFind(){$('#sFind').classList.remove('hidden');const q=$('#sFindQ');q.focus();q.select();}
 function closeFind(){$('#sFind').classList.add('hidden');$('#sFindInfo').textContent='';renderDoc();}

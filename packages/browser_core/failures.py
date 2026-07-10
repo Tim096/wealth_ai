@@ -28,6 +28,10 @@ class FailureSpec(BaseModel):
     detection: str
     repair_strategy: str
     repairable: bool
+    # Honesty flag: is this type actually produced by the current diagnoser +
+    # dispatched to its strategy today, or is it catalogued for flows (download,
+    # multi-page forms) that the current demo does not exercise? Declared != dispatched.
+    dispatched: bool = True
 
 
 FAILURE_TAXONOMY: dict[str, FailureSpec] = {
@@ -74,6 +78,7 @@ FAILURE_TAXONOMY: dict[str, FailureSpec] = {
             detection="validation error text visible after submit",
             repair_strategy="refill fields once; otherwise mark fail",
             repairable=True,
+            dispatched=False,  # activates when a form-submit flow exists (not the search demo)
         ),
         FailureSpec(
             failure_type="empty_result",
@@ -86,6 +91,7 @@ FAILURE_TAXONOMY: dict[str, FailureSpec] = {
             detection="no download artifact on disk after download action",
             repair_strategy="parse href / network response directly",
             repairable=True,
+            dispatched=False,  # activates when a download flow exists (not the search demo)
         ),
         FailureSpec(
             failure_type="silent_failure_risk",

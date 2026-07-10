@@ -213,6 +213,17 @@ class BrowserAgent:
                                    selector_used=selector,
                                    screenshot=self._screenshot(f"{step.purpose}-empty")))
             return out
+        if diag.failure_type == "timeout":
+            # dedicated strategy: switch the wait to network-idle and retry once
+            self.executor.execute(WaitForAction(
+                condition=WaitCondition(kind="network_idle", timeout_ms=8000)))
+            out_retry = self.executor.execute(action)
+            trace.append(StepTrace(step=step.purpose, action=step.kind, ok=out_retry.ok, mode="repair",
+                                   diagnosis=diag.failure_type,
+                                   detail="timeout -> switched wait condition to network_idle, retried",
+                                   selector_used=selector, latency_ms=out_retry.latency_ms,
+                                   screenshot=self._screenshot(f"{step.purpose}-waited")))
+            return out_retry
         # selector_not_found / multiple_candidates / wrong_page -> a11y-tree search
         rr = repair_target(step.purpose, obs, want_value=step.value)
         considered = rr.considered

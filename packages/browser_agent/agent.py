@@ -264,6 +264,62 @@ class BrowserAgent:
             return WaitForAction(condition=WaitCondition(kind="text_visible", value=step.value))
         raise ValueError(f"unknown step kind {step.kind}")
 
+    def run_agentic(self, task_id: str, contract: BrowserTaskContract, planner,
+                    max_steps: int = 8) -> TaskRun:
+        """Agent Mode (SPEC 6.2): an LLM planner chooses actions from the
+        controlled schema; each is capability-screened and executed; the
+        verifier — not the LLM — decides the outcome. Falls back cleanly if the
+        planner has no credentials."""
+        t0 = time.perf_counter()
+        cap = screen_task(contract.natural_language_task)
+        if not cap.allowed:
+            return TaskRun(task_id=task_id, site=self.site, status="refused",
+                           verifier=VerifierResult(status="unknown", reason=cap.reason,
+                                                   missing_evidence=["task refused by capability guard"]),
+                           total_latency_ms=(time.perf_counter() - t0) * 1000)
+        trace: list[StepTrace] = []
+        history: list[str] = []
+        llm_cost = 0.0
+        self._dismiss_modal_if_present(trace)
+        verdict = VerifierResult(status="unknown", reason="no steps taken")
+        for _ in range(max_steps):
+            obs = self.observer.observe()
+            verdict = verify_contract(contract, obs, {})
+            if verdict.status == "pass":
+                break
+            decision = planner.next_action(
+                contract.natural_language_task,
+                [f"{c.type}:{c.value}" for c in contract.success_conditions], obs, history)
+            if decision.llm is not None:
+                llm_cost += decision.llm.cost_usd
+            if decision.kind in ("done", "give_up"):
+                history.append(f"{decision.kind}({decision.reason})")
+                trace.append(StepTrace(step="planner", action=decision.kind, ok=decision.kind == "done",
+                                       mode="agent", detail=decision.reason))
+                break
+            action = decision.action
+            ascreen = screen_action(action)
+            if not ascreen.allowed:
+                trace.append(StepTrace(step="planner", action=action.type, ok=False, mode="agent",
+                                       diagnosis="capability_refused", detail=ascreen.reason))
+                break
+            out = self.executor.execute(action)
+            history.append(f"{action.type}:{'ok' if out.ok else 'fail'}")
+            trace.append(StepTrace(step="planner", action=action.type, ok=out.ok, mode="agent",
+                                   detail=decision.reason, selector_used=getattr(
+                                       getattr(action, "target", None), "selector", ""),
+                                   latency_ms=out.latency_ms,
+                                   screenshot=self._screenshot(f"agent-{len(trace)}")))
+            self.page.wait_for_timeout(300)
+        obs = self.observer.observe()
+        verdict = verify_contract(contract, obs, {})
+        base = {"pass": 1.0, "unknown": 0.4, "fail": 0.0}[verdict.status]
+        run = TaskRun(task_id=task_id, site=self.site, status=verdict.status, verifier=verdict,
+                      steps=trace, repairs=0, confidence=base,
+                      total_latency_ms=(time.perf_counter() - t0) * 1000)
+        self._emit_evidence(f"agent-{self.site}-{task_id}", task_id, run)
+        return run
+
     def run(self, task_id: str, steps: list[Step], contract: BrowserTaskContract) -> TaskRun:
         t0 = time.perf_counter()
         # capability guard (SPEC 6.3/6.4): refuse out-of-scope tasks in code

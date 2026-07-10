@@ -11,6 +11,7 @@ from browser_agent.executor import ActionExecutor, ActionOutcome
 from browser_agent.verifier import verify_contract
 from browser_agent.repair import diagnose_failure, repair_target
 from browser_agent.capability import screen_action, screen_task, CapabilityDecision
+from browser_agent.planner import LLMPlanner, MockPlanner, PlannerDecision
 from browser_agent.agent import BrowserAgent, TaskRun
 
 __all__ = [
@@ -19,8 +20,11 @@ __all__ = [
     "BrowserAgent",
     "CapabilityDecision",
     "ElementCandidate",
+    "LLMPlanner",
+    "MockPlanner",
     "Observation",
     "PageObserver",
+    "PlannerDecision",
     "TaskRun",
     "diagnose_failure",
     "repair_target",

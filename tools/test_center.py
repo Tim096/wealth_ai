@@ -6,9 +6,9 @@ Launch: double-click 啟動測試中心.bat, or:
 Opens http://127.0.0.1:8765 with two panels:
   · Browser Agent — dispatch a natural-language task; a HEADED browser opens
     and the page streams every step (plan → action → verifier verdict).
-  · SEC Extractor — type a ticker or upload a 10-K; inspect every item's
-    status / confidence / provenance / XBRL / topic checks and read the
-    source-exact extracted text.
+  · SEC Extractor — type a ticker to fetch its 10-K; inspect every item's
+    status / confidence / provenance / XBRL / topic checks, read the
+    source-exact extracted text, and download the original filing as-is.
 
 Design notes: stdlib http.server only (no new deps); the browser agent runs
 in one dedicated Playwright thread (jobs are queued); SEC extraction is
@@ -48,7 +48,8 @@ from sec_core.xbrl import certify_item8                 # noqa: E402
 # ---------------------------------------------------------------- SEC side
 import re                                                # noqa: E402
 _SEC_LOCK = threading.Lock()
-_SEC_STATE: dict = {"result": None, "meta": None, "exhibits": []}
+_SEC_STATE: dict = {"result": None, "meta": None, "exhibits": [],
+                    "raw": b"", "raw_name": ""}
 
 # A 10-K FILING is more than its main document: the real exhibits (21.1 List
 # of Subsidiaries, 23.1 Consent, 31/32 Certifications, 97.1 Clawback) are
@@ -153,7 +154,8 @@ def sec_extract(query: str, accession: str = "") -> dict:
             return {"ok": False, "error": f"{query}: 找不到 10-K"}
         resolver.load_files(ref)
         best = pick_main_document(ref)
-        raw = fetcher.get(ref.file_url(best.name)).content.decode("utf-8", errors="replace")
+        raw_bytes = fetcher.get(ref.file_url(best.name)).content
+        raw = raw_bytes.decode("utf-8", errors="replace")
         result = extract_from_html(raw, f"{query}-{ref.accession}")
         xbrl = ""
         item8 = next((s for s in result.segments if s.item_code == "8"), None)
@@ -166,18 +168,25 @@ def sec_extract(query: str, accession: str = "") -> dict:
         meta = {"source": query.upper(), "form": ref.form, "report_date": ref.report_date,
                 "accession": ref.accession, "filing_class": result.filing_class,
                 "xbrl_item8": xbrl, "latency_ms": round(result.latency_ms)}
-        _SEC_STATE.update(result=result, meta=meta, exhibits=exhibits)
+        # keep the ORIGINAL source document so it can be downloaded as-is for
+        # independent verification (offset-exact against what we analysed)
+        raw_name = f"{query.upper()}_{ref.accession}_{best.name}"
+        _SEC_STATE.update(result=result, meta=meta, exhibits=exhibits,
+                          raw=raw_bytes, raw_name=raw_name)
         return _items_payload(result, meta, exhibits)
 
 
-def sec_upload(text: str, name: str) -> dict:
-    """Extract an operator-supplied 10-K (HTML/TXT). No CIK → XBRL skipped."""
+def _ingest_html(text: str, name: str) -> dict:
+    """Extract a local HTML/TXT 10-K into state WITHOUT any network — used only
+    to drive the pipeline over offline fixtures in tests. Not a product feature
+    (the operator-facing upload was removed); there is no HTTP route for it."""
     with _SEC_LOCK:
-        result = extract_from_html(text, Path(name).stem or "upload")
-        meta = {"source": name, "form": "upload", "report_date": "-", "accession": "-",
+        result = extract_from_html(text, Path(name).stem or "fixture")
+        meta = {"source": name, "form": "fixture", "report_date": "-", "accession": "-",
                 "filing_class": result.filing_class, "xbrl_item8": "",
                 "latency_ms": round(result.latency_ms)}
-        _SEC_STATE.update(result=result, meta=meta, exhibits=[])
+        _SEC_STATE.update(result=result, meta=meta, exhibits=[],
+                          raw=text.encode("utf-8", "replace"), raw_name=name)
         return _items_payload(result, meta, [])
 
 
@@ -501,6 +510,14 @@ class Handler(BaseHTTPRequestHandler):
     def _read_body(self) -> bytes:
         return self.rfile.read(int(self.headers.get("Content-Length", 0)))
 
+    def _download(self, body: bytes, filename: str) -> None:
+        self.send_response(200)
+        self.send_header("Content-Type", "application/octet-stream")
+        self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_GET(self):  # noqa: N802
         u = urlparse(self.path)
         if u.path in ("/", "/index.html"):
@@ -522,6 +539,13 @@ class Handler(BaseHTTPRequestHandler):
             self._json(sec_find(parse_qs(u.query).get("q", [""])[0]))
         elif u.path == "/api/sec/filings":
             self._json(sec_filings(parse_qs(u.query).get("query", [""])[0].strip()))
+        elif u.path == "/api/sec/raw":
+            # the original source of the filing currently on screen, byte-for-byte
+            raw, name = _SEC_STATE.get("raw", b""), _SEC_STATE.get("raw_name", "")
+            if raw:
+                self._download(raw, name or "filing.htm")
+            else:
+                self._json({"ok": False, "error": "尚未抽取任何 filing"}, 404)
         else:
             self._json({"ok": False, "error": "not found"}, 404)
 
@@ -535,9 +559,6 @@ class Handler(BaseHTTPRequestHandler):
             elif u.path == "/api/sec/extract":
                 req = json.loads(self._read_body() or b"{}")
                 self._json(sec_extract(req.get("query", "").strip(), req.get("accession", "").strip()))
-            elif u.path == "/api/sec/upload":
-                name = parse_qs(u.query).get("name", ["upload.htm"])[0]
-                self._json(sec_upload(self._read_body().decode("utf-8", errors="replace"), name))
             else:
                 self._json({"ok": False, "error": "not found"}, 404)
         except Exception as e:  # noqa: BLE001 — return errors to the page, never crash

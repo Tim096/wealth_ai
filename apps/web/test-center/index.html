@@ -133,8 +133,7 @@
         <select id="sYear" style="min-width:150px"><option value="">最新</option></select>
       </div>
       <button class="btn" id="sGo">抽取 ▶</button>
-      <button class="btn ghost" id="sUpBtn">上傳自己的 10-K 📁</button>
-      <input type="file" id="sFile" accept=".htm,.html,.txt" style="display:none">
+      <button class="btn ghost" id="sDlBtn" disabled title="下載目前分析中的 10-K 原始檔">下載原始檔 ⬇</button>
       <span id="sBusy"></span>
     </div>
     <div class="meta" id="sMeta"></div>
@@ -153,7 +152,7 @@
         <div class="tbwrap scroll">
           <table id="sTable">
             <thead><tr><th>Item</th><th>Status</th><th>Conf</th><th>XBRL</th><th>Topic</th><th>字數</th></tr></thead>
-            <tbody><tr><td colspan="6" class="sub" style="padding:1rem">尚未抽取。輸入代號按「抽取」,或上傳你的 10-K。</td></tr></tbody>
+            <tbody><tr><td colspan="6" class="sub" style="padding:1rem">尚未抽取。輸入代號按「抽取」。</td></tr></tbody>
           </table>
         </div>
         <div class="hint">status 可信度:三態判定 + 全 item topic oracle + Item 8 XBRL 認證(對照 SEC 官方數字)。點任一列讀原文。</div>
@@ -219,7 +218,8 @@ let SEC_ITEMS=[];          // last extracted item list (code/title/…) for find
 let SEC_DOC={head:'',text:''};  // last shown item body, for highlight re-render
 function renderSec(d){
   $('#sFind').classList.add('hidden');SEC_SHOWN='';SEC_DOC={head:'',text:''};$('#sFindQ').value='';$('#sFindInfo').textContent='';
-  if(!d.ok){SEC_ITEMS=[];$('#sMeta').innerHTML=`<span class="pill p-fail">錯誤</span> ${d.error}`;return;}
+  if(!d.ok){SEC_ITEMS=[];$('#sDlBtn').disabled=true;$('#sMeta').innerHTML=`<span class="pill p-fail">錯誤</span> ${d.error}`;return;}
+  $('#sDlBtn').disabled=false;   // a filing is loaded → its original source can be downloaded
   // gaps AND exhibits are searchable/jumpable regions too
   SEC_ITEMS=(d.items||[]).concat(d.gaps||[]).concat(d.exhibits||[]);
   $('#sFind').classList.remove('hidden');    // search + ▲▼ always available once loaded
@@ -311,7 +311,7 @@ function focusMark(k){
   const m=SEC_MARKS[k];if(m){m.classList.add('cur');m.scrollIntoView({block:'center'});}
 }
 async function secBusy(on){$('#sBusy').innerHTML=on?'<span class="spin"></span>':'';
-  $('#sGo').disabled=on;$('#sUpBtn').disabled=on;}
+  $('#sGo').disabled=on;}
 let SEC_YEARS_FOR='';
 async function loadYears(){
   const q=$('#sQuery').value.trim(); const sel=$('#sYear');
@@ -391,15 +391,9 @@ document.addEventListener('keydown',e=>{
     e.preventDefault();openFind();}
 });
 
-$('#sUpBtn').onclick=()=>$('#sFile').click();
-$('#sFile').onchange=async e=>{
-  const f=e.target.files[0]; if(!f)return;
-  secBusy(true);
-  try{const text=await f.text();
-    renderSec(await(await fetch('/api/sec/upload?name='+encodeURIComponent(f.name),
-      {method:'POST',body:text})).json());}
-  finally{secBusy(false);e.target.value='';}
-};
+// download the ORIGINAL filing byte-for-byte (Content-Disposition attachment,
+// so the page stays put); enabled only once a filing has been analysed
+$('#sDlBtn').onclick=()=>{ if(!$('#sDlBtn').disabled) window.location.href='/api/sec/raw'; };
 </script>
 </body>
 </html>

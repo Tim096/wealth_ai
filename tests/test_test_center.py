@@ -1,5 +1,6 @@
-"""Web test-center handlers (no network, no GUI): the SEC upload path, the
-item-text endpoint contract, and the page asset itself."""
+"""Web test-center handlers (no network, no GUI): the SEC extraction pipeline
+over offline fixtures, the item-text endpoint contract, the original-source
+download, and the page asset itself."""
 
 from pathlib import Path
 
@@ -10,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_sec_upload_extracts_fixture():
     raw = (ROOT / "data" / "sec_eval" / "fixtures" / "alpha_10k.html").read_text(encoding="utf-8")
-    d = tc.sec_upload(raw, "alpha_10k.html")
+    d = tc._ingest_html(raw, "alpha_10k.html")
     assert d["ok"] and d["meta"]["filing_class"] == "standard"
     by = {i["code"]: i for i in d["items"]}
     assert by["1"]["status"] == "pass"
@@ -19,7 +20,7 @@ def test_sec_upload_extracts_fixture():
 
 def test_sec_item_text_after_upload():
     raw = (ROOT / "data" / "sec_eval" / "fixtures" / "alpha_10k.html").read_text(encoding="utf-8")
-    tc.sec_upload(raw, "alpha_10k.html")
+    tc._ingest_html(raw, "alpha_10k.html")
     d = tc.sec_item_text("7")
     assert d["ok"] and d["status"] == "pass"
     assert d["sha256"] and d["offsets"][1] > d["offsets"][0]
@@ -27,7 +28,7 @@ def test_sec_item_text_after_upload():
 
 def test_upload_exposes_gaps_and_coverage():
     raw = (ROOT / "data" / "sec_eval" / "fixtures" / "alpha_10k.html").read_text(encoding="utf-8")
-    d = tc.sec_upload(raw, "alpha_10k.html")
+    d = tc._ingest_html(raw, "alpha_10k.html")
     assert "gaps" in d and 0.0 < d["meta"]["coverage"] <= 1.0
     for g in d["gaps"]:                       # gap rows are readable, source-exact
         assert g["code"].startswith("gap:")
@@ -36,7 +37,7 @@ def test_upload_exposes_gaps_and_coverage():
 
 def test_full_document_find_returns_ordered_hits():
     raw = (ROOT / "data" / "sec_eval" / "fixtures" / "alpha_10k.html").read_text(encoding="utf-8")
-    tc.sec_upload(raw, "alpha_10k.html")
+    tc._ingest_html(raw, "alpha_10k.html")
     d = tc.sec_item_text("1")           # a word that certainly appears in Item 1
     word = next(w for w in d["text"].split() if len(w) > 6 and w.isalpha())
     r = tc.sec_find(word)
@@ -75,4 +76,16 @@ def test_agent_submit_blank_defers_planning_to_worker():
 def test_page_has_both_panels():
     html = (ROOT / "apps" / "web" / "test-center" / "index.html").read_text(encoding="utf-8")
     assert "tab-agent" in html and "tab-sec" in html
-    assert "/api/agent/run" in html and "/api/sec/extract" in html and "/api/sec/upload" in html
+    assert "/api/agent/run" in html and "/api/sec/extract" in html
+    # the operator-upload feature is gone; the original-source download replaces it
+    assert "/api/sec/upload" not in html and 'id="sFile"' not in html
+    assert "/api/sec/raw" in html
+
+
+def test_raw_download_serves_original_bytes_untouched():
+    # the download must be the ORIGINAL source byte-for-byte — not the
+    # normalized/extracted text the analyzer works on.
+    raw = (ROOT / "data" / "sec_eval" / "fixtures" / "alpha_10k.html").read_bytes()
+    tc._ingest_html(raw.decode("utf-8"), "alpha_10k.html")
+    assert tc._SEC_STATE["raw"] == raw
+    assert tc._SEC_STATE["raw"] != tc._SEC_STATE["result"].doc.text.encode("utf-8")

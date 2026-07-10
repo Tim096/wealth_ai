@@ -163,7 +163,8 @@ const $=s=>document.querySelector(s);
 const PILL={pass:'p-pass',partial:'p-warn',incorporated_by_reference:'p-warn',ambiguous:'p-warn',
   missing:'p-grey',reserved:'p-grey',unsupported:'p-fail',refused:'p-fail',fail:'p-fail',
   certified:'p-pass',contradicted:'p-fail',consistent:'p-pass',weak:'p-warn',
-  inconsistent:'p-fail',boilerplate:'p-grey',unknown:'p-warn',error:'p-fail',running:'p-warn'};
+  inconsistent:'p-fail',boilerplate:'p-grey',unknown:'p-warn',error:'p-fail',running:'p-warn',
+  unclassified:'p-grey'};
 const pill=(t)=>`<span class="pill ${PILL[t]||'p-grey'}">${t}</span>`;
 
 // tabs
@@ -212,11 +213,13 @@ let SEC_DOC={head:'',text:''};  // last shown item body, for highlight re-render
 function renderSec(d){
   $('#sFind').classList.add('hidden');
   if(!d.ok){SEC_ITEMS=[];$('#sMeta').innerHTML=`<span class="pill p-fail">錯誤</span> ${d.error}`;return;}
-  SEC_ITEMS=d.items||[];
+  SEC_ITEMS=(d.items||[]).concat(d.gaps||[]);   // gaps are searchable/jumpable too
   const m=d.meta;
+  const cov=m.coverage!=null?`<span>本文覆蓋 <b class="mono">${(m.coverage*100).toFixed(1)}%</b>${(d.gaps||[]).length?` · 未分類 ${d.gaps.length} 段`:''}</span>`:'';
   $('#sMeta').innerHTML=`<span><b>${m.source}</b> · ${m.form} ${m.report_date}</span>
     <span>filing_class <b class="mono">${m.filing_class}</b></span>
     ${m.xbrl_item8?`<span>Item 8 XBRL ${pill(m.xbrl_item8)}</span>`:''}
+    ${cov}
     <span>parse <b>${m.latency_ms} ms</b></span>`;
   const tb=$('#sTable tbody');tb.innerHTML='';
   d.items.forEach(it=>{
@@ -228,6 +231,18 @@ function renderSec(d){
       <td>${it.topic?pill(it.topic):'<span class="sub">–</span>'}</td>
       <td class="mono">${it.chars.toLocaleString()}</td>`;
     tr.onclick=()=>{selectRow(it.code);showItem(it.code);};
+    tb.appendChild(tr);
+  });
+  // completeness rows: uncovered gaps, so nothing in the filing is unreachable
+  (d.gaps||[]).forEach(g=>{
+    const tr=document.createElement('tr');
+    tr.dataset.code=g.code;
+    tr.innerHTML=`<td class="mono" style="color:var(--muted)">未分類</td>
+      <td>${pill('unclassified')}</td><td class="mono sub">–</td>
+      <td class="sub" colspan="1">${g.title.replace('未分類內容 ','')}</td>
+      <td class="sub" title="${(g.preview||'').replace(/"/g,'')}">${(g.preview||'').slice(0,18)}…</td>
+      <td class="mono">${g.chars.toLocaleString()}</td>`;
+    tr.onclick=()=>{selectRow(g.code);showItem(g.code);};
     tb.appendChild(tr);
   });
 }
@@ -276,27 +291,29 @@ function selectRow(code){
   const tr=document.querySelector(`#sTable tbody tr[data-code="${code}"]`);
   if(tr){tr.classList.add('sel');tr.scrollIntoView({block:'nearest'});}
 }
-function findItem(q){
-  const s=q.replace(/^item\s*/i,'').trim().toLowerCase();
-  // exact item code first (1a / 7 / 9b), then a title substring (risk -> 1A)
-  return SEC_ITEMS.find(it=>it.code.toLowerCase()===s)
-      || SEC_ITEMS.find(it=>it.title&&it.title.toLowerCase().includes(q.trim().toLowerCase()));
-}
+let secJumpSeq=0;
 async function secJump(q){
   q=q.trim();const info=$('#sFindInfo');
   if(!q){renderDoc();info.textContent='';return;}
-  const it=findItem(q);
-  if(it){
-    selectRow(it.code);
-    const byTitleOrPhrase=!(SEC_ITEMS.find(x=>x.code.toLowerCase()===q.replace(/^item\s*/i,'').trim().toLowerCase()));
-    const d=await showItem(it.code, byTitleOrPhrase?q:'');
-    const hits=byTitleOrPhrase?(SEC_DOC.text.toLowerCase().split(q.toLowerCase()).length-1):0;
-    info.textContent=`→ Item ${it.code} · ${it.title}`+(hits?` · 原文 ${hits} 處`:'');
-  }else{
-    // no Item matches — fall back to a plain find inside the current body
-    const hits=renderDoc(q);
-    info.textContent=hits?`目前原文 ${hits} 處`:'查無對應 Item / 文字';
-  }
+  // 1) exact item code (1a/7/9b) — jump to that Item, no body highlight needed
+  const code=q.replace(/^item\s*/i,'').trim().toLowerCase();
+  const byCode=SEC_ITEMS.find(it=>String(it.code).toLowerCase()===code);
+  if(byCode){selectRow(byCode.code);await showItem(byCode.code);
+    info.textContent=`→ Item ${byCode.code}`+(byCode.title?` · ${byCode.title}`:'');return;}
+  if(q.length<2)return;
+  // 2) anything else: search the WHOLE document server-side and jump to the
+  //    region (item OR unclassified gap) that holds the text — even if the
+  //    current view is a different item.
+  const seq=++secJumpSeq;
+  const r=await(await fetch('/api/sec/find?q='+encodeURIComponent(q))).json();
+  if(seq!==secJumpSeq)return;               // a newer keystroke superseded us
+  if(!r.ok){info.textContent=r.error||'錯誤';return;}
+  if(!r.found){info.textContent='全文查無此字串';return;}
+  selectRow(r.code);
+  await showItem(r.code, q);                 // loads the region + highlights q
+  if(seq!==secJumpSeq)return;
+  const where=r.code&&String(r.code).startsWith('gap:')?'未分類內容':('Item '+r.code+(r.title?' · '+r.title:''));
+  info.textContent=`→ ${where} · 全文 ${r.count} 處`;
 }
 $('#sFindQ').addEventListener('input',e=>secJump(e.target.value));
 $('#sFindQ').addEventListener('keydown',e=>{if(e.key==='Escape')closeFind();});

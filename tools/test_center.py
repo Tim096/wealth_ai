@@ -37,6 +37,7 @@ os.environ.setdefault("SEC_EDGAR_USER_AGENT", "ai-coding-test-2026 test-center c
 
 from browser_agent.nl import derive_success            # noqa: E402
 from llm_core.config import load_llm_config             # noqa: E402
+from sec_core.coverage import compute_gaps, coverage_ratio  # noqa: E402
 from sec_core.fetcher import EdgarFetcher               # noqa: E402
 from sec_core.main_doc import pick_main_document        # noqa: E402
 from sec_core.pipeline import extract_from_html         # noqa: E402
@@ -59,7 +60,15 @@ def _items_payload(result, meta: dict) -> dict:
             "topic": (s.topic_check.split(":")[0] if s.topic_check else ""),
             "warnings": len(s.warnings),
         })
-    return {"ok": True, "meta": meta, "items": items}
+    # Completeness guarantee: expose every uncovered gap so nothing is dropped.
+    gaps = []
+    for g in compute_gaps(result.doc.text, result.segments):
+        where = (f"Item {g.after_code} → {g.before_code}" if g.after_code and g.before_code
+                 else (f"Item {g.after_code} 之後" if g.after_code else f"Item {g.before_code} 之前"))
+        gaps.append({"code": f"gap:{g.start}-{g.end}", "title": f"未分類內容 ({where})",
+                     "chars": g.chars, "preview": g.preview})
+    meta = {**meta, "coverage": round(coverage_ratio(result.doc.text, result.segments), 4)}
+    return {"ok": True, "meta": meta, "items": items, "gaps": gaps}
 
 
 def sec_extract(query: str) -> dict:
@@ -100,10 +109,35 @@ def sec_upload(text: str, name: str) -> dict:
         return _items_payload(result, meta)
 
 
+def _slice_body(text: str, full_chars: int) -> tuple[str, bool]:
+    CAP = 600_000
+    truncated = full_chars > CAP
+    out = text[:CAP]
+    if truncated:
+        out += (f"\n\n──── 顯示前 {CAP:,} 字,共 {full_chars:,} 字;其餘未顯示"
+                f"(完整內容仍在 offset span 內)────")
+    return out, truncated
+
+
 def sec_item_text(code: str) -> dict:
     result = _SEC_STATE["result"]
     if result is None:
         return {"ok": False, "error": "尚未抽取任何 filing"}
+    # gap:<start>-<end> — an uncovered region surfaced for completeness. It has
+    # no item classification, but the source-exact text is still shown so
+    # nothing in the filing is unreachable.
+    if code.startswith("gap:"):
+        try:
+            a, b = (int(x) for x in code[4:].split("-"))
+        except ValueError:
+            return {"ok": False, "error": f"bad gap ref {code}"}
+        body = result.doc.slice(a, b)
+        text, truncated = _slice_body(body, len(body))
+        return {"ok": True, "code": code, "title": "未分類內容(保底,無 Item 歸屬)",
+                "status": "unclassified", "confidence": 0.0, "provenance": "gap_fill",
+                "needs_review": True, "sha256": "", "offsets": [a, b],
+                "full_chars": len(body), "truncated": truncated,
+                "xbrl": "", "topic": "", "warnings": [], "text": text}
     seg = next((s for s in result.segments if s.item_code == code), None)
     if seg is None:
         return {"ok": False, "error": f"無 Item {code}"}
@@ -112,12 +146,7 @@ def sec_item_text(code: str) -> dict:
     # guard well above the largest real item (Item 8/15 ≈ 200K chars), and when
     # it fires, say so explicitly rather than truncating in silence.
     full_chars = len(body)
-    CAP = 600_000
-    truncated = full_chars > CAP
-    text = body[:CAP]
-    if truncated:
-        text += (f"\n\n──── 顯示前 {CAP:,} 字,共 {full_chars:,} 字;其餘未顯示"
-                 f"(完整內容仍在 offset span 內)────")
+    text, truncated = _slice_body(body, full_chars)
     return {"ok": True, "code": code, "title": seg.canonical_title, "status": seg.status,
             "confidence": round(seg.confidence, 2), "provenance": seg.provenance,
             "needs_review": seg.needs_review, "sha256": seg.text_sha256[:16],
@@ -125,6 +154,35 @@ def sec_item_text(code: str) -> dict:
             "full_chars": full_chars, "truncated": truncated,
             "xbrl": seg.xbrl_check, "topic": seg.topic_check,
             "warnings": seg.warnings, "text": text}
+
+
+def sec_find(q: str) -> dict:
+    """Full-document find for Ctrl+F: search the ENTIRE normalized text (not
+    just the item currently shown) and report which region — an item span OR
+    an unclassified gap — contains the first match, so the viewer can jump
+    there even if the user was not already on that item."""
+    result = _SEC_STATE["result"]
+    if result is None:
+        return {"ok": False, "error": "尚未抽取任何 filing"}
+    q = (q or "").strip()
+    if not q:
+        return {"ok": False, "error": "empty query"}
+    text = result.doc.text
+    at = text.lower().find(q.lower())
+    if at < 0:
+        return {"ok": True, "found": False, "count": 0}
+    count = text.lower().count(q.lower())
+    # which item span contains the first hit?
+    for s in result.segments:
+        if s.end_offset > s.start_offset and s.start_offset <= at < s.end_offset:
+            return {"ok": True, "found": True, "code": s.item_code,
+                    "title": s.canonical_title, "count": count}
+    # else it is in a gap — return the gap code covering the hit
+    for g in compute_gaps(text, result.segments):
+        if g.start <= at < g.end:
+            return {"ok": True, "found": True, "code": f"gap:{g.start}-{g.end}",
+                    "title": "未分類內容", "count": count}
+    return {"ok": True, "found": True, "code": "", "title": "(全文)", "count": count}
 
 
 # ---------------------------------------------------------------- Agent side
@@ -309,6 +367,8 @@ class Handler(BaseHTTPRequestHandler):
         elif u.path == "/api/sec/item":
             code = parse_qs(u.query).get("code", [""])[0]
             self._json(sec_item_text(code))
+        elif u.path == "/api/sec/find":
+            self._json(sec_find(parse_qs(u.query).get("q", [""])[0]))
         else:
             self._json({"ok": False, "error": "not found"}, 404)
 

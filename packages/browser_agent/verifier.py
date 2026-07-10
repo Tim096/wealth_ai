@@ -22,10 +22,18 @@ def _check_success(cond, obs: Observation, extracted: dict[str, str]) -> str:
     if t == "field_value_equals":
         return "pass" if any(v == x for x in extracted.values()) else "fail"
     if t == "download_exists":
-        dl = extracted.get("__download__", "")
-        if not dl:
+        path = extracted.get("__download__", "")
+        if not path:
             return "unknown"          # no download observed
-        return "pass" if (not v or v.lower() in dl.lower()) else "fail"
+        # Trust the CONTENT, not the mere existence of a file. The reported failure
+        # was a run that saved *something* (a wrong page) and called it success. So
+        # a value is checked against the downloaded file's TEXT (did we save the
+        # RIGHT document — one that actually contains "Risk Factors"?), and an empty
+        # value still requires a real, non-trivial document, not a stub/error page.
+        body = extracted.get("__download_text__", "")
+        if not v:
+            return "pass" if len(body.strip()) >= 200 else "unknown"
+        return "pass" if v.lower() in body.lower() else "fail"
     if t == "screenshot_region_changed":
         return "unknown"  # not observable without a baseline; honest unknown
     return "unknown"

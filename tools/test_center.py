@@ -435,9 +435,14 @@ def _agent_worker() -> None:
                     if conds is None:
                         conds = p_conds or derive_success(task)
                     if not conds:
-                        rec.update(status="error", url=url,
-                                   verifier="無法規畫可驗證的成功條件——請在「成功條件」欄填一小段完成時會出現的文字。")
-                        continue
+                        # The LLM preflight always returns a landmark; reaching here
+                        # means the model was unavailable AND the task has no literal
+                        # cue to derive one offline. Run anyway and let the verifier
+                        # return an honest 'unknown' — never a hard stop, and never
+                        # blame a UI field that no longer exists.
+                        conds = ["text_visible:__unverifiable__"]
+                        rec["steps"].append(
+                            "🧭 規畫:無法自動導出可驗證條件(模型不可用),將如實回報 unknown")
                     rec["url"], rec["success"] = url, conds
                     rec["steps"].append(f"🧭 規畫:起點 {url} · 成功條件 {' / '.join(conds)}")
                 try:

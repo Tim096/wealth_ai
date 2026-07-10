@@ -1,0 +1,14 @@
+# Browser Agent (Task 1) — LLM configuration.
+# DEFAULT: Codex via a local gateway (ChatGPT OAuth), per your setup.
+# Precedence: environment variables override these values.
+#   OPENAI_BASE_URL, OPENAI_MODEL, OPENAI_API_KEY
+
+[llm]
+# Default mode: talk to the local Codex gateway (tools/codex_gateway.py).
+# The gateway holds the Codex OAuth session; no API key lives in this repo.
+mode      = "gateway"                       # gateway | direct | mock
+base_url  = "http://127.0.0.1:8791/v1"
+model     = "gpt-5.3-codex"                 # gpt-5-codex-mini on lower tiers
+# For mode="gateway" the key is unused (the gateway authenticates via OAuth);
+# a placeholder keeps the OpenAI-compatible client happy.
+api_key_placeholder = "codex-oauth-gateway"

@@ -34,11 +34,21 @@ from browser_core import BrowserTaskContract, SuccessCondition
 from browser_agent.agent import BrowserAgent
 from browser_agent.memory_store import MemoryStore
 from browser_agent.planner import LLMPlanner, MockPlanner
+from llm_core.config import load_llm_config
 from llm_core.openai_client import OpenAIClient
 from observability_core import EvidenceStore
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "runs" / "agent_live"
+
+
+def _preflight_gateway(base_url: str) -> tuple[bool, str]:
+    import httpx
+    try:
+        r = httpx.get(f"{base_url.rstrip('/')}/models", timeout=5)
+        return (r.status_code == 200, f"HTTP {r.status_code}")
+    except Exception as e:  # noqa: BLE001
+        return False, f"{type(e).__name__}: {e}"
 
 
 def main() -> None:
@@ -47,7 +57,9 @@ def main() -> None:
     ap.add_argument("--task", default="Search MockShop for 'widget' and see the results")
     ap.add_argument("--success", action="append", default=[],
                     help="success condition 'type:value', e.g. text_visible:Widget (repeatable)")
-    ap.add_argument("--mock", action="store_true", help="use the deterministic MockPlanner (no key)")
+    ap.add_argument("--mock", action="store_true", help="deterministic MockPlanner, no LLM at all")
+    ap.add_argument("--direct", action="store_true",
+                    help="talk to OpenAI directly with OPENAI_API_KEY (skip the gateway)")
     ap.add_argument("--query", default="widget", help="query for MockPlanner")
     ap.add_argument("--headed", action="store_true", help="show the browser window")
     ap.add_argument("--max-steps", type=int, default=8)
@@ -65,13 +77,27 @@ def main() -> None:
     if args.mock:
         planner = MockPlanner(args.query)
         print("[planner] MockPlanner (deterministic, no LLM)")
-    else:
-        client = OpenAIClient()
+    elif args.direct:
+        client = OpenAIClient()  # reads OPENAI_API_KEY / OPENAI_BASE_URL / OPENAI_MODEL
         if not client.available():
-            raise SystemExit(
-                "No OPENAI_API_KEY set. Set it (and OPENAI_BASE_URL for a gateway) or pass --mock.")
+            raise SystemExit("--direct needs OPENAI_API_KEY set.")
         planner = LLMPlanner(client)
-        print(f"[planner] LLMPlanner model={client.model} base={client.base_url}")
+        print(f"[planner] direct OpenAI model={client.model} base={client.base_url}")
+    else:
+        # DEFAULT: Codex via the local gateway (ChatGPT OAuth) — config/agent.toml
+        cfg = load_llm_config()
+        ok, why = _preflight_gateway(cfg.base_url)
+        if not ok:
+            raise SystemExit(
+                f"Codex gateway not reachable at {cfg.base_url} ({why}).\n"
+                "Start it first (one-time: `codex login`):\n"
+                "    python tools/codex_gateway.py --model gpt-5.3-codex\n"
+                "Or verify the whole path with the mock backend:\n"
+                "    python tools/codex_gateway.py --backend mock\n"
+                "Setup guide: docs/setup_codex_gateway.md.  Or run with --mock / --direct.")
+        client = OpenAIClient(api_key=cfg.api_key, base_url=cfg.base_url, model=cfg.model)
+        planner = LLMPlanner(client)
+        print(f"[planner] Codex gateway model={cfg.model} base={cfg.base_url}")
 
     OUT.mkdir(parents=True, exist_ok=True)
     mem_path = OUT / "selector_memory.json"

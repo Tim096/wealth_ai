@@ -58,7 +58,7 @@ def _candidate_lines(obs: Observation) -> str:
             continue
         label = c.aria_label or c.placeholder or c.text or c.name or c.id
         out.append(f'aid={c.index} <{c.tag}{" role="+c.role if c.role else ""}> '
-                   f'type={c.type or "-"} label="{label[:50]}"')
+                   f'type={c.type or "-"} id="{c.id[:30]}" label="{label[:50]}"')
     return "\n".join(out[:40]) or "(no visible interactive elements)"
 
 

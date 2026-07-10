@@ -1,0 +1,45 @@
+{
+  "note": "Layered browser eval set (SPEC 6.10). Runs against local mock sites so it is deterministic and offline. Each task compiles to a verifier contract; success is evidence-backed, never self-reported.",
+  "tasks": [
+    {
+      "task_id": "search-v1-widget",
+      "layer": "mock_baseline",
+      "site": "v1",
+      "query": "widget",
+      "expect_status": "pass",
+      "expect_repairs": 0,
+      "success_text": ["results for", "Widget"],
+      "note": "clean baseline, script mode"
+    },
+    {
+      "task_id": "search-v2-widget-drift",
+      "layer": "mock_drift",
+      "site": "v2",
+      "query": "widget",
+      "expect_status": "pass",
+      "expect_repairs_min": 2,
+      "success_text": ["results for", "Widget"],
+      "note": "UI drift: id removed, button->icon, cookie modal, decoy button, lazy render -> must self-repair"
+    },
+    {
+      "task_id": "search-v2-gizmo-drift",
+      "layer": "mock_drift",
+      "site": "v2",
+      "query": "gizmo",
+      "expect_status": "pass",
+      "expect_repairs_min": 2,
+      "success_text": ["results for", "Gizmo"],
+      "note": "second drifted query -> selector memory should make the second run cheaper"
+    },
+    {
+      "task_id": "search-v1-nonexistent",
+      "layer": "adversarial_empty",
+      "site": "v1",
+      "query": "zzzznotarealproduct",
+      "expect_status": "fail",
+      "expect_repairs": 0,
+      "success_text": ["Widget"],
+      "note": "empty result: the success contract requires a real product to be visible; the agent must NOT fake pass on 0 results"
+    }
+  ]
+}

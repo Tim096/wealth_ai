@@ -37,7 +37,7 @@ os.environ.setdefault("SEC_EDGAR_USER_AGENT", "ai-coding-test-2026 test-center c
 
 from browser_agent.nl import derive_success            # noqa: E402
 from llm_core.config import load_llm_config             # noqa: E402
-from sec_core.coverage import compute_gaps, coverage_ratio  # noqa: E402
+from sec_core.coverage import compute_gaps, coverage_ratio, partition_document, region_at  # noqa: E402
 from sec_core.fetcher import EdgarFetcher               # noqa: E402
 from sec_core.main_doc import pick_main_document        # noqa: E402
 from sec_core.normalize import normalize_html           # noqa: E402
@@ -240,16 +240,16 @@ def sec_item_text(code: str) -> dict:
 _FIND_MAX_HITS = 500
 
 
-def _region_for(offset: int, segments, gaps) -> tuple[str, int]:
-    """Return (region_code, region_start) that contains a document offset —
-    an item code, or a gap:<a>-<b> code, so any hit anywhere is addressable."""
-    for s in segments:
-        if s.end_offset > s.start_offset and s.start_offset <= offset < s.end_offset:
-            return s.item_code, s.start_offset
-    for g in gaps:
-        if g.start <= offset < g.end:
-            return f"gap:{g.start}-{g.end}", g.start
-    return "", 0
+def _region_for(offset: int, blocks) -> tuple[str, int]:
+    """Return (region_code, region_start) that contains a document offset, using
+    the clean non-overlapping partition. An item block yields its item code; an
+    unclassified block yields the matching gap:<a>-<b> code the viewer renders —
+    so a hit is attributed to the TIGHTEST region that actually holds it, never
+    to whichever overlapping item happened to sort first."""
+    b = region_at(offset, blocks)
+    if b is None:
+        return "", 0
+    return (b.code if b.code else f"gap:{b.start}-{b.end}"), b.start
 
 
 def sec_find(q: str) -> dict:
@@ -266,10 +266,10 @@ def sec_find(q: str) -> dict:
         return {"ok": False, "error": "empty query"}
     text = result.doc.text
     low, needle = text.lower(), q.lower()
-    gaps = compute_gaps(text, result.segments)
+    blocks = partition_document(text, result.segments)
     hits, per_region, at = [], {}, low.find(needle)
     while at >= 0 and len(hits) < _FIND_MAX_HITS:
-        code, rstart = _region_for(at, result.segments, gaps)
+        code, rstart = _region_for(at, blocks)
         k = per_region.get(code, 0)
         per_region[code] = k + 1
         hits.append({"code": code, "k": k})   # k-th occurrence within that region
@@ -404,8 +404,13 @@ def _agent_worker() -> None:
                 except Exception:  # noqa: BLE001
                     pass
             browser = p.chromium.launch(headless=False)
-            ctx = browser.new_context(viewport={"width": 1200, "height": 820},
-                                      accept_downloads=True)
+            # a real desktop UA: many sites (and SEC) reject the default
+            # HeadlessChrome UA; the executor still has an httpx fallback for
+            # hosts that fingerprint-block Chromium regardless.
+            ctx = browser.new_context(
+                viewport={"width": 1200, "height": 820}, accept_downloads=True,
+                user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                            "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"))
             page = ctx.new_page()
 
         fresh_page()
@@ -434,17 +439,15 @@ def _agent_worker() -> None:
                         url = _sec_start_url(task) or p_url or DEFAULT_START
                     if conds is None:
                         conds = p_conds or derive_success(task)
-                    if not conds:
-                        # The LLM preflight always returns a landmark; reaching here
-                        # means the model was unavailable AND the task has no literal
-                        # cue to derive one offline. Run anyway and let the verifier
-                        # return an honest 'unknown' — never a hard stop, and never
-                        # blame a UI field that no longer exists.
-                        conds = ["text_visible:__unverifiable__"]
-                        rec["steps"].append(
-                            "🧭 規畫:無法自動導出可驗證條件(模型不可用),將如實回報 unknown")
-                    rec["url"], rec["success"] = url, conds
-                    rec["steps"].append(f"🧭 規畫:起點 {url} · 成功條件 {' / '.join(conds)}")
+                    # NEVER hard-fail for lack of a condition — that killed
+                    # generality (an open-ended task like "找最熱門的財經節目"
+                    # has no crisp success string). Run the task anyway; with no
+                    # verifiable condition the verifier returns an honest
+                    # `unknown`, never a disguised pass.
+                    rec["url"], rec["success"] = url, conds or ["(無明確成功條件 → 結果以 unknown 誠實回報)"]
+                    plan = f"起點 {url}" + (f" · 成功條件 {' / '.join(conds)}" if conds
+                                           else " · 無可驗證條件,結果將誠實標示 unknown")
+                    rec["steps"].append(f"🧭 規畫:{plan}")
                 try:
                     page.goto(url, wait_until="domcontentloaded", timeout=30000)
                 except Exception:

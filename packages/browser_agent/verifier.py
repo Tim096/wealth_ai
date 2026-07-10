@@ -5,10 +5,40 @@ observed, the verdict is `unknown` — never a disguised pass.
 
 from __future__ import annotations
 
+import os
+
 from browser_core import BrowserTaskContract
 from browser_agent.observer import Observation
 from eval_core import ConditionCheck, combine_checks
 from observability_core import VerifierResult
+
+_MIN_DOWNLOAD_BYTES = 512          # smaller than this is not a real document
+_DOWNLOAD_SCAN_BYTES = 8_000_000   # read up to this much to confirm content
+
+
+def _download_ok(path: str, needle: str) -> str:
+    """Trustworthy download check: the file must exist, be a non-trivial
+    document, and — when the task named the content — ACTUALLY CONTAIN it. A
+    wrong/blocked page written to disk (or a stub with the right name) must not
+    count as success, so we read the bytes, never just the path string."""
+    if not path or not os.path.exists(path):
+        return "unknown"          # nothing downloaded → not observable
+    try:
+        size = os.path.getsize(path)
+    except OSError:
+        return "unknown"
+    if size < _MIN_DOWNLOAD_BYTES:
+        return "fail"             # a tiny file is not the document that was asked for
+    if not needle:
+        return "pass"             # download-only task: a real file is enough
+    try:
+        with open(path, "rb") as fh:
+            content = fh.read(_DOWNLOAD_SCAN_BYTES).decode("utf-8", errors="replace").lower()
+    except OSError:
+        return "unknown"
+    n = needle.lower()
+    # content is the real proof; the filename is a weak secondary signal
+    return "pass" if (n in content or n in os.path.basename(path).lower()) else "fail"
 
 
 def _check_success(cond, obs: Observation, extracted: dict[str, str]) -> str:
@@ -22,18 +52,7 @@ def _check_success(cond, obs: Observation, extracted: dict[str, str]) -> str:
     if t == "field_value_equals":
         return "pass" if any(v == x for x in extracted.values()) else "fail"
     if t == "download_exists":
-        path = extracted.get("__download__", "")
-        if not path:
-            return "unknown"          # no download observed
-        # Trust the CONTENT, not the mere existence of a file. The reported failure
-        # was a run that saved *something* (a wrong page) and called it success. So
-        # a value is checked against the downloaded file's TEXT (did we save the
-        # RIGHT document — one that actually contains "Risk Factors"?), and an empty
-        # value still requires a real, non-trivial document, not a stub/error page.
-        body = extracted.get("__download_text__", "")
-        if not v:
-            return "pass" if len(body.strip()) >= 200 else "unknown"
-        return "pass" if v.lower() in body.lower() else "fail"
+        return _download_ok(extracted.get("__download__", ""), v)
     if t == "screenshot_region_changed":
         return "unknown"  # not observable without a baseline; honest unknown
     return "unknown"

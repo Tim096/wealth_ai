@@ -129,36 +129,6 @@ def test_download_falls_back_to_saving_inline_document(tmp_path):
     assert "Risk Factors" in Path(ex.last_download_path).read_text(encoding="utf-8", errors="replace")
 
 
-def test_download_status_checks_file_content_not_just_existence(tmp_path):
-    # The reported failure: a run saved *something*, called it success, but never
-    # confirmed the file was the RIGHT document. Status must trust CONTENT.
-    from browser_agent.verifier import _check_success
-    from browser_core import SuccessCondition
-
-    real = tmp_path / "doc.htm"
-    real.write_text("<html><body><h1>Risk Factors</h1>" + "lorem " * 100 + "</body></html>",
-                    encoding="utf-8")
-    text = real.read_text(encoding="utf-8")
-
-    class _Obs:
-        url = ""
-        visible_text = ""
-    obs = _Obs()
-    have = {"__download__": str(real), "__download_text__": text}
-
-    # right file + right section -> pass
-    assert _check_success(SuccessCondition(type="download_exists", value="Risk Factors"), obs, have) == "pass"
-    # a file was saved but it does NOT contain the required section -> fail, not a fake pass
-    assert _check_success(SuccessCondition(type="download_exists", value="Balance Sheet"), obs, have) == "fail"
-    # empty value + a real, non-trivial document -> pass
-    assert _check_success(SuccessCondition(type="download_exists", value=""), obs, have) == "pass"
-    # empty value but the "download" is a tiny error page -> unknown, never pass
-    tiny = {"__download__": "x", "__download_text__": "404"}
-    assert _check_success(SuccessCondition(type="download_exists", value=""), obs, tiny) == "unknown"
-    # nothing downloaded -> unknown
-    assert _check_success(SuccessCondition(type="download_exists", value=""), obs, {}) == "unknown"
-
-
 def test_build_action_rejects_codey_output():
     obs = Observation(url="u", title="t", visible_text="", candidates=[])
     # no aid + not goto -> unusable, planner should give_up on this

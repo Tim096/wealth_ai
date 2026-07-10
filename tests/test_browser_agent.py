@@ -43,6 +43,39 @@ def test_verifier_unknown_when_unobservable():
     assert verify_contract(c, obs([])).status == "unknown"
 
 
+def _dl_contract(value):
+    return BrowserTaskContract(task_id="t", natural_language_task="download it",
+                               expected_outcome="file", success_conditions=[
+                                   SuccessCondition(type="download_exists", value=value)])
+
+
+def test_download_verified_by_file_content_not_path(tmp_path):
+    # The saved file must actually contain the asked-for section — a wrong page
+    # written to disk (right name, wrong bytes) must NOT pass. This is the
+    # "you said success but never checked the contents" fix.
+    good = tmp_path / "intc-10k.htm"
+    good.write_text("<h1>Item 1A. Risk Factors</h1>" + "x" * 1000, encoding="utf-8")
+    wrong = tmp_path / "risk-factors.htm"   # right-looking NAME, wrong CONTENT
+    wrong.write_text("<h1>Are you a robot?</h1>" + "x" * 1000, encoding="utf-8")
+
+    c = _dl_contract("Risk Factors")
+    assert verify_contract(c, obs([]), {"__download__": str(good)}).status == "pass"
+    assert verify_contract(c, obs([]), {"__download__": str(wrong)}).status == "fail"
+
+
+def test_download_exists_states(tmp_path):
+    real = tmp_path / "doc.htm"
+    real.write_text("y" * 2000, encoding="utf-8")
+    tiny = tmp_path / "stub.htm"
+    tiny.write_text("no", encoding="utf-8")
+    # no download observed -> unknown, not a disguised pass
+    assert verify_contract(_dl_contract(""), obs([]), {}).status == "unknown"
+    # a real file with no required content -> pass
+    assert verify_contract(_dl_contract(""), obs([]), {"__download__": str(real)}).status == "pass"
+    # a trivially small file is not a real document -> fail
+    assert verify_contract(_dl_contract(""), obs([]), {"__download__": str(tiny)}).status == "fail"
+
+
 # --- repair ---
 def test_repair_finds_search_box_by_aria_label():
     cands = [cand(tag="input", name="query", aria_label="Search products", placeholder="Search products")]

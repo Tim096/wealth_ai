@@ -129,17 +129,14 @@ Return EXACTLY ONE JSON object, nothing else:
      - A named site/brand: its real domain (finlab -> https://finlab.tw, Wikipedia article -> https://en.wikipedia.org/wiki/<Topic>).
      - Only if the target is genuinely unknown, start at https://duckduckgo.com/html/ .
      Never invent a deep path you cannot know exists (a guessed accession number, a made-up article slug) — construct only URLs whose shape the site guarantees (a ticker-keyed EDGAR query, a domain root, a Wikipedia /wiki/Title).
-  "success_conditions": 1-3 objects proving completion (return AT LEAST ONE — never an empty list), each:
+  "success_conditions": 1-3 objects proving completion, each:
        {"type":"text_visible","value":"<short exact substring that appears on the page only when done>"}
        {"type":"url_contains","value":"<url fragment true only when done>"}
-       {"type":"download_exists","value":"<a short phrase the SAVED FILE must contain, or empty>"}
+       {"type":"download_exists","value":"<distinctive text the SAVED FILE must contain, or \"\">"}
+     download_exists is verified against the file's BYTES on disk, not its name: if the task says to download a document AND locate a section in it (e.g. "download the 10-K and find Risk Factors"), set value to that section's exact heading ("Risk Factors") so a wrong or blocked page saved to disk cannot count as success. Use "" only when any file is acceptable.
      Prefer a distinctive phrase in the language the target page will render (English site -> English phrase). Keep each value short and literal (a title, a heading, a ticker, a section name) — not a whole sentence, not vague words that appear everywhere.
 
-DOWNLOAD tasks: use download_exists. If the task also names WHICH document or WHICH section it wants (e.g. "download Intel's 10-K and find the Risk Factors section"), put that distinctive phrase as the value ("Risk Factors") so success means we saved the RIGHT file — one whose contents actually include it — not merely that some file landed on disk. The value is checked against the downloaded file's text, so choose a phrase that literally appears inside the target document. Use an empty value only when any file satisfies the task.
-
-OPEN-ENDED tasks whose exact answer you cannot know in advance ("find the most popular finance show on YouTube", "find the top-rated restaurant"): you STILL must give a checkable landmark. Use a url_contains that proves you reached the right KIND of destination (a YouTube video/channel page -> url_contains "/watch" or "/channel/" or "/@"; a product -> "/product/"), or a text_visible landmark that the destination section always renders. Never return zero conditions because the answer is unknown — a landmark of the destination is always available.
-
-Rules: pick conditions that are SUFFICIENT (met => task genuinely done) and NECESSARY (task done => met). If the task is a search/read, the condition is the answer text or a landmark of the destination page. Do not require login/CAPTCHA text. Never fabricate a value you don't expect to literally appear."""
+Rules: pick conditions that are SUFFICIENT (met => task genuinely done) and NECESSARY (task done => met). If the task is a search/read, the condition is the answer text or a landmark of the destination page. If it downloads a document to inspect, prefer download_exists carrying the section/heading to confirm. Always return at least one condition — for an open-ended task ("find the most popular X"), use a landmark of the destination page (its title/section). Do not require login/CAPTCHA text. Never fabricate a value you don't expect to literally appear."""
 
 
 class LLMPlanner:

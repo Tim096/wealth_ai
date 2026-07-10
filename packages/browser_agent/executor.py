@@ -79,13 +79,16 @@ class ActionExecutor:
             name = name.split("?")[0].rstrip("/").split("/")[-1] or "download.bin"
             return _os.path.join(str(self.downloads_dir), name) if self.downloads_dir else name
 
-        def _save_url(u: str, note: str) -> ActionOutcome | None:
-            if not u.startswith(("http://", "https://")):
-                return None
-            try:
-                body = self.page.request.get(u).body()
-            except Exception:  # noqa: BLE001
-                return None
+        # A short body carrying this signature is SEC's automation block page,
+        # not the document — a naked page.request.get() sends no declared UA and
+        # gets rejected even when the browser loaded the real file fine. Treat it
+        # as a miss so we fall back to the browser-rendered content.
+        def _is_block_page(body: bytes) -> bool:
+            head = body[:4000].lower()
+            return (b"undeclared automated" in head or b"request originates" in head
+                    or (len(body) < 2048 and b"automated tool" in head))
+
+        def _save_bytes(body: bytes, u: str, note: str) -> ActionOutcome:
             last = u.split("/")[-1]
             dest = _dest(u if "." in last else u.rstrip("/") + "/download.htm")
             with open(dest, "wb") as fh:
@@ -94,21 +97,84 @@ class ActionExecutor:
             return ActionOutcome(ok=True, action_type="download", detail=f"{dest} ({note})",
                                  extracted_text=dest, url_before=url_before, url_after=self.page.url)
 
+        def _save_content(u: str, note: str) -> ActionOutcome:
+            """Save the document the BROWSER actually rendered (correct UA,
+            cookies, JS) — the reliable source for a UA-gated site like SEC."""
+            if u.endswith((".htm", ".html", ".txt", ".xml")):
+                name = u
+            else:
+                import re as _re
+                slug = _re.sub(r"[^A-Za-z0-9._-]+", "-", (self.page.title() or "").strip())[:60]
+                name = f"{slug.strip('-') or 'page'}.html"
+            dest = _dest(name)
+            with open(dest, "w", encoding="utf-8") as fh:
+                fh.write(self.page.content())
+            self.last_download_path = dest
+            return ActionOutcome(ok=True, action_type="download", detail=f"{dest} ({note})",
+                                 extracted_text=dest, url_before=url_before, url_after=self.page.url)
+
+        def _httpx_save(u: str, note: str) -> ActionOutcome | None:
+            """Fetch bytes over a plain HTTP client with a proper User-Agent.
+            Some hosts (SEC EDGAR) 403 Chromium's header/TLS fingerprint no
+            matter the UA string, yet serve a declared client fine — so this is
+            the reliable path when the browser is blocked. A declared contact UA
+            is used for sec.gov (its documented requirement), a normal browser UA
+            elsewhere."""
+            import os as _os2
+            from urllib.parse import urlsplit as _urlsplit
+            host = (_urlsplit(u).hostname or "").lower()
+            ua = _os2.environ.get("SEC_EDGAR_USER_AGENT", "") if host.endswith("sec.gov") else ""
+            ua = ua or ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                        "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
+            try:
+                import httpx
+                resp = httpx.get(u, headers={"User-Agent": ua}, timeout=30, follow_redirects=True)
+            except Exception:  # noqa: BLE001
+                return None
+            if resp.status_code != 200 or _is_block_page(resp.content):
+                return None
+            return _save_bytes(resp.content, u, note + ", via http")
+
+        def _save_url(u: str, note: str) -> ActionOutcome | None:
+            """Fetch a DIFFERENT url's bytes. Try the browser session first (it
+            carries cookies), then a declared HTTP client (bypasses fingerprint
+            blocks), then a browser navigation — so a UA-gated document still
+            downloads instead of a block page."""
+            if not u.startswith(("http://", "https://")):
+                return None
+            try:
+                resp = self.page.request.get(u)
+                body = resp.body()
+            except Exception:  # noqa: BLE001
+                body = b""
+            if body and resp.ok and not _is_block_page(body):
+                return _save_bytes(body, u, note)
+            viahttp = _httpx_save(u, note)
+            if viahttp is not None:
+                return viahttp
+            try:                              # last resort: let the browser render it
+                self.page.goto(u, wait_until="domcontentloaded", timeout=self.timeout * 3)
+                if not _is_block_page(self.page.content().encode("utf-8", "replace")):
+                    return _save_content(u, note + ", via browser")
+            except Exception:  # noqa: BLE001
+                pass
+            return None
+
         def _save_current() -> ActionOutcome:
             try:
                 self.page.wait_for_load_state("domcontentloaded", timeout=self.timeout)
             except Exception:  # noqa: BLE001
                 pass
-            r = _save_url(self.page.url, "fetched current document")
-            if r is not None:
-                return r
-            dest = _dest(self.page.url if self.page.url.endswith((".htm", ".html", ".txt", ".xml"))
-                         else "download.html")
-            with open(dest, "w", encoding="utf-8") as fh:
-                fh.write(self.page.content())
-            self.last_download_path = dest
-            return ActionOutcome(ok=True, action_type="download", detail=f"{dest} (saved rendered page)",
-                                 extracted_text=dest, url_before=url_before, url_after=self.page.url)
+            # the current page is already loaded in the browser — normally just
+            # save its rendered content. But if the browser is itself showing a
+            # block page (SEC 403s Chromium), re-fetch the real bytes over the
+            # declared HTTP client so we save the document, not the block notice.
+            rendered = self.page.content()
+            if _is_block_page(rendered.encode("utf-8", "replace")):
+                r = _httpx_save(self.page.url, "refetched blocked document")
+                if r is not None:
+                    return r
+            return _save_content(self.page.url, "saved rendered page")
 
         # 1) explicit URL to save — best for an inline document the model can see
         if getattr(action, "url", ""):

@@ -104,20 +104,6 @@ _OVERLAY_HIDE_JS = r"""
 """
 
 
-def _read_download_text(path: str, cap: int = 6_000_000) -> str:
-    """Decode a just-downloaded file to searchable text for content verification.
-    HTML tags are left in place — a plain phrase like 'Risk Factors' still appears
-    as literal text between them — so no HTML parser (or extra dependency) is
-    needed. Capped so a huge filing can't blow up memory; the section headings a
-    task looks for appear well within the cap."""
-    try:
-        with open(path, "rb") as fh:
-            raw = fh.read(cap)
-    except Exception:  # noqa: BLE001 — verification is best-effort; missing text -> unknown
-        return ""
-    return raw.decode("utf-8", errors="replace")
-
-
 @dataclass
 class Step:
     purpose: str          # search_box / submit_button / ...
@@ -504,12 +490,7 @@ class BrowserAgent:
                 except Exception:  # noqa: BLE001 — best-effort; some pages never idle
                     pass
             self.page.wait_for_timeout(300)
-        extracted: dict[str, str] = {}
-        if self.executor.last_download_path:
-            extracted["__download__"] = self.executor.last_download_path
-            # read the saved file's text so the verifier can confirm we saved the
-            # RIGHT document (contains the expected section), not just any file
-            extracted["__download_text__"] = _read_download_text(self.executor.last_download_path)
+        extracted = {"__download__": self.executor.last_download_path} if self.executor.last_download_path else {}
         obs = self.observer.observe()
         verdict = verify_contract(contract, obs, extracted)
         base = {"pass": 1.0, "unknown": 0.4, "fail": 0.0}[verdict.status]

@@ -20,6 +20,7 @@ from sec_core.headings import HeadingCandidate, detect_candidates
 from sec_core.items import ItemSegment
 from sec_core.normalize import NormalizedDocument, normalize_html
 from sec_core.toc import assess_toc
+from sec_core.topic_check import check_topic
 
 
 @dataclass
@@ -80,6 +81,24 @@ def extract_from_html(
     else:
         segments, breakdowns = resolve_items(doc, candidates, filing_id)
         filing_class = "standard" if candidates else "non_10k"
+
+    # per-item topic-consistency oracle (independent, lexical, all items) —
+    # a span labelled Item 1A that has no risk-factor language is suspect even
+    # if the heading matched. Flags a pass/partial item that fails its topic.
+    for seg in segments:
+        if seg.end_offset > seg.start_offset:
+            body = doc.slice(seg.start_offset, seg.end_offset)
+            nl = body.find("\n")
+            body = body[nl + 1:] if nl != -1 else body
+        else:
+            body = ""
+        tc = check_topic(seg.item_code, body)
+        seg.topic_check = f"{tc.verdict}: {tc.detail}"
+        if tc.verdict == "inconsistent" and seg.status in ("pass", "partial"):
+            seg.needs_review = True
+            seg.warnings.append(
+                f"topic-consistency oracle: extracted span has no canonical "
+                f"'{seg.canonical_title}' language — possible mislabel/mis-boundary; needs_review")
 
     latency_ms = (time.perf_counter() - t0) * 1000
     result = ExtractionResult(

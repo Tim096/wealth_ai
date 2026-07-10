@@ -329,6 +329,15 @@ class BrowserAgent:
                                    screenshot=self._screenshot(f"agent-{len(trace)}")))
             _emit(f"{'⬇️' if action.type == 'download' and out.ok else ('👉' if out.ok else '⚠️')} "
                   f"{action.type}:{detail}")
+            # settle before re-observing: an action that navigates or fires an
+            # SPA fetch (goto/click/press) needs the new content to load, else
+            # the next observation shows the OLD page and the planner loops
+            # (this is why EDGAR full-text search kept re-filling the ticker).
+            if action.type in ("goto", "click", "press"):
+                try:
+                    self.page.wait_for_load_state("networkidle", timeout=4000)
+                except Exception:  # noqa: BLE001 — best-effort; some pages never idle
+                    pass
             self.page.wait_for_timeout(300)
         extracted = {"__download__": self.executor.last_download_path} if self.executor.last_download_path else {}
         obs = self.observer.observe()

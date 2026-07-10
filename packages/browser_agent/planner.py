@@ -113,7 +113,11 @@ def _build_action(decision: dict, obs: Observation):
 _PREFLIGHT_SYSTEM = """You plan the opening of a verified browser task. Given ONE natural-language task (any language), decide the best page to start on and the conditions that will prove success — BEFORE any browsing. An external verifier checks these conditions literally, so make them observable and true only when the task is actually done.
 
 Return EXACTLY ONE JSON object, nothing else:
-  "start_url": a full https:// URL to open first. Go STRAIGHT to the target: if the task names a site/brand/company/document, use its real domain (finlab -> https://finlab.tw, a US company's SEC 10-K -> https://efts.sec.gov/LATEST/search-index?q=... is wrong; use https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=<name>&type=10-K, Wikipedia -> https://en.wikipedia.org). Only if the target is genuinely unknown, start at https://duckduckgo.com/html/ . Never invent a deep guessed path you cannot know exists — prefer a search/browse entry the site publishes.
+  "start_url": a full https:// URL to open first. Go STRAIGHT to the target and land as DEEP as a URL you can construct reliably lets you, so the agent has the fewest hops left:
+     - A US company's SEC filing: use the plain-HTML EDGAR browse endpoint keyed by the ticker, which lists that one company's filings of a type directly — https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=<TICKER>&type=10-K&dateb=&owner=include&count=10 (e.g. CIK=INTC&type=10-K). Do NOT use the efts.sec.gov full-text search SPA — it renders results via JavaScript and is unreliable to drive.
+     - A named site/brand: its real domain (finlab -> https://finlab.tw, Wikipedia article -> https://en.wikipedia.org/wiki/<Topic>).
+     - Only if the target is genuinely unknown, start at https://duckduckgo.com/html/ .
+     Never invent a deep path you cannot know exists (a guessed accession number, a made-up article slug) — construct only URLs whose shape the site guarantees (a ticker-keyed EDGAR query, a domain root, a Wikipedia /wiki/Title).
   "success_conditions": 1-3 objects proving completion, each:
        {"type":"text_visible","value":"<short exact substring that appears on the page only when done>"}
        {"type":"url_contains","value":"<url fragment true only when done>"}

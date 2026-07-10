@@ -69,6 +69,7 @@
     height:min(62vh,640px);overflow-y:auto;font-family:var(--mono);font-size:.82rem;
     white-space:pre-wrap;word-break:break-word;line-height:1.6}
   .doc .head{color:var(--accent)}
+  .doc mark{background:var(--accent);color:#0b0f14;border-radius:2px;padding:0 1px}
   #sTable tbody{max-height:min(62vh,640px)}
   .tbwrap{max-height:min(62vh,640px);overflow-y:auto;border:1px solid var(--line);border-radius:10px}
   .tbwrap table{border-collapse:separate}
@@ -102,13 +103,9 @@
   <section class="panel" id="tab-agent">
     <div class="grid2">
       <div>
-        <label>起始網址</label>
-        <input type="text" id="aUrl" value="https://www.youtube.com">
         <label>任務(自然語言,中英皆可)</label>
-        <textarea id="aTask" placeholder="例:搜尋 &quot;33號遠征隊&quot; 然後點第一個影片"></textarea>
-        <div class="hint" style="margin-top:.2rem">💡 直接連得到的站(YouTube/Wikipedia/公司官網)最順;若填搜尋引擎首頁,Google/Bing 可能出現「我不是機器人」而卡住——agent 會誠實 give_up。</div>
-        <label>成功條件(看到什麼文字算成功;留空自動推斷)</label>
-        <input type="text" id="aSucc" placeholder="留空 = 自動">
+        <textarea id="aTask" placeholder="例:找 INTC 最新 10-K 的 Risk Factors 並下載;或:搜尋 &quot;33號遠征隊&quot; 然後點第一個影片"></textarea>
+        <div class="hint" style="margin-top:.2rem">💡 只要輸入任務就好。開場時 LLM 會自己規劃「起點網址 + 可驗證的成功條件」(🧭 那一列),直達目標站、不繞搜尋引擎;遇彈窗先關、遇 CAPTCHA 誠實 give_up。</div>
         <div style="margin-top:.9rem;display:flex;gap:.7rem;align-items:center">
           <button class="btn" id="aRun">派工 ▶</button>
           <span class="hint">會另開一個真實瀏覽器視窗,你可以全程看它操作。</span>
@@ -136,6 +133,14 @@
       <span id="sBusy"></span>
     </div>
     <div class="meta" id="sMeta"></div>
+    <div id="sFind" class="hidden" style="margin-top:.5rem;display:flex;gap:.5rem;align-items:center;
+         background:var(--panel2);border:1px solid var(--accent);border-radius:8px;padding:.4rem .6rem">
+      <span class="mono" style="font-size:.72rem;color:var(--accent)">Ctrl+F 跳到 Item</span>
+      <input type="text" id="sFindQ" placeholder="打 item 代號或標題:1A · 7 · risk factor · 財報…"
+             style="flex:1;min-width:0" autocomplete="off">
+      <span class="mono sub" id="sFindInfo" style="white-space:nowrap"></span>
+      <button class="btn ghost" id="sFindX" style="padding:.2rem .6rem">✕</button>
+    </div>
     <div class="grid2" style="margin-top:.6rem">
       <div>
         <div class="tbwrap scroll">
@@ -182,9 +187,9 @@ $('#aRun').onclick=async()=>{
   $('#aRun').disabled=true;$('#aFeed').innerHTML='';$('#aVerdict').innerHTML='<span class="spin"></span>';
   feed('sys','你 › '+task);
   const r=await fetch('/api/agent/run',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({task,url:$('#aUrl').value.trim(),success:$('#aSucc').value})});
+    body:JSON.stringify({task,url:'',success:''})});
   const d=await r.json();
-  feed('sys','成功條件:'+d.success.join(' , '));
+  feed('sys','起點與成功條件:開場由 LLM 規劃(見下方 🧭)');
   let seen=0;
   pollTimer=setInterval(async()=>{
     const s=await(await fetch('/api/agent/status?id='+d.run_id)).json();
@@ -202,8 +207,12 @@ $('#aRun').onclick=async()=>{
 };
 
 // ---------- sec ----------
+let SEC_ITEMS=[];          // last extracted item list (code/title/…) for find
+let SEC_DOC={head:'',text:''};  // last shown item body, for highlight re-render
 function renderSec(d){
-  if(!d.ok){$('#sMeta').innerHTML=`<span class="pill p-fail">錯誤</span> ${d.error}`;return;}
+  $('#sFind').classList.add('hidden');
+  if(!d.ok){SEC_ITEMS=[];$('#sMeta').innerHTML=`<span class="pill p-fail">錯誤</span> ${d.error}`;return;}
+  SEC_ITEMS=d.items||[];
   const m=d.meta;
   $('#sMeta').innerHTML=`<span><b>${m.source}</b> · ${m.form} ${m.report_date}</span>
     <span>filing_class <b class="mono">${m.filing_class}</b></span>
@@ -212,28 +221,44 @@ function renderSec(d){
   const tb=$('#sTable tbody');tb.innerHTML='';
   d.items.forEach(it=>{
     const tr=document.createElement('tr');
+    tr.dataset.code=it.code;
     tr.innerHTML=`<td class="mono">Item ${it.code}${it.needs_review?' ⚠':''}</td>
       <td>${pill(it.status)}</td><td class="mono">${it.confidence.toFixed(2)}</td>
       <td>${it.xbrl?pill(it.xbrl):'<span class="sub">–</span>'}</td>
       <td>${it.topic?pill(it.topic):'<span class="sub">–</span>'}</td>
       <td class="mono">${it.chars.toLocaleString()}</td>`;
-    tr.onclick=()=>{document.querySelectorAll('#sTable tbody tr').forEach(x=>x.classList.remove('sel'));
-      tr.classList.add('sel');showItem(it.code);};
+    tr.onclick=()=>{selectRow(it.code);showItem(it.code);};
     tb.appendChild(tr);
   });
 }
-async function showItem(code){
+async function showItem(code,highlight){
   const d=await(await fetch('/api/sec/item?code='+encodeURIComponent(code))).json();
-  if(!d.ok){$('#sDoc').textContent=d.error;return;}
+  if(!d.ok){$('#sDoc').textContent=d.error;return d;}
   const head=`Item ${d.code}. ${d.title}\n`+
     `status=${d.status}  conf=${d.confidence}  provenance=${d.provenance}  needs_review=${d.needs_review}\n`+
     `offset=[${d.offsets}]  sha256=${d.sha256}  chars=${(d.full_chars??0).toLocaleString()}\n`+
     (d.xbrl?`xbrl: ${d.xbrl}\n`:'')+(d.topic?`topic: ${d.topic}\n`:'')+
     (d.warnings.length?('warnings: '+d.warnings.join(' | ')+'\n'):'')+
     '─'.repeat(56)+'\n';
-  $('#sDoc').innerHTML='<span class="head"></span>';
-  $('#sDoc').firstChild.textContent=head;
-  $('#sDoc').appendChild(document.createTextNode(d.text));
+  SEC_DOC={head,text:d.text};
+  renderDoc(highlight);
+  return d;
+}
+// render the current item body, optionally wrapping matches of `q` in <mark>
+// and scrolling the first hit into view (used by the Ctrl+F item jump).
+function renderDoc(q){
+  const el=$('#sDoc');el.innerHTML='<span class="head"></span>';
+  el.firstChild.textContent=SEC_DOC.head;
+  const body=SEC_DOC.text;
+  if(!q){el.appendChild(document.createTextNode(body));return 0;}
+  const low=body.toLowerCase(),needle=q.toLowerCase();let i=0,from=0,first=null;
+  while(true){const at=low.indexOf(needle,from);if(at<0)break;
+    if(at>from)el.appendChild(document.createTextNode(body.slice(from,at)));
+    const mk=document.createElement('mark');mk.textContent=body.slice(at,at+q.length);
+    el.appendChild(mk);if(!first)first=mk;from=at+q.length;i++;}
+  el.appendChild(document.createTextNode(body.slice(from)));
+  if(first)first.scrollIntoView({block:'center'});
+  return i;
 }
 async function secBusy(on){$('#sBusy').innerHTML=on?'<span class="spin"></span>':'';
   $('#sGo').disabled=on;$('#sUpBtn').disabled=on;}
@@ -245,6 +270,44 @@ $('#sGo').onclick=async()=>{
   finally{secBusy(false);}
 };
 $('#sQuery').addEventListener('keydown',e=>{if(e.key==='Enter')$('#sGo').click();});
+// ---- Ctrl+F: jump to the corresponding Item ----
+function selectRow(code){
+  document.querySelectorAll('#sTable tbody tr').forEach(x=>x.classList.remove('sel'));
+  const tr=document.querySelector(`#sTable tbody tr[data-code="${code}"]`);
+  if(tr){tr.classList.add('sel');tr.scrollIntoView({block:'nearest'});}
+}
+function findItem(q){
+  const s=q.replace(/^item\s*/i,'').trim().toLowerCase();
+  // exact item code first (1a / 7 / 9b), then a title substring (risk -> 1A)
+  return SEC_ITEMS.find(it=>it.code.toLowerCase()===s)
+      || SEC_ITEMS.find(it=>it.title&&it.title.toLowerCase().includes(q.trim().toLowerCase()));
+}
+async function secJump(q){
+  q=q.trim();const info=$('#sFindInfo');
+  if(!q){renderDoc();info.textContent='';return;}
+  const it=findItem(q);
+  if(it){
+    selectRow(it.code);
+    const byTitleOrPhrase=!(SEC_ITEMS.find(x=>x.code.toLowerCase()===q.replace(/^item\s*/i,'').trim().toLowerCase()));
+    const d=await showItem(it.code, byTitleOrPhrase?q:'');
+    const hits=byTitleOrPhrase?(SEC_DOC.text.toLowerCase().split(q.toLowerCase()).length-1):0;
+    info.textContent=`→ Item ${it.code} · ${it.title}`+(hits?` · 原文 ${hits} 處`:'');
+  }else{
+    // no Item matches — fall back to a plain find inside the current body
+    const hits=renderDoc(q);
+    info.textContent=hits?`目前原文 ${hits} 處`:'查無對應 Item / 文字';
+  }
+}
+$('#sFindQ').addEventListener('input',e=>secJump(e.target.value));
+$('#sFindQ').addEventListener('keydown',e=>{if(e.key==='Escape')closeFind();});
+$('#sFindX').onclick=()=>closeFind();
+function openFind(){$('#sFind').classList.remove('hidden');const q=$('#sFindQ');q.focus();q.select();}
+function closeFind(){$('#sFind').classList.add('hidden');$('#sFindInfo').textContent='';renderDoc();}
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='f'&&!$('#tab-sec').classList.contains('hidden')){
+    e.preventDefault();openFind();}
+});
+
 $('#sUpBtn').onclick=()=>$('#sFile').click();
 $('#sFile').onchange=async e=>{
   const f=e.target.files[0]; if(!f)return;

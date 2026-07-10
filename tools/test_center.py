@@ -270,7 +270,7 @@ def _agent_worker() -> None:
                                      artifact_dir=OUT / "shots",
                                      evidence_store=EvidenceStore(OUT / "evidence"),
                                      downloads_dir=OUT / "downloads")
-                run = agent.run_agentic(run_id, contract, planner, max_steps=8,
+                run = agent.run_agentic(run_id, contract, planner, max_steps=14,
                                         on_step=lambda t: rec["steps"].append(t))
                 rec.update(status=run.status, confidence=run.confidence,
                            verifier=run.verifier.reason,

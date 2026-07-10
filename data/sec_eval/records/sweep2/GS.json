@@ -1,0 +1,207 @@
+﻿{
+ "ticker": "GS",
+ "cik": 886982,
+ "accession": "0000886982-26-000091",
+ "form": "10-K",
+ "filing_date": "2026-02-25",
+ "report_date": "2025-12-31",
+ "main_document": "gs-20251231.htm",
+ "main_document_score": 3.0,
+ "raw_chars": 9611165,
+ "latency_ms": 2044.6,
+ "candidates": 42,
+ "toc_rejected": 20,
+ "pipeline_warnings": [],
+ "items": {
+  "1": {
+   "status": "pass",
+   "confidence": 0.967,
+   "heading": "Item 1. Business",
+   "span_chars": 151917,
+   "warnings": []
+  },
+  "1A": {
+   "status": "pass",
+   "confidence": 0.967,
+   "heading": "Item 1A. Risk Factors",
+   "span_chars": 141715,
+   "warnings": [
+    "trimmed trailing page furniture: 60, Goldman Sachs 2025 Form 10-K, THE GOLDMAN SACHS GROUP, INC. AND SUBSIDIARIES"
+   ]
+  },
+  "1B": {
+   "status": "pass",
+   "confidence": 0.967,
+   "heading": "Item 1B. Unresolved Staff Comments",
+   "span_chars": 242,
+   "warnings": []
+  },
+  "1C": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.667,
+   "heading": "Item 1C. Cybersecurity",
+   "span_chars": 247,
+   "warnings": [
+    "body is a reference stub pointing to another item (Item 7) in this filing; the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "2": {
+   "status": "pass",
+   "confidence": 0.967,
+   "heading": "Item 2. Properties",
+   "span_chars": 1896,
+   "warnings": []
+  },
+  "3": {
+   "status": "pass",
+   "confidence": 0.967,
+   "heading": "Item 3. Legal Proceedings",
+   "span_chars": 1223,
+   "warnings": []
+  },
+  "4": {
+   "status": "pass",
+   "confidence": 0.867,
+   "heading": "Item 4. Mine Safety Disclosures",
+   "span_chars": 48,
+   "warnings": [
+    "trimmed trailing page furniture: Goldman Sachs 2025 Form 10-K, 61, THE GOLDMAN SACHS GROUP, INC. AND SUBSIDIARIES, PART II"
+   ]
+  },
+  "5": {
+   "status": "pass",
+   "confidence": 0.967,
+   "heading": "Item 5. Market for Registrant's Common Equity, Related Stockholder Matters and Issuer Purchases of Equity Securities",
+   "span_chars": 2332,
+   "warnings": []
+  },
+  "6": {
+   "status": "reserved",
+   "confidence": 0.0,
+   "heading": "",
+   "span_chars": 0,
+   "warnings": [
+    "no heading candidate found for item 6"
+   ]
+  },
+  "7": {
+   "status": "pass",
+   "confidence": 0.967,
+   "heading": "Item 7. Management's Discussion and Analysis of Financial Condition and Results of Operations",
+   "span_chars": 306659,
+   "warnings": [
+    "trimmed trailing page furniture: 134, Goldman Sachs 2025 Form 10-K, THE GOLDMAN SACHS GROUP, INC. AND SUBSIDIARIES"
+   ]
+  },
+  "7A": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.667,
+   "heading": "Item 7A. Quantitative and Qualitative Disclosures About Market Risk",
+   "span_chars": 288,
+   "warnings": [
+    "body is a reference stub pointing to another item (Item 7) in this filing; the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "8": {
+   "status": "pass",
+   "confidence": 0.967,
+   "heading": "Item 8. Financial Statements and Supplementary Data",
+   "span_chars": 441486,
+   "warnings": [
+    "trimmed trailing page furniture: Goldman Sachs 2025 Form 10-K, 243, THE GOLDMAN SACHS GROUP, INC. AND SUBSIDIARIES"
+   ]
+  },
+  "9": {
+   "status": "pass",
+   "confidence": 0.967,
+   "heading": "Item 9. Changes in and Disagreements with Accountants on Accounting and Financial Disclosure",
+   "span_chars": 218,
+   "warnings": []
+  },
+  "9A": {
+   "status": "pass",
+   "confidence": 0.967,
+   "heading": "Item 9A. Controls and Procedures",
+   "span_chars": 1041,
+   "warnings": []
+  },
+  "9B": {
+   "status": "pass",
+   "confidence": 0.967,
+   "heading": "Item 9B. Other Information",
+   "span_chars": 1364,
+   "warnings": []
+  },
+  "9C": {
+   "status": "pass",
+   "confidence": 0.967,
+   "heading": "Item 9C. Disclosure Regarding Foreign Jurisdictions that Prevent Inspections",
+   "span_chars": 93,
+   "warnings": [
+    "trimmed trailing page furniture: PART III"
+   ]
+  },
+  "10": {
+   "status": "pass",
+   "confidence": 0.967,
+   "heading": "Item 10. Directors, Executive Officers and Corporate Governance",
+   "span_chars": 1294,
+   "warnings": [
+    "trimmed trailing page furniture: 244, Goldman Sachs 2025 Form 10-K, THE GOLDMAN SACHS GROUP, INC. AND SUBSIDIARIES"
+   ]
+  },
+  "11": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.667,
+   "heading": "Item 11. Executive Compensation",
+   "span_chars": 236,
+   "warnings": [
+    "body is a reference stub pointing to the definitive proxy statement (external document, not fetched); the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "12": {
+   "status": "pass",
+   "confidence": 0.967,
+   "heading": "Item 12. Security Ownership of Certain Beneficial Owners and Management and Related Stockholder Matters",
+   "span_chars": 2207,
+   "warnings": []
+  },
+  "13": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.667,
+   "heading": "Item 13. Certain Relationships and Related Transactions, and Director Independence",
+   "span_chars": 266,
+   "warnings": [
+    "body is a reference stub pointing to the definitive proxy statement (external document, not fetched); the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "14": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.667,
+   "heading": "Item 14. Principal Accountant Fees and Services",
+   "span_chars": 197,
+   "warnings": [
+    "trimmed trailing page furniture: PART IV",
+    "body is a reference stub pointing to the definitive proxy statement (external document, not fetched); the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "15": {
+   "status": "pass",
+   "confidence": 0.959,
+   "heading": "Item 15. Exhibit and Financial Statement Schedules",
+   "span_chars": 15101,
+   "warnings": [
+    "trimmed trailing page furniture: Goldman Sachs 2025 Form 10-K, 249"
+   ]
+  },
+  "16": {
+   "status": "missing",
+   "confidence": 0.0,
+   "heading": "",
+   "span_chars": 0,
+   "warnings": [
+    "no heading candidate found for item 16"
+   ]
+  }
+ }
+}

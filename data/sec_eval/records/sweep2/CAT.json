@@ -1,0 +1,211 @@
+﻿{
+ "ticker": "CAT",
+ "cik": 18230,
+ "accession": "0000018230-26-000008",
+ "form": "10-K",
+ "filing_date": "2026-02-13",
+ "report_date": "2025-12-31",
+ "main_document": "cat-20251231.htm",
+ "main_document_score": 3.0,
+ "raw_chars": 6100469,
+ "latency_ms": 1151.8,
+ "candidates": 46,
+ "toc_rejected": 23,
+ "pipeline_warnings": [],
+ "items": {
+  "1": {
+   "status": "pass",
+   "confidence": 0.961,
+   "heading": "Item 1.Business.",
+   "span_chars": 39207,
+   "warnings": []
+  },
+  "1A": {
+   "status": "pass",
+   "confidence": 0.963,
+   "heading": "Item 1A.Risk Factors.",
+   "span_chars": 53426,
+   "warnings": []
+  },
+  "1B": {
+   "status": "pass",
+   "confidence": 0.865,
+   "heading": "Item 1B.Unresolved Staff Comments.",
+   "span_chars": 41,
+   "warnings": []
+  },
+  "1C": {
+   "status": "pass",
+   "confidence": 0.963,
+   "heading": "Item 1C. Cybersecurity.",
+   "span_chars": 10186,
+   "warnings": [
+    "trimmed trailing page furniture: 22, Table of Contents"
+   ]
+  },
+  "2": {
+   "status": "pass",
+   "confidence": 0.962,
+   "heading": "Item 2.Properties.",
+   "span_chars": 5976,
+   "warnings": [
+    "trimmed trailing page furniture: 24, Table of Contents"
+   ]
+  },
+  "3": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.664,
+   "heading": "Item 3.Legal Proceedings.",
+   "span_chars": 327,
+   "warnings": [
+    "body is a reference stub pointing to a financial-statement note (Note 22) elsewhere in this filing; the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "4": {
+   "status": "pass",
+   "confidence": 0.865,
+   "heading": "Item 4.Mine Safety Disclosures.",
+   "span_chars": 48,
+   "warnings": [
+    "trimmed trailing page furniture: PART II"
+   ]
+  },
+  "5": {
+   "status": "pass",
+   "confidence": 0.966,
+   "heading": "Item 5.Market for Registrant's Common Equity, Related Stockholder Matters and Issuer Purchases of Equity Securities.",
+   "span_chars": 2553,
+   "warnings": []
+  },
+  "6": {
+   "status": "reserved",
+   "confidence": 0.767,
+   "heading": "Item 6.[Reserved]",
+   "span_chars": 18,
+   "warnings": [
+    "trimmed trailing page furniture: 27, Table of Contents"
+   ]
+  },
+  "7": {
+   "status": "pass",
+   "confidence": 0.966,
+   "heading": "Item 7.Management's Discussion and Analysis of Financial Condition and Results of Operations.",
+   "span_chars": 102408,
+   "warnings": [
+    "trimmed trailing page furniture: 53, Table of Contents"
+   ]
+  },
+  "7A": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.666,
+   "heading": "Item 7A.Quantitative and Qualitative Disclosures About Market Risk.",
+   "span_chars": 653,
+   "warnings": [
+    "trimmed trailing page furniture: 54, Table of Contents",
+    "body is a reference stub pointing to a financial-statement note (Note 1) elsewhere in this filing; the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "8": {
+   "status": "pass",
+   "confidence": 0.966,
+   "heading": "Item 8.Financial Statements and Supplementary Data.",
+   "span_chars": 176380,
+   "warnings": [
+    "trimmed trailing page furniture: 123, Table of Contents"
+   ]
+  },
+  "9": {
+   "status": "pass",
+   "confidence": 0.966,
+   "heading": "Item 9.Changes in and Disagreements with Accountants on Accounting and Financial Disclosure.",
+   "span_chars": 109,
+   "warnings": []
+  },
+  "9A": {
+   "status": "pass",
+   "confidence": 0.965,
+   "heading": "Item 9A.Controls and Procedures.",
+   "span_chars": 1532,
+   "warnings": []
+  },
+  "9B": {
+   "status": "pass",
+   "confidence": 0.964,
+   "heading": "Item 9B.Other Information.",
+   "span_chars": 1862,
+   "warnings": []
+  },
+  "9C": {
+   "status": "pass",
+   "confidence": 0.966,
+   "heading": "Item 9C. Disclosure Regarding Foreign Jurisdictions that Prevent Inspections.",
+   "span_chars": 94,
+   "warnings": [
+    "trimmed trailing page furniture: 124, PART III"
+   ]
+  },
+  "10": {
+   "status": "pass",
+   "confidence": 0.966,
+   "heading": "Item 10. Directors, Executive Officers and Corporate Governance.",
+   "span_chars": 2372,
+   "warnings": []
+  },
+  "11": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.664,
+   "heading": "Item 11. Executive Compensation.",
+   "span_chars": 127,
+   "warnings": [
+    "trimmed trailing page furniture: 125, Table of Contents",
+    "body is a reference stub pointing to the definitive proxy statement (external document, not fetched); the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "12": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.566,
+   "heading": "Item 12. Security Ownership of Certain Beneficial Owners and Management and Related Stockholder Matters.",
+   "span_chars": 1003,
+   "warnings": [
+    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 18 chars before this line; dense_cluster: 4 other item headings within 1500 chars (3 after) \u2014 heading list, not body; kept despite TOC signals: no later candidate exists for this item",
+    "body is a reference stub pointing to the definitive proxy statement (external document, not fetched); the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "13": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.566,
+   "heading": "Item 13. Certain Relationships and Related Transactions, and Director Independence.",
+   "span_chars": 178,
+   "warnings": [
+    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 1021 chars before this line; dense_cluster: 4 other item headings within 1500 chars (2 after) \u2014 heading list, not body; short_section: only 95 chars before the next item heading \u2014 no real section body; kept despite TOC signals: no later candidate exists for this item",
+    "body is a reference stub pointing to the definitive proxy statement (external document, not fetched); the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "14": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.665,
+   "heading": "Item 14. Principal Accountant Fees and Services.",
+   "span_chars": 261,
+   "warnings": [
+    "trimmed trailing page furniture: 126, Table of Contents, PART IV",
+    "body is a reference stub pointing to the definitive proxy statement (external document, not fetched); the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "15": {
+   "status": "pass",
+   "confidence": 0.959,
+   "heading": "Item 15. Exhibits and Financial Statement Schedules.",
+   "span_chars": 22175,
+   "warnings": []
+  },
+  "16": {
+   "status": "pass",
+   "confidence": 0.864,
+   "heading": "Item 16. Form 10-K Summary.",
+   "span_chars": 34,
+   "warnings": [
+    "trimmed trailing page furniture: 131, Table of Contents, Form 10-K"
+   ]
+  }
+ }
+}

@@ -1,0 +1,210 @@
+﻿{
+ "ticker": "MSFT",
+ "cik": 789019,
+ "accession": "0000950170-25-100235",
+ "form": "10-K",
+ "filing_date": "2025-07-30",
+ "report_date": "2025-06-30",
+ "main_document": "msft-20250630.htm",
+ "main_document_score": 3.0,
+ "raw_chars": 8158067,
+ "latency_ms": 1048.1,
+ "candidates": 144,
+ "toc_rejected": 25,
+ "pipeline_warnings": [],
+ "items": {
+  "1": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 1. BUSINESS",
+   "span_chars": 48647,
+   "warnings": [
+    "trimmed trailing page furniture: 15, PART I, Item 1A"
+   ]
+  },
+  "1A": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 1A. RISK FACTORS",
+   "span_chars": 68963,
+   "warnings": []
+  },
+  "1B": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 1B. UNRESOLVED STAFF COMMENTS",
+   "span_chars": 271,
+   "warnings": []
+  },
+  "1C": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 1C. CYBERSECURITY",
+   "span_chars": 9198,
+   "warnings": []
+  },
+  "2": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 2. PROPERTIES",
+   "span_chars": 1342,
+   "warnings": [
+    "trimmed trailing page furniture: 47, 50, 97"
+   ]
+  },
+  "3": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.7,
+   "heading": "ITEM 3. LEGAL PROCEEDINGS",
+   "span_chars": 202,
+   "warnings": [
+    "body is a reference stub pointing to a financial-statement note (Note 14) elsewhere in this filing; the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "4": {
+   "status": "pass",
+   "confidence": 0.9,
+   "heading": "ITEM 4. MINE SAFETY DISCLOSURES",
+   "span_chars": 48,
+   "warnings": [
+    "trimmed trailing page furniture: 32, PART II, Item 5, PART II"
+   ]
+  },
+  "5": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 5. MARKET FOR REGISTRANT'S COMMON EQUITY, RELATED STOCKHOLDER MATTERS, AND ISSUER PURCHASES OF EQUITY SECURITIES",
+   "span_chars": 2433,
+   "warnings": [
+    "trimmed trailing page furniture: 33, PART II, Item 6"
+   ]
+  },
+  "6": {
+   "status": "reserved",
+   "confidence": 0.8,
+   "heading": "ITEM 6. [RESERVED]",
+   "span_chars": 19,
+   "warnings": [
+    "trimmed trailing page furniture: 34, PART II, Item 7"
+   ]
+  },
+  "7": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 7. MANAGEMENT'S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS",
+   "span_chars": 47880,
+   "warnings": [
+    "trimmed trailing page furniture: 48, PART II, Item 7A"
+   ]
+  },
+  "7A": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 7A. QUANTITATIVE AND QUALITATIVE DISCLOSURES ABOUT MARKET RISK",
+   "span_chars": 1921,
+   "warnings": [
+    "trimmed trailing page furniture: 49, PART II, Item 8"
+   ]
+  },
+  "8": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 8. FINANCIAL STATEMENTS AND SUPPLEMENTARY DATA",
+   "span_chars": 99735,
+   "warnings": []
+  },
+  "9": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 9. CHANGES IN AND DISAGREEMENTS WITH ACCOUNTANTS ON ACCOUNTING AND FINANCIAL DISCLOSURE",
+   "span_chars": 109,
+   "warnings": []
+  },
+  "9A": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 9A. CONTROLS AND PROCEDURES",
+   "span_chars": 6672,
+   "warnings": []
+  },
+  "9B": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 9B. OTHER INFORMATION",
+   "span_chars": 359,
+   "warnings": []
+  },
+  "9C": {
+   "status": "pass",
+   "confidence": 1.0,
+   "heading": "ITEM 9C. DISCLOSURE REGARDING FOREIGN JURISDICTIONS THAT PREVENT INSPECTIONS",
+   "span_chars": 93,
+   "warnings": [
+    "trimmed trailing page furniture: PART III"
+   ]
+  },
+  "10": {
+   "status": "pass",
+   "confidence": 0.999,
+   "heading": "ITEM 10. DIRECTORS, EXECUTIVE OFFICERS, AND CORPORATE GOVERNANCE",
+   "span_chars": 1608,
+   "warnings": []
+  },
+  "11": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.7,
+   "heading": "ITEM 11. EXECUTIVE COMPENSATION",
+   "span_chars": 316,
+   "warnings": [
+    "body is a reference stub pointing to the definitive proxy statement (external document, not fetched); the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "12": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.7,
+   "heading": "ITEM 12. SECURITY OWNERSHIP OF CERTAIN BENEFICIAL OWNERS AND MANAGEMENT AND RELATED STOCKHOLDER MATTERS",
+   "span_chars": 309,
+   "warnings": [
+    "body is a reference stub pointing to the definitive proxy statement (external document, not fetched); the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "13": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.7,
+   "heading": "ITEM 13. CERTAIN RELATIONSHIPS AND RELATED TRANSACTIONS, AND DIRECTOR INDEPENDENCE",
+   "span_chars": 265,
+   "warnings": [
+    "trimmed trailing page furniture: 91, PART III, Item 14",
+    "body is a reference stub pointing to the definitive proxy statement (external document, not fetched); the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "14": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.7,
+   "heading": "ITEM 14. PRINCIPAL ACCOUNTANT FEES AND SERVICES",
+   "span_chars": 406,
+   "warnings": [
+    "trimmed trailing page furniture: 92, PART IV, Item 15, PART IV",
+    "body is a reference stub pointing to the definitive proxy statement (external document, not fetched); the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "15": {
+   "status": "pass",
+   "confidence": 0.993,
+   "heading": "ITEM 15. EXHIBIT AND FINANCIAL STATEMENT SCHEDULES",
+   "span_chars": 12842,
+   "warnings": [
+    "trimmed trailing page furniture: 99, PART IV, Item 16"
+   ]
+  },
+  "16": {
+   "status": "pass",
+   "confidence": 0.9,
+   "heading": "ITEM 16. FORM 10-K SUMMARY",
+   "span_chars": 33,
+   "warnings": [
+    "trimmed trailing page furniture: 100"
+   ]
+  }
+ }
+}

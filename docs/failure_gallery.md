@@ -24,3 +24,66 @@
 | Related Commit | fix(sec): classify cross-reference stub bodies as incorporated_by_reference |
 
 **附註(同次 smoke run 的正確行為驗證):** JPM 沒有 Item 16(選填項,raw HTML 0 hits)→ pipeline 標 `missing`,是正確的誠實判定,計入 missing item correctness。
+
+---
+
+## FG-SEC-002: Reference-stub 措辭變體大規模逃過偵測(silent failure class)
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-SEC-002 |
+| App | sec_extractor |
+| Input | 11 家真實 10-K(sweep1);對抗式稽核發現 |
+| Expected | 只指向他處的短 body 應標 incorporated_by_reference,不是 pass |
+| Actual | MSFT/NVDA/CAT Item 3、JPM 1C/7/7A/8、GS 1C/7A/11/13/14、XOM 3/7/7A/8、NVDA 8 全被標 pass、confidence ~0.958 |
+| Status | fixed |
+| Failure Type | silent_failure(FG-SEC-001 的一般化)|
+| Evidence | 對抗式稽核 31 confirmed 中的多數;例:GS Item 11 body = 「...is incorporated in this Form 10-K by reference.」regex `incorporated\s+(?:herein\s+)?by\s+reference` 因中間夾「in this Form 10-K」而不命中 |
+| Root Cause | FG-SEC-001 的修復 `_CROSS_REF_RE` 只認「refer to/see Item N」;真實 filing 用大量其他措辭指向 Note、named section、page range、proxy(不同 word order)。單一狹窄 regex 是脆弱設計 |
+| Repair Attempt | 新 `refine.classify_reference_stub`:body < 900 字且命中廣義 reference cue → incorporated_by_reference,並用 `_describe_target` 標明指向 proxy / Note / Item / Financial Section / page range |
+| Why It Still Failed | (已修復)殘留:內容真正還原(接回 MD&A/財報)尚未做,見 insights §2 |
+| Next Fix | cross-reference resolution 第二遍 |
+| Related Commit | fix(sec): kill three silent-failure classes found by 11-company audit |
+
+---
+
+## FG-SEC-003: Part divider / 頁碼 / running header 洩漏進 span 尾端
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-SEC-003 |
+| App | sec_extractor |
+| Input | 幾乎每家的 Item 4 / 9C / 16(Part 邊界上的 item)|
+| Expected | span 只含 item body |
+| Actual | AAPL Item 4 span = 「Not applicable. / Apple Inc. \| 2025 Form 10-K \| 18 / PART II」;confidence 0.958、無警告 |
+| Status | fixed |
+| Failure Type | boundary_leak |
+| Root Cause | span end = 下一個 item heading 的 start;兩者間夾著 Part divider、頁碼、running header,全被吃進 span。normalizer 保留這些為獨立行卻無人裁切 |
+| Repair Attempt | `refine.trim_trailing_furniture`:從 span 尾端逐行裁掉符合 furniture pattern(PART [IVX]、bare page number、Table of Contents、含 Form 10-K 的短行、公司 banner)的行,遇實質內容即停,並記錄裁掉了什麼 |
+| Why It Still Failed | (已修復)|
+| Related Commit | 同上 |
+
+---
+
+## FG-SEC-004: Terminal item 吞掉整本 appended 財報(最嚴重)
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-SEC-004 |
+| App | sec_extractor |
+| Input | XOM 10-K(Item 16)、JPM 10-K(Item 15)|
+| Expected | XOM Item 16 body = 「None.」;JPM Item 15 = exhibit 清單 |
+| Actual | **XOM Item 16 = 311,785 字**(吞掉整個 FINANCIAL SECTION:MD&A、財報、附註、油氣補充資料)、confidence 1.0、無警告;**JPM Item 15 = 985,564 字**(吞掉整本 annual report)|
+| Status | fixed |
+| Failure Type | boundary_runaway |
+| Evidence | 稽核 dump:XOM Item 16 span 開頭「None. / 27 / FINANCIAL SECTION / TABLE OF CONTENTS / ...」;JPM Item 15 中段出現「Return on tangible common equity (ROTCE)」MD&A 表格 |
+| Root Cause | **wrapper 10-K 模式**:公司把 Item 7/8 寫成一句指向「Financial Section / annual report」的 stub,真正內容以獨立區塊接在最後一個 item heading 之後。末項 span 定義為「到下一個 item heading 或 end-of-doc」→ 吃光後面全部。**這正是主管點名的 Intel/Citi corner case。** |
+| Repair Attempt | `refine.detect_appended_section_cut`:僅對 terminal item 且 span > 20K 時,偵測 section break(hard:「FINANCIAL SECTION」立即切;soft:「Report of Independent...」「MD&A of Financial Condition」「Consolidated Statements of」等保留 ≥1000 字 body 後切),並警告排除了多少字 |
+| Why It Still Failed | (已修復 boundary;內容還原見 insights §2)結果:XOM Item 16 → 33 字 + 警告排除 311,749 字;JPM Item 15 → 15,529 字 + 警告排除 970,031 字 |
+| Related Commit | 同上 |
+
+---
+
+## 稽核方法本身(元層次)
+
+這四個 FG 都不是我「讀 code 想出來的」,而是 **56 個 agent 的對抗式稽核**跑真實 filing 跑出來的,且每個都經過獨立 verifier「盡力反駁」後才留下(12 個被反駁的 anomaly 沒進這裡)。這個「用 AI 對抗式驗證 AI 產出」的 harness 本身,就是 SPEC 17 想證明的「AI 時代最稀缺的是驗證能力」。詳見 `prompts/eval_design/2026-07-10-adversarial-audit-workflow.md`。

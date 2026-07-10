@@ -1,0 +1,213 @@
+﻿{
+ "ticker": "JPM",
+ "cik": 19617,
+ "accession": "0001628280-26-008131",
+ "form": "10-K",
+ "filing_date": "2026-02-13",
+ "report_date": "2025-12-31",
+ "main_document": "jpm-20251231.htm",
+ "main_document_score": 3.0,
+ "raw_chars": 12927325,
+ "latency_ms": 2544.5,
+ "candidates": 44,
+ "toc_rejected": 22,
+ "pipeline_warnings": [],
+ "items": {
+  "1": {
+   "status": "pass",
+   "confidence": 0.961,
+   "heading": "Item 1. Business.",
+   "span_chars": 39056,
+   "warnings": [
+    "trimmed trailing page furniture: 8"
+   ]
+  },
+  "1A": {
+   "status": "pass",
+   "confidence": 0.963,
+   "heading": "Item 1A. Risk Factors.",
+   "span_chars": 112128,
+   "warnings": []
+  },
+  "1B": {
+   "status": "pass",
+   "confidence": 0.865,
+   "heading": "Item 1B. Unresolved Staff Comments.",
+   "span_chars": 42,
+   "warnings": []
+  },
+  "1C": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.663,
+   "heading": "Item 1C. Cybersecurity.",
+   "span_chars": 170,
+   "warnings": [
+    "body is a reference stub pointing to a page range (pages 146-149) of this filing; the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "2": {
+   "status": "pass",
+   "confidence": 0.962,
+   "heading": "Item 2. Properties.",
+   "span_chars": 2098,
+   "warnings": []
+  },
+  "3": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.664,
+   "heading": "Item 3. Legal Proceedings.",
+   "span_chars": 104,
+   "warnings": [
+    "body is a reference stub pointing to a financial-statement note (Note 30) elsewhere in this filing; the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "4": {
+   "status": "pass",
+   "confidence": 0.865,
+   "heading": "Item 4. Mine Safety Disclosures.",
+   "span_chars": 49,
+   "warnings": [
+    "trimmed trailing page furniture: 32"
+   ]
+  },
+  "5": {
+   "status": "pass",
+   "confidence": 0.966,
+   "heading": "Item 5. Market for Registrant's Common Equity, Related Stockholder Matters and Issuer Purchases of Equity Securities.",
+   "span_chars": 2635,
+   "warnings": []
+  },
+  "6": {
+   "status": "reserved",
+   "confidence": 0.656,
+   "heading": "Item 6. Reserved",
+   "span_chars": 17,
+   "warnings": [
+    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 2170 chars before this line; dense_cluster: 5 other item headings within 1500 chars (5 after) \u2014 heading list, not body; short_section: only 1 chars before the next item heading \u2014 no real section body; kept despite TOC signals: no later candidate exists for this item"
+   ]
+  },
+  "7": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.566,
+   "heading": "Item 7. Management's Discussion and Analysis of Financial Condition and Results of Operations.",
+   "span_chars": 396,
+   "warnings": [
+    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 2187 chars before this line; dense_cluster: 5 other item headings within 1500 chars (4 after) \u2014 heading list, not body; kept despite TOC signals: no later candidate exists for this item",
+    "body is a reference stub pointing to a page range (pages 46-160) of this filing; the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "7A": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.566,
+   "heading": "Item 7A. Quantitative and Qualitative Disclosures About Market Risk.",
+   "span_chars": 270,
+   "warnings": [
+    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 2583 chars before this line; dense_cluster: 5 other item headings within 1500 chars (3 after) \u2014 heading list, not body; short_section: only 202 chars before the next item heading \u2014 no real section body; kept despite TOC signals: no later candidate exists for this item",
+    "body is a reference stub pointing to a page range (pages 133-142) of this filing; the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "8": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.566,
+   "heading": "Item 8. Financial Statements and Supplementary Data.",
+   "span_chars": 369,
+   "warnings": [
+    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 2853 chars before this line; dense_cluster: 5 other item headings within 1500 chars (2 after) \u2014 heading list, not body; kept despite TOC signals: no later candidate exists for this item",
+    "body is a reference stub pointing to a page range (pages 162-314) of this filing; the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "9": {
+   "status": "pass",
+   "confidence": 0.966,
+   "heading": "Item 9. Changes in and Disagreements With Accountants on Accounting and Financial Disclosure.",
+   "span_chars": 100,
+   "warnings": []
+  },
+  "9A": {
+   "status": "pass",
+   "confidence": 0.965,
+   "heading": "Item 9A. Controls and Procedures.",
+   "span_chars": 2225,
+   "warnings": [
+    "trimmed trailing page furniture: 34"
+   ]
+  },
+  "9B": {
+   "status": "pass",
+   "confidence": 0.964,
+   "heading": "Item 9B. Other Information.",
+   "span_chars": 5348,
+   "warnings": []
+  },
+  "9C": {
+   "status": "pass",
+   "confidence": 0.966,
+   "heading": "Item 9C. Disclosure regarding Foreign Jurisdictions that Prevent Inspections.",
+   "span_chars": 94,
+   "warnings": [
+    "trimmed trailing page furniture: 36"
+   ]
+  },
+  "10": {
+   "status": "pass",
+   "confidence": 0.966,
+   "heading": "Item 10. Directors, Executive Officers and Corporate Governance.",
+   "span_chars": 3930,
+   "warnings": []
+  },
+  "11": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.664,
+   "heading": "Item 11. Executive Compensation.",
+   "span_chars": 51,
+   "warnings": [
+    "body is a reference stub pointing to another item (Item 10) in this filing; the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "12": {
+   "status": "pass",
+   "confidence": 0.966,
+   "heading": "Item 12. Security Ownership of Certain Beneficial Owners and Management and Related Stockholder Matters.",
+   "span_chars": 1333,
+   "warnings": []
+  },
+  "13": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.666,
+   "heading": "Item 13. Certain Relationships and Related Transactions, and Director Independence.",
+   "span_chars": 102,
+   "warnings": [
+    "body is a reference stub pointing to another item (Item 10) in this filing; the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "14": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.66,
+   "heading": "Item 14. Principal Accounting Fees and Services.",
+   "span_chars": 67,
+   "warnings": [
+    "trimmed trailing page furniture: 38",
+    "body is a reference stub pointing to another item (Item 10) in this filing; the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "15": {
+   "status": "pass",
+   "confidence": 0.965,
+   "heading": "Item 15. Exhibits, Financial Statement Schedules.",
+   "span_chars": 15529,
+   "warnings": [
+    "trimmed trailing page furniture: 161",
+    "excluded 970031 chars of an appended non-item section (bound financial statements / annual report) that followed this item's body; items that point into it are marked incorporated_by_reference"
+   ]
+  },
+  "16": {
+   "status": "missing",
+   "confidence": 0.0,
+   "heading": "",
+   "span_chars": 0,
+   "warnings": [
+    "no heading candidate found for item 16"
+   ]
+  }
+ }
+}

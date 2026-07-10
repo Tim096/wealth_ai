@@ -128,6 +128,10 @@
         <label>Ticker / CIK(例:INTC · AAPL · XOM · JPM · C)</label>
         <input type="text" id="sQuery" value="INTC">
       </div>
+      <div>
+        <label>年度(預設最新)</label>
+        <select id="sYear" style="min-width:150px"><option value="">最新</option></select>
+      </div>
       <button class="btn" id="sGo">抽取 ▶</button>
       <button class="btn ghost" id="sUpBtn">上傳自己的 10-K 📁</button>
       <input type="file" id="sFile" accept=".htm,.html,.txt" style="display:none">
@@ -300,14 +304,30 @@ function focusMark(k){
 }
 async function secBusy(on){$('#sBusy').innerHTML=on?'<span class="spin"></span>':'';
   $('#sGo').disabled=on;$('#sUpBtn').disabled=on;}
+let SEC_YEARS_FOR='';
+async function loadYears(){
+  const q=$('#sQuery').value.trim(); const sel=$('#sYear');
+  if(!q){sel.innerHTML='<option value="">最新</option>';SEC_YEARS_FOR='';return;}
+  try{
+    const d=await(await fetch('/api/sec/filings?query='+encodeURIComponent(q))).json();
+    if(!d.ok||!(d.filings||[]).length){sel.innerHTML='<option value="">最新</option>';SEC_YEARS_FOR=q;return;}
+    sel.innerHTML=d.filings.map((f,i)=>
+      `<option value="${f.accession}">${f.year||f.filing_date} · ${f.form}${i===0?'(最新)':''}</option>`).join('');
+    SEC_YEARS_FOR=q;
+  }catch(e){/* leave default */}
+}
 $('#sGo').onclick=async()=>{
   secBusy(true);
-  try{renderSec(await(await fetch('/api/sec/extract',{method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({query:$('#sQuery').value.trim()})})).json());}
-  finally{secBusy(false);}
+  try{
+    if(SEC_YEARS_FOR!==$('#sQuery').value.trim()) await loadYears();
+    renderSec(await(await fetch('/api/sec/extract',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({query:$('#sQuery').value.trim(),accession:$('#sYear').value})})).json());
+  }finally{secBusy(false);}
 };
+$('#sQuery').addEventListener('change',loadYears);   // load year list when ticker changes
 $('#sQuery').addEventListener('keydown',e=>{if(e.key==='Enter')$('#sGo').click();});
+$('#sYear').addEventListener('change',()=>$('#sGo').click());  // pick a year -> re-extract it
 // ---- Ctrl+F: jump to the corresponding Item ----
 function selectRow(code){
   document.querySelectorAll('#sTable tbody tr').forEach(x=>x.classList.remove('sel'));

@@ -117,13 +117,35 @@ def _items_payload(result, meta: dict, exhibits: list[dict] | None = None) -> di
     return {"ok": True, "meta": meta, "items": items, "gaps": gaps, "exhibits": exs}
 
 
-def sec_extract(query: str) -> dict:
-    """Fetch + extract the latest 10-K for a ticker/CIK; certify Item 8."""
+def sec_filings(query: str) -> dict:
+    """List a ticker/CIK's available 10-K filings (newest first) so the front
+    end can offer a year picker instead of always forcing the latest."""
+    with _SEC_LOCK:
+        fetcher = EdgarFetcher(cache_dir=ROOT / "data" / "raw_filings")
+        resolver = FilingResolver(fetcher)
+        try:
+            cik = int(query) if query.isdigit() else resolver.cik_for_ticker(query)
+        except Exception as e:  # noqa: BLE001
+            return {"ok": False, "error": f"{query}: {e}"}
+        out = [{"accession": f.accession, "form": f.form,
+                "filing_date": f.filing_date, "report_date": f.report_date,
+                "year": (f.report_date or f.filing_date or "")[:4]}
+               for f in resolver.annual_filings(cik) if not f.is_amendment]
+        return {"ok": True, "source": query.upper(), "filings": out}
+
+
+def sec_extract(query: str, accession: str = "") -> dict:
+    """Fetch + extract a ticker/CIK's 10-K (a specific accession if given, else
+    the latest); certify Item 8."""
     with _SEC_LOCK:
         fetcher = EdgarFetcher(cache_dir=ROOT / "data" / "raw_filings")
         resolver = FilingResolver(fetcher)
         cik = int(query) if query.isdigit() else resolver.cik_for_ticker(query)
-        ref = next((f for f in resolver.annual_filings(cik) if not f.is_amendment), None)
+        annual = [f for f in resolver.annual_filings(cik) if not f.is_amendment]
+        if accession:
+            ref = next((f for f in annual if f.accession == accession), None)
+        else:
+            ref = annual[0] if annual else None
         if ref is None:
             return {"ok": False, "error": f"{query}: 找不到 10-K"}
         resolver.load_files(ref)
@@ -474,6 +496,8 @@ class Handler(BaseHTTPRequestHandler):
             self._json(sec_item_text(code))
         elif u.path == "/api/sec/find":
             self._json(sec_find(parse_qs(u.query).get("q", [""])[0]))
+        elif u.path == "/api/sec/filings":
+            self._json(sec_filings(parse_qs(u.query).get("query", [""])[0].strip()))
         else:
             self._json({"ok": False, "error": "not found"}, 404)
 
@@ -486,7 +510,7 @@ class Handler(BaseHTTPRequestHandler):
                                         req.get("success", "")))
             elif u.path == "/api/sec/extract":
                 req = json.loads(self._read_body() or b"{}")
-                self._json(sec_extract(req.get("query", "").strip()))
+                self._json(sec_extract(req.get("query", "").strip(), req.get("accession", "").strip()))
             elif u.path == "/api/sec/upload":
                 name = parse_qs(u.query).get("name", ["upload.htm"])[0]
                 self._json(sec_upload(self._read_body().decode("utf-8", errors="replace"), name))

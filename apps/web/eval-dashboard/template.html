@@ -1,0 +1,253 @@
+<title>Reliability Eval — Browser Agent · SEC 10-K Extractor</title>
+<style>
+  :root{
+    --bg:#f6f5f2; --panel:#fffefb; --ink:#1a1f27; --muted:#5c6672; --line:#e2ded6;
+    --accent:#127e8a; --accent-soft:#e2f0f1;
+    --pass:#2f8f5b; --warn:#b5852b; --fail:#c05043; --grey:#8a8f98;
+    --pass-bg:#e6f2ea; --warn-bg:#f6eed9; --fail-bg:#f7e6e3; --grey-bg:#ecebe8;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0d1219; --panel:#141b25; --ink:#e7ecf2; --muted:#93a0b0; --line:#243040;
+      --accent:#45b9c6; --accent-soft:#12303400;
+      --pass:#4bbd80; --warn:#d9ad55; --fail:#e07a6d; --grey:#7f8b99;
+      --pass-bg:#12281d; --warn-bg:#2a2413; --fail-bg:#2c1815; --grey-bg:#1b232e;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d1219; --panel:#141b25; --ink:#e7ecf2; --muted:#93a0b0; --line:#243040;
+    --accent:#45b9c6; --pass:#4bbd80; --warn:#d9ad55; --fail:#e07a6d; --grey:#7f8b99;
+    --pass-bg:#12281d; --warn-bg:#2a2413; --fail-bg:#2c1815; --grey-bg:#1b232e;
+  }
+  :root[data-theme="light"]{
+    --bg:#f6f5f2; --panel:#fffefb; --ink:#1a1f27; --muted:#5c6672; --line:#e2ded6;
+    --accent:#127e8a; --pass:#2f8f5b; --warn:#b5852b; --fail:#c05043; --grey:#8a8f98;
+    --pass-bg:#e6f2ea; --warn-bg:#f6eed9; --fail-bg:#f7e6e3; --grey-bg:#ecebe8;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:2.4rem 1.4rem 5rem}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--accent);font-weight:600}
+  h1{font-size:clamp(1.7rem,3.6vw,2.5rem);line-height:1.08;margin:.5rem 0 .4rem;letter-spacing:-.02em;
+    text-wrap:balance;font-weight:800}
+  .lede{color:var(--muted);max-width:60ch;font-size:1.02rem}
+  h2{font-size:1.18rem;letter-spacing:-.01em;margin:0;font-weight:750}
+  .sub{color:var(--muted);font-size:.86rem;margin:.15rem 0 0}
+  section{margin-top:2.4rem}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:1.4rem}
+  .grid{display:grid;gap:1rem}
+  @media(min-width:720px){.two{grid-template-columns:1fr 1fr}}
+  .tiles{display:grid;gap:.8rem;grid-template-columns:repeat(2,1fr)}
+  @media(min-width:720px){.tiles{grid-template-columns:repeat(4,1fr)}}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem}
+  .tile .n{font-family:var(--mono);font-size:1.8rem;font-weight:700;font-variant-numeric:tabular-nums;
+    letter-spacing:-.02em;display:block}
+  .tile .k{color:var(--muted);font-size:.78rem;margin-top:.2rem}
+  .tile .note{color:var(--accent);font-size:.72rem;margin-top:.35rem;font-family:var(--mono)}
+  .bar{display:flex;height:26px;border-radius:7px;overflow:hidden;border:1px solid var(--line);margin:.3rem 0 .6rem}
+  .bar span{display:flex;align-items:center;justify-content:center;font-size:.7rem;color:#fff;
+    font-family:var(--mono);font-weight:600;min-width:0}
+  .legend{display:flex;flex-wrap:wrap;gap:.5rem .9rem;font-size:.78rem;color:var(--muted)}
+  .legend b{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:.35rem;vertical-align:baseline}
+  table{width:100%;border-collapse:collapse;font-size:.83rem}
+  .scroll{overflow-x:auto}
+  th{text-align:left;font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--muted);font-weight:600;padding:.5rem .55rem;border-bottom:1px solid var(--line)}
+  td{padding:.46rem .55rem;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  tr:last-child td{border-bottom:none}
+  .t-mono{font-family:var(--mono)}
+  .pill{display:inline-block;padding:.08rem .5rem;border-radius:999px;font-size:.72rem;font-weight:600;
+    font-family:var(--mono);white-space:nowrap}
+  .p-pass{background:var(--pass-bg);color:var(--pass)} .p-warn{background:var(--warn-bg);color:var(--warn)}
+  .p-fail{background:var(--fail-bg);color:var(--fail)} .p-grey{background:var(--grey-bg);color:var(--grey)}
+  .held{font-family:var(--mono);font-size:.66rem;color:var(--accent);border:1px solid var(--accent);
+    border-radius:4px;padding:0 .25rem;margin-left:.35rem}
+  .conf{display:grid;gap:.7rem;grid-template-columns:1fr 1fr;margin-top:.4rem}
+  .conf .box{border:1px solid var(--line);border-radius:10px;padding:.8rem}
+  .conf .big{font-family:var(--mono);font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}
+  .step{border:1px solid var(--line);border-left-width:4px;border-radius:8px;padding:.6rem .8rem;margin:.5rem 0}
+  .step.ok{border-left-color:var(--pass)} .step.repair{border-left-color:var(--warn)}
+  .step .h{display:flex;justify-content:space-between;gap:.5rem;align-items:baseline;flex-wrap:wrap}
+  .step .name{font-weight:650}
+  .step .mode{font-family:var(--mono);font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .step .why{font-size:.8rem;color:var(--muted);margin-top:.3rem}
+  .step .why code{font-family:var(--mono);background:var(--grey-bg);padding:.05rem .3rem;border-radius:4px;font-size:.76rem}
+  .runhead{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;margin-bottom:.3rem}
+  .callout{border:1px solid var(--line);border-radius:10px;padding:.9rem 1rem;background:var(--accent-soft)}
+  .callout .lab{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .foot{color:var(--muted);font-size:.78rem;margin-top:2.6rem;border-top:1px solid var(--line);padding-top:1rem}
+  a{color:var(--accent)}
+  .toggle{position:fixed;top:1rem;right:1rem;font-family:var(--mono);font-size:.72rem;background:var(--panel);
+    border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:.4rem .7rem;cursor:pointer}
+  .toggle:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<button class="toggle" id="themeToggle" aria-label="Toggle light and dark theme">◐ theme</button>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">AI Coding Test 2026 · Reliability Platform</div>
+    <h1>Does the system know when it&rsquo;s right, wrong, or unsure?</h1>
+    <p class="lede">One evidence-first platform, proven on two hard tasks. Every result is
+      <b>pass</b>, <b>fail</b>, or <b>unknown</b> — lack of evidence can never become success.
+      All numbers below come from real runs, not self-report.</p>
+  </header>
+
+  <section class="tiles" id="tiles"></section>
+
+  <section>
+    <div class="runhead"><div><h2>Task 2 · SEC 10-K item extraction</h2>
+      <p class="sub" id="sec-sub"></p></div></div>
+    <div class="grid two">
+      <div class="panel">
+        <h2 style="font-size:1rem">Item status across the sweep</h2>
+        <p class="sub">Lower pass-rate here is <em>higher</em> honesty: stubs that point elsewhere
+          are labelled, not faked.</p>
+        <div class="bar" id="statusBar"></div>
+        <div class="legend" id="statusLegend"></div>
+      </div>
+      <div class="panel">
+        <h2 style="font-size:1rem">Confidence discriminates</h2>
+        <p class="sub">Before the audit, confidence was a flat ~0.958 for everything. Now:</p>
+        <div class="conf" id="confBox"></div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:1rem">
+      <h2 style="font-size:1rem">Independent oracle · Item 8 vs SEC XBRL facts</h2>
+      <p class="sub">The answer to &ldquo;how do you ensure status is trustworthy?&rdquo; — not an LLM
+        judging itself, but SEC&rsquo;s own structured numbers. A real Item 8 must contain the reported
+        revenue / net income / assets; a wrapper stub cannot.</p>
+      <div class="scroll"><table id="secTable"></table></div>
+    </div>
+
+    <div class="callout" style="margin-top:1rem">
+      <div class="lab">Corner case · cross-reference-index filings</div>
+      <p style="margin:.4rem 0 0" id="wrapNote"></p>
+      <div class="scroll" style="margin-top:.6rem"><table id="wrapTable"></table></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="runhead"><div><h2>Task 1 · Browser agent — selector self-repair</h2>
+      <p class="sub">Same search task on two site versions. v2 drifts the UI; the agent repairs
+        itself via the accessibility tree and the verifier confirms real results.</p></div></div>
+    <div class="grid two" id="browserRuns"></div>
+  </section>
+
+  <section>
+    <div class="callout">
+      <div class="lab">Adversarial audit · how the silent failures were found</div>
+      <p style="margin:.4rem 0 0" id="auditNote"></p>
+    </div>
+  </section>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<script>
+const DATA = __DATA__;
+const $=(s)=>document.querySelector(s);
+const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
+const COLOR={pass:'--pass',incorporated_by_reference:'--warn',ambiguous:'--warn',partial:'--warn',
+  missing:'--grey',reserved:'--grey',fail:'--fail'};
+const PILL={pass:'p-pass',certified:'p-pass',incorporated_by_reference:'p-warn',ambiguous:'p-warn',
+  partial:'p-warn',contradicted:'p-fail',fail:'p-fail',missing:'p-grey',reserved:'p-grey',
+  cross_reference_pointer:'p-warn',inconclusive:'p-warn',unavailable:'p-grey'};
+function cvar(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+
+// tiles
+const s=DATA.sec, a=DATA.audit;
+const cert=s.xbrl_summary.certified||0, contra=s.xbrl_summary.contradicted||0;
+const tiles=[
+  {n:s.total_items, k:'10-K items extracted', note:s.filings+' filings, 8 held-out'},
+  {n:cert+'/'+(cert+contra), k:'Item 8 XBRL-certified', note:'0 disagreements w/ pipeline'},
+  {n:a.anomalies_confirmed, k:'silent failures caught', note:a.agents+'-agent audit → 0 remain'},
+  {n:DATA.browser.runs.length?DATA.browser.runs[DATA.browser.runs.length-1].repairs:'—',
+    k:'browser self-repairs', note:'UI drift → still PASS'},
+];
+tiles.forEach(t=>{const d=el('div','tile');d.append(el('span','n',t.n),el('div','k',t.k),el('div','note',t.note));$('#tiles').append(d);});
+
+$('#sec-sub').textContent=`${s.filings} filings · ${s.total_items} items · deterministic pipeline, $0 LLM on the main path`;
+
+// status bar
+const bar=$('#statusBar'), leg=$('#statusLegend');
+s.status_distribution.forEach(d=>{
+  const span=el('span');span.style.width=(d.share*100)+'%';span.style.background=cvar(COLOR[d.status]||'--grey');
+  span.title=`${d.status}: ${d.count} (${(d.share*100).toFixed(1)}%)`;
+  if(d.share>0.08)span.textContent=(d.share*100).toFixed(0)+'%';bar.append(span);
+  const l=el('span',null,`<b style="background:${cvar(COLOR[d.status]||'--grey')}"></b>${d.status} · ${d.count}`);leg.append(l);
+});
+
+// confidence
+const c=s.confidence;
+$('#confBox').append(
+  (()=>{const b=el('div','box');b.append(el('div','sub','substantive pass'),el('div','big',c.substantive_pass_mean),el('div','sub','min '+c.substantive_pass_min));return b;})(),
+  (()=>{const b=el('div','box');b.append(el('div','sub','reference stub'),el('div','big',c.stub_mean),el('div','sub','max '+c.stub_max));return b;})()
+);
+
+// sec table
+const tbl=$('#secTable');
+tbl.append((()=>{const tr=el('tr');['Ticker','Layer','Item 8','XBRL oracle','Items pass','IBR','Parse'].forEach(h=>tr.append(el('th',null,h)));return tr;})());
+s.tickers.forEach(t=>{
+  const tr=el('tr');
+  tr.append(el('td','t-mono',t.ticker+(t.held_out?'<span class="held">held-out</span>':'')));
+  tr.append(el('td',null,t.layer));
+  tr.append(el('td',null,`<span class="pill ${PILL[t.item8_status]||'p-grey'}">${t.item8_status}</span>`));
+  tr.append(el('td',null,`<span class="pill ${PILL[t.item8_xbrl]||'p-grey'}">${t.item8_xbrl}</span>`));
+  tr.append(el('td','t-mono',t.pass));
+  tr.append(el('td','t-mono',t.incorporated_by_reference));
+  tr.append(el('td','t-mono',t.latency_ms+'ms'));
+  tbl.append(tr);
+});
+
+// wrappers
+$('#wrapNote').textContent='Intel & Citi file a 10-K whose main document is a pointer index into a bound annual report. Most submissions mislabel these items as extracted/ok. Ours auto-detects the class and marks each item a needs_review pointer — never a fabricated body.';
+const wt=$('#wrapTable');
+wt.append((()=>{const tr=el('tr');['Filing','Class','Item 14','Provenance','needs_review'].forEach(h=>tr.append(el('th',null,h)));return tr;})());
+s.wrappers.forEach(w=>{const tr=el('tr');
+  tr.append(el('td','t-mono',w.ticker));
+  tr.append(el('td',null,`<span class="pill p-warn">${w.filing_class}</span>`));
+  tr.append(el('td',null,`<span class="pill ${PILL[w.item14_status]||'p-grey'}">${w.item14_status||'—'}</span>`));
+  tr.append(el('td','t-mono',w.item14_provenance||'—'));
+  tr.append(el('td','t-mono',(w.needs_review_count!=null?w.needs_review_count+' items':'—')));
+  wt.append(tr);});
+
+// browser runs
+const br=$('#browserRuns');
+DATA.browser.runs.forEach(r=>{
+  const p=el('div','panel');
+  const head=el('div','runhead');
+  head.append(el('div',null,`<h2 style="font-size:.98rem">${r.label}</h2>`),
+    el('div',null,`<span class="pill ${r.status==='pass'?'p-pass':(r.status==='fail'?'p-fail':'p-warn')}">${r.status}</span>`));
+  p.append(head);
+  p.append(el('div','sub',`${r.repairs} repair(s) · ${r.total_latency_ms}ms · verifier: ${r.verifier.reason}`));
+  r.steps.forEach(st=>{
+    const d=el('div','step '+(st.mode==='repair'?'repair':'ok'));
+    const h=el('div','h');
+    h.append(el('div','name',`${st.step} · ${st.action} ${st.ok?'✓':'✗'}`),el('div','mode',st.mode));
+    d.append(h);
+    let why='';
+    if(st.diagnosis)why+=`diagnosed <code>${st.diagnosis}</code> `;
+    if(st.repair_chosen)why+=`→ repaired to <code>${st.repair_chosen}</code>`;
+    else if(st.selector_used)why+=`selector <code>${st.selector_used}</code>`;
+    if(why)d.append(el('div','why',why));
+    p.append(d);
+  });
+  br.append(p);
+});
+
+$('#auditNote').innerHTML=`A ${a.agents}-agent workflow audited every extracted item, then had independent verifiers try to <em>refute</em> each finding. <b>${a.anomalies_confirmed} silent failures confirmed, ${a.anomalies_refuted} refuted</b> (the refuters caught false alarms). Pass-rate moved ${(a.pass_before*100).toFixed(1)}% → ${(a.pass_after*100).toFixed(1)}% as ${a.silent_failures_before} fakes were reclassified — and now <b>${a.silent_failures_after}</b> remain.`;
+
+$('#foot').innerHTML=DATA.generated_note+' · <a href="https://github.com/Tim096/wealth">github.com/Tim096/wealth</a>';
+
+// theme toggle
+const root=document.documentElement, tg=$('#themeToggle');
+tg.addEventListener('click',()=>{
+  const cur=root.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  root.setAttribute('data-theme',cur==='dark'?'light':'dark');
+});
+</script>

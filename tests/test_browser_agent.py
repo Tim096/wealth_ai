@@ -47,7 +47,9 @@ def test_verifier_unknown_when_unobservable():
 def test_repair_finds_search_box_by_aria_label():
     cands = [cand(tag="input", name="query", aria_label="Search products", placeholder="Search products")]
     rr = repair_target("search_box", obs(cands), want_value="widget")
-    assert rr.ok and "query" in rr.new_target.selector
+    assert rr.ok
+    assert "query" in rr.durable_selector          # durable selector for memory
+    assert rr.new_target.selector.startswith("[data-aid=")  # exact handle for the action
 
 
 def test_repair_avoids_decoy_button():
@@ -57,8 +59,8 @@ def test_repair_avoids_decoy_button():
     ]
     rr = repair_target("submit_button", obs(cands))
     assert rr.ok
-    assert "go" in rr.new_target.selector
-    assert "fake-search" not in rr.new_target.selector
+    assert "go" in rr.durable_selector
+    assert "fake-search" not in rr.durable_selector
 
 
 def test_repair_skips_invisible_and_returns_reasons():

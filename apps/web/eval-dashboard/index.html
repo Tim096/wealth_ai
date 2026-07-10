@@ -377,9 +377,9 @@ const DATA = {
     "task_id": "search-v1",
     "site": "mockshop",
     "status": "pass",
-    "confidence": 0.8,
-    "repairs": 2,
-    "total_latency_ms": 668.5,
+    "confidence": 1.0,
+    "repairs": 0,
+    "total_latency_ms": 627.1,
     "verifier": {
      "status": "pass",
      "reason": "all conditions observed and satisfied",
@@ -396,33 +396,27 @@ const DATA = {
       "step": "search_box",
       "action": "fill",
       "ok": true,
-      "mode": "repair",
-      "detail": "selector matched no element",
-      "diagnosis": "selector_not_found",
-      "repair_considered": [
-       "input#search-box[Search products] score=4.5 (tag=input, purpose word match)",
-       "button#search-btn[Search] score=2.0 (purpose word match)"
-      ],
-      "repair_chosen": "#search-box score=4.5: tag=input, purpose word match",
+      "mode": "script",
+      "detail": "",
+      "diagnosis": "",
+      "repair_considered": [],
+      "repair_chosen": "",
       "selector_used": "#search-box",
-      "latency_ms": 10.3,
-      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v1\\search_box-repaired.png"
+      "latency_ms": 12.5,
+      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v1\\search_box-ok.png"
      },
      {
       "step": "submit_button",
       "action": "click",
       "ok": true,
-      "mode": "repair",
-      "detail": "selector matched no element",
-      "diagnosis": "selector_not_found",
-      "repair_considered": [
-       "button#search-btn[Search] score=5.5 (tag=button, purpose word match, type=submit)",
-       "input#search-box[Search products] score=2.0 (purpose word match)"
-      ],
-      "repair_chosen": "#search-btn score=5.5: tag=button, purpose word match, type=submit",
+      "mode": "script",
+      "detail": "",
+      "diagnosis": "",
+      "repair_considered": [],
+      "repair_chosen": "",
       "selector_used": "#search-btn",
-      "latency_ms": 41.1,
-      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v1\\submit_button-repaired.png"
+      "latency_ms": 47.8,
+      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v1\\submit_button-ok.png"
      }
     ]
    },
@@ -433,7 +427,7 @@ const DATA = {
     "status": "pass",
     "confidence": 0.8,
     "repairs": 2,
-    "total_latency_ms": 662.0,
+    "total_latency_ms": 676.7,
     "verifier": {
      "status": "pass",
      "reason": "all conditions observed and satisfied",
@@ -456,7 +450,7 @@ const DATA = {
       "repair_considered": [],
       "repair_chosen": "",
       "selector_used": "#accept-cookies",
-      "latency_ms": 39.8,
+      "latency_ms": 38.3,
       "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\modal-dismissed.png"
      },
      {
@@ -473,7 +467,7 @@ const DATA = {
       ],
       "repair_chosen": "input[name=query] score=4.5: tag=input, purpose word match",
       "selector_used": "input[name=query]",
-      "latency_ms": 8.9,
+      "latency_ms": 9.1,
       "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\search_box-repaired.png"
      },
      {
@@ -490,7 +484,7 @@ const DATA = {
       ],
       "repair_chosen": "#go score=5.5: tag=button, purpose word match, type=submit",
       "selector_used": "#go",
-      "latency_ms": 11.9,
+      "latency_ms": 42.8,
       "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\submit_button-repaired.png"
      }
     ]

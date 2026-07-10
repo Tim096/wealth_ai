@@ -55,7 +55,11 @@ def search_task(site: str):
 
 def main() -> None:
     ART.mkdir(parents=True, exist_ok=True)
-    mem = MemoryStore(ART / "selector_memory.json")
+    # fresh memory so the demo reproducibly shows v1 learning -> v2 repair
+    mem_path = ART / "selector_memory.json"
+    if mem_path.exists():
+        mem_path.unlink()
+    mem = MemoryStore(mem_path)
     evidence = EvidenceStore(EVIDENCE)
     runs = []
     with sync_playwright() as p:

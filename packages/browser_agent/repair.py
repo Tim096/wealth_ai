@@ -101,13 +101,16 @@ def _score_candidate(cand: ElementCandidate, purpose: str, want_value: str) -> t
 @dataclass
 class RepairResult:
     ok: bool
-    new_target: ElementTarget | None
+    new_target: ElementTarget | None   # exact handle for the IMMEDIATE action (data-aid)
+    durable_selector: str              # durable semantic selector to REMEMBER
     chosen_reason: str
     considered: list[str]
 
 
 def repair_target(purpose: str, obs: Observation, want_value: str = "") -> RepairResult:
-    """Find the best candidate for `purpose` in the current observation."""
+    """Find the best candidate for `purpose` in the current observation.
+    Acts on the exact element via its data-aid handle, but remembers it by a
+    durable semantic selector so the memory survives a page reload."""
     scored = []
     for c in obs.candidates:
         s, why = _score_candidate(c, purpose, want_value)
@@ -116,12 +119,13 @@ def repair_target(purpose: str, obs: Observation, want_value: str = "") -> Repai
     considered = [f"{c.tag}#{c.id or '-'}[{c.aria_label or c.placeholder or c.text[:20]}] "
                   f"score={s:.1f} ({why})" for s, why, c in scored[:6]]
     if not scored or scored[0][0] <= 0:
-        return RepairResult(False, None, "no viable candidate", considered)
+        return RepairResult(False, None, "", "no viable candidate", considered)
     best_s, best_why, best_c = scored[0]
     return RepairResult(
         ok=True,
-        new_target=ElementTarget(selector=best_c.css(), selector_type="css",
+        new_target=ElementTarget(selector=best_c.aid_selector(), selector_type="css",
                                  description=f"repaired {purpose}"),
+        durable_selector=best_c.css(),
         chosen_reason=f"{best_c.css()} score={best_s:.1f}: {best_why}",
         considered=considered,
     )

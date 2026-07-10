@@ -222,21 +222,23 @@ class BrowserAgent:
                                    repair_considered=considered,
                                    screenshot=self._screenshot(f"{step.purpose}-repair-fail")))
             return out
-        # small-step verify: re-run the action against the repaired target
+        # small-step verify: act on the EXACT element (data-aid), remember the
+        # DURABLE selector so the fix survives a reload
         action2 = self._build_action(step, rr.new_target)
         out2 = self.executor.execute(action2)
+        durable = rr.durable_selector
         repair = RepairEvent(
             timestamp=self._now(), failed_selector=selector, failure_type=diag.failure_type,
-            candidates_considered=considered, chosen_selector=rr.new_target.selector,
+            candidates_considered=considered, chosen_selector=durable,
             choice_reason=rr.chosen_reason, verified=out2.ok, evidence_run_id="",
         )
-        self.memory.record(self.site, self.task_type, step.purpose, rr.new_target.selector,
+        self.memory.record(self.site, self.task_type, step.purpose, durable,
                            self._now(), success=out2.ok,
                            dom_fingerprint=sha256_text(self.page.content())[:16], repair=repair)
         trace.append(StepTrace(step=step.purpose, action=step.kind, ok=out2.ok, mode="repair",
                                diagnosis=diag.failure_type, detail=diag.detail,
                                repair_considered=considered, repair_chosen=rr.chosen_reason,
-                               selector_used=rr.new_target.selector, latency_ms=out2.latency_ms,
+                               selector_used=durable, latency_ms=out2.latency_ms,
                                screenshot=self._screenshot(f"{step.purpose}-repaired")))
         return out2
 

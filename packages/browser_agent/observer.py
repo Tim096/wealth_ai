@@ -9,11 +9,17 @@ from dataclasses import dataclass, field
 from typing import Any
 
 # JS that enumerates interactive elements with the attributes repair needs.
+# We stamp a stable data-aid on each element at observe time so a repaired
+# target can be addressed by [data-aid=N] — an exact, unambiguous handle on the
+# element we actually saw, instead of reconstructing a possibly-non-unique CSS
+# selector from its attributes. (Technique adapted from EmergenceAI/Agent-E's
+# `mmid` DOM-distillation idea — MIT-licensed; see docs/ATTRIBUTION.md.)
 _ENUMERATE_JS = r"""
 () => {
   const sel = 'input,button,a,select,textarea,[role=button],[role=link],[role=searchbox],[role=textbox]';
   const els = Array.from(document.querySelectorAll(sel));
   return els.slice(0, 200).map((el, i) => {
+    el.setAttribute('data-aid', String(i));
     const r = el.getBoundingClientRect();
     const cs = getComputedStyle(el);
     const visible = r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none';
@@ -53,7 +59,9 @@ class ElementCandidate:
     y: int
 
     def css(self) -> str:
-        """A best-effort stable selector for this element, for memory storage."""
+        """A durable selector to REMEMBER this element across runs — prefers a
+        semantic attribute (id/name/aria) that survives a page reload. Used for
+        selector memory, so it must not depend on the volatile data-aid."""
         if self.id:
             return f"#{self.id}"
         if self.name:
@@ -63,6 +71,11 @@ class ElementCandidate:
         if self.placeholder:
             return f'{self.tag}[placeholder="{self.placeholder}"]'
         return self.tag
+
+    def aid_selector(self) -> str:
+        """An exact, unambiguous handle on THIS observed element for the
+        immediate action (data-aid is stamped fresh each observe())."""
+        return f'[data-aid="{self.index}"]'
 
 
 @dataclass

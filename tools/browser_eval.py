@@ -47,7 +47,12 @@ def build(task: dict):
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     spec = json.loads(TASKS.read_text(encoding="utf-8"))
-    mem = MemoryStore(OUT / "selector_memory.json")
+    # fresh memory each run so the eval is reproducible (memory accumulation
+    # across invocations would make repair counts non-deterministic)
+    mem_path = OUT / "selector_memory.json"
+    if mem_path.exists():
+        mem_path.unlink()
+    mem = MemoryStore(mem_path)
     evidence = EvidenceStore(EVIDENCE)
     rows = []
     with sync_playwright() as p:

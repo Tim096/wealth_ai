@@ -32,22 +32,10 @@ from llm_core.config import load_llm_config
 from llm_core.openai_client import OpenAIClient
 from observability_core import EvidenceStore
 
+from browser_agent.nl import derive_success  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "runs" / "agent_chat"
-_STOP = {"the", "a", "an", "for", "to", "and", "of", "in", "on", "open", "search",
-         "find", "go", "click", "read", "article", "page", "play", "並", "然後", "打開",
-         "搜尋", "按", "撥放", "播放", "到"}
-
-
-def derive_success(task: str) -> list[str]:
-    if re.search(r"download|下載|下载|存檔|save file", task, re.I):
-        return ["download_exists:"]     # any download counts as success
-    q = re.findall(r"['\"“」『]([^'\"”」』]{2,60})['\"”」』]", task)
-    if q:
-        return [f"text_visible:{q[0]}"]
-    words = [w for w in re.findall(r"[A-Za-z0-9一-鿿]{2,}", task) if w not in _STOP]
-    words.sort(key=len, reverse=True)
-    return [f"text_visible:{words[0]}"] if words else ["url_contains:."]
 
 
 class AgentChat:

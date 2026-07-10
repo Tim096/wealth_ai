@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reliability Test Center · Browser Agent × SEC Extractor</title>
+<style>
+  :root{
+    --bg:#0d1219; --panel:#141b25; --panel2:#101722; --ink:#e7ecf2; --muted:#93a0b0;
+    --line:#243040; --accent:#45b9c6; --accent-ink:#0d1219;
+    --pass:#4bbd80; --warn:#d9ad55; --fail:#e07a6d; --grey:#7f8b99;
+    --pass-bg:#12281d; --warn-bg:#2a2413; --fail-bg:#2c1815; --grey-bg:#1b232e;
+    --mono:ui-monospace,"Cascadia Code",Consolas,monospace;
+    --sans:"Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+  .wrap{max-width:1180px;margin:0 auto;padding:1.6rem 1.2rem 3rem}
+  header{display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap;margin-bottom:1.1rem}
+  .eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  h1{font-size:1.45rem;margin:.1rem 0 0;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:.85rem}
+  .chip{font-family:var(--mono);font-size:.72rem;border:1px solid var(--line);border-radius:999px;
+    padding:.15rem .6rem;color:var(--muted)}
+  .chip b{color:var(--accent);font-weight:600}
+  .tabs{display:flex;gap:.5rem;margin:1.1rem 0 .9rem}
+  .tab{background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:10px;
+    padding:.55rem 1.1rem;cursor:pointer;font-size:.95rem;font-weight:600}
+  .tab.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:1.2rem}
+  .hidden{display:none}
+  label{display:block;font-size:.78rem;color:var(--muted);margin:.6rem 0 .25rem}
+  input[type=text],textarea{width:100%;background:var(--panel2);border:1px solid var(--line);
+    border-radius:8px;color:var(--ink);padding:.55rem .7rem;font-size:.95rem;font-family:var(--sans)}
+  textarea{resize:vertical;min-height:64px}
+  input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .btn{background:var(--accent);color:var(--accent-ink);border:none;border-radius:8px;
+    padding:.6rem 1.3rem;font-weight:700;font-size:.95rem;cursor:pointer}
+  .btn:disabled{opacity:.45;cursor:default}
+  .btn.ghost{background:var(--panel2);color:var(--ink);border:1px solid var(--line);font-weight:600}
+  .row{display:flex;gap:.8rem;align-items:end;flex-wrap:wrap}
+  .row>.grow{flex:1 1 260px}
+  .grid2{display:grid;gap:1rem}
+  @media(min-width:900px){.grid2{grid-template-columns:5fr 7fr}}
+  .feed{background:var(--panel2);border:1px solid var(--line);border-radius:10px;min-height:230px;
+    max-height:420px;overflow-y:auto;padding:.8rem 1rem;font-family:var(--mono);font-size:.84rem}
+  .feed div{margin:.18rem 0;white-space:pre-wrap}
+  .feed .sys{color:var(--muted)} .feed .ok{color:var(--pass)} .feed .bad{color:var(--fail)}
+  .pill{display:inline-block;padding:.1rem .55rem;border-radius:999px;font-size:.72rem;
+    font-weight:700;font-family:var(--mono);white-space:nowrap}
+  .p-pass{background:var(--pass-bg);color:var(--pass)} .p-warn{background:var(--warn-bg);color:var(--warn)}
+  .p-fail{background:var(--fail-bg);color:var(--fail)} .p-grey{background:var(--grey-bg);color:var(--grey)}
+  .verdict{display:flex;gap:.7rem;align-items:center;margin-top:.7rem;flex-wrap:wrap;font-size:.9rem}
+  table{width:100%;border-collapse:collapse;font-size:.84rem}
+  th{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--muted);text-align:left;padding:.45rem .5rem;border-bottom:1px solid var(--line)}
+  td{padding:.4rem .5rem;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  tbody tr{cursor:pointer} tbody tr:hover{background:var(--panel2)}
+  tbody tr.sel{background:#18222f}
+  .mono{font-family:var(--mono)}
+  .meta{display:flex;gap:1rem;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin:.6rem 0}
+  .meta b{color:var(--ink)}
+  .doc{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:.9rem 1rem;
+    max-height:480px;overflow-y:auto;font-family:var(--mono);font-size:.82rem;white-space:pre-wrap}
+  .doc .head{color:var(--accent)}
+  .hint{font-size:.78rem;color:var(--muted);margin-top:.5rem}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);
+    border-top-color:var(--accent);border-radius:50%;animation:r 1s linear infinite;vertical-align:-2px}
+  @keyframes r{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion: reduce){.spin{animation:none}}
+  a{color:var(--accent)}
+  .scroll{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">AI Coding Test 2026 · Reliability Platform</div>
+      <h1>測試中心 — 兩題親手驗證</h1>
+      <div class="sub">每個結果由 verifier / 獨立 oracle 判定,不是 AI 自述。</div>
+    </div>
+    <span class="chip" id="plannerChip">planner:<b id="plannerName">連線中…</b></span>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-t="agent">🤖 題目一 · Browser Agent</button>
+    <button class="tab" data-t="sec">📄 題目二 · SEC 10-K Extractor</button>
+  </div>
+
+  <!-- ============ Browser Agent ============ -->
+  <section class="panel" id="tab-agent">
+    <div class="grid2">
+      <div>
+        <label>起始網址</label>
+        <input type="text" id="aUrl" value="https://www.youtube.com">
+        <label>任務(自然語言,中英皆可)</label>
+        <textarea id="aTask" placeholder="例:搜尋 &quot;33號遠征隊&quot; 然後點第一個影片"></textarea>
+        <label>成功條件(看到什麼文字算成功;留空自動推斷)</label>
+        <input type="text" id="aSucc" placeholder="留空 = 自動">
+        <div style="margin-top:.9rem;display:flex;gap:.7rem;align-items:center">
+          <button class="btn" id="aRun">派工 ▶</button>
+          <span class="hint">會另開一個真實瀏覽器視窗,你可以全程看它操作。</span>
+        </div>
+        <div class="verdict" id="aVerdict"></div>
+      </div>
+      <div>
+        <label>執行過程(每一步:思考 → 動作 → 驗證)</label>
+        <div class="feed" id="aFeed"><div class="sys">待命。輸入任務後按「派工」。</div></div>
+        <div class="hint">拒絕範例:任務含登入/購買/送出會被 capability guard 直接 REFUSED —— 這是責任邊界,由程式強制。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SEC Extractor ============ -->
+  <section class="panel hidden" id="tab-sec">
+    <div class="row">
+      <div class="grow">
+        <label>Ticker / CIK(例:INTC · AAPL · XOM · JPM · C)</label>
+        <input type="text" id="sQuery" value="INTC">
+      </div>
+      <button class="btn" id="sGo">抽取 ▶</button>
+      <button class="btn ghost" id="sUpBtn">上傳自己的 10-K 📁</button>
+      <input type="file" id="sFile" accept=".htm,.html,.txt" style="display:none">
+      <span id="sBusy"></span>
+    </div>
+    <div class="meta" id="sMeta"></div>
+    <div class="grid2" style="margin-top:.6rem">
+      <div class="scroll">
+        <table id="sTable">
+          <thead><tr><th>Item</th><th>Status</th><th>Conf</th><th>XBRL</th><th>Topic</th><th>字數</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="hint">status 可信度:三態判定 + 全 item topic oracle + Item 8 XBRL 認證(對照 SEC 官方數字)。點任一列讀原文。</div>
+      </div>
+      <div>
+        <div class="doc" id="sDoc"><span class="sys" style="color:var(--muted)">點左側任一 Item,這裡會顯示 source-exact 抽取原文(offset + sha256 定址,非 AI 生成)。</span></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const PILL={pass:'p-pass',partial:'p-warn',incorporated_by_reference:'p-warn',ambiguous:'p-warn',
+  missing:'p-grey',reserved:'p-grey',unsupported:'p-fail',refused:'p-fail',fail:'p-fail',
+  certified:'p-pass',contradicted:'p-fail',consistent:'p-pass',weak:'p-warn',
+  inconsistent:'p-fail',boilerplate:'p-grey',unknown:'p-warn',error:'p-fail',running:'p-warn'};
+const pill=(t)=>`<span class="pill ${PILL[t]||'p-grey'}">${t}</span>`;
+
+// tabs
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));
+  $('#tab-agent').classList.toggle('hidden',b.dataset.t!=='agent');
+  $('#tab-sec').classList.toggle('hidden',b.dataset.t!=='sec');
+});
+
+// planner chip
+fetch('/api/agent/info').then(r=>r.json()).then(d=>{$('#plannerName').textContent=d.planner;});
+setInterval(()=>fetch('/api/agent/info').then(r=>r.json())
+  .then(d=>{$('#plannerName').textContent=d.planner;}),4000);
+
+// ---------- agent ----------
+let pollTimer=null;
+function feed(kind,text){const d=document.createElement('div');d.className=kind;d.textContent=text;
+  const f=$('#aFeed');f.appendChild(d);f.scrollTop=f.scrollHeight;}
+$('#aRun').onclick=async()=>{
+  const task=$('#aTask').value.trim(); if(!task)return;
+  $('#aRun').disabled=true;$('#aFeed').innerHTML='';$('#aVerdict').innerHTML='<span class="spin"></span>';
+  feed('sys','你 › '+task);
+  const r=await fetch('/api/agent/run',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({task,url:$('#aUrl').value.trim(),success:$('#aSucc').value})});
+  const d=await r.json();
+  feed('sys','成功條件:'+d.success.join(' , '));
+  let seen=0;
+  pollTimer=setInterval(async()=>{
+    const s=await(await fetch('/api/agent/status?id='+d.run_id)).json();
+    (s.steps||[]).slice(seen).forEach(t=>feed('',t)); seen=(s.steps||[]).length;
+    if(!['queued','running'].includes(s.status)){
+      clearInterval(pollTimer);$('#aRun').disabled=false;
+      const ok=s.status==='pass';
+      $('#aVerdict').innerHTML=pill(s.status)
+        +(s.confidence!=null?` <span class="mono">confidence ${s.confidence.toFixed(2)}</span>`:'')
+        +` <span class="sub">${s.verifier||''}</span>`
+        +(s.download?`<div class="mono" style="margin-top:.3rem">📁 ${s.download}</div>`:'');
+      feed(ok?'ok':'bad','結果:'+s.status.toUpperCase()+' — '+(s.verifier||''));
+    }
+  },700);
+};
+
+// ---------- sec ----------
+function renderSec(d){
+  if(!d.ok){$('#sMeta').innerHTML=`<span class="pill p-fail">錯誤</span> ${d.error}`;return;}
+  const m=d.meta;
+  $('#sMeta').innerHTML=`<span><b>${m.source}</b> · ${m.form} ${m.report_date}</span>
+    <span>filing_class <b class="mono">${m.filing_class}</b></span>
+    ${m.xbrl_item8?`<span>Item 8 XBRL ${pill(m.xbrl_item8)}</span>`:''}
+    <span>parse <b>${m.latency_ms} ms</b></span>`;
+  const tb=$('#sTable tbody');tb.innerHTML='';
+  d.items.forEach(it=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="mono">Item ${it.code}${it.needs_review?' ⚠':''}</td>
+      <td>${pill(it.status)}</td><td class="mono">${it.confidence.toFixed(2)}</td>
+      <td>${it.xbrl?pill(it.xbrl):'<span class="sub">–</span>'}</td>
+      <td>${it.topic?pill(it.topic):'<span class="sub">–</span>'}</td>
+      <td class="mono">${it.chars.toLocaleString()}</td>`;
+    tr.onclick=()=>{document.querySelectorAll('#sTable tbody tr').forEach(x=>x.classList.remove('sel'));
+      tr.classList.add('sel');showItem(it.code);};
+    tb.appendChild(tr);
+  });
+}
+async function showItem(code){
+  const d=await(await fetch('/api/sec/item?code='+encodeURIComponent(code))).json();
+  if(!d.ok){$('#sDoc').textContent=d.error;return;}
+  const head=`Item ${d.code}. ${d.title}\n`+
+    `status=${d.status}  conf=${d.confidence}  provenance=${d.provenance}  needs_review=${d.needs_review}\n`+
+    `offset=[${d.offsets}]  sha256=${d.sha256}\n`+
+    (d.xbrl?`xbrl: ${d.xbrl}\n`:'')+(d.topic?`topic: ${d.topic}\n`:'')+
+    (d.warnings.length?('warnings: '+d.warnings.join(' | ')+'\n'):'')+
+    '─'.repeat(56)+'\n';
+  $('#sDoc').innerHTML='<span class="head"></span>';
+  $('#sDoc').firstChild.textContent=head;
+  $('#sDoc').appendChild(document.createTextNode(d.text));
+}
+async function secBusy(on){$('#sBusy').innerHTML=on?'<span class="spin"></span>':'';
+  $('#sGo').disabled=on;$('#sUpBtn').disabled=on;}
+$('#sGo').onclick=async()=>{
+  secBusy(true);
+  try{renderSec(await(await fetch('/api/sec/extract',{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({query:$('#sQuery').value.trim()})})).json());}
+  finally{secBusy(false);}
+};
+$('#sQuery').addEventListener('keydown',e=>{if(e.key==='Enter')$('#sGo').click();});
+$('#sUpBtn').onclick=()=>$('#sFile').click();
+$('#sFile').onchange=async e=>{
+  const f=e.target.files[0]; if(!f)return;
+  secBusy(true);
+  try{const text=await f.text();
+    renderSec(await(await fetch('/api/sec/upload?name='+encodeURIComponent(f.name),
+      {method:'POST',body:text})).json());}
+  finally{secBusy(false);e.target.value='';}
+};
+</script>
+</body>
+</html>

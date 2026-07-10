@@ -108,12 +108,23 @@ def sec_item_text(code: str) -> dict:
     if seg is None:
         return {"ok": False, "error": f"無 Item {code}"}
     body = result.text_of(code) if seg.end_offset > seg.start_offset else "(無正文 span)"
+    # Never silently drop content: show the whole span. Cap only as an anti-DoS
+    # guard well above the largest real item (Item 8/15 ≈ 200K chars), and when
+    # it fires, say so explicitly rather than truncating in silence.
+    full_chars = len(body)
+    CAP = 600_000
+    truncated = full_chars > CAP
+    text = body[:CAP]
+    if truncated:
+        text += (f"\n\n──── 顯示前 {CAP:,} 字,共 {full_chars:,} 字;其餘未顯示"
+                 f"(完整內容仍在 offset span 內)────")
     return {"ok": True, "code": code, "title": seg.canonical_title, "status": seg.status,
             "confidence": round(seg.confidence, 2), "provenance": seg.provenance,
             "needs_review": seg.needs_review, "sha256": seg.text_sha256[:16],
             "offsets": [seg.start_offset, seg.end_offset],
+            "full_chars": full_chars, "truncated": truncated,
             "xbrl": seg.xbrl_check, "topic": seg.topic_check,
-            "warnings": seg.warnings, "text": body[:20000]}
+            "warnings": seg.warnings, "text": text}
 
 
 # ---------------------------------------------------------------- Agent side
@@ -161,20 +172,20 @@ DEFAULT_START = "https://duckduckgo.com/html/"
 
 
 def agent_submit(task: str, url: str, success: str) -> dict:
-    url = url.strip() or DEFAULT_START
-    if success.strip():
-        conds = [f"text_visible:{success.strip()}"]
-    else:
-        conds = derive_success(task)
-        if not conds:
-            return {"ok": False, "need_success": True,
-                    "error": "這個任務推斷不出可驗證的成功條件(中文長句無法自動切詞)——"
-                             "請在「成功條件」欄填:完成時頁面上會出現的一小段文字。"}
+    # The user may leave start URL and/or success condition blank: an LLM
+    # preflight plans them from the task at the start of the run (in the
+    # worker, where the model is ready). Explicit values always win; blanks
+    # are the sentinel that asks for planning. No more hard-fail on Chinese
+    # prose — the model, not a word-splitter, writes the condition.
+    url = url.strip()
+    conds = [f"text_visible:{success.strip()}"] if success.strip() else None
     run_id = f"run{int(time.time() * 1000) % 10**9}"
-    _RUNS[run_id] = {"status": "queued", "steps": [], "task": task, "url": url,
-                     "success": conds, "verifier": "", "confidence": None, "download": ""}
+    _RUNS[run_id] = {"status": "queued", "steps": [], "task": task,
+                     "url": url or "(開場由 LLM 規畫)",
+                     "success": conds or ["(開場由 LLM 規畫)"],
+                     "verifier": "", "confidence": None, "download": ""}
     _JOBS.put((run_id, task, url, conds))
-    return {"ok": True, "run_id": run_id, "success": conds}
+    return {"ok": True, "run_id": run_id, "success": conds or ["auto-plan"]}
 
 
 def _agent_worker() -> None:
@@ -221,6 +232,29 @@ def _agent_worker() -> None:
             rec = _RUNS[run_id]
             rec["status"] = "running"
             try:
+                # always go through the gateway — its backend (codex/mock)
+                # decides behaviour; a local MockPlanner is only for tests
+                planner = LLMPlanner(client)
+                # Preflight: when the user left the start URL or success
+                # conditions blank, have the LLM plan them from the task before
+                # any browsing. Heuristics (DuckDuckGo start, word-split
+                # derive_success) are only the offline fallback.
+                if not url or conds is None:
+                    p_url, p_conds = "", []
+                    try:
+                        p_url, p_conds = planner.plan_preflight(task)
+                    except Exception:  # noqa: BLE001 — model unavailable → fall back
+                        pass
+                    if not url:
+                        url = p_url or DEFAULT_START
+                    if conds is None:
+                        conds = p_conds or derive_success(task)
+                    if not conds:
+                        rec.update(status="error", url=url,
+                                   verifier="無法規畫可驗證的成功條件——請在「成功條件」欄填一小段完成時會出現的文字。")
+                        continue
+                    rec["url"], rec["success"] = url, conds
+                    rec["steps"].append(f"🧭 規畫:起點 {url} · 成功條件 {' / '.join(conds)}")
                 try:
                     page.goto(url, wait_until="domcontentloaded", timeout=30000)
                 except Exception:
@@ -232,9 +266,6 @@ def _agent_worker() -> None:
                     success_conditions=[SuccessCondition(type=c.split(":", 1)[0],
                                                          value=c.split(":", 1)[1])
                                         for c in conds])
-                # always go through the gateway — its backend (codex/mock)
-                # decides behaviour; a local MockPlanner is only for tests
-                planner = LLMPlanner(client)
                 agent = BrowserAgent(page, MemoryStore(OUT / "mem.json"), "web", "agentic",
                                      artifact_dir=OUT / "shots",
                                      evidence_store=EvidenceStore(OUT / "evidence"),

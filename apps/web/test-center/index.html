@@ -227,7 +227,7 @@ async function showItem(code){
   if(!d.ok){$('#sDoc').textContent=d.error;return;}
   const head=`Item ${d.code}. ${d.title}\n`+
     `status=${d.status}  conf=${d.confidence}  provenance=${d.provenance}  needs_review=${d.needs_review}\n`+
-    `offset=[${d.offsets}]  sha256=${d.sha256}\n`+
+    `offset=[${d.offsets}]  sha256=${d.sha256}  chars=${(d.full_chars??0).toLocaleString()}\n`+
     (d.xbrl?`xbrl: ${d.xbrl}\n`:'')+(d.topic?`topic: ${d.topic}\n`:'')+
     (d.warnings.length?('warnings: '+d.warnings.join(' | ')+'\n'):'')+
     '─'.repeat(56)+'\n';

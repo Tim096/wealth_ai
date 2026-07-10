@@ -26,14 +26,23 @@ def test_sec_item_text_after_upload():
     assert d["sha256"] and d["offsets"][1] > d["offsets"][0]
 
 
-def test_agent_submit_queues_and_derives_success():
-    d = tc.agent_submit("搜尋 'widget' 然後看結果", "about:blank", "")
+def test_agent_submit_explicit_success_used_verbatim():
+    d = tc.agent_submit("搜尋 'widget' 然後看結果", "about:blank", "widget")
     assert d["ok"] and d["run_id"] in tc._RUNS
     assert d["success"] == ["text_visible:widget"]
     st = tc._RUNS[d["run_id"]]
     assert st["status"] == "queued"
-    # drain the job so a later-started worker never actually runs it
     tc._JOBS.get_nowait()
+
+
+def test_agent_submit_blank_defers_planning_to_worker():
+    # No hard-fail on prose any more: a blank start/success is queued for the
+    # worker's LLM preflight (conds sentinel is None), never rejected.
+    d = tc.agent_submit("幫我看一下他訂閱價格不同怎麼算", "", "")
+    assert d["ok"] and d["run_id"] in tc._RUNS
+    assert d["success"] == ["auto-plan"]
+    run_id, task, url, conds = tc._JOBS.get_nowait()
+    assert run_id == d["run_id"] and url == "" and conds is None
 
 
 def test_page_has_both_panels():

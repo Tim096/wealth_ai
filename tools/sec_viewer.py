@@ -242,7 +242,12 @@ class SecViewer:
                 + "註:表格數字已保留(cell 以空白分隔);圖片/圖表為影像,純文字抽取不含。\n"
                 + "─" * 60 + "\n")
         self.txt.delete("1.0", tk.END)
-        self.txt.insert(tk.END, head + body[:20000])
+        # show the whole span; never silently truncate (cap only as a safety net)
+        CAP = 600_000
+        shown = body[:CAP]
+        if len(body) > CAP:
+            shown += (f"\n\n──── 顯示前 {CAP:,} 字,共 {len(body):,} 字;其餘未顯示 ────")
+        self.txt.insert(tk.END, head + shown)
 
 
 if __name__ == "__main__":

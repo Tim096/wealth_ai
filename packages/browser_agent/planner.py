@@ -33,12 +33,15 @@ OUTPUT (one JSON object, nothing else):
 CHOOSING ELEMENTS
 - Use ONLY listed aids. Each candidate shows tag, role, type, id and label — weigh ALL of them.
 - Prefer semantically-right controls: a real submit (type=submit / role=button with a search/submit label) over a random clickable; an input/textarea/searchbox for typing.
-- AVOID traps: ids/labels containing decoy/fake/ad/promo/sponsor, login/sign-in prompts, cookie-notice links. If a consent/cookie dialog blocks the page, dismiss it first (accept/agree/close button), then continue the task.
+- AVOID traps: ids/labels containing decoy/fake/ad/promo/sponsor, login/sign-in prompts, cookie-notice links.
+- DISMISS OVERLAYS FIRST: any modal, popup, cookie/consent banner, newsletter, "unusual traffic" notice, or interstitial that covers the page must be closed before the task can proceed — click its close/×/dismiss/accept/agree/"no thanks"/"not now" control. A blocking popup is a step to clear, not a reason to stop.
 
 PLAYBOOK
 - Prefer going straight to the target site over a web search. If the task names a site or brand with an obvious domain (finlab -> finlab.tw, wikipedia -> en.wikipedia.org, a company's SEC 10-K -> sec.gov EDGAR), use "goto" with that URL instead of searching. Search engines often block automation with a CAPTCHA.
 - If you DO land on a search-results page, click the most relevant organic result to leave it; don't keep searching.
 - Search flows (when needed): fill the search box first, then click the submit control — or "press" Enter on the box if no reliable submit exists or a click had no effect.
+- SITE-SEARCH SEMANTICS: type what the site indexes, not the kind of document you want. A company/registry/database search wants the ENTITY name or ticker (e.g. "Intel" or "INTC"), NOT a document-type label like "10-K risk factor" — stuffing the type into the free-text box returns nothing. Enter the entity to reach its page, then use the site's own filters/facets/links (a form-type filter, a document list, a section link) to narrow to the specific document or section.
+- IF A SEARCH RETURNS NOTHING: do not give up — the query was likely wrong for this site. Re-read the results state, then either simplify the query to the bare entity name, switch to the site's filter/browse UI, or "goto" the entity's page directly.
 - Downloads: use "download" with the aid of the download link/button (the file is saved and verified on disk). If a download control isn't visible yet, navigate to it first.
 - Navigation: "goto" with a URL you can see on the page, one given in the task, or an obvious well-known domain for a named site. Never invent a deep/guessed path — go to the site root and navigate from there.
 - Reading: "extract_text" on the element that holds the answer when the task asks for information.
@@ -53,7 +56,8 @@ PROGRESS DISCIPLINE
 
 HONESTY & BOUNDARIES
 - "done" ONLY when the success conditions are actually satisfied in the current state (visible text / URL / a completed download) — not because you expect them to become true.
-- "give_up" honestly when no candidate can advance the task, the page requires login/CAPTCHA/payment, or you are looping. Say why.
+- Don't give up on the FIRST setback. A single failed action (empty search, a click with no effect, one blocked page) is not a dead end — change strategy: dismiss an overlay, simplify the query, use a filter/browse UI, or "goto" the target URL directly. Only after a genuinely different approach has also failed is give_up warranted.
+- "give_up" honestly when every reasonable approach is exhausted — no candidate can advance the task, the page hard-requires login/CAPTCHA/payment with no bypass, or you are looping. Say why, and name what you already tried. This honest stop is correct; giving up prematurely (before trying an alternative) is not.
 - Never enter credentials, personal or payment data; never buy, subscribe, or submit consequential forms. A capability guard will refuse these anyway — do not attempt them.
 - Tasks may be in any language (中文/English); match your "reason" to it, and type fill values exactly as the task specifies."""
 
@@ -106,6 +110,19 @@ def _build_action(decision: dict, obs: Observation):
     return None
 
 
+_PREFLIGHT_SYSTEM = """You plan the opening of a verified browser task. Given ONE natural-language task (any language), decide the best page to start on and the conditions that will prove success — BEFORE any browsing. An external verifier checks these conditions literally, so make them observable and true only when the task is actually done.
+
+Return EXACTLY ONE JSON object, nothing else:
+  "start_url": a full https:// URL to open first. Go STRAIGHT to the target: if the task names a site/brand/company/document, use its real domain (finlab -> https://finlab.tw, a US company's SEC 10-K -> https://efts.sec.gov/LATEST/search-index?q=... is wrong; use https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=<name>&type=10-K, Wikipedia -> https://en.wikipedia.org). Only if the target is genuinely unknown, start at https://duckduckgo.com/html/ . Never invent a deep guessed path you cannot know exists — prefer a search/browse entry the site publishes.
+  "success_conditions": 1-3 objects proving completion, each:
+       {"type":"text_visible","value":"<short exact substring that appears on the page only when done>"}
+       {"type":"url_contains","value":"<url fragment true only when done>"}
+       {"type":"download_exists","value":""}   (only if the task is to download a file)
+     Prefer a distinctive phrase in the language the target page will render (English site -> English phrase). Keep each value short and literal (a title, a heading, a ticker, a section name) — not a whole sentence, not vague words that appear everywhere.
+
+Rules: pick conditions that are SUFFICIENT (met => task genuinely done) and NECESSARY (task done => met). If the task is a search/read, the condition is the answer text or a landmark of the destination page. If it is a download, use download_exists. Do not require login/CAPTCHA text. Never fabricate a value you don't expect to literally appear."""
+
+
 class LLMPlanner:
     """Agent Mode planner backed by an OpenAI/Codex-compatible model."""
 
@@ -114,6 +131,30 @@ class LLMPlanner:
 
     def available(self) -> bool:
         return self.client.available()
+
+    def plan_preflight(self, task: str) -> tuple[str, list[str]]:
+        """Ask the model, once, for a start URL and verifiable success
+        conditions derived from the task. Returns (start_url, ["type:value"…]).
+        Raises LLMConfigError if the model is unavailable so the caller can
+        fall back to heuristics. The values are validated, never trusted blindly:
+        a non-http start_url or an empty/oversized condition is dropped."""
+        user = (f"TASK: {task}\nPlan the start_url and success_conditions as JSON.")
+        decision, _ = self.client.complete_json(_PREFLIGHT_SYSTEM, user)
+        start = str(decision.get("start_url", "") or "").strip()
+        if not start.lower().startswith(("http://", "https://")):
+            start = ""
+        conds: list[str] = []
+        for c in decision.get("success_conditions", []) or []:
+            if not isinstance(c, dict):
+                continue
+            t = str(c.get("type", "")).strip()
+            v = str(c.get("value", "")).strip()
+            if t not in ("text_visible", "url_contains", "download_exists"):
+                continue
+            if t != "download_exists" and not (0 < len(v) <= 120):
+                continue
+            conds.append(f"{t}:{v}")
+        return start, conds[:3]
 
     def next_action(self, task: str, success_conditions: list[str],
                     obs: Observation, history: list[str]) -> PlannerDecision:

@@ -1,177 +1,318 @@
 {
  "ticker": "INTC",
+ "cik": 50863,
  "accession": "0000050863-26-000011",
+ "form": "10-K",
+ "filing_date": "2026-01-23",
+ "report_date": "2025-12-27",
  "filing_class": "cross_reference_index",
- "resolved_from_page_anchor": [
+ "main_document": "intc-20251227.htm",
+ "main_document_score": 5.0,
+ "raw_chars": 3320720,
+ "latency_ms": 928.7,
+ "candidates": 23,
+ "toc_rejected": 0,
+ "needs_review_items": [
+  "1",
   "1A",
+  "1B",
+  "1C",
   "2",
   "3",
+  "4",
+  "5",
+  "7",
   "7A",
   "8",
+  "9",
   "9A",
-  "15"
+  "9B",
+  "9C",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16"
+ ],
+ "pipeline_warnings": [
+  "cross-reference-index 10-K detected: 23 item headings clustered within 1685 chars; 13 point to annual-report page ranges \u2014 cross-reference index; item bodies are not in addressable Item sections of the main document. Items are pointers into the annual report (needs_review); body resolution is a documented next step."
  ],
  "items": {
   "1": {
-   "status": "incorporated_by_reference",
-   "provenance": "cross_reference_pointer",
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
    "needs_review": true,
    "xbrl_check": "",
-   "span_chars": 1664
+   "heading": "Item 1. Business",
+   "span_chars": 121867,
+   "warnings": [
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range Pages 3-5, 18; Pages 3-24, 33, 52, 72-75; Page 2 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing."
+   ]
   },
   "1A": {
    "status": "partial",
+   "confidence": 0.725,
    "provenance": "resolved_from_page_anchor",
    "needs_review": true,
    "xbrl_check": "",
-   "span_chars": 96213
+   "heading": "Item 1A. Risk Factors",
+   "span_chars": 96213,
+   "warnings": [
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range Pages 37-51 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing."
+   ]
   },
   "1B": {
    "status": "missing",
+   "confidence": 0.0,
    "provenance": "unresolved",
    "needs_review": true,
    "xbrl_check": "",
-   "span_chars": 0
+   "heading": "Item 1B. Unresolved Staff Comments",
+   "span_chars": 0,
+   "warnings": [
+    "cross-reference index lists item 1B as 'None' \u2014 treated as no-content but not source-span verified; needs_review"
+   ]
   },
   "1C": {
-   "status": "incorporated_by_reference",
-   "provenance": "cross_reference_pointer",
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
    "needs_review": true,
    "xbrl_check": "",
-   "span_chars": 1664
+   "heading": "Item 1C. Cybersecurity",
+   "span_chars": 6578,
+   "warnings": [
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range Page 54 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing."
+   ]
   },
   "2": {
    "status": "partial",
+   "confidence": 0.725,
    "provenance": "resolved_from_page_anchor",
    "needs_review": true,
    "xbrl_check": "",
-   "span_chars": 6424
+   "heading": "Item 2. Properties",
+   "span_chars": 6424,
+   "warnings": [
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range Pages 11, 32 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing."
+   ]
   },
   "3": {
    "status": "partial",
+   "confidence": 0.725,
    "provenance": "resolved_from_page_anchor",
    "needs_review": true,
    "xbrl_check": "",
-   "span_chars": 23988
+   "heading": "Item 3. Legal Proceedings",
+   "span_chars": 24012,
+   "warnings": [
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range Pages 102-105 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing."
+   ]
   },
   "4": {
    "status": "missing",
+   "confidence": 0.0,
    "provenance": "unresolved",
    "needs_review": true,
    "xbrl_check": "",
-   "span_chars": 0
+   "heading": "Item 4. Mine Safety Disclosures",
+   "span_chars": 0,
+   "warnings": [
+    "cross-reference index lists item 4 as 'None' \u2014 treated as no-content but not source-span verified; needs_review"
+   ]
   },
   "5": {
-   "status": "incorporated_by_reference",
-   "provenance": "cross_reference_pointer",
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
    "needs_review": true,
    "xbrl_check": "",
-   "span_chars": 1664
+   "heading": "Item 5. Market for Registrant's Common Equity, Related Stockholder Matters and Issuer Purchases of Equity Securities",
+   "span_chars": 2519,
+   "warnings": [
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range Pages 53 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing."
+   ]
   },
   "6": {
    "status": "reserved",
+   "confidence": 0.0,
    "provenance": "offset_exact_span",
    "needs_review": false,
    "xbrl_check": "",
-   "span_chars": 0
+   "heading": "Item 6. [Reserved]",
+   "span_chars": 0,
+   "warnings": []
   },
   "7": {
-   "status": "incorporated_by_reference",
-   "provenance": "cross_reference_pointer",
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
    "needs_review": true,
    "xbrl_check": "",
-   "span_chars": 1664
+   "heading": "Item 7. Management's Discussion and Analysis of Financial Condition and Results of Operations",
+   "span_chars": 44850,
+   "warnings": [
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range Pages 29-32; Pages 18-29; Pages 34-36, 65-72 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing."
+   ]
   },
   "7A": {
    "status": "partial",
+   "confidence": 0.725,
    "provenance": "resolved_from_page_anchor",
    "needs_review": true,
    "xbrl_check": "",
-   "span_chars": 5633
+   "heading": "Item 7A. Quantitative and Qualitative Disclosures About Market Risk",
+   "span_chars": 5633,
+   "warnings": [
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range Pages 33 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing."
+   ]
   },
   "8": {
    "status": "partial",
+   "confidence": 0.725,
    "provenance": "resolved_from_page_anchor",
    "needs_review": true,
    "xbrl_check": "certified: 3/3 XBRL headline figures found in the span",
-   "span_chars": 202858
+   "heading": "Item 8. Financial Statements and Supplementary Data",
+   "span_chars": 204301,
+   "warnings": [
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range Pages 56-108 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing."
+   ]
   },
   "9": {
    "status": "missing",
+   "confidence": 0.0,
    "provenance": "unresolved",
    "needs_review": true,
    "xbrl_check": "",
-   "span_chars": 0
+   "heading": "Item 9. Changes in and Disagreements with Accountants on Accounting and Financial Disclosure",
+   "span_chars": 0,
+   "warnings": [
+    "cross-reference index lists item 9 as 'None' \u2014 treated as no-content but not source-span verified; needs_review"
+   ]
   },
   "9A": {
    "status": "partial",
+   "confidence": 0.725,
    "provenance": "resolved_from_page_anchor",
    "needs_review": true,
    "xbrl_check": "",
-   "span_chars": 3867
+   "heading": "Item 9A. Controls and Procedures",
+   "span_chars": 3867,
+   "warnings": [
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range Page 109 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing."
+   ]
   },
   "9B": {
-   "status": "incorporated_by_reference",
-   "provenance": "cross_reference_pointer",
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
    "needs_review": true,
    "xbrl_check": "",
-   "span_chars": 1664
+   "heading": "Item 9B. Other Information",
+   "span_chars": 6578,
+   "warnings": [
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range Page 54 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing."
+   ]
   },
   "9C": {
    "status": "missing",
+   "confidence": 0.0,
    "provenance": "unresolved",
    "needs_review": true,
    "xbrl_check": "",
-   "span_chars": 0
+   "heading": "Item 9C. Disclosure Regarding Foreign Jurisdictions that Prevent Inspections",
+   "span_chars": 0,
+   "warnings": [
+    "cross-reference index lists item 9C as 'None' \u2014 treated as no-content but not source-span verified; needs_review"
+   ]
   },
   "10": {
-   "status": "incorporated_by_reference",
-   "provenance": "cross_reference_pointer",
-   "needs_review": true,
-   "xbrl_check": "",
-   "span_chars": 1664
-  },
-  "11": {
-   "status": "incorporated_by_reference",
-   "provenance": "cross_reference_pointer",
-   "needs_review": true,
-   "xbrl_check": "",
-   "span_chars": 1664
-  },
-  "12": {
-   "status": "incorporated_by_reference",
-   "provenance": "cross_reference_pointer",
-   "needs_review": true,
-   "xbrl_check": "",
-   "span_chars": 1664
-  },
-  "13": {
-   "status": "incorporated_by_reference",
-   "provenance": "cross_reference_pointer",
-   "needs_review": true,
-   "xbrl_check": "",
-   "span_chars": 1664
-  },
-  "14": {
-   "status": "incorporated_by_reference",
-   "provenance": "cross_reference_pointer",
-   "needs_review": true,
-   "xbrl_check": "",
-   "span_chars": 1664
-  },
-  "15": {
    "status": "partial",
+   "confidence": 0.725,
    "provenance": "resolved_from_page_anchor",
    "needs_review": true,
    "xbrl_check": "",
-   "span_chars": 202858
+   "heading": "Item 10. Directors, Executive Officers and Corporate Governance",
+   "span_chars": 5446,
+   "warnings": [
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range Page 52 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing."
+   ]
+  },
+  "11": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.25,
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "xbrl_check": "",
+   "heading": "Item 11. Executive Compensation",
+   "span_chars": 31,
+   "warnings": [
+    "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
+   ]
+  },
+  "12": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.25,
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "xbrl_check": "",
+   "heading": "Item 12. Security Ownership of Certain Beneficial Owners and Management and Related Stockholder Matters",
+   "span_chars": 103,
+   "warnings": [
+    "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
+   ]
+  },
+  "13": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.25,
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "xbrl_check": "",
+   "heading": "Item 13. Certain Relationships and Related Transactions, and Director Independence",
+   "span_chars": 82,
+   "warnings": [
+    "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
+   ]
+  },
+  "14": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.25,
+   "provenance": "cross_reference_pointer",
+   "needs_review": true,
+   "xbrl_check": "",
+   "heading": "Item 14. Principal Accountant Fees and Services",
+   "span_chars": 47,
+   "warnings": [
+    "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
+   ]
+  },
+  "15": {
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
+   "needs_review": true,
+   "xbrl_check": "",
+   "heading": "Item 15. Exhibits, Financial Statement Schedules",
+   "span_chars": 204301,
+   "warnings": [
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range Pages 56-108, 110-115 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing."
+   ]
   },
   "16": {
    "status": "missing",
+   "confidence": 0.0,
    "provenance": "unresolved",
    "needs_review": true,
    "xbrl_check": "",
-   "span_chars": 0
+   "heading": "Item 16. Form 10-K Summary",
+   "span_chars": 0,
+   "warnings": [
+    "cross-reference index lists item 16 as 'None' \u2014 treated as no-content but not source-span verified; needs_review"
+   ]
   }
  }
 }

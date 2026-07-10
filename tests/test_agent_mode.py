@@ -60,6 +60,37 @@ def test_build_action_rejects_codey_output():
     assert _build_action({"action": "click", "aid": None}, obs) is None
 
 
+class _FakeClient:
+    def __init__(self, payload):
+        self._payload = payload
+    def available(self):
+        return True
+    def complete_json(self, system, user):
+        return self._payload, None
+
+
+def test_preflight_parses_and_validates():
+    p = LLMPlanner(_FakeClient({
+        "start_url": "https://finlab.tw",
+        "success_conditions": [
+            {"type": "text_visible", "value": "訂閱方案"},
+            {"type": "url_contains", "value": "/pricing"},
+            {"type": "bogus", "value": "x"},          # dropped: bad type
+            {"type": "text_visible", "value": ""},      # dropped: empty value
+        ],
+    }))
+    url, conds = p.plan_preflight("看 finlab 訂閱價格")
+    assert url == "https://finlab.tw"
+    assert conds == ["text_visible:訂閱方案", "url_contains:/pricing"]
+
+
+def test_preflight_drops_non_http_start_url():
+    p = LLMPlanner(_FakeClient({"start_url": "javascript:alert(1)",
+                                "success_conditions": [{"type": "download_exists", "value": ""}]}))
+    url, conds = p.plan_preflight("下載檔案")
+    assert url == "" and conds == ["download_exists:"]
+
+
 def test_mock_planner_fills_then_clicks_then_done():
     box = cand(index=0, tag="input", name="query", aria_label="Search products")
     btn = cand(index=1, tag="button", type="submit", aria_label="Search", text="Go")

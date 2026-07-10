@@ -165,6 +165,24 @@ def test_preflight_parses_and_validates():
     assert plan["steps"] == ["goto finlab.tw", "找定價連結"]
 
 
+def test_plan_steps_are_fed_back_to_the_planner():
+    # the preflight route must reach the per-step planner so a hard multi-step
+    # task follows its own roadmap — not just be shown to the user.
+    captured = {}
+
+    class _Rec:
+        def available(self): return True
+        def complete_json(self, system, user):
+            captured["user"] = user
+            return {"action": "goto", "value": "https://x"}, None
+
+    obs = Observation(url="u", title="t", visible_text="", candidates=[])
+    LLMPlanner(_Rec()).next_action("hard task", [], obs, [],
+                                   plan_steps=["open EDGAR", "download the 10-K"])
+    assert "PLANNED ROUTE" in captured["user"]
+    assert "download the 10-K" in captured["user"]
+
+
 def test_preflight_drops_non_http_start_url():
     p = LLMPlanner(_FakeClient({"start_url": "javascript:alert(1)",
                                 "success_conditions": [{"type": "download_exists", "value": ""}]}))

@@ -392,11 +392,15 @@ class BrowserAgent:
         raise ValueError(f"unknown step kind {step.kind}")
 
     def run_agentic(self, task_id: str, contract: BrowserTaskContract, planner,
-                    max_steps: int = 8, on_step=None) -> TaskRun:
+                    max_steps: int = 8, on_step=None, plan_steps=None) -> TaskRun:
         """Agent Mode (SPEC 6.2): an LLM planner chooses actions from the
         controlled schema; each is capability-screened and executed; the
         verifier — not the LLM — decides the outcome. Falls back cleanly if the
-        planner has no credentials. `on_step(text)` is called live per step."""
+        planner has no credentials. `on_step(text)` is called live per step.
+        `plan_steps` is the preflight dynamic-workflow route; it is fed back to
+        the planner each turn so a hard, multi-step task follows (and re-plans
+        against) its own roadmap instead of deciding each step blind."""
+        plan_steps = plan_steps or []
         def _emit(text):
             if on_step:
                 try:
@@ -432,7 +436,8 @@ class BrowserAgent:
             _emit("💭 看畫面、決定下一步…")
             decision = planner.next_action(
                 contract.natural_language_task,
-                [f"{c.type}:{c.value}" for c in contract.success_conditions], obs, history)
+                [f"{c.type}:{c.value}" for c in contract.success_conditions], obs, history,
+                plan_steps=plan_steps)
             if decision.llm is not None:
                 llm_cost += decision.llm.cost_usd
             # a malformed/unusable action is recoverable — give the model another

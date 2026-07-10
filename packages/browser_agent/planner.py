@@ -74,7 +74,8 @@ class PlannerDecision:
 
 class Planner(Protocol):
     def next_action(self, task: str, success_conditions: list[str],
-                    obs: Observation, history: list[str]) -> PlannerDecision: ...
+                    obs: Observation, history: list[str],
+                    plan_steps: list[str] | None = None) -> PlannerDecision: ...
 
 
 def _candidate_lines(obs: Observation) -> str:
@@ -192,9 +193,15 @@ class LLMPlanner:
         return start, conds[:3], plan
 
     def next_action(self, task: str, success_conditions: list[str],
-                    obs: Observation, history: list[str]) -> PlannerDecision:
+                    obs: Observation, history: list[str],
+                    plan_steps: list[str] | None = None) -> PlannerDecision:
+        route = ("PLANNED ROUTE (your own preflight plan — follow it, but adapt to "
+                 "the live page and re-plan if a step is blocked or already done):\n"
+                 + "\n".join(f"  {i+1}. {s}" for i, s in enumerate(plan_steps)) + "\n"
+                 if plan_steps else "")
         user = (
             f"TASK: {task}\n"
+            f"{route}"
             f"SUCCESS WHEN: {'; '.join(success_conditions)}\n"
             f"CURRENT URL: {obs.url}\nTITLE: {obs.title}\n"
             f"VISIBLE TEXT (excerpt): {obs.visible_text[:1600]}\n"
@@ -251,7 +258,8 @@ class MockPlanner:
         return pool[0][0]
 
     def next_action(self, task: str, success_conditions: list[str],
-                    obs: Observation, history: list[str]) -> PlannerDecision:
+                    obs: Observation, history: list[str],
+                    plan_steps: list[str] | None = None) -> PlannerDecision:
         self._step += 1
         if self._step == 1:
             box = self._find(obs, {"input", "textarea", "searchbox", "textbox"},

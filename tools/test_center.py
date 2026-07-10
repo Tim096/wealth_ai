@@ -430,12 +430,14 @@ def _agent_worker() -> None:
                 # conditions blank, have the LLM plan them from the task before
                 # any browsing. Heuristics (DuckDuckGo start, word-split
                 # derive_success) are only the offline fallback.
+                plan_steps: list[str] = []
                 if not url or conds is None:
                     p_url, p_conds, p_plan = "", [], {}
                     try:
                         p_url, p_conds, p_plan = planner.plan_preflight(task)
                     except Exception:  # noqa: BLE001 — model unavailable → fall back
                         pass
+                    plan_steps = p_plan.get("steps", [])
                     # Dynamic-workflow preamble: show the model's goal analysis,
                     # anticipated obstacles and planned steps BEFORE browsing, so
                     # the run opens with a thought-through route, not a blind hop.
@@ -477,7 +479,8 @@ def _agent_worker() -> None:
                                      evidence_store=EvidenceStore(OUT / "evidence"),
                                      downloads_dir=OUT / "downloads")
                 run = agent.run_agentic(run_id, contract, planner, max_steps=18,
-                                        on_step=lambda t: rec["steps"].append(t))
+                                        on_step=lambda t: rec["steps"].append(t),
+                                        plan_steps=plan_steps)
                 rec.update(status=run.status, confidence=run.confidence,
                            verifier=run.verifier.reason,
                            download=agent.executor.last_download_path)

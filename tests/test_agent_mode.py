@@ -23,6 +23,37 @@ def test_build_action_targets_by_aid_only():
     assert act.type == "fill" and act.target.selector == '[data-aid="3"]'
 
 
+def test_build_action_supports_download():
+    obs = Observation(url="u", title="t", visible_text="", candidates=[cand(index=5)])
+    act = _build_action({"action": "download", "aid": 5}, obs)
+    assert act.type == "download" and act.target.selector == '[data-aid="5"]'
+
+
+@pytest.mark.integration
+def test_agent_downloads_a_real_file(tmp_path):
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from browser_agent.executor import ActionExecutor
+    from browser_core import ElementTarget
+    from browser_core.actions import DownloadAction
+
+    html = ('<a id="d" href="data:text/csv,name,val%0Aa,1%0Ab,2" '
+            'download="report.csv">Download</a>')
+    with sync_playwright() as p:
+        b = p.chromium.launch(headless=True)
+        ctx = b.new_context(accept_downloads=True)
+        page = ctx.new_page()
+        page.set_content(html)
+        ex = ActionExecutor(page, downloads_dir=tmp_path)
+        out = ex.execute(DownloadAction(target=ElementTarget(selector="#d", selector_type="css")))
+        b.close()
+    assert out.ok
+    saved = tmp_path / "report.csv"
+    assert saved.exists()
+    assert "name,val" in saved.read_text()
+
+
 def test_build_action_rejects_codey_output():
     obs = Observation(url="u", title="t", visible_text="", candidates=[])
     # no aid + not goto -> unusable, planner should give_up on this

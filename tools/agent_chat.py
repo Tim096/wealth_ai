@@ -40,6 +40,8 @@ _STOP = {"the", "a", "an", "for", "to", "and", "of", "in", "on", "open", "search
 
 
 def derive_success(task: str) -> list[str]:
+    if re.search(r"download|下載|下载|存檔|save file", task, re.I):
+        return ["download_exists:"]     # any download counts as success
     q = re.findall(r"['\"“」『]([^'\"”」』]{2,60})['\"”」』]", task)
     if q:
         return [f"text_visible:{q[0]}"]
@@ -163,11 +165,14 @@ class AgentChat:
         client = OpenAIClient(api_key=cfg.api_key, base_url=cfg.base_url, model=cfg.model)
         OUT.mkdir(parents=True, exist_ok=True)
         try:
+            dl_dir = OUT / "downloads"
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=False)
-                page = browser.new_page(viewport={"width": 1200, "height": 820})
+                context = browser.new_context(viewport={"width": 1200, "height": 820},
+                                              accept_downloads=True)
+                page = context.new_page()
                 self._log("sys", f"就緒 ✔  planner={'Codex(' + cfg.base_url + ')' if real_codex else 'mock'}"
-                                  "。瀏覽器視窗已開,派工吧。")
+                                  f"。下載會存到 {dl_dir}。瀏覽器視窗已開,派工吧。")
                 while True:
                     url, task = self.task_q.get()
                     if task is None:
@@ -195,11 +200,14 @@ class AgentChat:
             success_conditions=[SuccessCondition(type=c.split(":", 1)[0], value=c.split(":", 1)[1])
                                 for c in conds])
         agent = BrowserAgent(page, MemoryStore(OUT / "mem.json"), site="chat", task_type="agentic",
-                             artifact_dir=OUT / "shots", evidence_store=EvidenceStore(OUT / "evidence"))
+                             artifact_dir=OUT / "shots", evidence_store=EvidenceStore(OUT / "evidence"),
+                             downloads_dir=OUT / "downloads")
         run = agent.run_agentic("chat", contract, planner, max_steps=8,
                                 on_step=lambda t: self._log("agent", t))
         kind = "ok" if run.status == "pass" else "bad"
         self._log(kind, f"結果:{run.status.upper()}(confidence {run.confidence:.2f}) — {run.verifier.reason}")
+        if agent.executor.last_download_path:
+            self._log("ok", f"📁 已下載到:{agent.executor.last_download_path}")
 
 
 if __name__ == "__main__":

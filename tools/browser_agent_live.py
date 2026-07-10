@@ -59,6 +59,8 @@ _STOP = {"the", "a", "an", "for", "to", "and", "of", "in", "on", "open", "search
 def derive_success(task: str) -> list[str]:
     """Turn a natural-language task into a verifier condition when the user
     didn't give one: prefer a quoted phrase, else the most salient long word."""
+    if re.search(r"download|下載|下载|save file", task, re.I):
+        return ["download_exists:"]
     q = re.findall(r"['\"]([^'\"]{2,60})['\"]", task)
     if q:
         return [f"text_visible:{q[0]}"]
@@ -101,11 +103,14 @@ def run_task(page, args, task: str, url: str | None, conds: list[str]):
                             for c in conds])
     mem = MemoryStore(OUT / "selector_memory.json")
     agent = BrowserAgent(page, mem, site="live", task_type="agentic",
-                         artifact_dir=OUT / "shots", evidence_store=EvidenceStore(OUT / "evidence"))
+                         artifact_dir=OUT / "shots", evidence_store=EvidenceStore(OUT / "evidence"),
+                         downloads_dir=OUT / "downloads")
     # reset step state for the deterministic mock; LLM planner is stateless per call
     if isinstance(args._planner, MockPlanner):
         args._planner = MockPlanner(args.query)
     run = agent.run_agentic("live", contract, args._planner, max_steps=args.max_steps)
+    if agent.executor.last_download_path:
+        print(f"📁 downloaded to: {agent.executor.last_download_path}")
     print(f"\nSTATUS: {run.status.upper()}  confidence={run.confidence:.2f}  "
           f"latency={run.total_latency_ms:.0f}ms")
     print(f"verifier: {run.verifier.reason}")
@@ -162,7 +167,8 @@ def main() -> None:
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=not headed)
-        page = browser.new_page(viewport={"width": 1100, "height": 850})
+        context = browser.new_context(viewport={"width": 1100, "height": 850}, accept_downloads=True)
+        page = context.new_page()
         if interactive:
             interactive_loop(page, args)
         else:

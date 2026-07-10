@@ -46,7 +46,8 @@ ACTION_SCHEMA = {
     # OpenAI strict structured-output requires every property in `required`
     "required": ["action", "aid", "value", "reason"],
     "properties": {
-        "action": {"enum": ["fill", "click", "press", "goto", "extract_text", "done", "give_up"]},
+        "action": {"enum": ["fill", "click", "press", "goto", "extract_text", "download",
+                            "done", "give_up"]},
         "aid": {"type": ["integer", "null"]},
         "value": {"type": "string"},
         "reason": {"type": "string"},

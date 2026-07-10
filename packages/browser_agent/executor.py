@@ -46,9 +46,11 @@ def _locator(page, target: ElementTarget):
 
 
 class ActionExecutor:
-    def __init__(self, page, default_timeout_ms: int = 5000) -> None:
+    def __init__(self, page, default_timeout_ms: int = 5000, downloads_dir=None) -> None:
         self.page = page
         self.timeout = default_timeout_ms
+        self.downloads_dir = downloads_dir
+        self.last_download_path = ""
 
     def execute(self, action) -> ActionOutcome:
         t0 = time.perf_counter()
@@ -98,10 +100,17 @@ class ActionExecutor:
                                      extracted_text=txt, url_before=url_before,
                                      url_after=self.page.url)
             elif at == "download":
-                with self.page.expect_download(timeout=self.timeout) as di:
+                import os as _os
+                with self.page.expect_download(timeout=self.timeout * 2) as di:
                     loc.click()
+                dl = di.value
+                name = dl.suggested_filename or "download.bin"
+                dest = _os.path.join(str(self.downloads_dir), name) if self.downloads_dir else None
+                if dest:
+                    dl.save_as(dest)
+                    self.last_download_path = dest
                 return ActionOutcome(ok=True, action_type=at, matched_count=n,
-                                     detail=di.value.suggested_filename,
+                                     detail=dest or name, extracted_text=dest or name,
                                      url_before=url_before, url_after=self.page.url)
             return ActionOutcome(ok=True, action_type=at, matched_count=n,
                                  url_before=url_before, url_after=self.page.url)

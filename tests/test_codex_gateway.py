@@ -47,4 +47,4 @@ def test_extract_json_object_from_chatter():
 
 def test_action_schema_matches_planner_actions():
     assert set(gw.ACTION_SCHEMA["properties"]["action"]["enum"]) == {
-        "fill", "click", "press", "goto", "extract_text", "done", "give_up"}
+        "fill", "click", "press", "goto", "extract_text", "download", "done", "give_up"}

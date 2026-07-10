@@ -17,7 +17,7 @@ from typing import Protocol
 
 from browser_core import ElementTarget
 from browser_core.actions import (
-    ClickAction, ExtractTextAction, FillAction, GotoAction, PressAction,
+    ClickAction, DownloadAction, ExtractTextAction, FillAction, GotoAction, PressAction,
 )
 from browser_agent.observer import Observation
 from llm_core.openai_client import LLMConfigError, LLMResponse, OpenAIClient
@@ -25,7 +25,7 @@ from llm_core.openai_client import LLMConfigError, LLMResponse, OpenAIClient
 _SYSTEM = """You drive a web browser to complete a task. You may ONLY return a single JSON object choosing the next action. You never write code and never invent CSS selectors — you target an element only by its numeric "aid" from the candidate list.
 
 Return exactly one JSON object with keys:
-  "action": one of "fill","click","press","goto","extract_text","done","give_up"
+  "action": one of "fill","click","press","goto","extract_text","download","done","give_up"
   "aid": integer id of the target element from the candidates (or null)
   "value": string (fill text, press key like "Enter", or goto url; else "")
   "reason": one short sentence
@@ -34,6 +34,7 @@ Rules:
 - Pick "aid" ONLY from the listed candidates. If nothing fits, use give_up.
 - Use "done" when the success conditions already appear satisfied on the page.
 - Prefer filling the search box then clicking/ pressing Enter on the submit control.
+- To download a file, use action "download" with the aid of the download link/button.
 - Never choose an element whose text/label looks like a decoy, ad, or login."""
 
 
@@ -78,6 +79,8 @@ def _build_action(decision: dict, obs: Observation):
         return PressAction(target=target, key=value or "Enter")
     if action == "extract_text" and target:
         return ExtractTextAction(target=target)
+    if action == "download" and target:
+        return DownloadAction(target=target)
     if action == "goto" and value:
         return GotoAction(url=value)
     return None

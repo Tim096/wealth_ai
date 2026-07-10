@@ -22,7 +22,10 @@ def _check_success(cond, obs: Observation, extracted: dict[str, str]) -> str:
     if t == "field_value_equals":
         return "pass" if any(v == x for x in extracted.values()) else "fail"
     if t == "download_exists":
-        return "pass" if extracted.get("__download__") == v or v in extracted.get("__download__", "") else "unknown"
+        dl = extracted.get("__download__", "")
+        if not dl:
+            return "unknown"          # no download observed
+        return "pass" if (not v or v.lower() in dl.lower()) else "fail"
     if t == "screenshot_region_changed":
         return "unknown"  # not observable without a baseline; honest unknown
     return "unknown"

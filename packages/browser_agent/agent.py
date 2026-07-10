@@ -86,9 +86,13 @@ class TaskRun:
 class BrowserAgent:
     def __init__(self, page, memory: MemoryStore, site: str, task_type: str,
                  artifact_dir: Path | str | None = None,
-                 evidence_store: EvidenceStore | None = None) -> None:
+                 evidence_store: EvidenceStore | None = None,
+                 downloads_dir: Path | str | None = None) -> None:
         self.page = page
-        self.executor = ActionExecutor(page)
+        self.downloads_dir = Path(downloads_dir) if downloads_dir else None
+        if self.downloads_dir:
+            self.downloads_dir.mkdir(parents=True, exist_ok=True)
+        self.executor = ActionExecutor(page, downloads_dir=self.downloads_dir)
         self.observer = PageObserver(page)
         self.memory = memory
         self.site = site
@@ -315,15 +319,20 @@ class BrowserAgent:
                 break
             out = self.executor.execute(action)
             history.append(f"{action.type}:{'ok' if out.ok else 'fail'}")
+            detail = decision.reason
+            if action.type == "download" and out.ok:
+                detail = f"下載完成 → {self.executor.last_download_path}"
             trace.append(StepTrace(step="planner", action=action.type, ok=out.ok, mode="agent",
-                                   detail=decision.reason, selector_used=getattr(
+                                   detail=detail, selector_used=getattr(
                                        getattr(action, "target", None), "selector", ""),
                                    latency_ms=out.latency_ms,
                                    screenshot=self._screenshot(f"agent-{len(trace)}")))
-            _emit(f"{'👉' if out.ok else '⚠️'} {action.type}:{decision.reason}")
+            _emit(f"{'⬇️' if action.type == 'download' and out.ok else ('👉' if out.ok else '⚠️')} "
+                  f"{action.type}:{detail}")
             self.page.wait_for_timeout(300)
+        extracted = {"__download__": self.executor.last_download_path} if self.executor.last_download_path else {}
         obs = self.observer.observe()
-        verdict = verify_contract(contract, obs, {})
+        verdict = verify_contract(contract, obs, extracted)
         base = {"pass": 1.0, "unknown": 0.4, "fail": 0.0}[verdict.status]
         run = TaskRun(task_id=task_id, site=self.site, status=verdict.status, verifier=verdict,
                       steps=trace, repairs=0, confidence=base,

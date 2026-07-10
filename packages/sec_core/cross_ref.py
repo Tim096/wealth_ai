@@ -22,11 +22,13 @@ import re
 import statistics
 from dataclasses import dataclass, field
 
+from observability_core import sha256_text
 from sec_core.confidence import ConfidenceBreakdown
 from sec_core.confidence import ConfidenceComponent as CC
 from sec_core.headings import VALID_CODES, HeadingCandidate
 from sec_core.items import CANONICAL_ITEM_TITLES, ItemSegment
 from sec_core.normalize import NormalizedDocument
+from sec_core.page_map import build_page_map, resolve_page_ref
 
 # a page reference right after a heading: "Pages 37-51", "49-62", "4-36, 121-127"
 _PAGE_REF_RE = re.compile(
@@ -197,6 +199,7 @@ def build_cross_reference_segments(
 ) -> tuple[list[ItemSegment], dict[str, ConfidenceBreakdown]]:
     """Honest segments for a cross-reference-index filing: each item is a
     pointer into the annual report, never a fabricated body."""
+    page_map = build_page_map(doc)
     segments: list[ItemSegment] = []
     breakdowns: dict[str, ConfidenceBreakdown] = {}
     for code in VALID_CODES:
@@ -205,8 +208,33 @@ def build_cross_reference_segments(
         following = index.entries.get(code, "")
 
         if code in index.page_refs:
-            # points to a page range in the bound annual report — a pointer, not content
             ref = index.page_refs[code]
+            # try to RESOLVE the pointer to a real source-exact span via the
+            # printed page-number footers (robust: printed data, not a guess)
+            span = resolve_page_ref(page_map, ref)
+            if span is not None and span[1] - span[0] > 400:
+                start, end = span
+                text = doc.slice(start, end)
+                bd = ConfidenceBreakdown(components=[
+                    CC(name="content_substantiveness", score=1.4, max_score=2.0,
+                       reason=f"resolved page range {ref} to a {end - start}-char body span"),
+                    CC(name="heading_strength", score=1.5, max_score=2.0,
+                       reason="page anchor resolved from printed page-number footers"),
+                ])
+                breakdowns[code] = bd
+                segments.append(ItemSegment(
+                    filing_id=filing_id, item_code=code, canonical_title=canonical,
+                    extracted_heading=heading, start_offset=start, end_offset=end,
+                    text_sha256=sha256_text(text), status="partial", confidence=bd.total,
+                    provenance="resolved_from_page_anchor", needs_review=True,
+                    warnings=[
+                        f"cross-reference-index 10-K: Item body resolved from the annual-report "
+                        f"page range {ref} via printed page-number anchors (source-exact span). "
+                        "Marked partial + needs_review because page-boundary alignment is "
+                        "heuristic — verify start/end against the filing."],
+                ))
+                continue
+            # could not resolve — honest pointer
             bd = ConfidenceBreakdown(components=[
                 CC(name="content_substantiveness", score=0.0, max_score=2.0,
                    reason="cross-reference index: only a page pointer was found, not item body"),
@@ -222,9 +250,8 @@ def build_cross_reference_segments(
                 provenance="cross_reference_pointer", needs_review=True,
                 warnings=[
                     "cross-reference-index 10-K: this item's body is NOT in an addressable Item "
-                    f"section; the filing points to the bound annual report at page(s) {ref}. Body "
-                    "resolution requires following the pointer into the annual-report exhibit (not "
-                    "yet implemented) — this is a pointer, not extracted content."
+                    f"section; the filing points to the bound annual report at page(s) {ref}, but "
+                    "the page anchors could not be resolved — this is a pointer, not content."
                 ],
             ))
         elif code == "6":

@@ -55,9 +55,10 @@ CANONICAL_ITEM_TITLES: dict[str, str] = {
 
 
 Provenance = Literal[
-    "offset_exact_span",        # body is a source-exact span addressed by offsets (normal path)
-    "cross_reference_pointer",  # only a pointer into an annual report / another section was found
-    "unresolved",               # no addressable content found
+    "offset_exact_span",         # body is a source-exact span addressed by offsets (normal path)
+    "cross_reference_pointer",   # only a pointer into an annual report / another section was found
+    "resolved_from_page_anchor", # wrapper body recovered from printed page-number anchors (source-exact)
+    "unresolved",                # no addressable content found
 ]
 
 

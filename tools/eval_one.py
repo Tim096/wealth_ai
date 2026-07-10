@@ -41,8 +41,12 @@ def run(ticker: str):
     run_id = f"sec-{ticker}-{ref.accession}"
     result = extract_from_html(raw, filing_id=f"{ticker}-{ref.accession}",
                                evidence_store=store, run_id=run_id)
-    # apply the XBRL oracle so the SHIPPED record carries the gated Item 8 status
-    if result.filing_class == "standard":
+    # apply the XBRL oracle so the SHIPPED record carries the gated Item 8
+    # status — including a cross-reference filing whose Item 8 we resolved from
+    # page anchors (Intel), which is the strongest possible check: two
+    # independent methods (page-anchor resolution + XBRL) must agree.
+    item8 = next((s for s in result.segments if s.item_code == "8"), None)
+    if item8 is not None and item8.end_offset > item8.start_offset:
         try:
             certify_item8(result, fetcher, cik, ref.accession)
         except Exception:  # noqa: BLE001 — certification is best-effort enrichment

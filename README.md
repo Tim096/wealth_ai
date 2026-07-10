@@ -8,12 +8,12 @@
 
 | 題目 | 內容 | 狀態 |
 |---|---|---|
-| 題目一 Browser Agent | capability-aware 瀏覽器自動化:受控 action space、task-contract verifier、accessibility-tree selector 自我修復、selector memory | **可執行**:Playwright executor + v1→v2 selector-repair killer demo(`tools/browser_killer_demo.py`) |
-| 題目二 SEC Extractor | 10-K Item 1–16 結構化抽取:source-exact span、TOC 防禦、confidence、cross-reference-index(Intel/Citi)、**XBRL 獨立認證** | **可執行**:跑過 11 家真實 10-K + Intel/Citi(`tools/eval_one.py`, `tools/certify.py`) |
-| 共用層 | evidence store、三態 verdict、eval case、LLM 成本紀錄 | 已實作 |
-| Eval Dashboard | 兩題 eval 結果、XBRL 認證、browser repair trace(真實數據) | `apps/web/eval-dashboard/`,自包含 HTML |
+| 題目一 Browser Agent | 受控 action space、task-contract verifier、a11y selector 自修復、selector memory、**Agent Mode(LLM 驅動,預設接 Codex OAuth via gateway)**、code-enforced capability guard | **可執行**:selector-repair killer demo(`tools/browser_killer_demo.py`)+ live LLM 驅動(`tools/browser_agent_live.py`) |
+| 題目二 SEC Extractor | 10-K Item 1–16 source-exact 抽取、TOC 防禦、cross-reference-index、**page-anchor 還原(Intel 正文抽回)**、**XBRL 認證(Item 8)**、**topic-consistency oracle(全 item)** | **可執行**:11 家真實 10-K + Intel/Citi(`tools/eval_one.py`, `tools/certify.py`) |
+| 共用層 | evidence store(兩題共用)、三態 verdict、eval case、LLM 成本紀錄 | 已實作 |
+| Eval Dashboard | 兩題 eval、XBRL 認證、browser repair trace(真實數據) | `apps/web/eval-dashboard/`,自包含 HTML |
 
-**62 tests 通過**(含真實瀏覽器 integration test)。完整規格:[docs/SPEC.md](docs/SPEC.md)。
+**89 tests 通過**(含真實瀏覽器 integration test + gateway e2e)。完整規格:[docs/SPEC.md](docs/SPEC.md)。手動測 Task 1:[docs/setup_codex_gateway.md](docs/setup_codex_gateway.md)。
 
 ## 核心原則(已在 code 層強制,不是文件宣示)
 
@@ -30,12 +30,14 @@ python -m venv .venv
 .venv\Scripts\python -m playwright install chromium
 $env:SEC_EDGAR_USER_AGENT = "your-name your@email"
 
-.venv\Scripts\python -m pytest                          # 62 passed
+.venv\Scripts\python -m pytest                          # 89 passed
 .venv\Scripts\python tools\browser_killer_demo.py       # 題目一:v1→v2 selector 自修復
+.venv\Scripts\python tools\browser_agent_live.py --mock # 題目一:Agent Mode 迴圈(免 key)
 .venv\Scripts\python tools\eval_one.py AAPL             # 題目二:抽取一份 10-K
 .venv\Scripts\python tools\certify.py AAPL XOM JPM      # XBRL 認證 Item 8(certified vs contradicted)
-.venv\Scripts\python tools\build_dashboard_data.py      # 重建 dashboard 數據
 ```
+
+Task 1 用你自己的 **Codex OAuth**(預設走 gateway)實測:見 [docs/setup_codex_gateway.md](docs/setup_codex_gateway.md)。
 
 ## 支援範圍(Browser Agent,SPEC 6.4)
 

@@ -8,25 +8,34 @@
 
 這在本次開發中不是口號:我的 SEC pipeline 通過 3 家 smoke test 後自報 75.9% pass;接著我用 56 個 agent 的**對抗式稽核**跑 11 家真實 10-K,證明其中 15 個 pass 是 silent failure(reference stub 被當成內容、末項吞掉整本財報)。**稽核抓到了我自己的系統在說謊,然後我才修。** 這就是「demo 不可信,所以要做 eval」的實際演出。
 
-## 1. 如果直接把這兩題丟給 autonomous coding agent(OpenClawn / Hermes 類)會怎樣?
+## 1. 如果直接把這兩題丟給 autonomous coding agent(OpenClaw / Hermes 類)會怎樣?
 
-會得到一個「跑得起來、自報完成度很高、但沒有人驗證過」的東西。具體:
+**我不用猜——我把「用 LLM 驅動瀏覽器」真的做出來了(Agent Mode,`browser_agent/planner.py` + Codex gateway,預設接 Codex OAuth),所以能直接對照。**
 
-- **SEC**:agent 會寫 regex 切 Item、跑幾家大公司(AAPL/MSFT)看起來很漂亮,然後宣稱完成。它不會自己去跑 JPM/XOM 這種 wrapper 10-K,更不會發現 Item 16 吞了 31 萬字還標 confidence 1.0——因為它沒有動機去**反駁自己**。這正是你們看到「很多作業 SEC 跑出來不完整但 AI 總結完成度很高」的結構性原因:autonomous agent 的 reward 是「產出看起來完成」,不是「產出被驗證為正確」。
-- **Browser**:agent 會 happy-path 點一個網站成功,然後宣稱通用。不會設計 UI 變動的 mock site 來證明 selector 自修復,也不會區分「工具回傳成功」與「任務真的完成」。
+OpenClaw / Hermes 這類「LLM 自主驅動瀏覽器」的核心迴圈就是:看畫面 → LLM 決定下一步 → 執行。我的 Agent Mode 用同一個迴圈,差別在**周邊約束**:
 
-**差異點不在會不會寫,而在會不會不相信自己。** 我的作法把「不相信自己」制度化:三態判定(缺證據永遠是 unknown,結構上不可能升級成 pass)、受控 action space、對抗式稽核 harness。這是人在 AI 之後的槓桿點。
+| 面向 | 純 OpenClaw/Hermes | 我的 Agent Mode(同樣 LLM 驅動) |
+|---|---|---|
+| LLM 輸出 | 任意工具 / 甚至改檔案 | 只能回**受控 action JSON**,target 只能選現有元素 aid,不能寫 code、不能造 selector |
+| 危險操作 | 靠 prompt 自律 | `capability.screen_action` **程式攔截** login/購買/送出 |
+| 成敗判定 | LLM 自評「完成了」 | **verifier 依 task contract 判**,LLM 說 done 不算數;缺證據 → unknown |
+| 失敗 | 靜默重試 | diagnosis-driven repair + selector memory |
+| 可稽核 | 難 | 每步 EvidenceRecord + 截圖 + trace |
 
-## 2. SEC:wrapper 10-K 的 cross-reference resolution(最該做的下一步)
+**同樣「LLM 會亂點」的擔憂,我用「限制輸出空間 + guard + verifier + evidence」把它馴服。** 不是不用 LLM,而是**用 LLM 但不相信 LLM 自評**——這正是主管說的「AI 之後最稀缺的是驗證」。
 
-**現狀**:JPM/XOM 這類「wrapper 10-K」把 Item 7/8 寫成一句「見 Financial Section / annual report」,真正 MD&A 與財報以獨立區塊接在最後一個 item heading 之後。我目前**誠實地**標成 `incorporated_by_reference` 並警告內容在 appended section——不再是 silent failure,但也還沒把內容還原。
+- **SEC 若丟給 autonomous agent**:它會 regex 切 Item、跑 AAPL/MSFT 很漂亮就宣稱完成;不會自己去跑 JPM/XOM/Intel 這種 wrapper 10-K,更不會發現 Item 16 吞了 31 萬字還標 confidence 1.0——因為沒有動機**反駁自己**。這就是「SEC 跑出來不完整但 AI 自報完成度很高」的結構性原因。我的對策:對抗式稽核(56 agent 證偽)+ XBRL/topic 雙獨立 oracle + page-anchor 真正把 Intel 正文抽回來。
+- **一句話**:差異不在會不會寫,而在**會不會不相信自己**。我把「不相信自己」制度化。
 
-**方向**:第二遍 resolver。偵測到 reference stub 時,解析它指向的目標(page range / named section / Note N),到 appended section 或對應 anchor 把真正 span 接回該 item。這需要:
-- page-anchor 對應(filing 內部 `<a href="#...">` 與頁碼 → offset)
-- appended section 自身的 heading 偵測(它有自己的 mini-TOC)
-- 把「Item 7 的內容其實在這段」建成一條 evidence,而非假裝原地就有
+## 2. SEC:wrapper 10-K 的 page-anchor resolution(**已實作**)
 
-**為什麼重要**:Intel、Citi 都是這種結構。能正確處理 wrapper 10-K,是「跑得完整」與「跑一半」的分水嶺。
+**現狀(已完成)**:Intel/Citi 這類 cross-reference-index 10-K,主文件是索引,正文在另外裝訂的 annual report。`sec_core/page_map.py` 用**正文印出的頁碼 footer**(normalize 後的 bare-number 行)以 LIS 重建 page→offset 對應,再把索引的「Item 1A → Pages 37-51」解析成**真實 source-exact span**。
+
+**實測(Intel FY2025)**:7 個 item 從 page anchor 抽回真實正文——Item 1A = 96,213 字 Risk Factors、**Item 8 = 202,858 字財報**。而且解出來的 Item 8 **被 XBRL 獨立認證**(營收/淨利/總資產全中)——page-anchor 與 XBRL 兩個獨立方法互相佐證。標 `partial` + provenance `resolved_from_page_anchor` + needs_review(頁界對齊是啟發式,如實揭露)。
+
+**為何用頁碼而非標題**:我原本拒絕 title-based 抽取(Intel 標題無 emphasis、重複當頁首,會出錯)。頁碼是**印出來的資料**,不是猜的——這是「站得住腳的 robust 版」與「脆弱猜測」的差別。
+
+**剩餘方向**:Item 7(MD&A)的索引項是 inline 子標題非乾淨 page ref,尚未解析;頁界對齊可再精修(目前 needs_review)。
 
 ## 3. 驗證的正確基材:不是 LLM-as-judge,是結構化 ground truth
 
@@ -66,10 +75,33 @@
 
 **下一個前沿**:把 XBRL cross-check(§3)接進對抗式稽核,讓 verifier 不只靠 LLM 判斷,而有一條結構化事實線——**AI 驗證 + 結構化 ground truth 的混合**,比純 LLM-judge 或純規則都強。
 
-## 6. 給評審的一頁總結
+## 6. 實務應用場景與適配(主管問:更多應用 / 會遇到什麼場景 / 如何優化)
 
-- 我沒有向你們要 API key(資安考量);SEC 走公開 EDGAR + 明確 user-agent + rate limit + cache,LLM 目前 $0。
+### SEC Extractor 的真實應用
+
+| 場景 | 會遇到什麼 | 現有作品如何適配 / 優化 |
+|---|---|---|
+| **投研 / 量化前處理** | 要把數千份 10-K 的 Item 1A/7/8 結構化餵下游模型;wrapper filing(Intel/Citi/GE)佔比不低 | 已有:source-exact span + XBRL 認證 + page-anchor 還原。優化:批次化(process pool)、把 XBRL 反向定位自動化 |
+| **法遵 / 揭露監控** | 逐年比對某公司 Risk Factors / Cybersecurity(1C)變化 | item-level boundary + sha256 讓 diff 精準到段落;topic oracle 防止比錯段 |
+| **審計 / 盡職調查** | 需要「這段話出自 filing 哪個 offset」的可稽核性 | provenance + char_range + evidence chain 正是為此;LLM 生成的摘要做不到 |
+| **老 filing / 掃描檔** | 1990s 10-K 是掃描 PDF | 現狀 code-enforced `unsupported`;優化:OCR path(Tesseract,不是餵圖給 LLM)→ 同一套 boundary 邏輯 |
+
+### Browser Agent 的真實應用
+
+| 場景 | 會遇到什麼 | 現有作品如何適配 / 優化 |
+|---|---|---|
+| **監控型爬蟲**(價格/公告/法遵) | 痛點不是「點得到」,是**改版後靜默壞掉**沒人知道 | selector memory + DOM fingerprint + repair evidence:UI 一變就有 repair 紀錄,不是靜默回傳舊資料 |
+| **RPA / 內部系統自動化** | login/金流/送出是紅線 | capability guard **程式攔截**,task 回 refused——上 production 的前提 |
+| **未知網站 / 一次性任務** | 沒有預寫 script | Agent Mode(LLM 驅動)接手,但輸出受限 + verifier 把關 |
+| **別人的 agent 的評測平台** | 市面 browser agent 多,能證明何時失敗的少 | 把 verifier + evidence + 對抗式 mock drift eval 抽出來當 SaaS——這可能是**比兩個 demo 更大的產品** |
+
+**共同優化主線**:真實網站廣度(接 WebArena/WebVoyager 對標)、把 XBRL/topic 這種「獨立結構化 oracle」的思路推廣到更多 item / 更多網站驗證面。
+
+## 7. 給評審的一頁總結
+
+- 我沒有向你們要 API key(資安考量);SEC 走公開 EDGAR,Browser 的 Codex 由**你自己的 OAuth** 經 gateway 驅動,key 從不進 repo。
 - 我沒有相信自己的 pass rate;我用對抗式稽核證偽它,抓到 15 個 silent failure 才修。
-- 我知道 wrapper 10-K(Intel/Citi 類)是分水嶺,已誠實標示並給出還原方向。
-- 我知道驗證財報的正確基材是 XBRL / OCR / 結構化資料,不是 LLM-as-judge。
-- 我知道這套東西的真正產品可能不是兩個 demo,是底下那套「能證偽 AI 產出」的 harness。
+- **Intel/Citi 我不只誠實標示,還用 page-anchor 把正文真的抽回來了**(Item 1A 96K 字、Item 8 202K 字且 XBRL 認證)。
+- status 可信不只靠 Item 8 XBRL——每個 item 都有獨立的 topic-consistency oracle。
+- 「丟給 OpenClaw/Hermes 會怎樣」我直接做了(Agent Mode),證明差異在**用 LLM 但不信 LLM 自評**。
+- 這套東西的真正產品可能不是兩個 demo,是底下那套「能證偽 AI 產出」的 harness。

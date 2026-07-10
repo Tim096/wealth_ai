@@ -1,11 +1,13 @@
 @echo off
-chcp 65001 >nul
 cd /d "%~dp0"
-echo Starting SEC 10-K Viewer...
+echo Starting tools/sec_viewer.py ...
 ".venv\Scripts\python.exe" tools\sec_viewer.py
 if errorlevel 1 (
   echo.
   echo Setup first if this failed:
-  echo   .venv\Scripts\python -m pip install -e ".[dev,sec]"
+  echo   python -m venv .venv
+  echo   .venv\Scripts\python -m pip install -e ".[dev,sec,browser]"
+  echo   .venv\Scripts\python -m playwright install chromium
+  echo   npm i -g @openai/codex   then   codex login
   pause
 )

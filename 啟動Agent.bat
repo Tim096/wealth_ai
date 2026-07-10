@@ -1,15 +1,13 @@
 @echo off
-chcp 65001 >nul
 cd /d "%~dp0"
-echo Starting AI Browser Agent chat window...
-echo (a browser window will open; type tasks in the chat window)
+echo Starting tools/agent_chat.py ...
 ".venv\Scripts\python.exe" tools\agent_chat.py
 if errorlevel 1 (
   echo.
-  echo Something went wrong. Make sure setup is done:
+  echo Setup first if this failed:
   echo   python -m venv .venv
-  echo   .venv\Scripts\python -m pip install -e ".[dev,browser]"
+  echo   .venv\Scripts\python -m pip install -e ".[dev,sec,browser]"
   echo   .venv\Scripts\python -m playwright install chromium
-  echo   npm i -g @openai/codex  ^&^&  codex login
+  echo   npm i -g @openai/codex   then   codex login
   pause
 )

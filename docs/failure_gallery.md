@@ -17,7 +17,7 @@
 | Failure Type | silent_failure(錯了卻標成功)|
 | Evidence | smoke run 輸出 + `r.text_of('11')` == `'Item 11. Executive Compensation.\nRefer to Item 10.\n'` |
 | Root Cause | `_INCORPORATED_RE` 只匹配 "incorporated by reference" 字樣;JPM 用 "Refer to Item 10." 措辭,不含該片語,於是 stub 通過 verifier(heading 對、span 非空、順序對)拿到高 confidence |
-| Repair Attempt | 新增 `_CROSS_REF_RE`(`refer to / see item N`):body < 600 字元且命中 cross-reference → `incorporated_by_reference` + warning |
+| Repair Attempt | 初版(commit 892ae0b):新增 `_CROSS_REF_RE`(`refer to / see item N`),body < 600 且命中 → `incorporated_by_reference`。**此機制後於 FG-SEC-002 的 refine 重構(commit 0c46e9d)被 `sec_core/refine.py::classify_reference_stub`(廣義 reference cue,body < 900)取代並移除**——故現行 code 已無 `_CROSS_REF_RE` 符號,見 refine.py |
 | Why It Still Failed | (已修復)殘餘風險:非 Part III 的極短 cross-ref 措辭變體(如 "included in Item 8")尚未覆蓋,由 boundary_length_sanity confidence 分量部分攔截 |
 | Next Fix | eval sweep 擴大公司樣本,收集更多 cross-ref 措辭變體 |
 | Related Prompt | prompts/failure_triage/2026-07-10-jpm-cross-ref-stub.md |

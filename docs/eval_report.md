@@ -90,18 +90,22 @@ Item 8 對照 SEC companyfacts 的營收/淨利/總資產(非 LLM,免費、可�
 
 Eval set(`data/browser_eval/tasks.json`,4 tasks,分層,offline mock sites)+ runner(`tools/browser_eval.py`)。實測 metrics(`runs/browser_eval/results.json`):
 
+**穩定不變量(硬數字):**
+
 | Metric | 值 | 意義 |
 |---|---|---|
 | task success rate | 1.0 | 支援任務完成率 |
 | **verifier false-positive rate** | **0.0** | 空結果 task 正確判 fail,**不偽裝成功** |
-| repair success rate | 0.5 | 見下註 |
-| trace completeness | 1.0 | 每個 run 都有完整 trace + screenshots |
+| trace completeness | 1.0 | 每個 run 都有完整 trace + screenshots + EvidenceRecord |
 | verdict accuracy | 1.0 | 判定與 ground truth 一致 |
+
+會漂移的量測(latency、repair success rate)以 `runs/browser_eval/results.json` 為準,不硬寫進文件(selector memory 在 tasks 間累積會改變 repair 次數)。
 
 - **Killer demo(SPEC 15)**:v1 script mode pass(0 repair)→ v2 UI 漂移(id 移除、button→icon、cookie modal、decoy button、lazy render)→ 偵測 selector_not_found + modal_blocking → a11y-tree 修復(避開 decoy)→ verifier pass → memory 更新。trace 在 `runs/browser_demo/trace.json`。
 - **自我維護證據**:v2-gizmo task **0 repair**——selector memory 從前一個 v2 task 學到新 selector,漂移成本攤平。
 - **誠實邊界(code-enforced)**:capability guard 拒絕 login/purchase/checkout/submit(`packages/browser_agent/capability.py`),task 回 `refused`;非 docs-only。
-- repair success rate 0.5 的說明:2 個含 repair 的 task 中,v2-widget repair 後 pass;v1-nonexistent 的 repair 找到了元素(repair 本身成功),但任務因空結果**正確判 fail**——這裡 metric 定義偏保守(以 task 最終 pass 計),不是 repair 失敗。
+- repair success rate 定義說明:以「含 repair 的 task 最終 pass」計,偏保守——v1-nonexistent 的 repair 其實成功找到元素,但任務因空結果**正確判 fail**,不計入分子。故此 metric 低估了 repair 機制本身的成功率。
+- **Evidence 持久化**:browser run 現在也走共用 `EvidenceStore`,每步 + verdict 產生 `EvidenceRecord`,committed 於 `data/browser_eval/evidence/`——與 SEC 同一 evidence 契約(兩題共用,不是各寫各的)。
 
 ### Browser held-out / 真實網站(誠實邊界)
 

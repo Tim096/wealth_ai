@@ -4,8 +4,8 @@ The "responsibility boundary" is enforced in code, not just documented: before
 a task runs, classify it; before any action runs, screen it. Irreversible or
 credentialed operations (login, purchase, checkout, payment, submitting a
 formal form) are refused with an explicit reason — the agent returns
-`unsupported`, it does not attempt them. This is what makes "not supported"
-a real limit rather than an unenforced policy.
+TaskRun.status == "refused", it does not attempt them. This is what makes
+"not supported" a real limit rather than an unenforced policy.
 """
 
 from __future__ import annotations

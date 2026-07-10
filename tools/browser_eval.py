@@ -17,10 +17,12 @@ from playwright.sync_api import sync_playwright
 from browser_core import BrowserTaskContract, ForbiddenCondition, SuccessCondition
 from browser_agent.agent import BrowserAgent, Step
 from browser_agent.memory_store import MemoryStore
+from observability_core import EvidenceStore
 
 ROOT = Path(__file__).resolve().parents[1]
 TASKS = ROOT / "data" / "browser_eval" / "tasks.json"
 OUT = ROOT / "runs" / "browser_eval"
+EVIDENCE = ROOT / "data" / "browser_eval" / "evidence"
 
 
 def uri(version: str) -> str:
@@ -46,6 +48,7 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     spec = json.loads(TASKS.read_text(encoding="utf-8"))
     mem = MemoryStore(OUT / "selector_memory.json")
+    evidence = EvidenceStore(EVIDENCE)
     rows = []
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -53,7 +56,7 @@ def main() -> None:
         for task in spec["tasks"]:
             page.goto(uri(task["site"]))
             agent = BrowserAgent(page, mem, site="mockshop", task_type="search",
-                                 artifact_dir=OUT / task["task_id"])
+                                 artifact_dir=OUT / task["task_id"], evidence_store=evidence)
             steps, contract = build(task)
             run = agent.run(task["task_id"], steps, contract)
             # ground-truth comparison: did the agent's verdict match what the eval expects?
@@ -65,6 +68,7 @@ def main() -> None:
             rows.append({
                 "task_id": task["task_id"], "layer": task["layer"], "site": task["site"],
                 "status": run.status, "expected": expected, "correct": correct,
+                "confidence": round(run.confidence, 3),
                 "repairs": run.repairs, "false_positive": false_pos,
                 "trace_complete": has_trace, "latency_ms": round(run.total_latency_ms, 1),
                 "verifier_reason": run.verifier.reason,

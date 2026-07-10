@@ -49,6 +49,20 @@ def extract_from_html(
 ) -> ExtractionResult:
     t0 = time.perf_counter()
 
+    # scanned-PDF / non-HTML guard (SPEC 7.10): code-enforce the 'unsupported'
+    # boundary instead of only documenting it.
+    head = raw_html.lstrip()[:2000]
+    if head.startswith("%PDF") or "\x00" in raw_html[:4000] or (
+            "<" not in head and "item" not in head.lower()):
+        latency_ms = (time.perf_counter() - t0) * 1000
+        doc = normalize_html("")
+        return ExtractionResult(
+            filing_id=filing_id, segments=[], confidence={}, doc=doc, candidates=[],
+            filing_class="unsupported_scanned_or_binary", latency_ms=latency_ms,
+            warnings=["input is a scanned PDF or non-HTML/binary document — unsupported; "
+                      "the correct tool here is an OCR path (not an LLM), see docs/insights §3"],
+        )
+
     doc = normalize_html(raw_html)
     candidates = detect_candidates(doc)
     assess_toc(doc, candidates)

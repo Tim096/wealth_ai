@@ -25,7 +25,7 @@ from browser_agent.memory_store import MemoryStore
 from browser_agent.observer import PageObserver
 from browser_agent.repair import diagnose_failure, repair_target
 from browser_agent.verifier import verify_contract
-from observability_core import VerifierResult, sha256_text
+from observability_core import EvidenceRecord, EvidenceStore, VerifierResult, sha256_text
 
 
 @dataclass
@@ -85,16 +85,49 @@ class TaskRun:
 
 class BrowserAgent:
     def __init__(self, page, memory: MemoryStore, site: str, task_type: str,
-                 artifact_dir: Path | str | None = None) -> None:
+                 artifact_dir: Path | str | None = None,
+                 evidence_store: EvidenceStore | None = None) -> None:
         self.page = page
         self.executor = ActionExecutor(page)
         self.observer = PageObserver(page)
         self.memory = memory
         self.site = site
         self.task_type = task_type
+        self.evidence_store = evidence_store
         self.artifact_dir = Path(artifact_dir) if artifact_dir else None
         if self.artifact_dir:
             self.artifact_dir.mkdir(parents=True, exist_ok=True)
+
+    def _emit_evidence(self, run_id: str, task_id: str, run: "TaskRun") -> None:
+        """Route the browser run through the SAME EvidenceRecord contract the SEC
+        pipeline uses — one record per step + one verdict record."""
+        if self.evidence_store is None:
+            return
+        for i, s in enumerate(run.steps):
+            self.evidence_store.append(EvidenceRecord(
+                run_id=run_id, app="browser_agent", step_id=f"{task_id}-step{i}-{s.step}",
+                timestamp=s and self._now() or self._now(),
+                input_hash=sha256_text(s.selector_used or s.step),
+                output_hash=sha256_text(s.detail or s.repair_chosen or ""),
+                tool_used=f"browser_agent.{s.mode}.{s.action}",
+                latency_ms=s.latency_ms,
+                status="pass" if s.ok else "fail",
+                evidence_type="screenshot" if s.screenshot else "trace",
+                artifact_path=s.screenshot or "",
+                verifier_result=VerifierResult(
+                    status="pass" if s.ok else "fail",
+                    reason=s.diagnosis or s.detail or f"{s.step}.{s.action}",
+                    required_evidence=[s.step], observed_evidence=[s.selector_used] if s.selector_used else [],
+                    missing_evidence=[] if s.ok else [s.step]),
+            ))
+        self.evidence_store.append(EvidenceRecord(
+            run_id=run_id, app="browser_agent", step_id=f"{task_id}-verdict",
+            timestamp=self._now(), input_hash=sha256_text(task_id),
+            output_hash=sha256_text(run.status), tool_used="browser_agent.verify_contract",
+            latency_ms=run.total_latency_ms, cost_usd=0.0,
+            status=run.status if run.status in ("pass", "fail", "unknown") else "unknown",
+            evidence_type="metric", artifact_path="", verifier_result=run.verifier,
+        ))
 
     def _now(self) -> str:
         return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -246,8 +279,10 @@ class BrowserAgent:
         self.memory.save()
         base = {"pass": 1.0, "unknown": 0.4, "fail": 0.0}[verdict.status]
         confidence = max(0.0, base - 0.1 * repairs) if verdict.status == "pass" else base
-        return TaskRun(
+        run = TaskRun(
             task_id=task_id, site=self.site, status=verdict.status, verifier=verdict,
             steps=trace, repairs=repairs, confidence=confidence,
             total_latency_ms=(time.perf_counter() - t0) * 1000,
         )
+        self._emit_evidence(f"browser-{self.site}-{task_id}", task_id, run)
+        return run

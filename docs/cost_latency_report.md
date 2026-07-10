@@ -49,21 +49,24 @@ Item 8 對 companyfacts 交叉驗證:每家多 1 次 `companyfacts` fetch(cache 
 
 ## Browser Agent
 
-由 `runs/browser_eval/results.json`(4 tasks,mock sites,offline):
+來源:`runs/browser_eval/results.json`(5 tasks,mock sites,offline)。重生:`tools\browser_eval.py`。
+
+**穩定不變量(不隨 run 漂移,以下為硬數字):**
 
 | 指標 | 值 |
 |---|---|
-| 平均延遲 / task | 660 ms |
 | task success rate | 1.0 |
 | **verifier false-positive rate** | **0.0**(空結果 task 正確判 fail,不偽裝成功)|
 | trace completeness | 1.0 |
-| repair success rate | 0.5(2 個含 repair 的 task,1 個成功 pass;另一個是刻意的空結果 task,repair 找到元素但任務正確判 fail)|
+| verdict accuracy | 1.0 |
+
+**會隨 selector memory 狀態漂移的量測(不在此硬寫,以 artifact 為準):** 平均延遲(~600 ms/task)、repair success rate——因為 memory 在 tasks 間累積(第二個同類漂移 task 可能 0 repair),這些值 run-to-run 會變。**正確做法是讀 `runs/browser_eval/results.json`,不是把快照凍進文件**——這也是我們對「可重跑」的一致態度:會變的量測不硬寫。
 
 ### Browser 成本結構
 
-- **LLM 成本 $0**:Script Mode(記憶命中)與 a11y-tree repair 都是確定性,不呼叫 LLM。這是 SPEC 6.3 的核心權衡——已知任務不丟給 LLM,LLM 只在真正未知時升級(目前 mock 場景不需要)。
-- **Runtime 成本**:Playwright headless Chromium,~660 ms/task 含 launch 攤提;真實網站會受網路延遲主導。
-- **Repair 延遲**:UI 漂移時多 1–2 次 observe + a11y 搜尋,單步 <100 ms;selector memory 命中後第二次同類 task **0 repair**(見 eval:v2-gizmo 0 repairs),攤平漂移成本。
+- **LLM 成本 $0——與 SEC 同樣的誠實說明:** Script Mode(memory 命中)與 a11y-tree repair 都是確定性,不呼叫 LLM;且 escalation 到 LLM 的路徑**尚未 wired**(mock 場景未觸發)。所以 $0 同樣是「不需要」+「未接上」兩者兼有,不宣稱為已量測的成本成果。
+- **Runtime 成本**:Playwright headless Chromium,含 launch 攤提;真實網站會受網路延遲主導。
+- **Repair 延遲**:UI 漂移時多 1–2 次 observe + a11y 搜尋,單步 <100 ms;selector memory 命中後第二次同類 task **0 repair**(見 eval:v2-gizmo),攤平漂移成本——這是 selector memory 的核心價值。
 
 ### 成本控制決策
 

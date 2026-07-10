@@ -32,6 +32,7 @@ SPEC 4.1:畫面看起來完成 ≠ 成功。這是 silent failure rate metric �
 
 ## Resulting Change
 
-- packages/sec_core/boundary.py:_CROSS_REF_RE
-- docs/failure_gallery.md:FG-SEC-001
-- 對應 commit:fix(sec): classify cross-reference stub bodies as incorporated_by_reference
+- 初版:packages/sec_core/boundary.py 的 `_CROSS_REF_RE`(commit 892ae0b)。
+- **後續(commit 0c46e9d)**:此 regex 被 `sec_core/refine.py::classify_reference_stub`(廣義 reference cue,body < 900)取代並自 boundary.py 移除——現行 code 已無 `_CROSS_REF_RE`。此為誠實的歷史紀錄。
+- docs/failure_gallery.md:FG-SEC-001 → 一般化為 FG-SEC-002。
+- 對應 commit:fix(sec): classify cross-reference stub bodies as incorporated_by_reference;fix(sec): kill three silent-failure classes found by 11-company audit

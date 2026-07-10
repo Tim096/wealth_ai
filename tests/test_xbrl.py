@@ -35,6 +35,41 @@ def test_unavailable_when_no_facts():
     assert chk.available is False
 
 
+def test_certify_item8_gates_status_on_contradiction():
+    """The load-bearing gate: a pass Item 8 that XBRL contradicts must flip to
+    needs_review. Tests the gating logic with a fake fetcher (no network)."""
+    from sec_core.items import ItemSegment
+    from sec_core.xbrl import certify_item8
+
+    seg = ItemSegment(filing_id="f", item_code="8", canonical_title="Financial Statements",
+                      extracted_heading="Item 8.", start_offset=0, end_offset=50,
+                      text_sha256="x", status="pass", confidence=0.9)
+
+    class FakeResult:
+        segments = [seg]
+        def text_of(self, code):  # a wrapper stub with none of the figures
+            return "Reference is made to the Financial Section of this report."
+
+    facts_json = {"facts": {"us-gaap": {
+        "Revenues": {"units": {"USD": [{"accn": "0000000000-00-000000", "form": "10-K", "val": 500_000_000_000}]}},
+        "NetIncomeLoss": {"units": {"USD": [{"accn": "0000000000-00-000000", "form": "10-K", "val": 90_000_000_000}]}},
+        "Assets": {"units": {"USD": [{"accn": "0000000000-00-000000", "form": "10-K", "val": 400_000_000_000}]}},
+    }}}
+
+    class FakeResp:
+        content = __import__("json").dumps(facts_json).encode()
+
+    class FakeFetcher:
+        def get(self, url):
+            return FakeResp()
+
+    chk = certify_item8(FakeResult(), FakeFetcher(), cik=1, accession="0000000000-00-000000")
+    assert chk.verdict == "contradicted"
+    assert seg.needs_review is True
+    assert seg.xbrl_check.startswith("contradicted")
+    assert any("XBRL oracle contradicts" in w for w in seg.warnings)
+
+
 def test_key_facts_matched_by_accession():
     facts = {
         "facts": {"us-gaap": {

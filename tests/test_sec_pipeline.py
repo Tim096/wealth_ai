@@ -133,3 +133,10 @@ def test_non_10k_document_yields_no_false_items():
     result = extract_from_html("<html><body><p>Quarterly newsletter.</p></body></html>", "junk")
     assert all(s.status in ("missing", "reserved") for s in result.segments)
     assert result.warnings
+
+
+def test_scanned_pdf_is_code_enforced_unsupported():
+    result = extract_from_html("%PDF-1.7\n%\xe2\xe3\xcf\xd3 binary garbage", "scanned")
+    assert result.filing_class == "unsupported_scanned_or_binary"
+    assert result.segments == []
+    assert any("OCR" in w for w in result.warnings)

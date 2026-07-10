@@ -21,9 +21,11 @@ from playwright.sync_api import sync_playwright
 from browser_core import BrowserTaskContract, ForbiddenCondition, SuccessCondition
 from browser_agent.agent import BrowserAgent, Step
 from browser_agent.memory_store import MemoryStore
+from observability_core import EvidenceStore
 
 ROOT = Path(__file__).resolve().parents[1]
 ART = ROOT / "runs" / "browser_demo"
+EVIDENCE = ROOT / "data" / "browser_eval" / "evidence"
 
 
 def site_uri(version: str) -> str:
@@ -54,6 +56,7 @@ def search_task(site: str):
 def main() -> None:
     ART.mkdir(parents=True, exist_ok=True)
     mem = MemoryStore(ART / "selector_memory.json")
+    evidence = EvidenceStore(EVIDENCE)
     runs = []
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -62,7 +65,7 @@ def main() -> None:
         # --- v1: learn the selectors (Script Mode) ---
         page.goto(site_uri("v1"))
         agent = BrowserAgent(page, mem, site="mockshop", task_type="search",
-                             artifact_dir=ART / "v1")
+                             artifact_dir=ART / "v1", evidence_store=evidence)
         steps, contract = search_task("v1")
         r1 = agent.run("search-v1", steps, contract)
         runs.append(("v1 (baseline, script mode)", r1))
@@ -70,7 +73,7 @@ def main() -> None:
         # --- v2: UI drifted; remembered selectors fail -> repair ---
         page.goto(site_uri("v2"))
         agent2 = BrowserAgent(page, mem, site="mockshop", task_type="search",
-                              artifact_dir=ART / "v2")
+                              artifact_dir=ART / "v2", evidence_store=evidence)
         steps2, contract2 = search_task("v2")
         r2 = agent2.run("search-v2", steps2, contract2)
         runs.append(("v2 (UI drift, repair mode)", r2))

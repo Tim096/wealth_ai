@@ -66,6 +66,66 @@ class ActionExecutor:
         outcome.latency_ms = (time.perf_counter() - t0) * 1000
         return outcome
 
+    def _download(self, loc, n: int, url_before: str) -> ActionOutcome:
+        """Save the target file. First try a real browser download; if none
+        fires (an SEC .htm renders INLINE rather than attaching), fall back to
+        fetching the linked URL's bytes over the session, then to saving the
+        rendered document — so 'download it locally' never dead-ends."""
+        import os as _os
+        from urllib.parse import urljoin as _urljoin
+
+        href = None
+        try:
+            href = loc.get_attribute("href")
+        except Exception:  # noqa: BLE001
+            pass
+
+        def _dest(name: str) -> str:
+            name = name.split("?")[0].rstrip("/").split("/")[-1] or "download.bin"
+            return _os.path.join(str(self.downloads_dir), name) if self.downloads_dir else name
+
+        # 1) a genuine download event
+        try:
+            with self.page.expect_download(timeout=3000) as di:
+                loc.click()
+            dl = di.value
+            dest = _dest(dl.suggested_filename or "download.bin")
+            dl.save_as(dest)
+            self.last_download_path = dest
+            return ActionOutcome(ok=True, action_type="download", matched_count=n, detail=dest,
+                                 extracted_text=dest, url_before=url_before, url_after=self.page.url)
+        except Exception:  # noqa: BLE001 — no download fired; use fallbacks
+            pass
+
+        target = _urljoin(self.page.url, href) if href else self.page.url
+        # 2) fetch the bytes directly (works for http/https links, keeps session)
+        if target.startswith(("http://", "https://")):
+            try:
+                resp = self.page.request.get(target)
+                body = resp.body()
+                dest = _dest(target if "." in target.split("/")[-1] else target + "/download.htm")
+                with open(dest, "wb") as fh:
+                    fh.write(body)
+                self.last_download_path = dest
+                return ActionOutcome(ok=True, action_type="download", matched_count=n,
+                                     detail=f"{dest} (fetched inline document)", extracted_text=dest,
+                                     url_before=url_before, url_after=self.page.url)
+            except Exception:  # noqa: BLE001
+                pass
+        # 3) last resort: save whatever the page now renders (the click navigated to it)
+        try:
+            self.page.wait_for_load_state("domcontentloaded", timeout=self.timeout)
+        except Exception:  # noqa: BLE001
+            pass
+        name = self.page.url if self.page.url.startswith("http") else "download.html"
+        dest = _dest(name if name.endswith((".htm", ".html", ".txt", ".xml")) else "download.html")
+        with open(dest, "w", encoding="utf-8") as fh:
+            fh.write(self.page.content())
+        self.last_download_path = dest
+        return ActionOutcome(ok=True, action_type="download", matched_count=n,
+                             detail=f"{dest} (saved rendered page)", extracted_text=dest,
+                             url_before=url_before, url_after=self.page.url)
+
     def _count(self, target: ElementTarget) -> int:
         try:
             return _locator(self.page, target).count()
@@ -100,18 +160,7 @@ class ActionExecutor:
                                      extracted_text=txt, url_before=url_before,
                                      url_after=self.page.url)
             elif at == "download":
-                import os as _os
-                with self.page.expect_download(timeout=self.timeout * 2) as di:
-                    loc.click()
-                dl = di.value
-                name = dl.suggested_filename or "download.bin"
-                dest = _os.path.join(str(self.downloads_dir), name) if self.downloads_dir else None
-                if dest:
-                    dl.save_as(dest)
-                    self.last_download_path = dest
-                return ActionOutcome(ok=True, action_type=at, matched_count=n,
-                                     detail=dest or name, extracted_text=dest or name,
-                                     url_before=url_before, url_after=self.page.url)
+                return self._download(loc, n, url_before)
             return ActionOutcome(ok=True, action_type=at, matched_count=n,
                                  url_before=url_before, url_after=self.page.url)
 

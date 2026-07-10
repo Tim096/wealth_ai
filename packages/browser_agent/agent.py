@@ -413,6 +413,7 @@ class BrowserAgent:
         trace: list[StepTrace] = []
         history: list[str] = []
         llm_cost = 0.0
+        give_ups = 0
         self._dismiss_overlay(trace)
         verdict = VerifierResult(status="unknown", reason="no steps taken")
         _emit(f"🧠 想任務:{contract.natural_language_task}")
@@ -441,6 +442,18 @@ class BrowserAgent:
                 trace.append(StepTrace(step="planner", action="noop", ok=False, mode="agent",
                                        detail=decision.reason))
                 _emit(f"↻ 重試:{decision.reason}")
+                continue
+            # Don't accept the FIRST give_up: the reported failure was quitting
+            # with the task nearly done (only download + navigate-to-section
+            # left). Reject one give_up with a concrete nudge so the model must
+            # try a genuinely different action before we honour a second one.
+            if decision.kind == "give_up" and give_ups < 1:
+                give_ups += 1
+                history.append(f"give_up_rejected({decision.reason})")
+                trace.append(StepTrace(step="planner", action="give_up_rejected", ok=False,
+                                       mode="agent", detail=decision.reason))
+                _emit("↻ 先別放棄——換一個具體做法再試(直接 goto 目標檔案的 href / 用 download / 關掉彈窗)")
+                self.page.wait_for_timeout(200)
                 continue
             if decision.kind in ("done", "give_up"):
                 history.append(f"{decision.kind}({decision.reason})")

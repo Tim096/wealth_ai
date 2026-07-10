@@ -2,6 +2,8 @@
 browser or a key; one integration test drives the real loop with MockPlanner.
 """
 
+from pathlib import Path
+
 import pytest
 
 from browser_core import BrowserTaskContract, SuccessCondition
@@ -89,6 +91,32 @@ def test_agent_downloads_a_real_file(tmp_path):
     saved = tmp_path / "report.csv"
     assert saved.exists()
     assert "name,val" in saved.read_text()
+
+
+@pytest.mark.integration
+def test_download_falls_back_to_saving_inline_document(tmp_path):
+    # An SEC .htm renders inline (no download event). The fallback must still
+    # save the linked file's bytes so "download it" doesn't dead-end.
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from browser_agent.executor import ActionExecutor
+    from browser_core import ElementTarget
+    from browser_core.actions import DownloadAction
+
+    # a normal link (NO download attr) → clicking it navigates, never downloads
+    html = '<a id="d" href="data:text/html,<h1>Risk Factors</h1>">open doc</a>'
+    with sync_playwright() as p:
+        b = p.chromium.launch(headless=True)
+        ctx = b.new_context()
+        page = ctx.new_page()
+        page.set_content(html)
+        ex = ActionExecutor(page, downloads_dir=tmp_path)
+        out = ex.execute(DownloadAction(target=ElementTarget(selector="#d", selector_type="css")))
+        b.close()
+    assert out.ok
+    assert ex.last_download_path and Path(ex.last_download_path).exists()
+    assert "Risk Factors" in Path(ex.last_download_path).read_text(encoding="utf-8", errors="replace")
 
 
 def test_build_action_rejects_codey_output():

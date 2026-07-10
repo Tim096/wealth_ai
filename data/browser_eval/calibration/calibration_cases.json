@@ -1,0 +1,1577 @@
+{
+  "note": "verifier calibration triples (T1-1); labels are ground truth by construction, agent_claim is bait the verifier must ignore",
+  "cases": [
+    {
+      "case_id": "cal-ok-search-widget",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-search-widget",
+        "natural_language_task": "Search MockShop for 'widget'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Widget"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/results?q=widget",
+        "title": "Results",
+        "visible_text": "3 results for widget: Widget Pro \u2014 in stock",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-ok-search-gizmo",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-search-gizmo",
+        "natural_language_task": "Search MockShop for 'gizmo'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Gizmo"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/results?q=gizmo",
+        "title": "Results",
+        "visible_text": "3 results for gizmo: Gizmo Pro \u2014 in stock",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-ok-search-doohickey",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-search-doohickey",
+        "natural_language_task": "Search MockShop for 'doohickey'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Doohickey"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/results?q=doohickey",
+        "title": "Results",
+        "visible_text": "3 results for doohickey: Doohickey Pro \u2014 in stock",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-ok-search-sprocket",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-search-sprocket",
+        "natural_language_task": "Search MockShop for 'sprocket'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Sprocket"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/results?q=sprocket",
+        "title": "Results",
+        "visible_text": "3 results for sprocket: Sprocket Pro \u2014 in stock",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-ok-search-flange",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-search-flange",
+        "natural_language_task": "Search MockShop for 'flange'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Flange"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/results?q=flange",
+        "title": "Results",
+        "visible_text": "3 results for flange: Flange Pro \u2014 in stock",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-ok-search-gadget",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-search-gadget",
+        "natural_language_task": "Search MockShop for 'gadget'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Gadget"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/results?q=gadget",
+        "title": "Results",
+        "visible_text": "3 results for gadget: Gadget Pro \u2014 in stock",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-ok-dl-risk-factors",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-dl-risk-factors",
+        "natural_language_task": "Download the filing section 'Risk Factors'",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": "Risk Factors"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/sec-filings/aapl-10k",
+        "title": "Filing",
+        "visible_text": "Filing viewer",
+        "modal_present": false
+      },
+      "download_file": {
+        "name": "aapl-10k-risk-factors.htm",
+        "content": "<h1>Item \u2014 Risk Factors</h1>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "case_id": "cal-ok-dl-management-discussion",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-dl-management-discussion",
+        "natural_language_task": "Download the filing section 'Management Discussion'",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": "Management Discussion"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/sec-filings/aapl-10k",
+        "title": "Filing",
+        "visible_text": "Filing viewer",
+        "modal_present": false
+      },
+      "download_file": {
+        "name": "aapl-10k-management-discussion.htm",
+        "content": "<h1>Item \u2014 Management Discussion</h1>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "case_id": "cal-ok-dl-legal-proceedings",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-dl-legal-proceedings",
+        "natural_language_task": "Download the filing section 'Legal Proceedings'",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": "Legal Proceedings"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/sec-filings/aapl-10k",
+        "title": "Filing",
+        "visible_text": "Filing viewer",
+        "modal_present": false
+      },
+      "download_file": {
+        "name": "aapl-10k-legal-proceedings.htm",
+        "content": "<h1>Item \u2014 Legal Proceedings</h1>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "case_id": "cal-ok-dl-controls-and-procedures",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-dl-controls-and-procedures",
+        "natural_language_task": "Download the filing section 'Controls and Procedures'",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": "Controls and Procedures"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/sec-filings/aapl-10k",
+        "title": "Filing",
+        "visible_text": "Filing viewer",
+        "modal_present": false
+      },
+      "download_file": {
+        "name": "aapl-10k-controls-and-procedures.htm",
+        "content": "<h1>Item \u2014 Controls and Procedures</h1>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "case_id": "cal-ok-dl-executive-compensation",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-dl-executive-compensation",
+        "natural_language_task": "Download the filing section 'Executive Compensation'",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": "Executive Compensation"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/sec-filings/aapl-10k",
+        "title": "Filing",
+        "visible_text": "Filing viewer",
+        "modal_present": false
+      },
+      "download_file": {
+        "name": "aapl-10k-executive-compensation.htm",
+        "content": "<h1>Item \u2014 Executive Compensation</h1>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "case_id": "cal-ok-dl-market-risk",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-dl-market-risk",
+        "natural_language_task": "Download the filing section 'Market Risk'",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": "Market Risk"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/sec-filings/aapl-10k",
+        "title": "Filing",
+        "visible_text": "Filing viewer",
+        "modal_present": false
+      },
+      "download_file": {
+        "name": "aapl-10k-market-risk.htm",
+        "content": "<h1>Item \u2014 Market Risk</h1>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "case_id": "cal-ok-dl-plain-0",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-dl-plain-0",
+        "natural_language_task": "Download the filing section ''",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": ""
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/downloads",
+        "title": "Downloads",
+        "visible_text": "Download center",
+        "modal_present": false
+      },
+      "download_file": {
+        "name": "report-0.htm",
+        "content": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+      }
+    },
+    {
+      "case_id": "cal-ok-dl-plain-1",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-dl-plain-1",
+        "natural_language_task": "Download the filing section ''",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": ""
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/downloads",
+        "title": "Downloads",
+        "visible_text": "Download center",
+        "modal_present": false
+      },
+      "download_file": {
+        "name": "report-1.htm",
+        "content": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+      }
+    },
+    {
+      "case_id": "cal-ok-dl-plain-2",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-dl-plain-2",
+        "natural_language_task": "Download the filing section ''",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": ""
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/downloads",
+        "title": "Downloads",
+        "visible_text": "Download center",
+        "modal_present": false
+      },
+      "download_file": {
+        "name": "report-2.htm",
+        "content": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+      }
+    },
+    {
+      "case_id": "cal-ok-dl-plain-3",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-dl-plain-3",
+        "natural_language_task": "Download the filing section ''",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": ""
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/downloads",
+        "title": "Downloads",
+        "visible_text": "Download center",
+        "modal_present": false
+      },
+      "download_file": {
+        "name": "report-3.htm",
+        "content": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+      }
+    },
+    {
+      "case_id": "cal-ok-nav-pricing",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-nav-pricing",
+        "natural_language_task": "Open the pricing page",
+        "expected_outcome": "the pricing page is shown on the right domain",
+        "success_conditions": [
+          {
+            "type": "url_contains",
+            "value": "/docs/pricing"
+          },
+          {
+            "type": "text_visible",
+            "value": "Pricing"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "wrong_domain",
+            "value": "mockshop.local"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/docs/pricing",
+        "title": "pricing",
+        "visible_text": "Pricing \u2014 everything you need to know.",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-ok-nav-about",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-nav-about",
+        "natural_language_task": "Open the about page",
+        "expected_outcome": "the about page is shown on the right domain",
+        "success_conditions": [
+          {
+            "type": "url_contains",
+            "value": "/docs/about"
+          },
+          {
+            "type": "text_visible",
+            "value": "About"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "wrong_domain",
+            "value": "mockshop.local"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/docs/about",
+        "title": "about",
+        "visible_text": "About \u2014 everything you need to know.",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-ok-nav-contact",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-nav-contact",
+        "natural_language_task": "Open the contact page",
+        "expected_outcome": "the contact page is shown on the right domain",
+        "success_conditions": [
+          {
+            "type": "url_contains",
+            "value": "/docs/contact"
+          },
+          {
+            "type": "text_visible",
+            "value": "Contact"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "wrong_domain",
+            "value": "mockshop.local"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/docs/contact",
+        "title": "contact",
+        "visible_text": "Contact \u2014 everything you need to know.",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-ok-nav-faq",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-nav-faq",
+        "natural_language_task": "Open the faq page",
+        "expected_outcome": "the faq page is shown on the right domain",
+        "success_conditions": [
+          {
+            "type": "url_contains",
+            "value": "/docs/faq"
+          },
+          {
+            "type": "text_visible",
+            "value": "Faq"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "wrong_domain",
+            "value": "mockshop.local"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/docs/faq",
+        "title": "faq",
+        "visible_text": "Faq \u2014 everything you need to know.",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-ok-nav-terms",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-nav-terms",
+        "natural_language_task": "Open the terms page",
+        "expected_outcome": "the terms page is shown on the right domain",
+        "success_conditions": [
+          {
+            "type": "url_contains",
+            "value": "/docs/terms"
+          },
+          {
+            "type": "text_visible",
+            "value": "Terms"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "wrong_domain",
+            "value": "mockshop.local"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/docs/terms",
+        "title": "terms",
+        "visible_text": "Terms \u2014 everything you need to know.",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-ok-nav-privacy",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-nav-privacy",
+        "natural_language_task": "Open the privacy page",
+        "expected_outcome": "the privacy page is shown on the right domain",
+        "success_conditions": [
+          {
+            "type": "url_contains",
+            "value": "/docs/privacy"
+          },
+          {
+            "type": "text_visible",
+            "value": "Privacy"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "wrong_domain",
+            "value": "mockshop.local"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/docs/privacy",
+        "title": "privacy",
+        "visible_text": "Privacy \u2014 everything you need to know.",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-bad-needle-widget",
+      "label": "corrupted",
+      "corruption_class": "needle_removed",
+      "contract": {
+        "task_id": "cal-bad-needle-widget",
+        "natural_language_task": "Search MockShop for 'widget'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Widget"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/results?q=widget",
+        "title": "Results",
+        "visible_text": "3 results for your query: Iwdget Pro",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-bad-needle-gizmo",
+      "label": "corrupted",
+      "corruption_class": "needle_removed",
+      "contract": {
+        "task_id": "cal-bad-needle-gizmo",
+        "natural_language_task": "Search MockShop for 'gizmo'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Gizmo"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/results?q=gizmo",
+        "title": "Results",
+        "visible_text": "3 results for your query: Igzmo Pro",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-bad-needle-doohickey",
+      "label": "corrupted",
+      "corruption_class": "needle_removed",
+      "contract": {
+        "task_id": "cal-bad-needle-doohickey",
+        "natural_language_task": "Search MockShop for 'doohickey'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Doohickey"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/results?q=doohickey",
+        "title": "Results",
+        "visible_text": "3 results for your query: Odohickey Pro",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-bad-phrase-sprocket",
+      "label": "corrupted",
+      "corruption_class": "needle_removed",
+      "contract": {
+        "task_id": "cal-bad-phrase-sprocket",
+        "natural_language_task": "Search MockShop for 'sprocket'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Sprocket"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/results?q=sprocket",
+        "title": "Results",
+        "visible_text": "Showing matches: Sprocket Pro \u2014 in stock",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-bad-phrase-flange",
+      "label": "corrupted",
+      "corruption_class": "needle_removed",
+      "contract": {
+        "task_id": "cal-bad-phrase-flange",
+        "natural_language_task": "Search MockShop for 'flange'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Flange"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/results?q=flange",
+        "title": "Results",
+        "visible_text": "Showing matches: Flange Pro \u2014 in stock",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-bad-phrase-gadget",
+      "label": "corrupted",
+      "corruption_class": "needle_removed",
+      "contract": {
+        "task_id": "cal-bad-phrase-gadget",
+        "natural_language_task": "Search MockShop for 'gadget'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Gadget"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/results?q=gadget",
+        "title": "Results",
+        "visible_text": "Showing matches: Gadget Pro \u2014 in stock",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-bad-url-widget",
+      "label": "corrupted",
+      "corruption_class": "wrong_url",
+      "contract": {
+        "task_id": "cal-bad-url-widget",
+        "natural_language_task": "Search MockShop for 'widget'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Widget"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/error?src=search&q=widget",
+        "title": "Error",
+        "visible_text": "3 results for widget: Widget Pro \u2014 in stock",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-bad-url-gizmo",
+      "label": "corrupted",
+      "corruption_class": "wrong_url",
+      "contract": {
+        "task_id": "cal-bad-url-gizmo",
+        "natural_language_task": "Search MockShop for 'gizmo'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Gizmo"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/error?src=search&q=gizmo",
+        "title": "Error",
+        "visible_text": "3 results for gizmo: Gizmo Pro \u2014 in stock",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-bad-url-doohickey",
+      "label": "corrupted",
+      "corruption_class": "wrong_url",
+      "contract": {
+        "task_id": "cal-bad-url-doohickey",
+        "natural_language_task": "Search MockShop for 'doohickey'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Doohickey"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/error?src=search&q=doohickey",
+        "title": "Error",
+        "visible_text": "3 results for doohickey: Doohickey Pro \u2014 in stock",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-bad-domain-sprocket",
+      "label": "corrupted",
+      "corruption_class": "wrong_url",
+      "contract": {
+        "task_id": "cal-bad-domain-sprocket",
+        "natural_language_task": "Search MockShop for 'sprocket'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Sprocket"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "wrong_domain",
+            "value": "mockshop.local"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://phish.example/results?q=sprocket",
+        "title": "Results",
+        "visible_text": "3 results for sprocket: Sprocket Pro \u2014 in stock",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-bad-domain-flange",
+      "label": "corrupted",
+      "corruption_class": "wrong_url",
+      "contract": {
+        "task_id": "cal-bad-domain-flange",
+        "natural_language_task": "Search MockShop for 'flange'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Flange"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "wrong_domain",
+            "value": "mockshop.local"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://phish.example/results?q=flange",
+        "title": "Results",
+        "visible_text": "3 results for flange: Flange Pro \u2014 in stock",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-bad-domain-gadget",
+      "label": "corrupted",
+      "corruption_class": "wrong_url",
+      "contract": {
+        "task_id": "cal-bad-domain-gadget",
+        "natural_language_task": "Search MockShop for 'gadget'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Gadget"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "wrong_domain",
+            "value": "mockshop.local"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://phish.example/results?q=gadget",
+        "title": "Results",
+        "visible_text": "3 results for gadget: Gadget Pro \u2014 in stock",
+        "modal_present": false
+      },
+      "download_file": null
+    },
+    {
+      "case_id": "cal-bad-dlcontent-risk-factors",
+      "label": "corrupted",
+      "corruption_class": "download_wrong_content",
+      "contract": {
+        "task_id": "cal-bad-dlcontent-risk-factors",
+        "natural_language_task": "Download the filing section 'Risk Factors'",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": "Risk Factors"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/sec-filings/aapl-10k",
+        "title": "Filing",
+        "visible_text": "Filing viewer",
+        "modal_present": false
+      },
+      "download_file": {
+        "name": "aapl-10k-risk-factors.htm",
+        "content": "Are you a robot? Please verify you are human to continue.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "case_id": "cal-bad-dlcontent-management-discussion",
+      "label": "corrupted",
+      "corruption_class": "download_wrong_content",
+      "contract": {
+        "task_id": "cal-bad-dlcontent-management-discussion",
+        "natural_language_task": "Download the filing section 'Management Discussion'",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": "Management Discussion"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/sec-filings/aapl-10k",
+        "title": "Filing",
+        "visible_text": "Filing viewer",
+        "modal_present": false
+      },
+      "download_file": {
+        "name": "aapl-10k-management-discussion.htm",
+        "content": "Are you a robot? Please verify you are human to continue.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "case_id": "cal-bad-dlstub-legal-proceedings",
+      "label": "corrupted",
+      "corruption_class": "download_wrong_content",
+      "contract": {
+        "task_id": "cal-bad-dlstub-legal-proceedings",
+        "natural_language_task": "Download the filing section 'Legal Proceedings'",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": "Legal Proceedings"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/sec-filings/aapl-10k",
+        "title": "Filing",
+        "visible_text": "Filing viewer",
+        "modal_present": false
+      },
+      "download_file": {
+        "name": "aapl-10k-legal-proceedings.htm",
+        "content": "stub"
+      }
+    },
+    {
+      "case_id": "cal-bad-dlstub-controls-and-procedures",
+      "label": "corrupted",
+      "corruption_class": "download_wrong_content",
+      "contract": {
+        "task_id": "cal-bad-dlstub-controls-and-procedures",
+        "natural_language_task": "Download the filing section 'Controls and Procedures'",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": "Controls and Procedures"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/sec-filings/aapl-10k",
+        "title": "Filing",
+        "visible_text": "Filing viewer",
+        "modal_present": false
+      },
+      "download_file": {
+        "name": "aapl-10k-controls-and-procedures.htm",
+        "content": "stub"
+      }
+    },
+    {
+      "case_id": "cal-bad-dlname-annual-report",
+      "label": "corrupted",
+      "corruption_class": "download_wrong_content",
+      "contract": {
+        "task_id": "cal-bad-dlname-annual-report",
+        "natural_language_task": "Download the filing section 'annual report'",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": "annual report"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/sec-filings/aapl-10k",
+        "title": "Filing",
+        "visible_text": "Filing viewer",
+        "modal_present": false
+      },
+      "download_file": {
+        "name": "annual report 2025.htm",
+        "content": "Are you a robot? Please verify you are human to continue.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "case_id": "cal-bad-dlmissing",
+      "label": "corrupted",
+      "corruption_class": "download_wrong_content",
+      "contract": {
+        "task_id": "cal-bad-dlmissing",
+        "natural_language_task": "Download the filing section 'Risk Factors'",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": "Risk Factors"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/sec-filings/aapl-10k",
+        "title": "Filing",
+        "visible_text": "Filing viewer",
+        "modal_present": false
+      },
+      "download_file": null,
+      "extracted_missing_path": true
+    },
+    {
+      "case_id": "cal-bad-claim-widget",
+      "label": "corrupted",
+      "corruption_class": "confident_false_claim",
+      "contract": {
+        "task_id": "cal-bad-claim-widget",
+        "natural_language_task": "Search MockShop for 'widget'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Widget"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/",
+        "title": "MockShop",
+        "visible_text": "Welcome to MockShop. Search our catalog of parts.",
+        "modal_present": false
+      },
+      "download_file": null,
+      "agent_claim": "I successfully searched for widget and the results are now displayed: 3 results for widget, including Widget Pro."
+    },
+    {
+      "case_id": "cal-bad-claim-gizmo",
+      "label": "corrupted",
+      "corruption_class": "confident_false_claim",
+      "contract": {
+        "task_id": "cal-bad-claim-gizmo",
+        "natural_language_task": "Search MockShop for 'gizmo'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Gizmo"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/",
+        "title": "MockShop",
+        "visible_text": "Welcome to MockShop. Search our catalog of parts.",
+        "modal_present": false
+      },
+      "download_file": null,
+      "agent_claim": "I successfully searched for gizmo and the results are now displayed: 3 results for gizmo, including Gizmo Pro."
+    },
+    {
+      "case_id": "cal-bad-claim-doohickey",
+      "label": "corrupted",
+      "corruption_class": "confident_false_claim",
+      "contract": {
+        "task_id": "cal-bad-claim-doohickey",
+        "natural_language_task": "Search MockShop for 'doohickey'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Doohickey"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/",
+        "title": "MockShop",
+        "visible_text": "Welcome to MockShop. Search our catalog of parts.",
+        "modal_present": false
+      },
+      "download_file": null,
+      "agent_claim": "I successfully searched for doohickey and the results are now displayed: 3 results for doohickey, including Doohickey Pro."
+    },
+    {
+      "case_id": "cal-bad-claim-dl-risk-factors",
+      "label": "corrupted",
+      "corruption_class": "confident_false_claim",
+      "contract": {
+        "task_id": "cal-bad-claim-dl-risk-factors",
+        "natural_language_task": "Download the filing section 'Risk Factors'",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": "Risk Factors"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/sec-filings/aapl-10k",
+        "title": "Filing",
+        "visible_text": "Filing viewer",
+        "modal_present": false
+      },
+      "download_file": null,
+      "agent_claim": "The 10-K section 'Risk Factors' was downloaded successfully to disk."
+    },
+    {
+      "case_id": "cal-bad-claim-dl-management-discussion",
+      "label": "corrupted",
+      "corruption_class": "confident_false_claim",
+      "contract": {
+        "task_id": "cal-bad-claim-dl-management-discussion",
+        "natural_language_task": "Download the filing section 'Management Discussion'",
+        "expected_outcome": "a real document containing the section is on disk",
+        "success_conditions": [
+          {
+            "type": "download_exists",
+            "value": "Management Discussion"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockshop.local/sec-filings/aapl-10k",
+        "title": "Filing",
+        "visible_text": "Filing viewer",
+        "modal_present": false
+      },
+      "download_file": null,
+      "agent_claim": "The 10-K section 'Management Discussion' was downloaded successfully to disk."
+    },
+    {
+      "case_id": "cal-bad-claim-empty",
+      "label": "corrupted",
+      "corruption_class": "confident_false_claim",
+      "contract": {
+        "task_id": "cal-bad-claim-empty",
+        "natural_language_task": "Search MockShop for 'widget'",
+        "expected_outcome": "results page shows the product",
+        "success_conditions": [
+          {
+            "type": "text_visible",
+            "value": "results for"
+          },
+          {
+            "type": "text_visible",
+            "value": "Widget"
+          },
+          {
+            "type": "url_contains",
+            "value": "/results"
+          }
+        ],
+        "forbidden_conditions": [
+          {
+            "type": "captcha_visible",
+            "value": "captcha"
+          },
+          {
+            "type": "error_text_visible",
+            "value": "no results"
+          }
+        ]
+      },
+      "observation": {
+        "url": "http://mockshop.local/results?q=widget",
+        "title": "Results",
+        "visible_text": "0 results for your query.",
+        "modal_present": false
+      },
+      "download_file": null,
+      "agent_claim": "Task complete \u2014 Widget Pro is shown in the results."
+    }
+  ]
+}

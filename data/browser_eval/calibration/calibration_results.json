@@ -1,0 +1,376 @@
+{
+  "generated_by": "tools/calibrate_verifier.py",
+  "scope": {
+    "calibrated_condition_types": [
+      "url_contains",
+      "text_visible",
+      "download_exists",
+      "error_text_visible",
+      "captcha_visible",
+      "login_required",
+      "wrong_domain"
+    ],
+    "excluded_condition_types": {
+      "table_extracted": "returns unknown without extracted data by design",
+      "screenshot_region_changed": "no baseline -> structural unknown by design",
+      "field_value_equals": "agent currently only fills extracted['__download__']"
+    }
+  },
+  "label_layers": {
+    "calibration_labels": "ground truth by construction (this file's corruptions)",
+    "eval_labels": "hand-authored expect_status in data/browser_eval/tasks.json \u2014 weaker; not used for sensitivity/specificity"
+  },
+  "dataset": {
+    "n_success": 22,
+    "n_corrupted": 24,
+    "corruption_classes": [
+      "confident_false_claim",
+      "download_wrong_content",
+      "needle_removed",
+      "wrong_url"
+    ]
+  },
+  "three_state_table": {
+    "success": {
+      "pass": 22,
+      "fail": 0,
+      "unknown": 0
+    },
+    "corrupted": {
+      "pass": 1,
+      "fail": 20,
+      "unknown": 3
+    }
+  },
+  "per_corruption_class": {
+    "needle_removed": {
+      "pass": 0,
+      "fail": 6,
+      "unknown": 0
+    },
+    "wrong_url": {
+      "pass": 0,
+      "fail": 6,
+      "unknown": 0
+    },
+    "download_wrong_content": {
+      "pass": 1,
+      "fail": 4,
+      "unknown": 1
+    },
+    "confident_false_claim": {
+      "pass": 0,
+      "fail": 4,
+      "unknown": 2
+    }
+  },
+  "binary_mapping": "positive = verdict 'pass'; negative = 'fail' OR 'unknown' (unknown is never success); unknown also reported separately above",
+  "confusion": {
+    "tp": 22,
+    "fn_not_pass": 0,
+    "fp": 1,
+    "tn_not_pass": 23
+  },
+  "rates": {
+    "sensitivity": 1.0,
+    "specificity": 0.958333,
+    "false_positive_rate": 0.041667,
+    "false_negative_rate": 0.0,
+    "unknown_rate_success": 0.0,
+    "unknown_rate_corrupted": 0.125
+  },
+  "apparent": {
+    "source": "data/browser_eval/artifacts/eval_results.json",
+    "tasks": 5,
+    "claimed_pass": 4,
+    "apparent_success_rate": 0.8
+  },
+  "rogan_gladen_corrected_success_rate": {
+    "observed": 0.8,
+    "sensitivity": 1.0,
+    "specificity": 0.958333,
+    "denominator": 0.958333,
+    "formula": "(observed + specificity - 1) / (sensitivity + specificity - 1)",
+    "status": "ok",
+    "corrected": 0.791304,
+    "raw": 0.791304
+  },
+  "per_case": [
+    {
+      "case_id": "cal-ok-search-widget",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-search-gizmo",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-search-doohickey",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-search-sprocket",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-search-flange",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-search-gadget",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-dl-risk-factors",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-dl-management-discussion",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-dl-legal-proceedings",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-dl-controls-and-procedures",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-dl-executive-compensation",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-dl-market-risk",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-dl-plain-0",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-dl-plain-1",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-dl-plain-2",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-dl-plain-3",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-nav-pricing",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-nav-about",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-nav-contact",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-nav-faq",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-nav-terms",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-nav-privacy",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-bad-needle-widget",
+      "label": "corrupted",
+      "corruption_class": "needle_removed",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-needle-gizmo",
+      "label": "corrupted",
+      "corruption_class": "needle_removed",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-needle-doohickey",
+      "label": "corrupted",
+      "corruption_class": "needle_removed",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-phrase-sprocket",
+      "label": "corrupted",
+      "corruption_class": "needle_removed",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-phrase-flange",
+      "label": "corrupted",
+      "corruption_class": "needle_removed",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-phrase-gadget",
+      "label": "corrupted",
+      "corruption_class": "needle_removed",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-url-widget",
+      "label": "corrupted",
+      "corruption_class": "wrong_url",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-url-gizmo",
+      "label": "corrupted",
+      "corruption_class": "wrong_url",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-url-doohickey",
+      "label": "corrupted",
+      "corruption_class": "wrong_url",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-domain-sprocket",
+      "label": "corrupted",
+      "corruption_class": "wrong_url",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-domain-flange",
+      "label": "corrupted",
+      "corruption_class": "wrong_url",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-domain-gadget",
+      "label": "corrupted",
+      "corruption_class": "wrong_url",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-dlcontent-risk-factors",
+      "label": "corrupted",
+      "corruption_class": "download_wrong_content",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-dlcontent-management-discussion",
+      "label": "corrupted",
+      "corruption_class": "download_wrong_content",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-dlstub-legal-proceedings",
+      "label": "corrupted",
+      "corruption_class": "download_wrong_content",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-dlstub-controls-and-procedures",
+      "label": "corrupted",
+      "corruption_class": "download_wrong_content",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-dlname-annual-report",
+      "label": "corrupted",
+      "corruption_class": "download_wrong_content",
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-bad-dlmissing",
+      "label": "corrupted",
+      "corruption_class": "download_wrong_content",
+      "verdict": "unknown"
+    },
+    {
+      "case_id": "cal-bad-claim-widget",
+      "label": "corrupted",
+      "corruption_class": "confident_false_claim",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-claim-gizmo",
+      "label": "corrupted",
+      "corruption_class": "confident_false_claim",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-claim-doohickey",
+      "label": "corrupted",
+      "corruption_class": "confident_false_claim",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-claim-dl-risk-factors",
+      "label": "corrupted",
+      "corruption_class": "confident_false_claim",
+      "verdict": "unknown"
+    },
+    {
+      "case_id": "cal-bad-claim-dl-management-discussion",
+      "label": "corrupted",
+      "corruption_class": "confident_false_claim",
+      "verdict": "unknown"
+    },
+    {
+      "case_id": "cal-bad-claim-empty",
+      "label": "corrupted",
+      "corruption_class": "confident_false_claim",
+      "verdict": "fail"
+    }
+  ]
+}

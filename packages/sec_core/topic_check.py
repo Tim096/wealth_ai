@@ -53,6 +53,15 @@ class TopicCheck:
     detail: str
 
 
+def _signal_present(signal: str, low: str) -> bool:
+    # Word-boundary match so a short cue like "own" or "note" does not spuriously
+    # fire inside "grown"/"shown"/"downtown"/"another". Substring matching made
+    # the oracle rubber-stamp mis-resolved spans as consistent (a Properties span
+    # matched on "own" inside unrelated prose). Multi-word cues keep their
+    # internal spaces; we just anchor both ends on word boundaries.
+    return re.search(r"\b" + re.escape(signal) + r"\b", low) is not None
+
+
 def check_topic(item_code: str, body: str) -> TopicCheck:
     signals = _TOPIC_SIGNALS.get(item_code, [])
     stripped = body.strip()
@@ -61,7 +70,7 @@ def check_topic(item_code: str, body: str) -> TopicCheck:
     if _BOILERPLATE.match(stripped):
         return TopicCheck("boilerplate", [], "None./Not applicable./Reserved — complete short answer")
     low = body.lower()
-    matched = [s for s in signals if s in low]
+    matched = [s for s in signals if _signal_present(s, low)]
     # for a substantive body, expect at least 2 distinct topic signals
     need = 1 if len(stripped) < 400 else 2
     if len(matched) >= need:

@@ -32,12 +32,12 @@
 
 **主管的觀點我完全同意並想往前推一步:用 LLM 判斷財報對不對是壞主意(貴、不可重現、會 hallucinate)。** 我的 pipeline 已經不讓 LLM 產生或判斷 item 內容——它只做 offset-exact span 抽取,LLM 只在 ambiguous boundary 當裁判。但驗證還能更硬:
 
-**SEC filing 自帶結構化 ground truth,大多數作業沒用到:**
+**SEC filing 自帶結構化 ground truth,大多數作業沒用到——這一條我已經實作了(`sec_core/xbrl.py`):**
 
-- **Inline XBRL / `companyfacts` API**(`https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json`):SEC 已經把財報數字(Revenues、NetIncomeLoss、Assets…)結構化成機器可讀的 fact。這給了一個**免費、權威、非 LLM 的 cross-check**:
-  - 驗證 Item 8 抽對了——抽出的財報 span 裡的關鍵數字應與 XBRL fact 對得上;對不上就是 boundary 出錯的硬證據(比任何 LLM judge 都可靠)。
-  - 驗證「Item 8 是否真的是財報」——如果 XBRL 說這家有 800 億營收,而我的 Item 8 span 只有 700 字,那一定是 wrapper 模式(正如 XOM/JPM),自動觸發 §2 的 resolution。
-  - 這是一條 confidence calibration 的黃金線:XBRL 對得上的 filing,我的 high-confidence pass 應該接近 100% 正確。
+- **Inline XBRL / `companyfacts` API**(`https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json`):SEC 已把財報數字(Revenues、NetIncomeLoss、Assets…)結構化成機器可讀 fact。這是**免費、權威、非 LLM 的 cross-check**:
+  - **[已實作]** 驗證 Item 8 抽對了——抽出的財報 span 必須含 XBRL 的營收/淨利/總資產(各種 scale);對不上就是 wrapper/boundary 的硬證據。實測 11 家:7 家 pass 全 `certified`、3 家 wrapper stub `contradicted`,**pipeline 與獨立 oracle 零分歧**(`tools/certify.py`)。
+  - **[方向]** 反向定位:當 Item 8 被 XBRL contradicted,可全文搜尋這些數字出現在哪,自動指出真正財報位置 → 觸發 §2 的 wrapper resolution。
+  - **[方向]** confidence calibration 黃金線:以 XBRL certified 與否當標籤,校準 confidence 對應實際正確率。
 
 - **`_looks_like_reference_stub` 的下一步**:與其擴充 regex(脆弱),不如用 XBRL 反向驗證——「這個 item 該有數字但 span 裡沒有」比措辭偵測穩固。
 

@@ -60,11 +60,34 @@
 
 兩群完全分離,confidence 首次能作為「這是不是真內容」的信號。
 
+### Intel / Citi(主管點名的 corner case)
+
+實測 4 份 wrapper/index filing,全部正確歸類為 `cross_reference_index`,Item 14 從「碎片/ambiguous」變成誠實的 `needs_review` 指標:
+
+| Filing | 修復前 | 修復後 |
+|---|---|---|
+| INTC FY2019 | 全 item ambiguous 碎片(33–330 字)| `cross_reference_index`;Item 14 = incorporated_by_reference / needs_review / cross_reference_pointer |
+| INTC FY2020 | 同上 | 同上 |
+| INTC FY2025 | 同上 | 同上 |
+| Citi FY2025 | 0 candidates → 全 missing | `cross_reference_index`(bare index 偵測);1A/8 指標,needs_review |
+
+**沒有任何 item 被偽裝成 extracted/ok**——這正是主管點名別的作業犯的錯。
+
+### Status 可信度:XBRL 獨立 oracle(回答「如何確保 status 可信」)
+
+Item 8 對照 SEC companyfacts 的營收/淨利/總資產(非 LLM,免費、可重現)。11 家 sweep:
+
+| 判定 | 家數 | 對應 pipeline status |
+|---|---|---|
+| certified(2–3/3 數字命中)| 7(AAPL/MSFT/GS/WMT/CAT/NEM/MRNA/KO)| 全部 pass |
+| contradicted(0/3)| 3(NVDA/JPM/XOM)| 全部 incorporated_by_reference(wrapper)|
+
+**pipeline 結構分類與獨立 XBRL oracle 零分歧。** 這是 high-confidence precision 的硬證據:被標 pass 的 Item 8,獨立事實源全數佐證。防禦是縱深的——若某結構 heuristic 未來誤標 Item 8 pass,XBRL 會抓到。
+
 ### 已知殘留(誠實邊界)
 
-1. **Wrapper 10-K 的真實內容尚未還原。** JPM/XOM 的 Item 7/8 現在誠實標成 incorporated_by_reference 指向 appended section,但 pipeline 還沒把那段 MD&A/財報「接回」對應 item。這需要 cross-reference resolution(第二遍)——見 `docs/insights_and_directions.md` §2,列為明確優化方向。
-2. **Held-out 未擴及 Intel/Citi。** 稽核用的 11 家已涵蓋 wrapper 模式(JPM/XOM),但主管點名的 Intel/Citi 尚未實測;下一輪 held-out 應納入。
-3. **golden boundary IoU 尚未量化。** 目前用 status-level golden labels(合成 fixtures)+ 真實 filing 的對抗式稽核。真實 filing 的 token-level IoU 需要 manual span 標註,列為 backlog。
+1. **Wrapper / cross-reference-index 的真實內容尚未還原。** JPM/XOM/Intel/Citi 現在誠實標成 incorporated_by_reference / needs_review 指向 appended section 或年報,但 pipeline 還沒把那段 MD&A/財報「接回」對應 item。刻意不出貨脆弱的 title-based 猜測(Intel 正文無 emphasis 標記、標題重複當頁首,會出錯)——**錯的正文比誠實的指標更糟**。這需要 page-anchor resolution(第二遍),見 `insights_and_directions.md` §2。
+2. **golden boundary IoU 尚未量化。** 目前用 status-level golden labels(合成 fixtures)+ 真實 filing 的對抗式稽核 + XBRL oracle。真實 filing 的 token-level IoU 需 manual span 標註,列為 backlog。
 
 ## Browser Agent
 

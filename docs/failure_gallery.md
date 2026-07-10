@@ -84,6 +84,29 @@
 
 ---
 
+## FG-SEC-005: Cross-reference-index filing(Intel/Citi)被抽成碎片或 missing
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-SEC-005 |
+| App | sec_extractor |
+| Input | INTC FY2019/FY2020/FY2025、Citi FY2025 |
+| Expected | 正確辨識「主文件是交叉引用索引、正文在年報」,誠實標示 |
+| Actual(修復前) | INTC:所有 item 被抽成 33–330 字的碎片、標 `ambiguous`;Citi:0 candidates → 全 `missing`。**主管點名別的作業把 INTC Item 14 標成 extracted/ok。** |
+| Status | fixed(偵測+分類);正文還原待做 |
+| Failure Type | filing_class 誤判 |
+| Root Cause | Intel 把正文放在前段(以「Risk Factors」等**無 Item 前綴**的標題),正式的 Item N 交叉引用索引放在文末指向年報頁碼;Citi 更把索引寫成「1A.Risk Factors49-62」完全無「Item」字樣。單一「Item N」regex 只打到索引或全打不到 |
+| Repair Attempt | 新 `cross_ref.py`:偵測 item heading 群聚 +(頁碼指標 OR 極小行間距),且群聚外無正文候選;`scan_bare_index` 處理 Citi 無前綴格式。歸類為 `cross_reference_index`,items 標 `incorporated_by_reference`/`needs_review`/`cross_reference_pointer` |
+| Why It Still Failed | (偵測已修復)正文還原(跟指標進年報 exhibit)未做——刻意不出貨脆弱猜測 |
+| Independent check | XBRL oracle 對這些 filing 的 Item 8 判 `contradicted`(財報數字不在該 span),獨立佐證正文確實不在主文件 |
+| Related Commit | feat(sec): detect cross-reference-index filings (Intel/Citi/GE class) |
+
+---
+
+## 元層次(2):status 可信度的獨立驗證(XBRL)
+
+FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 加上一層**外部 oracle**:Item 8 對照 SEC XBRL companyfacts 的營收/淨利/總資產。11 家 sweep:7 家 pass 全被 XBRL `certified`、3 家 wrapper stub 被 `contradicted`,**pipeline 分類與獨立 oracle 零分歧**。這回答主管的核心問題「如何確保 status 可信」——不是 AI 自述,是對照結構化事實。詳見 `prompts/eval_design/2026-07-10-xbrl-and-cross-ref.md`。
+
 ## 稽核方法本身(元層次)
 
 這四個 FG 都不是我「讀 code 想出來的」,而是 **56 個 agent 的對抗式稽核**跑真實 filing 跑出來的,且每個都經過獨立 verifier「盡力反駁」後才留下(12 個被反駁的 anomaly 沒進這裡)。這個「用 AI 對抗式驗證 AI 產出」的 harness 本身,就是 SPEC 17 想證明的「AI 時代最稀缺的是驗證能力」。詳見 `prompts/eval_design/2026-07-10-adversarial-audit-workflow.md`。

@@ -25,6 +25,7 @@ from browser_agent.marks import set_of_marks
 from browser_agent.memory_store import MemoryStore
 from browser_agent.observer import PageObserver
 from browser_agent.repair import diagnose_failure, repair_target
+from browser_agent.trajectory import repetition_report
 from browser_agent.verifier import verify_contract
 from observability_core import EvidenceRecord, EvidenceStore, VerifierResult, sha256_text
 
@@ -138,12 +139,19 @@ class TaskRun:
     repairs: int = 0
     total_latency_ms: float = 0.0
     confidence: float = 0.0         # numeric, derived from verifier + repair cost
+    # T1-4 observation-layer metric: pre/post persistent-state diff. Empty until a
+    # runner captures snapshots around the run; on a real site it stays 'unknown'.
+    side_effects: dict[str, Any] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:
         return {
             "task_id": self.task_id, "site": self.site, "status": self.status,
             "confidence": round(self.confidence, 3),
             "repairs": self.repairs, "total_latency_ms": round(self.total_latency_ms, 1),
+            # T1-4 repetitiveness: derived purely from the recorded steps, so it is
+            # computed here (observation only, never influences agent behaviour).
+            "repetition": repetition_report(self.steps),
+            "side_effects": self.side_effects,
             "verifier": {
                 "status": self.verifier.status, "reason": self.verifier.reason,
                 "observed": self.verifier.observed_evidence,

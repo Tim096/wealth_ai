@@ -120,3 +120,10 @@ class PageObserver:
             candidates=candidates,
             modal_present=bool(modal),
         )
+
+    def snapshot_state(self):
+        """Capture persistent/residual page state (localStorage / sessionStorage /
+        cookies / leftover form input) for a before/after side-effect diff (T1-4).
+        Separate from observe(): it captures durable state, not page content."""
+        from browser_agent.trajectory import StateSnapshot
+        return StateSnapshot.capture(self.page)

@@ -1,0 +1,241 @@
+{
+  "generated_by": "tools/trajectory_metrics.py",
+  "source_tasks": "data/browser_eval/tasks.json -> tasks",
+  "definition": {
+    "repetition_score": "fraction of steps that repeat an earlier (purpose, action, selector) move; 0 = all distinct",
+    "loop_detected": "an immediately-repeated block, or the same move >=3x running",
+    "side_effects.status": "'clean' (no persistent-state delta), 'side_effects' (localStorage/sessionStorage/cookie/form-residue delta), or 'unknown' (real site \u2014 state not attributable)"
+  },
+  "metrics": {
+    "n_tasks": 5,
+    "mean_repetition_score": 0.0,
+    "max_repetition_score": 0.0,
+    "n_loops_detected": 0,
+    "loop_task_ids": [],
+    "n_with_side_effects": 5,
+    "side_effect_task_ids": [
+      "search-v1-widget",
+      "search-v2-widget-drift",
+      "search-v2-gizmo-drift",
+      "search-v1-nonexistent",
+      "search-v3-heldout"
+    ]
+  },
+  "tasks": [
+    {
+      "task_id": "search-v1-widget",
+      "site": "v1",
+      "layer": "mock_baseline",
+      "status": "pass",
+      "repairs": 0,
+      "repetition": {
+        "n_steps": 2,
+        "n_unique": 2,
+        "unique_ratio": 1.0,
+        "repetition_score": 0.0,
+        "max_consecutive_repeat": 1,
+        "loop_period": 0,
+        "loop_repeats": 0,
+        "loop_detected": false
+      },
+      "side_effects": {
+        "status": "side_effects",
+        "environment": "mock",
+        "n_changes": 1,
+        "local_storage": {
+          "added": {},
+          "removed": [],
+          "changed": {}
+        },
+        "session_storage": {
+          "added": {},
+          "removed": [],
+          "changed": {}
+        },
+        "cookies": {
+          "added": [],
+          "removed": []
+        },
+        "form_residue": {
+          "added": {
+            "search-box": "widget"
+          },
+          "removed": [],
+          "changed": {}
+        }
+      }
+    },
+    {
+      "task_id": "search-v2-widget-drift",
+      "site": "v2",
+      "layer": "mock_drift",
+      "status": "pass",
+      "repairs": 2,
+      "repetition": {
+        "n_steps": 3,
+        "n_unique": 3,
+        "unique_ratio": 1.0,
+        "repetition_score": 0.0,
+        "max_consecutive_repeat": 1,
+        "loop_period": 0,
+        "loop_repeats": 0,
+        "loop_detected": false
+      },
+      "side_effects": {
+        "status": "side_effects",
+        "environment": "mock",
+        "n_changes": 1,
+        "local_storage": {
+          "added": {},
+          "removed": [],
+          "changed": {}
+        },
+        "session_storage": {
+          "added": {},
+          "removed": [],
+          "changed": {}
+        },
+        "cookies": {
+          "added": [],
+          "removed": []
+        },
+        "form_residue": {
+          "added": {
+            "query": "widget"
+          },
+          "removed": [],
+          "changed": {}
+        }
+      }
+    },
+    {
+      "task_id": "search-v2-gizmo-drift",
+      "site": "v2",
+      "layer": "mock_drift",
+      "status": "pass",
+      "repairs": 2,
+      "repetition": {
+        "n_steps": 3,
+        "n_unique": 3,
+        "unique_ratio": 1.0,
+        "repetition_score": 0.0,
+        "max_consecutive_repeat": 1,
+        "loop_period": 0,
+        "loop_repeats": 0,
+        "loop_detected": false
+      },
+      "side_effects": {
+        "status": "side_effects",
+        "environment": "mock",
+        "n_changes": 1,
+        "local_storage": {
+          "added": {},
+          "removed": [],
+          "changed": {}
+        },
+        "session_storage": {
+          "added": {},
+          "removed": [],
+          "changed": {}
+        },
+        "cookies": {
+          "added": [],
+          "removed": []
+        },
+        "form_residue": {
+          "added": {
+            "query": "gizmo"
+          },
+          "removed": [],
+          "changed": {}
+        }
+      }
+    },
+    {
+      "task_id": "search-v1-nonexistent",
+      "site": "v1",
+      "layer": "adversarial_empty",
+      "status": "fail",
+      "repairs": 0,
+      "repetition": {
+        "n_steps": 2,
+        "n_unique": 2,
+        "unique_ratio": 1.0,
+        "repetition_score": 0.0,
+        "max_consecutive_repeat": 1,
+        "loop_period": 0,
+        "loop_repeats": 0,
+        "loop_detected": false
+      },
+      "side_effects": {
+        "status": "side_effects",
+        "environment": "mock",
+        "n_changes": 1,
+        "local_storage": {
+          "added": {},
+          "removed": [],
+          "changed": {}
+        },
+        "session_storage": {
+          "added": {},
+          "removed": [],
+          "changed": {}
+        },
+        "cookies": {
+          "added": [],
+          "removed": []
+        },
+        "form_residue": {
+          "added": {
+            "search-box": "zzzznotarealproduct"
+          },
+          "removed": [],
+          "changed": {}
+        }
+      }
+    },
+    {
+      "task_id": "search-v3-heldout",
+      "site": "v3_heldout",
+      "layer": "held_out",
+      "status": "pass",
+      "repairs": 2,
+      "repetition": {
+        "n_steps": 2,
+        "n_unique": 2,
+        "unique_ratio": 1.0,
+        "repetition_score": 0.0,
+        "max_consecutive_repeat": 1,
+        "loop_period": 0,
+        "loop_repeats": 0,
+        "loop_detected": false
+      },
+      "side_effects": {
+        "status": "side_effects",
+        "environment": "mock",
+        "n_changes": 1,
+        "local_storage": {
+          "added": {},
+          "removed": [],
+          "changed": {}
+        },
+        "session_storage": {
+          "added": {},
+          "removed": [],
+          "changed": {}
+        },
+        "cookies": {
+          "added": [],
+          "removed": []
+        },
+        "form_residue": {
+          "added": {
+            "q3": "widget"
+          },
+          "removed": [],
+          "changed": {}
+        }
+      }
+    }
+  ]
+}

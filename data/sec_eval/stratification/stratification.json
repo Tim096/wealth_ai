@@ -1,0 +1,247 @@
+{
+ "generated_at": "2026-07-10T11:23:05Z",
+ "user_agent": "wealth-eval p76091014@gs.ncku.edu.tw",
+ "purpose": "T2-4 stratified sampling by format source (era x filing agent); fills era/agent gaps left by the all-iXBRL scored sweep.",
+ "efts_note": "forms= is exact-match ('10-K' excludes '10-K/A'); pre-2001 not in FTS index so sourced from the submissions API instead.",
+ "baseline_scored_sweep": {
+  "era": "ixbrl_2019plus",
+  "n": 11,
+  "agents": {
+   "Workiva": 10,
+   "DFIN (Donnelley)": 1
+  }
+ },
+ "era_strata_runs": [
+  {
+   "ticker": "AAPL",
+   "cik": 320193,
+   "accession": "0000320193-96-000023",
+   "form": "",
+   "filing_date": "",
+   "filing_year": 1996,
+   "report_date": "",
+   "main_document": "0000320193-96-000023.txt",
+   "served_as_text": true,
+   "raw_chars": 271212,
+   "normalized_chars": 256658,
+   "detected_agent": "unknown/in-house",
+   "era": "text_pre2001",
+   "format_detail": "plain-text/SGML full submission (no HTML block tags)",
+   "filing_class": "non_10k",
+   "supported": false,
+   "invariants": {
+    "items_extracted": 23,
+    "partition_tiles_whole_document": true,
+    "partition_blocks": 1,
+    "coverage_ratio": 0.0,
+    "statuses": {
+     "missing": 22,
+     "reserved": 1
+    },
+    "needs_review": 0,
+    "pass_items": 0
+   },
+   "pipeline_warnings": [
+    "no item heading candidates found \u2014 unsupported or non-10-K document"
+   ],
+   "target_stratum": "text_pre2001"
+  },
+  {
+   "ticker": "KO",
+   "cik": 21344,
+   "accession": "0000021344-98-000004",
+   "form": "",
+   "filing_date": "",
+   "filing_year": 1998,
+   "report_date": "",
+   "main_document": "0000021344-98-000004.txt",
+   "served_as_text": true,
+   "raw_chars": 377407,
+   "normalized_chars": 315036,
+   "detected_agent": "unknown/in-house",
+   "era": "text_pre2001",
+   "format_detail": "plain-text/SGML full submission (no HTML block tags)",
+   "filing_class": "non_10k",
+   "supported": false,
+   "invariants": {
+    "items_extracted": 23,
+    "partition_tiles_whole_document": true,
+    "partition_blocks": 1,
+    "coverage_ratio": 0.0,
+    "statuses": {
+     "missing": 22,
+     "reserved": 1
+    },
+    "needs_review": 0,
+    "pass_items": 0
+   },
+   "pipeline_warnings": [
+    "no item heading candidates found \u2014 unsupported or non-10-K document"
+   ],
+   "target_stratum": "text_pre2001"
+  },
+  {
+   "ticker": "AAPL",
+   "cik": 320193,
+   "accession": "0001047469-04-035975",
+   "form": "",
+   "filing_date": "",
+   "filing_year": 2004,
+   "report_date": "",
+   "main_document": "a2147337z10-k.htm",
+   "served_as_text": false,
+   "raw_chars": 943155,
+   "normalized_chars": 403980,
+   "detected_agent": "unknown/in-house",
+   "era": "html_2001_2008",
+   "format_detail": "first-generation HTML (pre-XBRL)",
+   "filing_class": "standard",
+   "supported": true,
+   "invariants": {
+    "items_extracted": 23,
+    "partition_tiles_whole_document": true,
+    "partition_blocks": 26,
+    "coverage_ratio": 0.9824,
+    "statuses": {
+     "pass": 17,
+     "missing": 6
+    },
+    "needs_review": 2,
+    "pass_items": 17
+   },
+   "pipeline_warnings": [],
+   "target_stratum": "html_2001_2008"
+  },
+  {
+   "ticker": "AAPL",
+   "cik": 320193,
+   "accession": "0001193125-13-416534",
+   "form": "",
+   "filing_date": "",
+   "filing_year": 2013,
+   "report_date": "",
+   "main_document": "d590790d10k.htm",
+   "served_as_text": false,
+   "raw_chars": 1330408,
+   "normalized_chars": 292539,
+   "detected_agent": "unknown/in-house",
+   "era": "xbrl_2009_2018",
+   "format_detail": "HTML body + separate XBRL exhibits",
+   "filing_class": "standard",
+   "supported": true,
+   "invariants": {
+    "items_extracted": 23,
+    "partition_tiles_whole_document": true,
+    "partition_blocks": 31,
+    "coverage_ratio": 0.9592,
+    "statuses": {
+     "pass": 15,
+     "missing": 3,
+     "incorporated_by_reference": 5
+    },
+    "needs_review": 1,
+    "pass_items": 15
+   },
+   "pipeline_warnings": [],
+   "target_stratum": "xbrl_2009_2018"
+  }
+ ],
+ "agent_gap_run": {
+  "ticker": "",
+  "cik": 1819142,
+  "accession": "0001819142-25-000017",
+  "form": "",
+  "filing_date": "",
+  "filing_year": 2025,
+  "report_date": "",
+  "main_document": "ses-20241231x10k.htm",
+  "served_as_text": false,
+  "raw_chars": 2204545,
+  "normalized_chars": 358689,
+  "detected_agent": "Toppan Merrill",
+  "era": "ixbrl_2019plus",
+  "format_detail": "inline XBRL (ix: tags in the primary document)",
+  "filing_class": "standard",
+  "supported": true,
+  "invariants": {
+   "items_extracted": 23,
+   "partition_tiles_whole_document": true,
+   "partition_blocks": 31,
+   "coverage_ratio": 0.9107,
+   "statuses": {
+    "pass": 15,
+    "incorporated_by_reference": 7,
+    "reserved": 1
+   },
+   "needs_review": 0,
+   "pass_items": 15
+  },
+  "pipeline_warnings": [],
+  "target_stratum": "agent::Toppan Merrill"
+ },
+ "agent_survey": {
+  "window": "2025-02-01..2025-02-28",
+  "sampled": 40,
+  "distribution": {
+   "Workiva": 31,
+   "unknown/in-house": 8,
+   "Toppan Merrill": 1
+  },
+  "examples": {
+   "Workiva": {
+    "cik": 1841666,
+    "accession": "0002040266-25-000007",
+    "display": "APA Corp  (APA)  (CIK 0001841666)",
+    "primary_document": "apa-20241231.htm"
+   },
+   "unknown/in-house": {
+    "cik": 1450923,
+    "accession": "0001839882-25-012451",
+    "display": "abrdn Gold ETF Trust  (SGOL)  (CIK 0001450923)",
+    "primary_document": "sgol-10k_123124.htm"
+   },
+   "Toppan Merrill": {
+    "cik": 1819142,
+    "accession": "0001819142-25-000017",
+    "display": "SES AI Corp  (SES, SES-WT)  (CIK 0001819142)",
+    "primary_document": "ses-20241231x10k.htm"
+   }
+  }
+ },
+ "coverage_matrix": {
+  "text_pre2001": {
+   "unknown/in-house": 2
+  },
+  "html_2001_2008": {
+   "unknown/in-house": 1
+  },
+  "xbrl_2009_2018": {
+   "unknown/in-house": 1
+  },
+  "ixbrl_2019plus": {
+   "Workiva": 10,
+   "DFIN (Donnelley)": 1,
+   "Toppan Merrill": 1
+  }
+ },
+ "unsupported": [
+  {
+   "stratum": "text_pre2001",
+   "ticker": "AAPL",
+   "accession": "0000320193-96-000023",
+   "era": "text_pre2001",
+   "reason": "plain-text/SGML full submission (no HTML block tags)",
+   "items_extracted": 23,
+   "coverage_ratio": 0.0
+  },
+  {
+   "stratum": "text_pre2001",
+   "ticker": "KO",
+   "accession": "0000021344-98-000004",
+   "era": "text_pre2001",
+   "reason": "plain-text/SGML full submission (no HTML block tags)",
+   "items_extracted": 23,
+   "coverage_ratio": 0.0
+  }
+ ]
+}

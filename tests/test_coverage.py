@@ -5,7 +5,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from sec_core.coverage import compute_gaps, coverage_ratio
+from sec_core.coverage import (
+    compute_gaps, coverage_ratio, partition_document, region_at,
+)
 
 
 @dataclass
@@ -53,3 +55,22 @@ def test_whitespace_only_gap_is_ignored():
     text = "A" * 100 + "   \n \t " + "B" * 100
     segs = [_Seg("1", 0, 100), _Seg("2", 107, len(text))]
     assert compute_gaps(text, segs, min_chars=1) == []
+
+
+def test_partition_tiles_the_whole_document_without_overlap():
+    text = "z" * 1000
+    segs = [_Seg("1", 0, 800), _Seg("2", 400, 1000)]  # overlapping items
+    blocks = partition_document(text, segs)
+    assert blocks[0].start == 0 and blocks[-1].end == len(text)
+    assert all(blocks[i].end == blocks[i + 1].start for i in range(len(blocks) - 1))
+
+
+def test_partition_attributes_overlap_to_the_tightest_item():
+    # Item 2 (Properties, narrow) is nested inside Item 1 (Business, wide).
+    # A position inside the nested span must resolve to the tighter item — the
+    # bug that made find report "the wrong place".
+    text = "q" * 1000
+    segs = [_Seg("1", 0, 900), _Seg("2", 300, 400)]
+    assert region_at(350, partition_document(text, segs)).code == "2"
+    assert region_at(100, partition_document(text, segs)).code == "1"
+    assert region_at(950, partition_document(text, segs)).code == ""  # unclassified tail

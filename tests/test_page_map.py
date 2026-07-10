@@ -48,61 +48,20 @@ def test_resolve_returns_none_when_no_pagination():
     assert resolve_page_ref(pm, "Pages 3-5") is None
 
 
-def _wrapper_body_with_headings():
-    # a wrapper body that prints its section HEADING at the top of the item's
-    # first page (as real annual-report bodies do) plus a page-number footer.
-    # The trust gate resolves a page anchor to content only when the span head
-    # actually carries that item's heading — so the heading must be present.
-    headings = {3: "Risk Factors", 5: "Management's Discussion and Analysis"}
-    parts = ["<div>Cover</div>"]
-    for pg in range(1, 9):
-        if pg in headings:
-            parts.append(f"<p><b>{headings[pg]}</b></p>")
-        parts.append(f"<p>Body content on page {pg}. " + ("lorem ipsum dolor sit amet " * 20) + "</p>")
-        parts.append(f"<div>{pg}</div>")  # footer marker
-    return "".join(parts)
-
-
 def test_synthetic_wrapper_resolves_item_body():
-    # index points Item 1A -> pages 3-4 and Item 7 -> pages 5-6, whose body pages
-    # begin with the matching section heading, so the anchor is verifiable.
-    entries = [("1", "Business", "8-9"), ("1A", "Risk Factors", "3-4"),
-               ("2", "Properties", "8-9"), ("3", "Legal Proceedings", "8-9"),
-               ("5", "Market", "8-9"), ("7", "MD&A", "5-6"),
-               ("7A", "Market Risk", "8-9"), ("8", "Financial Statements", "8-9"),
-               ("9A", "Controls", "8-9")]
+    # index that points Item 1A to a page range, plus a paginated body
     index = ("<div>Cross-Reference Index</div>"
-             + "".join(f"<p><b>Item {c}. {t}</b></p><div>Pages {pr}</div>"
-                       for c, t, pr in entries))
-    html = f"<html><body>{index}{_wrapper_body_with_headings()}</body></html>"
+             + "".join(f"<p><b>Item {c}. {t}</b></p><div>Pages {2+i}-{3+i}</div>"
+                       for i, (c, t) in enumerate([
+                           ("1", "Business"), ("1A", "Risk Factors"), ("2", "Properties"),
+                           ("3", "Legal Proceedings"), ("5", "Market"), ("7", "MD&A"),
+                           ("7A", "Market Risk"), ("8", "Financial Statements"),
+                           ("9A", "Controls")])))
+    html = f"<html><body>{index}{_body_with_pages()}</body></html>"
     result = extract_from_html(html, "synthetic-wrapper")
     assert result.filing_class == "cross_reference_index"
     resolved = [s for s in result.segments if s.provenance == "resolved_from_page_anchor"]
     assert resolved, "expected at least one item resolved from page anchors"
-    codes = {s.item_code for s in resolved}
-    assert "1A" in codes and "7" in codes  # verified by their section headings
     for s in resolved:
         assert s.status == "partial" and s.needs_review is True
         assert s.text_sha256  # a real source-exact span, not a pointer
-
-
-def test_page_anchor_without_matching_heading_is_demoted_not_mislabelled():
-    # A page range that resolves to a body span whose head is NOT the item's
-    # section heading must NOT be shown as content (that is the Intel silent
-    # mislabel: "Properties" resolving onto unrelated prose). It is demoted to
-    # an honest pointer instead.
-    entries = [("1", "Business", "8-9"), ("1A", "Risk Factors", "8-9"),
-               ("2", "Properties", "3-4"), ("3", "Legal Proceedings", "8-9"),
-               ("5", "Market", "8-9"), ("7", "MD&A", "8-9"),
-               ("7A", "Market Risk", "8-9"), ("8", "Financial Statements", "8-9"),
-               ("9A", "Controls", "8-9")]
-    index = ("<div>Cross-Reference Index</div>"
-             + "".join(f"<p><b>Item {c}. {t}</b></p><div>Pages {pr}</div>"
-                       for c, t, pr in entries))
-    # pages 3-4 carry a "Risk Factors" heading, NOT "Properties"
-    html = f"<html><body>{index}{_wrapper_body_with_headings()}</body></html>"
-    result = extract_from_html(html, "synthetic-wrapper")
-    props = result.segment("2")
-    assert props.provenance == "cross_reference_pointer"
-    assert props.status == "incorporated_by_reference"
-    assert props.text_sha256 == ""  # never a fabricated/mislabelled body

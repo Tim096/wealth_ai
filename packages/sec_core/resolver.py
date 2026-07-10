@@ -57,22 +57,48 @@ class FilingResolver:
 
     def annual_filings(self, cik: int) -> list[FilingRef]:
         data = json.loads(self.fetcher.get(SUBMISSIONS_URL.format(cik=cik)).content)
-        recent = data.get("filings", {}).get("recent", {})
+        filings = data.get("filings", {})
         refs: list[FilingRef] = []
-        forms = recent.get("form", [])
+        self._collect_10k(cik, filings.get("recent", {}), refs)
+        # The submissions API keeps only the most recent ~1000 filings inline;
+        # a prolific filer's older 10-Ks live in separate paginated files. Pull
+        # those too so EVERY historical 10-K is selectable (the year picker must
+        # not silently stop at whatever fits in "recent").
+        for page in filings.get("files", []):
+            name = page.get("name")
+            if not name:
+                continue
+            try:
+                older = json.loads(self.fetcher.get(
+                    f"https://data.sec.gov/submissions/{name}").content)
+            except Exception:  # noqa: BLE001 — one bad page must not drop the rest
+                continue
+            self._collect_10k(cik, older, refs)
+        # newest first, de-duplicated by accession
+        seen: set[str] = set()
+        out: list[FilingRef] = []
+        for r in sorted(refs, key=lambda r: (r.report_date or r.filing_date or ""), reverse=True):
+            if r.accession in seen:
+                continue
+            seen.add(r.accession)
+            out.append(r)
+        return out
+
+    @staticmethod
+    def _collect_10k(cik: int, block: dict, refs: list[FilingRef]) -> None:
+        forms = block.get("form", [])
         for i, form in enumerate(forms):
             if form not in ("10-K", "10-K/A"):
                 continue
             refs.append(FilingRef(
                 cik=cik,
-                accession=recent["accessionNumber"][i],
+                accession=block["accessionNumber"][i],
                 form=form,
-                filing_date=recent.get("filingDate", [""] * len(forms))[i],
-                report_date=recent.get("reportDate", [""] * len(forms))[i],
-                primary_document=recent.get("primaryDocument", [""] * len(forms))[i],
+                filing_date=block.get("filingDate", [""] * len(forms))[i],
+                report_date=block.get("reportDate", [""] * len(forms))[i],
+                primary_document=block.get("primaryDocument", [""] * len(forms))[i],
                 is_amendment=form == "10-K/A",
             ))
-        return refs
 
     def find_10k(self, cik: int, year: int) -> FilingRef:
         """10-K whose report (fiscal) year matches; falls back to filing year."""

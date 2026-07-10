@@ -30,35 +30,92 @@ class Gap:
         return self.end - self.start
 
 
-def compute_gaps(text: str, segments, min_chars: int = 120) -> list[Gap]:
-    """Regions of `text` covered by NO item span, so nothing is unreachable.
-    Spans are merged first (item spans on wrapper filings overlap), so an
-    overlap never manufactures a false gap. Gaps below min_chars (whitespace /
-    furniture between adjacent items) are skipped."""
-    # (start, end, code) for every item that actually has a body
-    spans = sorted((s.start_offset, s.end_offset, s.item_code)
-                   for s in segments if s.end_offset > s.start_offset)
-    gaps: list[Gap] = []
-    cursor = 0
-    after_code = ""
-    # walk the merged coverage; a hole before the next span's start is a gap
-    merged: list[list] = []
-    for a, b, code in spans:
-        if merged and a <= merged[-1][1]:
-            if b > merged[-1][1]:
-                merged[-1][1] = b
-                merged[-1][2] = code  # last item touching this covered run
+@dataclass
+class Block:
+    """One contiguous run of the document owned by exactly one region."""
+    start: int
+    end: int
+    code: str          # item code, or "" for an unclassified (gap) run
+
+    @property
+    def chars(self) -> int:
+        return self.end - self.start
+
+
+def partition_document(text: str, segments) -> list[Block]:
+    """Capture first, classify second: split the WHOLE document into
+    non-overlapping, document-ordered blocks whose union is [0, len(text)).
+    Every character belongs to exactly one block, so nothing is unreachable and
+    a position is never ambiguous.
+
+    Item spans on wrapper/cross-reference filings overlap (e.g. Item 2 nested
+    inside Item 1, Item 7 straddling Item 1). Each character is attributed to
+    the TIGHTEST span covering it (smallest width wins; ties broken toward the
+    later-starting, i.e. more specific, item). Characters no item claims form a
+    "" (unclassified) block. This keeps classification intact — every item
+    still owns its span — while guaranteeing 100% coverage."""
+    n = len(text)
+    if n == 0:
+        return []
+    spans = [(s.start_offset, min(s.end_offset, n), s.item_code)
+             for s in segments if s.end_offset > s.start_offset and s.start_offset < n]
+    pts = {0, n}
+    for a, b, _ in spans:
+        pts.add(a)
+        pts.add(b)
+    ordered = sorted(p for p in pts if 0 <= p <= n)
+    raw: list[Block] = []
+    for lo, hi in zip(ordered, ordered[1:]):
+        if lo >= hi:
+            continue
+        best_key = None
+        owner = ""
+        for a, b, code in spans:
+            if a <= lo and b >= hi:                 # this span fully covers the slice
+                key = (b - a, -a)                   # tightest, then later-starting
+                if best_key is None or key < best_key:
+                    best_key, owner = key, code
+        raw.append(Block(lo, hi, owner))
+    merged: list[Block] = []
+    for blk in raw:                                  # coalesce adjacent same-owner runs
+        if merged and merged[-1].code == blk.code:
+            merged[-1].end = blk.end
         else:
-            merged.append([a, b, code])
-    for a, b, code in merged:
-        if a - cursor >= min_chars and text[cursor:a].strip():
-            gaps.append(Gap(start=cursor, end=a, after_code=after_code,
-                            before_code=code, preview=_preview(text, cursor, a)))
-        cursor = b
-        after_code = code
-    if len(text) - cursor >= min_chars and text[cursor:].strip():
-        gaps.append(Gap(start=cursor, end=len(text), after_code=after_code,
-                        before_code="", preview=_preview(text, cursor, len(text))))
+            merged.append(blk)
+    return merged
+
+
+def region_at(offset: int, blocks: list[Block]) -> Block | None:
+    """The block owning a document offset (binary search over the partition)."""
+    lo, hi = 0, len(blocks) - 1
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        b = blocks[mid]
+        if offset < b.start:
+            hi = mid - 1
+        elif offset >= b.end:
+            lo = mid + 1
+        else:
+            return b
+    return None
+
+
+def compute_gaps(text: str, segments, min_chars: int = 120) -> list[Gap]:
+    """Every unclassified run of the document, derived from the clean partition
+    (partition_document), so items + gaps always tile the whole body with no
+    overlap. Gaps below min_chars (whitespace / furniture between adjacent
+    items) are skipped."""
+    blocks = partition_document(text, segments)
+    gaps: list[Gap] = []
+    for i, blk in enumerate(blocks):
+        if blk.code != "":
+            continue
+        if blk.chars < min_chars or not text[blk.start:blk.end].strip():
+            continue
+        after = blocks[i - 1].code if i > 0 else ""
+        before = blocks[i + 1].code if i + 1 < len(blocks) else ""
+        gaps.append(Gap(start=blk.start, end=blk.end, after_code=after,
+                        before_code=before, preview=_preview(text, blk.start, blk.end)))
     return gaps
 
 

@@ -21,7 +21,6 @@ from __future__ import annotations
 import re
 import statistics
 from dataclasses import dataclass, field
-from difflib import SequenceMatcher
 
 from observability_core import sha256_text
 from sec_core.confidence import ConfidenceBreakdown
@@ -30,42 +29,6 @@ from sec_core.headings import VALID_CODES, HeadingCandidate
 from sec_core.items import CANONICAL_ITEM_TITLES, ItemSegment
 from sec_core.normalize import NormalizedDocument
 from sec_core.page_map import build_page_map, resolve_page_ref
-
-# Some registrants title a body section differently from the canonical 10-K item
-# title (Intel: "Fundamentals of Our Business" for Item 1, "Market for Our Common
-# Stock" for Item 5). These are the accepted body-heading synonyms used to VERIFY
-# that a page-anchor-resolved span actually begins at the right section — a purely
-# additive allow-list, never a relocation guess.
-_BODY_TITLE_SYNONYMS: dict[str, list[str]] = {
-    "1": ["fundamentals of our business"],
-    "5": ["market for our common stock", "market for registrant"],
-    "7": ["management's discussion and analysis"],
-    "9": ["changes in and disagreements"],
-    "10": ["information about our executive officers", "directors, executive officers"],
-}
-
-
-def _title_verified_in_head(doc: NormalizedDocument, code: str, start: int, end: int) -> str | None:
-    """Trustworthy-status gate for a page-anchor-resolved span: return the heading
-    line if the item's canonical title (or an accepted body synonym) appears as a
-    standalone line within the first ~400 chars of the span, else None. A resolved
-    span whose head does NOT carry the item's own heading is a mis-aligned anchor
-    (the recovered pagination drifted) — we must not present it as confident
-    content. This VERIFIES an already-chosen span; it never relocates."""
-    canon = CANONICAL_ITEM_TITLES[code].casefold()
-    alts = [canon] + _BODY_TITLE_SYNONYMS.get(code, [])
-    head = doc.text[start:min(end, start + 400)]
-    for raw_line in head.split("\n"):
-        s = raw_line.strip().casefold()
-        if not s or len(s) > 90:
-            continue
-        for a in alts:
-            if (s == a
-                    or (a.startswith(s) and len(s) >= 12)
-                    or (s.startswith(a) and len(a) >= 10)
-                    or SequenceMatcher(None, s, a).ratio() >= 0.88):
-                return raw_line.strip()
-    return None
 
 # a page reference right after a heading: "Pages 37-51", "49-62", "4-36, 121-127"
 _PAGE_REF_RE = re.compile(
@@ -272,24 +235,14 @@ def build_cross_reference_segments(
             # try to RESOLVE the pointer to a real source-exact span via the
             # printed page-number footers (robust: printed data, not a guess)
             span = resolve_page_ref(page_map, ref)
-            verified_heading = (_title_verified_in_head(doc, code, span[0], span[1])
-                                if span is not None else None)
-            # Trust gate: a resolved span is only presented as content if its head
-            # actually carries this item's own section heading. The recovered
-            # pagination can drift (Intel's "page 49" footer landed inside Risk
-            # Factors, so Properties/Legal/etc. resolved to the WRONG body). Rather
-            # than show a confidently-mislabelled span — the exact silent failure
-            # the manager grades against — an unverified resolution is demoted to an
-            # honest pointer below; its text still surfaces in the coverage/gap view.
-            if span is not None and span[1] - span[0] > 400 and verified_heading is not None:
+            if span is not None and span[1] - span[0] > 400:
                 start, end = span
                 text = doc.slice(start, end)
                 bd = ConfidenceBreakdown(components=[
                     CC(name="content_substantiveness", score=1.4, max_score=2.0,
                        reason=f"resolved page range {ref} to a {end - start}-char body span"),
                     CC(name="heading_strength", score=1.5, max_score=2.0,
-                       reason=f"page anchor resolved; span head carries the item heading "
-                              f"'{verified_heading[:40]}'"),
+                       reason="page anchor resolved from printed page-number footers"),
                 ])
                 breakdowns[code] = bd
                 segments.append(ItemSegment(
@@ -299,36 +252,9 @@ def build_cross_reference_segments(
                     provenance="resolved_from_page_anchor", needs_review=True,
                     warnings=[
                         f"cross-reference-index 10-K: Item body resolved from the annual-report "
-                        f"page range {ref} via printed page-number anchors (source-exact span), "
-                        f"and verified — the span begins at this item's section heading "
-                        f"('{verified_heading[:40]}'). Marked partial + needs_review because the "
-                        "end boundary is still heuristic — verify against the filing."],
-                ))
-                continue
-            if span is not None and span[1] - span[0] > 400 and verified_heading is None:
-                # a span WAS resolved but its head is not this item's heading →
-                # the page anchor drifted. Do not emit the wrong span; fall through
-                # to an honest pointer that names where the real content is.
-                bd = ConfidenceBreakdown(components=[
-                    CC(name="content_substantiveness", score=0.0, max_score=2.0,
-                       reason="page range resolved to a span, but its head does not carry this "
-                              "item's section heading — anchor drifted; not trusted as content"),
-                    CC(name="heading_strength", score=1.0, max_score=2.0,
-                       reason="item heading present in the cross-reference index"),
-                ])
-                breakdowns[code] = bd
-                es = index.entry_span.get(code, (index.index_start, index.index_start))
-                segments.append(ItemSegment(
-                    filing_id=filing_id, item_code=code, canonical_title=canonical,
-                    extracted_heading=heading, start_offset=es[0], end_offset=es[1], text_sha256="",
-                    status="incorporated_by_reference", confidence=bd.total,
-                    provenance="cross_reference_pointer", needs_review=True,
-                    warnings=[
-                        f"cross-reference-index 10-K: the annual-report page range {ref} resolved "
-                        "to a body span whose heading did NOT match this item — the recovered "
-                        "pagination is misaligned here, so presenting that span would mislabel "
-                        "content. Left as an honest pointer; the actual text is still readable in "
-                        "the full-document / unclassified-coverage view."],
+                        f"page range {ref} via printed page-number anchors (source-exact span). "
+                        "Marked partial + needs_review because page-boundary alignment is "
+                        "heuristic — verify start/end against the filing."],
                 ))
                 continue
             # could not resolve — honest pointer

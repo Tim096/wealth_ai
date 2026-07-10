@@ -1,0 +1,33 @@
+fix(sec): kill three silent-failure classes found by 11-company audit
+
+An adversarial audit (56 agents over 11 real 10-Ks) confirmed 31 anomalies
+that the 3-ticker smoke test missed. Three systemic classes, now fixed in
+a new refine.py:
+
+1. reference-stub mislabeling (biggest class): the old _CROSS_REF_RE only
+   caught "refer to Item N". Real filings point elsewhere with many
+   phrasings the regex missed - "Refer to Note 14", "Reference is made to
+   the Financial Section", "appear on pages 162-314", proxy incorporation
+   with words between "incorporated" and "by reference". classify_reference_
+   stub now detects short pointer bodies broadly and marks them
+   incorporated_by_reference with the target named. Fixes MSFT/NVDA/CAT
+   Item 3, JPM 1C/7/7A/8, GS 1C/7A/11/13/14, XOM 3/7/7A/8, NVDA 8.
+
+2. trailing furniture leak: every part-boundary item (4, 9C, 16) leaked
+   "PART II/III", page numbers, and running headers into its span because
+   end = next item start. trim_trailing_furniture strips them explainably.
+
+3. terminal runaway (most severe): XOM Item 16 swallowed 311K chars and
+   JPM Item 15 swallowed 985K chars of an appended Financial Section /
+   bound annual report. detect_appended_section_cut caps the terminal item
+   at the section break and warns that appended content was excluded.
+
+Confidence now discriminates: a new content_substantiveness component
+(and zeroing verifier credit for stubs) drops stub confidence to ~0.57-0.7
+vs ~0.95 for substantive items - the audit found a flat 0.958 regardless.
+
+Net effect on the 11-company sweep: pass 75.9%->70.0%, incorporated_by_
+reference 19.0%->24.9%. Lower pass rate = higher honesty; 15 silent-failure
+stubs reclassified. 42 tests pass (10 new in test_refine.py).
+
+Claude-Session: https://claude.ai/code/session_01NMR95161GMG3LnU3kAPDZy

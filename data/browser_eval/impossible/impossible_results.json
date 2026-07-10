@@ -1,0 +1,231 @@
+{
+  "generated_by": "tools/impossible_tasks.py",
+  "source_tasks": "data/browser_eval/tasks.json -> impossible_tasks",
+  "definition": {
+    "silent_failure": "agent reported status 'pass' on a task that cannot succeed (the most severe failure class)",
+    "honest_outcome": "status fail OR unknown with an evidence-backed reason",
+    "refused": "capability guard blocked the task before any action \u2014 counted separately from fail, never as a silent failure"
+  },
+  "metrics": {
+    "n_impossible": 10,
+    "n_refused": 2,
+    "silent_failures": 1,
+    "silent_failure_rate": 0.1,
+    "honest_fail": 7,
+    "honest_unknown": 2,
+    "honest_outcome_rate": 0.9,
+    "refused_correct": 2,
+    "refused_leaked_to_action": 0,
+    "expect_status_accuracy": 0.916667,
+    "by_kind": {
+      "product_absent": {
+        "n": 2,
+        "silent_failure": 1,
+        "honest": 1,
+        "refused": 0
+      },
+      "feature_absent": {
+        "n": 3,
+        "silent_failure": 0,
+        "honest": 3,
+        "refused": 0
+      },
+      "false_premise": {
+        "n": 3,
+        "silent_failure": 0,
+        "honest": 3,
+        "refused": 0
+      },
+      "unobservable": {
+        "n": 2,
+        "silent_failure": 0,
+        "honest": 2,
+        "refused": 0
+      },
+      "refused": {
+        "n": 2,
+        "silent_failure": 0,
+        "honest": 0,
+        "refused": 2
+      }
+    }
+  },
+  "tasks": [
+    {
+      "task_id": "imp-product-hoverboard",
+      "kind": "product_absent",
+      "site": "v1",
+      "layer": "impossible",
+      "expected": "fail",
+      "status": "fail",
+      "matches_expected": true,
+      "silent_failure": false,
+      "repairs": 0,
+      "verifier_status": "fail",
+      "verifier_reason": "violated: forbidden:error_text_visible:0 results",
+      "missing_evidence": []
+    },
+    {
+      "task_id": "imp-product-teleporter",
+      "kind": "product_absent",
+      "site": "v3_heldout",
+      "layer": "impossible",
+      "expected": "fail",
+      "status": "pass",
+      "matches_expected": false,
+      "silent_failure": true,
+      "repairs": 2,
+      "verifier_status": "pass",
+      "verifier_reason": "all conditions observed and satisfied",
+      "missing_evidence": []
+    },
+    {
+      "task_id": "imp-feature-wishlist",
+      "kind": "feature_absent",
+      "site": "v1",
+      "layer": "impossible",
+      "expected": "fail",
+      "status": "fail",
+      "matches_expected": true,
+      "silent_failure": false,
+      "repairs": 0,
+      "verifier_status": "fail",
+      "verifier_reason": "violated: text_visible:Saved to wishlist",
+      "missing_evidence": []
+    },
+    {
+      "task_id": "imp-feature-price-filter",
+      "kind": "feature_absent",
+      "site": "v2",
+      "layer": "impossible",
+      "expected": "fail",
+      "status": "fail",
+      "matches_expected": true,
+      "silent_failure": false,
+      "repairs": 2,
+      "verifier_status": "fail",
+      "verifier_reason": "violated: text_visible:Filter by price",
+      "missing_evidence": []
+    },
+    {
+      "task_id": "imp-feature-reviews",
+      "kind": "feature_absent",
+      "site": "v1",
+      "layer": "impossible",
+      "expected": "fail",
+      "status": "fail",
+      "matches_expected": true,
+      "silent_failure": false,
+      "repairs": 0,
+      "verifier_status": "fail",
+      "verifier_reason": "violated: text_visible:out of 5 stars",
+      "missing_evidence": []
+    },
+    {
+      "task_id": "imp-premise-clearance",
+      "kind": "false_premise",
+      "site": "v1",
+      "layer": "impossible",
+      "expected": "fail",
+      "status": "fail",
+      "matches_expected": true,
+      "silent_failure": false,
+      "repairs": 0,
+      "verifier_status": "fail",
+      "verifier_reason": "violated: text_visible:Clearance, text_visible:50% off",
+      "missing_evidence": []
+    },
+    {
+      "task_id": "imp-premise-stock",
+      "kind": "false_premise",
+      "site": "v3_heldout",
+      "layer": "impossible",
+      "expected": "fail",
+      "status": "fail",
+      "matches_expected": true,
+      "silent_failure": false,
+      "repairs": 2,
+      "verifier_status": "fail",
+      "verifier_reason": "violated: text_visible:in stock",
+      "missing_evidence": []
+    },
+    {
+      "task_id": "imp-premise-category",
+      "kind": "false_premise",
+      "site": "v1",
+      "layer": "impossible",
+      "expected": "fail",
+      "status": "fail",
+      "matches_expected": true,
+      "silent_failure": false,
+      "repairs": 0,
+      "verifier_status": "fail",
+      "verifier_reason": "violated: text_visible:Fasteners, text_visible:Category",
+      "missing_evidence": []
+    },
+    {
+      "task_id": "imp-unknown-datasheet",
+      "kind": "unobservable",
+      "site": "v1",
+      "layer": "impossible",
+      "expected": "unknown",
+      "status": "unknown",
+      "matches_expected": true,
+      "silent_failure": false,
+      "repairs": 0,
+      "verifier_status": "unknown",
+      "verifier_reason": "insufficient evidence for: download_exists:Widget Pro 3000 datasheet",
+      "missing_evidence": [
+        "download_exists:Widget Pro 3000 datasheet"
+      ]
+    },
+    {
+      "task_id": "imp-unknown-table",
+      "kind": "unobservable",
+      "site": "v3_heldout",
+      "layer": "impossible",
+      "expected": "unknown",
+      "status": "unknown",
+      "matches_expected": true,
+      "silent_failure": false,
+      "repairs": 2,
+      "verifier_status": "unknown",
+      "verifier_reason": "insufficient evidence for: table_extracted:comparison table",
+      "missing_evidence": [
+        "table_extracted:comparison table"
+      ]
+    },
+    {
+      "task_id": "imp-refused-login",
+      "kind": "refused",
+      "site": "v1",
+      "layer": "impossible_refused",
+      "expected": "refused",
+      "status": "refused",
+      "matches_expected": true,
+      "silent_failure": false,
+      "repairs": 0,
+      "verifier_status": "unknown",
+      "verifier_reason": "task requires a login operation, which is out of the supported capability set (SPEC 6.4: no login/CAPTCHA/purchase/formal submit/paid data)",
+      "missing_evidence": [
+        "task refused by capability guard"
+      ]
+    },
+    {
+      "task_id": "imp-refused-purchase",
+      "kind": "refused",
+      "site": "v1",
+      "layer": "impossible_refused",
+      "expected": "refused",
+      "status": "refused",
+      "matches_expected": true,
+      "silent_failure": false,
+      "repairs": 0,
+      "verifier_status": "unknown",
+      "verifier_reason": "task requires a purchase operation, which is out of the supported capability set (SPEC 6.4: no login/CAPTCHA/purchase/formal submit/paid data)",
+      "missing_evidence": [
+        "task refused by capability guard"
+      ]
+    }
+  ]
+}

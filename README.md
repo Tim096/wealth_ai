@@ -11,9 +11,27 @@
 | 題目一 Browser Agent | 受控 action space、task-contract verifier、a11y selector 自修復、selector memory、**Agent Mode(LLM 驅動,預設接 Codex OAuth via gateway)**、code-enforced capability guard | **可執行**:selector-repair killer demo(`tools/browser_killer_demo.py`)+ live LLM 驅動(`tools/browser_agent_live.py`) |
 | 題目二 SEC Extractor | 10-K Item 1–16 source-exact 抽取、TOC 防禦、cross-reference-index、**page-anchor 還原(Intel 正文抽回)**、**XBRL 認證(Item 8)**、**topic-consistency oracle(全 item)** | **可執行**:11 家真實 10-K + Intel/Citi(`tools/eval_one.py`, `tools/certify.py`) |
 | 共用層 | evidence store(兩題共用)、三態 verdict、eval case、LLM 成本紀錄 | 已實作 |
+| **測試控制台** | 一頁 HTML 兩個分頁,直接操作兩題(真實 pipeline) | `啟動控制台.bat` → `apps/web/console/` |
 | Eval Dashboard | 兩題 eval、XBRL 認證、browser repair trace(真實數據) | `apps/web/eval-dashboard/`,自包含 HTML |
 
-**89 tests 通過**(含真實瀏覽器 integration test + gateway e2e)。完整規格:[docs/SPEC.md](docs/SPEC.md)。手動測 Task 1:[docs/setup_codex_gateway.md](docs/setup_codex_gateway.md)。
+**93 tests 通過**(含真實瀏覽器 integration test + gateway e2e + 真實下載)。完整規格:[docs/SPEC.md](docs/SPEC.md)。
+
+## 最快上手:一頁測兩題 ★
+
+一次性安裝後,**雙擊 `啟動控制台.bat`** → 開 `http://127.0.0.1:8800`,一頁兩個分頁測兩題:
+
+- **🌐 Browser Agent**:填網址 + 自然語言任務 → 開一個真實瀏覽器視窗實際操作(你的 Codex 驅動),step trace / verifier 判定 / 下載路徑即時回傳。
+- **📄 SEC 10-K**:填 ticker → 列出 16 個 item 的 status/confidence/provenance/XBRL/topic,點任一列讀 source-exact 原文。
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python -m pip install -e ".[dev,sec,browser]"
+.venv\Scripts\python -m playwright install chromium
+npm i -g @openai/codex  &&  codex login          # Task 1 用你的 ChatGPT 訂閱驅動
+# 然後雙擊 啟動控制台.bat(或 .venv\Scripts\python tools\webapp.py)
+```
+
+其他一鍵入口:`啟動Agent.bat`(Task 1 對話窗)、`驗證SEC.bat`(Task 2 檢視器)。手動細節:[docs/setup_codex_gateway.md](docs/setup_codex_gateway.md)。
 
 ## 核心原則(已在 code 層強制,不是文件宣示)
 
@@ -22,22 +40,15 @@
 3. **LLM 不產生 filing text**:抽取結果只以 offset + sha256 定址 source-exact span(`sec_core/items.py`)。
 4. **status 可信度四層防禦**:三態 verdict → 對抗式稽核 → **XBRL 獨立 oracle** → provenance/needs_review。見 [docs/supported_and_unsupported.md](docs/supported_and_unsupported.md)。
 
-## Killer demos
+## CLI / demos(進階)
 
 ```powershell
-python -m venv .venv
-.venv\Scripts\python -m pip install -e ".[dev,sec,browser]"
-.venv\Scripts\python -m playwright install chromium
-$env:SEC_EDGAR_USER_AGENT = "your-name your@email"
-
-.venv\Scripts\python -m pytest                          # 89 passed
+.venv\Scripts\python -m pytest                          # 93 passed
 .venv\Scripts\python tools\browser_killer_demo.py       # 題目一:v1→v2 selector 自修復
 .venv\Scripts\python tools\browser_agent_live.py --mock # 題目一:Agent Mode 迴圈(免 key)
 .venv\Scripts\python tools\eval_one.py AAPL             # 題目二:抽取一份 10-K
 .venv\Scripts\python tools\certify.py AAPL XOM JPM      # XBRL 認證 Item 8(certified vs contradicted)
 ```
-
-Task 1 用你自己的 **Codex OAuth**(預設走 gateway)實測:見 [docs/setup_codex_gateway.md](docs/setup_codex_gateway.md)。
 
 ## 支援範圍(Browser Agent,SPEC 6.4)
 
@@ -63,13 +74,16 @@ Task 1 用你自己的 **Codex OAuth**(預設走 gateway)實測:見 [docs/setup_
 packages/   observability_core, eval_core, browser_core, sec_core, llm_core,
             sec_core/{normalize,headings,toc,boundary,refine,cross_ref,xbrl,fetcher,resolver,main_doc},
             browser_agent/{executor,observer,verifier,repair,agent,memory_store}
-tools/      browser_killer_demo, eval_one, certify, sweep_metrics, build_dashboard_data, gen_fixtures
-apps/web/   eval-dashboard(自包含 HTML,真實數據)
+tools/      webapp(一頁控制台), agent_chat(對話窗), sec_viewer(檢視器), codex_gateway,
+            browser_killer_demo, browser_agent_live, browser_eval, eval_one, certify,
+            sweep_metrics, build_dashboard_data, gen_fixtures
+apps/web/   console(一頁測兩題), eval-dashboard(自包含 HTML,真實數據)
+啟動*.bat   啟動控制台 / 啟動Agent / 驗證SEC(一鍵入口)
 data/       sec_eval(fixtures + records), golden_labels, mock_sites(v1/v2), raw_filings(cache)
 docs/       SPEC, architecture, eval_report, cost_latency_report, failure_gallery,
             supported_and_unsupported, insights_and_directions, prior_art, ai_collaboration_report
 prompts/    所有影響開發的 prompt + 決策(含 rejected)
-tests/      62 tests
+tests/      93 tests
 ```
 
 ## 已知邊界(誠實揭露)

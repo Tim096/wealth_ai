@@ -122,32 +122,53 @@ _JOBS: queue.Queue = queue.Queue()
 _AGENT_INFO = {"planner": "starting…", "ready": False}
 
 
-def _ensure_gateway(base_url: str) -> bool:
+def _gateway_backend(base_url: str) -> str:
+    """Ask the gateway what backend it runs ('' if unreachable). The client
+    must never guess from its own PATH — an Explorer-launched process may not
+    see codex even though the gateway (or a fresh spawn of it) can."""
     import httpx
+    try:
+        r = httpx.get(f"{base_url.rstrip('/')}/models", timeout=3)
+        if r.status_code == 200:
+            return r.json().get("backend", "unknown")
+    except Exception:  # noqa: BLE001
+        pass
+    return ""
 
-    def up() -> bool:
-        try:
-            return httpx.get(f"{base_url.rstrip('/')}/models", timeout=3).status_code == 200
-        except Exception:  # noqa: BLE001
-            return False
-    if up():
-        return shutil.which("codex") is not None
-    backend = "codex" if shutil.which("codex") else "mock"
+
+def _ensure_gateway(base_url: str) -> str:
+    """Return the running gateway's backend name, starting it (backend=auto,
+    which resolves codex via find_codex) if needed."""
+    backend = _gateway_backend(base_url)
+    if backend:
+        return backend
     port = base_url.rstrip("/").split(":")[-1].split("/")[0]
     subprocess.Popen([str(ROOT / ".venv" / "Scripts" / "python.exe"),
                       str(ROOT / "tools" / "codex_gateway.py"),
-                      "--backend", backend, "--model", "default", "--port", port],
+                      "--backend", "auto", "--model", "default", "--port", port],
                      creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     for _ in range(20):
-        if up():
-            return backend == "codex"
+        backend = _gateway_backend(base_url)
+        if backend:
+            return backend
         time.sleep(0.5)
-    return False
+    return ""
+
+
+DEFAULT_START = "https://www.bing.com"
 
 
 def agent_submit(task: str, url: str, success: str) -> dict:
+    url = url.strip() or DEFAULT_START
+    if success.strip():
+        conds = [f"text_visible:{success.strip()}"]
+    else:
+        conds = derive_success(task)
+        if not conds:
+            return {"ok": False, "need_success": True,
+                    "error": "這個任務推斷不出可驗證的成功條件(中文長句無法自動切詞)——"
+                             "請在「成功條件」欄填:完成時頁面上會出現的一小段文字。"}
     run_id = f"run{int(time.time() * 1000) % 10**9}"
-    conds = [f"text_visible:{success.strip()}"] if success.strip() else derive_success(task)
     _RUNS[run_id] = {"status": "queued", "steps": [], "task": task, "url": url,
                      "success": conds, "verifier": "", "confidence": None, "download": ""}
     _JOBS.put((run_id, task, url, conds))
@@ -165,8 +186,13 @@ def _agent_worker() -> None:
     from observability_core import EvidenceStore
 
     cfg = load_llm_config()
-    real = _ensure_gateway(cfg.base_url)
-    _AGENT_INFO["planner"] = f"Codex gateway({cfg.base_url})" if real else "mock planner(僅內建 demo 站)"
+    backend = _ensure_gateway(cfg.base_url)
+    if backend == "codex":
+        _AGENT_INFO["planner"] = "Codex(你的 ChatGPT OAuth)✓"
+    elif backend:
+        _AGENT_INFO["planner"] = f"⚠ {backend} 後端 — 未找到 codex,僅適合內建 demo;請先 codex login"
+    else:
+        _AGENT_INFO["planner"] = "✗ gateway 起不來"
     client = OpenAIClient(api_key=cfg.api_key, base_url=cfg.base_url, model=cfg.model)
     OUT.mkdir(parents=True, exist_ok=True)
 
@@ -204,7 +230,9 @@ def _agent_worker() -> None:
                     success_conditions=[SuccessCondition(type=c.split(":", 1)[0],
                                                          value=c.split(":", 1)[1])
                                         for c in conds])
-                planner = LLMPlanner(client) if real else MockPlanner("widget")
+                # always go through the gateway — its backend (codex/mock)
+                # decides behaviour; a local MockPlanner is only for tests
+                planner = LLMPlanner(client)
                 agent = BrowserAgent(page, MemoryStore(OUT / "mem.json"), "web", "agentic",
                                      artifact_dir=OUT / "shots",
                                      evidence_store=EvidenceStore(OUT / "evidence"),

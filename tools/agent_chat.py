@@ -181,6 +181,10 @@ class AgentChat:
                 self._log("bad", f"打不開 {url}: {e}")
                 return
         conds = derive_success(task)
+        if not conds:
+            self._log("bad", "推斷不出可驗證的成功條件(中文長句無法自動切詞)。"
+                             "請在任務裡用引號標出關鍵詞,例:搜尋 \"訂閱價格\"。")
+            return
         self._log("sys", f"成功條件(自動推斷):{conds[0]}")
         contract = BrowserTaskContract(
             task_id="chat", natural_language_task=task,

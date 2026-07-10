@@ -128,13 +128,32 @@ class MockBackend(Backend):
         return json.dumps({"action": "done", "reason": "mock: results should be visible"})
 
 
+def find_codex() -> str | None:
+    """Locate the codex CLI even when launched from Explorer (double-clicked
+    .bat), where fnm's per-shell PATH entries don't exist. Checks PATH first,
+    then the stable npm/fnm install locations."""
+    import glob
+    import shutil as _sh
+    p = _sh.which("codex")
+    if p:
+        return p
+    for pat in (
+        os.path.expandvars(r"%APPDATA%\npm\codex.cmd"),
+        os.path.expandvars(r"%APPDATA%\fnm\aliases\default\codex.cmd"),
+        os.path.expandvars(r"%APPDATA%\fnm\node-versions\*\installation\codex.cmd"),
+    ):
+        hits = sorted(glob.glob(pat))
+        if hits:
+            return hits[-1]
+    return None
+
+
 class CodexBackend(Backend):
     def __init__(self, model: str, extra_args: list[str], timeout_s: int = 180) -> None:
         self.model = model
         self.extra_args = extra_args
         self.timeout_s = timeout_s
-        import shutil
-        self.codex = shutil.which("codex") or "codex"
+        self.codex = find_codex() or "codex"
 
     def complete(self, system: str, user: str) -> str:
         # instruction goes as the prompt arg; page state is piped via stdin
@@ -190,7 +209,10 @@ class OpenAIBackend(Backend):
         return r.json()["choices"][0]["message"]["content"]
 
 
-def make_handler(backend: Backend, model: str):
+def make_handler(backend: Backend, model: str, backend_name: str = ""):
+    if not backend_name:
+        backend_name = type(backend).__name__.replace("Backend", "").lower()
+
     class Handler(BaseHTTPRequestHandler):
         def _send(self, code: int, obj: dict) -> None:
             body = json.dumps(obj).encode()
@@ -202,7 +224,10 @@ def make_handler(backend: Backend, model: str):
 
         def do_GET(self):  # noqa: N802
             if self.path.rstrip("/").endswith("/models"):
-                self._send(200, {"object": "list", "data": [{"id": model, "object": "model"}]})
+                # `backend` lets clients distinguish a real Codex gateway from
+                # the mock one instead of guessing from their own PATH
+                self._send(200, {"object": "list", "backend": backend_name,
+                                 "data": [{"id": model, "object": "model"}]})
             else:
                 self._send(404, {"error": "not found"})
 
@@ -235,12 +260,14 @@ def make_handler(backend: Backend, model: str):
     return Handler
 
 
-def build_backend(name: str, model: str) -> Backend:
+def build_backend(name: str, model: str) -> tuple[Backend, str]:
+    if name == "auto":
+        name = "codex" if find_codex() else "mock"
     if name == "mock":
-        return MockBackend()
+        return MockBackend(), "mock"
     if name == "openai":
-        return OpenAIBackend(model)
-    return CodexBackend(model, [])
+        return OpenAIBackend(model), "openai"
+    return CodexBackend(model, []), "codex"
 
 
 def main() -> None:
@@ -249,11 +276,12 @@ def main() -> None:
     ap.add_argument("--model", default=os.environ.get("CODEX_MODEL", "default"),
                     help="'default' = account default (recommended for ChatGPT OAuth, which "
                          "rejects explicit codex-* model names); or e.g. gpt-5.3-codex on an API key")
-    ap.add_argument("--backend", choices=["codex", "mock", "openai"], default="codex")
+    ap.add_argument("--backend", choices=["auto", "codex", "mock", "openai"], default="auto")
     args = ap.parse_args()
-    backend = build_backend(args.backend, args.model)
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(backend, args.model))
-    print(f"[codex-gateway] backend={args.backend} model={args.model} "
+    backend, name = build_backend(args.backend, args.model)
+    server = ThreadingHTTPServer(("127.0.0.1", args.port),
+                                 make_handler(backend, args.model, name))
+    print(f"[codex-gateway] backend={name} model={args.model} "
           f"listening on http://127.0.0.1:{args.port}/v1")
     print("[codex-gateway] point the agent at it: set OPENAI_BASE_URL=http://127.0.0.1:"
           f"{args.port}/v1 (already the default)")

@@ -52,21 +52,15 @@ def _preflight_gateway(base_url: str) -> tuple[bool, str]:
         return False, f"{type(e).__name__}: {e}"
 
 
-_STOP = {"the", "a", "an", "for", "to", "and", "of", "in", "on", "open", "search",
-         "find", "go", "click", "read", "article", "page", "this", "that", "with"}
+from browser_agent.nl import derive_success  # noqa: E402  (shared, CJK-aware)
 
 
-def derive_success(task: str) -> list[str]:
-    """Turn a natural-language task into a verifier condition when the user
-    didn't give one: prefer a quoted phrase, else the most salient long word."""
-    if re.search(r"download|下載|下载|save file", task, re.I):
-        return ["download_exists:"]
-    q = re.findall(r"['\"]([^'\"]{2,60})['\"]", task)
-    if q:
-        return [f"text_visible:{q[0]}"]
-    words = [w for w in re.findall(r"[A-Za-z][A-Za-z0-9\-]{3,}", task) if w.lower() not in _STOP]
-    words.sort(key=len, reverse=True)
-    return [f"text_visible:{words[0]}"] if words else ["url_contains:."]
+def derive_or_die(task: str) -> list[str]:
+    conds = derive_success(task)
+    if not conds:
+        raise SystemExit("推斷不出可驗證的成功條件(中文長句無法自動切詞)——"
+                         "請用 --success 'type:value' 或在任務裡用引號標出關鍵詞。")
+    return conds
 
 
 def make_planner(args):
@@ -135,7 +129,13 @@ def interactive_loop(page, args):
         url = input(f"起始 URL [{last_url or '目前頁面'}] > ").strip() or last_url
         last_url = url
         succ = input("成功條件 (看到什麼文字算成功,可留空自動推斷) > ").strip()
-        conds = [f"text_visible:{succ}"] if succ else derive_success(task)
+        if succ:
+            conds = [f"text_visible:{succ}"]
+        else:
+            conds = derive_success(task)
+            if not conds:
+                print("! 推斷不出成功條件(中文長句無法切詞)——請重新輸入,並填成功條件或在任務中用引號標關鍵詞。\n")
+                continue
         print(f"[success] {conds}")
         run_task(page, args, task, url, conds)
         print()
@@ -174,7 +174,7 @@ def main() -> None:
         else:
             task = args.task or "Search MockShop for 'widget' and see the results"
             url = args.url or (ROOT / "data" / "mock_sites" / "v2" / "index.html").resolve().as_uri()
-            conds = args.success or derive_success(task)
+            conds = args.success or derive_or_die(task)
             run_task(page, args, task, url, conds)
         browser.close()
     print(f"\nevidence: {OUT / 'evidence'}   shots: {OUT / 'shots'}")

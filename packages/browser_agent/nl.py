@@ -12,13 +12,20 @@ _STOP = {"the", "a", "an", "for", "to", "and", "of", "in", "on", "open", "search
 
 
 def derive_success(task: str) -> list[str]:
-    """Prefer an explicit download intent, then a quoted phrase, then the most
-    salient long word (works for Chinese and English tasks)."""
+    """Derive a verifier condition ONLY when it can be done confidently:
+    download intent, a quoted phrase, or a distinctive Latin token (brand /
+    proper noun). Unsegmented Chinese prose has no word boundaries — the whole
+    sentence regex-matches as one 'word' — so rather than produce a garbage
+    condition (e.g. text_visible:<half the task sentence>), return [] and let
+    the caller ask the operator for an explicit condition. Honest > guessy."""
     if re.search(r"download|下載|下载|存檔|save file", task, re.I):
         return ["download_exists:"]
     quoted = re.findall(r"['\"“」『]([^'\"”」』]{2,60})['\"”」』]", task)
     if quoted:
         return [f"text_visible:{quoted[0]}"]
-    words = [w for w in re.findall(r"[A-Za-z0-9一-鿿]{2,}", task) if w not in _STOP]
-    words.sort(key=len, reverse=True)
-    return [f"text_visible:{words[0]}"] if words else ["url_contains:."]
+    latin = [w for w in re.findall(r"[A-Za-z][A-Za-z0-9\-\.]{2,}", task)
+             if w.lower() not in _STOP]
+    if latin:
+        latin.sort(key=len, reverse=True)
+        return [f"text_visible:{latin[0]}"]
+    return []

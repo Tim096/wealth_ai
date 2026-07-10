@@ -63,6 +63,9 @@ def main() -> None:
         print(result.text_of(code))
         return
 
+    # TOC-rejected candidates are the filing's own claim of which items exist —
+    # the scoring layer maps `missing` + toc_listed to the MISSING tri-state.
+    toc_codes = {c.code for c in result.candidates if c.toc_rejected}
     record = {
         "ticker": ticker,
         "cik": ref.cik,
@@ -74,6 +77,7 @@ def main() -> None:
         "main_document": best.name,
         "main_document_score": best.score,
         "raw_chars": len(raw),
+        "normalized_chars": len(result.doc.text),
         "latency_ms": round(result.latency_ms, 1),
         "candidates": len(result.candidates),
         "toc_rejected": sum(1 for c in result.candidates if c.toc_rejected),
@@ -87,6 +91,10 @@ def main() -> None:
                 "needs_review": seg.needs_review,
                 "xbrl_check": seg.xbrl_check,
                 "heading": seg.extracted_heading,
+                "start_offset": seg.start_offset,
+                "end_offset": seg.end_offset,
+                "text_sha256": seg.text_sha256,
+                "toc_listed": seg.item_code in toc_codes,
                 "span_chars": (seg.end_offset - seg.start_offset)
                 if seg.status not in ("missing", "reserved") or seg.text_sha256 else 0,
                 "warnings": seg.warnings,

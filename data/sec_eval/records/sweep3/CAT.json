@@ -1,0 +1,374 @@
+{
+ "ticker": "CAT",
+ "cik": 18230,
+ "accession": "0000018230-26-000008",
+ "form": "10-K",
+ "filing_date": "2026-02-13",
+ "report_date": "2025-12-31",
+ "filing_class": "standard",
+ "main_document": "cat-20251231.htm",
+ "main_document_score": 3.0,
+ "raw_chars": 6100469,
+ "normalized_chars": 548817,
+ "latency_ms": 1194.0,
+ "candidates": 46,
+ "toc_rejected": 23,
+ "needs_review_items": [],
+ "pipeline_warnings": [],
+ "items": {
+  "1": {
+   "status": "pass",
+   "confidence": 0.961,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 1.Business.",
+   "start_offset": 122835,
+   "end_offset": 162075,
+   "text_sha256": "edaea147e0b19978eaa0bd5f112367fb0e2684cf53b600530fbf02ed2dbaa109",
+   "toc_listed": true,
+   "span_chars": 39240,
+   "warnings": []
+  },
+  "1A": {
+   "status": "pass",
+   "confidence": 0.963,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 1A.Risk Factors.",
+   "start_offset": 162075,
+   "end_offset": 215501,
+   "text_sha256": "cf324cb53e6c3152b393edc7fcef923a8a4c8ceb9712be9f6506ccf8dafd05be",
+   "toc_listed": true,
+   "span_chars": 53426,
+   "warnings": []
+  },
+  "1B": {
+   "status": "pass",
+   "confidence": 0.965,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 1B.Unresolved Staff Comments.",
+   "start_offset": 215501,
+   "end_offset": 215542,
+   "text_sha256": "5fe68f1a085cfd00134030a05c88f3bb6d772e947428a002dc8dde5d8f55a5c1",
+   "toc_listed": true,
+   "span_chars": 41,
+   "warnings": []
+  },
+  "1C": {
+   "status": "pass",
+   "confidence": 0.963,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 1C. Cybersecurity.",
+   "start_offset": 215542,
+   "end_offset": 225752,
+   "text_sha256": "a8a19233b29bd363e1f162c04608e8bddb0c77ae9360fbb5aafde9232b493f9f",
+   "toc_listed": true,
+   "span_chars": 10210,
+   "warnings": [
+    "trimmed trailing page furniture: 22, Table of Contents"
+   ]
+  },
+  "2": {
+   "status": "pass",
+   "confidence": 0.962,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 2.Properties.",
+   "start_offset": 225773,
+   "end_offset": 231751,
+   "text_sha256": "6fa26eeb5c05d2a23867c007fd37100ed9221520198b1d04b35e9cd3537aa39b",
+   "toc_listed": true,
+   "span_chars": 5978,
+   "warnings": [
+    "trimmed trailing page furniture: 24, Table of Contents"
+   ]
+  },
+  "3": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.664,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 3.Legal Proceedings.",
+   "start_offset": 231772,
+   "end_offset": 232099,
+   "text_sha256": "d4efce3a544547657beac014289ecb044c2ee7facb131bcc06b6d5aa2ee1c0f2",
+   "toc_listed": true,
+   "span_chars": 327,
+   "warnings": [
+    "body is a reference stub pointing to a financial-statement note (Note 22) elsewhere in this filing; the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "4": {
+   "status": "pass",
+   "confidence": 0.965,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 4.Mine Safety Disclosures.",
+   "start_offset": 232099,
+   "end_offset": 232147,
+   "text_sha256": "3216649cafd16a8c993cc4df6039769ff4c328b5165dc1b77d354b8529b47a8b",
+   "toc_listed": true,
+   "span_chars": 48,
+   "warnings": [
+    "trimmed trailing page furniture: PART II"
+   ]
+  },
+  "5": {
+   "status": "pass",
+   "confidence": 0.966,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 5.Market for Registrant's Common Equity, Related Stockholder Matters and Issuer Purchases of Equity Securities.",
+   "start_offset": 232155,
+   "end_offset": 234753,
+   "text_sha256": "663d887fc2df06be5b429364c45feb45c416e7f1fc90acda7122b310ab9060dd",
+   "toc_listed": true,
+   "span_chars": 2598,
+   "warnings": []
+  },
+  "6": {
+   "status": "reserved",
+   "confidence": 0.867,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 6.[Reserved]",
+   "start_offset": 234753,
+   "end_offset": 234771,
+   "text_sha256": "117a7662370c3fb0c4703a3fccdcd7838e12b2d77c0616e546fc542b1c0d1c0a",
+   "toc_listed": true,
+   "span_chars": 18,
+   "warnings": [
+    "trimmed trailing page furniture: 27, Table of Contents"
+   ]
+  },
+  "7": {
+   "status": "pass",
+   "confidence": 0.966,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 7.Management's Discussion and Analysis of Financial Condition and Results of Operations.",
+   "start_offset": 234792,
+   "end_offset": 338133,
+   "text_sha256": "4ba7fd277bf31e59d7c19ea7759de09da90e86e19e0b3248b16bde32e133ba28",
+   "toc_listed": true,
+   "span_chars": 103341,
+   "warnings": [
+    "trimmed trailing page furniture: 53, Table of Contents"
+   ]
+  },
+  "7A": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.666,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 7A.Quantitative and Qualitative Disclosures About Market Risk.",
+   "start_offset": 338154,
+   "end_offset": 338807,
+   "text_sha256": "37327eff6fc931bf9602d1c89b7256d332bbaebd60408f635eebbb57e16f403f",
+   "toc_listed": true,
+   "span_chars": 653,
+   "warnings": [
+    "trimmed trailing page furniture: 54, Table of Contents",
+    "body is a reference stub pointing to a financial-statement note (Note 1) elsewhere in this filing; the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "8": {
+   "status": "pass",
+   "confidence": 0.966,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "certified: 3/3 XBRL headline figures found in the span",
+   "heading": "Item 8.Financial Statements and Supplementary Data.",
+   "start_offset": 338828,
+   "end_offset": 517447,
+   "text_sha256": "c8d7d06ccf3c0c10dc1cb9eadc250def91e163c1ef24350a8f92b81e4caffdbd",
+   "toc_listed": true,
+   "span_chars": 178619,
+   "warnings": [
+    "trimmed trailing page furniture: 123, Table of Contents"
+   ]
+  },
+  "9": {
+   "status": "pass",
+   "confidence": 0.966,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 9.Changes in and Disagreements with Accountants on Accounting and Financial Disclosure.",
+   "start_offset": 517469,
+   "end_offset": 517578,
+   "text_sha256": "099808ed2bb6568f1459050f309d39cc1962658d4d1fe42761ede89b7c380a8f",
+   "toc_listed": true,
+   "span_chars": 109,
+   "warnings": []
+  },
+  "9A": {
+   "status": "pass",
+   "confidence": 0.965,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 9A.Controls and Procedures.",
+   "start_offset": 517578,
+   "end_offset": 519110,
+   "text_sha256": "d487b6bdeb52357583b544a52fe418b54494998f3d33c5dcdf9a1341537b0b7c",
+   "toc_listed": true,
+   "span_chars": 1532,
+   "warnings": []
+  },
+  "9B": {
+   "status": "pass",
+   "confidence": 0.964,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 9B.Other Information.",
+   "start_offset": 519110,
+   "end_offset": 520972,
+   "text_sha256": "74a2f4c7cf7cba8db8fa1ff1947f216cac056f3a22b3abd0cc1d199f8791660f",
+   "toc_listed": true,
+   "span_chars": 1862,
+   "warnings": []
+  },
+  "9C": {
+   "status": "pass",
+   "confidence": 0.966,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 9C. Disclosure Regarding Foreign Jurisdictions that Prevent Inspections.",
+   "start_offset": 520972,
+   "end_offset": 521066,
+   "text_sha256": "d8a6729530fdb49cc6643b482a058d475a62acb015f2e5963dfd970652f77f33",
+   "toc_listed": true,
+   "span_chars": 94,
+   "warnings": [
+    "trimmed trailing page furniture: 124, PART III"
+   ]
+  },
+  "10": {
+   "status": "pass",
+   "confidence": 0.966,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 10. Directors, Executive Officers and Corporate Governance.",
+   "start_offset": 521079,
+   "end_offset": 523451,
+   "text_sha256": "2525c699066f828422b8fb3cb076adcd0b19dfba68dfe081c1b4b56eb2adfb61",
+   "toc_listed": true,
+   "span_chars": 2372,
+   "warnings": []
+  },
+  "11": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.664,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 11. Executive Compensation.",
+   "start_offset": 523451,
+   "end_offset": 523578,
+   "text_sha256": "f4310323f2f2fd83db3898dad40d93362918b4ed67bb9132edeec71a35eec417",
+   "toc_listed": true,
+   "span_chars": 127,
+   "warnings": [
+    "trimmed trailing page furniture: 125, Table of Contents",
+    "body is a reference stub pointing to the definitive proxy statement (external document, not fetched); the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "12": {
+   "status": "pass",
+   "confidence": 0.866,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 12. Security Ownership of Certain Beneficial Owners and Management and Related Stockholder Matters.",
+   "start_offset": 523600,
+   "end_offset": 524613,
+   "text_sha256": "11f0ec837e96539eaac7fa4622c5087116fcf253f1fa887babc490ad76cebfa5",
+   "toc_listed": true,
+   "span_chars": 1013,
+   "warnings": [
+    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 18 chars before this line; dense_cluster: 4 other item headings within 1500 chars (3 after) \u2014 heading list, not body; kept despite TOC signals: no later candidate exists for this item"
+   ]
+  },
+  "13": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.566,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 13. Certain Relationships and Related Transactions, and Director Independence.",
+   "start_offset": 524613,
+   "end_offset": 524791,
+   "text_sha256": "a873c4ad2551764cf8ebbb962627a9d6862a1974b9a1143c6d8c73aee5fd5f16",
+   "toc_listed": true,
+   "span_chars": 178,
+   "warnings": [
+    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 1031 chars before this line; dense_cluster: 4 other item headings within 1500 chars (2 after) \u2014 heading list, not body; short_section: only 95 chars before the next item heading \u2014 no real section body; kept despite TOC signals: no later candidate exists for this item",
+    "body is a reference stub pointing to the definitive proxy statement (external document, not fetched); the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "14": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.665,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 14. Principal Accountant Fees and Services.",
+   "start_offset": 524791,
+   "end_offset": 525052,
+   "text_sha256": "426774852fbf041e48b292eacfcf3d7e6b92c3791d7a7b8ac6cf71a73beef692",
+   "toc_listed": true,
+   "span_chars": 261,
+   "warnings": [
+    "trimmed trailing page furniture: 126, Table of Contents, PART IV",
+    "body is a reference stub pointing to the definitive proxy statement (external document, not fetched); the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "15": {
+   "status": "pass",
+   "confidence": 0.959,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 15. Exhibits and Financial Statement Schedules.",
+   "start_offset": 525082,
+   "end_offset": 547264,
+   "text_sha256": "e392f64fb36a4aa0875d1dd1a7606124ff2531222a35d880f5a3a8b8083c805d",
+   "toc_listed": true,
+   "span_chars": 22182,
+   "warnings": []
+  },
+  "16": {
+   "status": "pass",
+   "confidence": 0.964,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 16. Form 10-K Summary.",
+   "start_offset": 547264,
+   "end_offset": 547298,
+   "text_sha256": "6c65730302d75f5d6478c36a5df739430a3c9cad9c9512bfbb116505ee2c5cb1",
+   "toc_listed": true,
+   "span_chars": 34,
+   "warnings": [
+    "trimmed trailing page furniture: 131, Table of Contents, Form 10-K"
+   ]
+  }
+ }
+}

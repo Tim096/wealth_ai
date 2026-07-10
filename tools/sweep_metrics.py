@@ -10,6 +10,8 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+from sec_core.scoring import tristate
+
 
 def main() -> None:
     sweep_dir = Path(sys.argv[1] if len(sys.argv) > 1 else "runs/sweep1")
@@ -21,11 +23,22 @@ def main() -> None:
     per_ticker_rows = []
     confidences_pass: list[float] = []
     latencies: list[float] = []
+    tri_counts: Counter[str] = Counter()
+    tri_available = True
+    missing_alarms: list[str] = []  # "TICKER:item" where tri-state == MISSING
 
     for rec in records:
         items = rec["items"]
         c: Counter[str] = Counter(v["status"] for v in items.values())
         status_counts.update(c)
+        for code, v in items.items():
+            if "toc_listed" not in v:
+                tri_available = False
+                continue
+            tri = tristate(v["status"], v["toc_listed"])
+            tri_counts[tri] += 1
+            if tri == "MISSING":
+                missing_alarms.append(f"{rec['ticker']}:{code}")
         confidences_pass += [v["confidence"] for v in items.values() if v["status"] == "pass"]
         latencies.append(rec["latency_ms"])
         substantive = sum(v for k, v in c.items() if k in ("pass", "partial", "incorporated_by_reference", "reserved"))
@@ -42,6 +55,20 @@ def main() -> None:
     print("|---|---|---|")
     for s, n in status_counts.most_common():
         print(f"| {s} | {n} | {n/total_items:.1%} |")
+    print()
+    if tri_available:
+        print("tri-state (ExtractBench-style; MISSING = TOC advertises item, nothing extracted):")
+        print()
+        print("| tri-state | count | share |")
+        print("|---|---|---|")
+        for s, n in tri_counts.most_common():
+            print(f"| {s} | {n} | {n/total_items:.1%} |")
+        if missing_alarms:
+            print()
+            print(f"MISSING alarms (omission candidates): {', '.join(missing_alarms)}")
+    else:
+        print("tri-state: n/a — records predate the offset upgrade "
+              "(re-run tools/eval_one.py to emit toc_listed/offsets)")
     print()
     print(f"pass-item confidence: mean {sum(confidences_pass)/len(confidences_pass):.3f}, "
           f"min {min(confidences_pass):.3f}")

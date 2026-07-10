@@ -1,0 +1,156 @@
+{
+ "ticker": "NEM",
+ "cik": 1164727,
+ "accession": "0001164727-26-000010",
+ "form": "10-K",
+ "report_date": "2025-12-31",
+ "normalized_chars": 1012803,
+ "labeling": "semi-automatic: pipeline offsets frozen only where the independent third engine (edgartools triangulation, data/sec_eval/triangulation/triangulation.json) returned verdict=agree AND needs_review=false; disagree/unavailable items keep state=present but are excluded from offset F1; missing-with-TOC-claim items are state=unverified. Frozen spans were human spot-checked before commit. Offsets address NormalizedDocument.text (map to raw HTML via doc.raw_offset).",
+ "frozen_at": "2026-07-10",
+ "items": {
+  "1": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 121831,
+   "end_offset": 175589,
+   "text_sha256": "e6039141ed2d4e0ba772d42a32b978036c26ae2c227b579f0d896d7bf85500a9"
+  },
+  "1A": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 175589,
+   "end_offset": 394432,
+   "text_sha256": "fbe431c2b7a59d7555126947a8a64d9ed146e1769219834734ef9e4ea17a94ad"
+  },
+  "1B": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 394432,
+   "end_offset": 394473,
+   "text_sha256": "7a3f44dd85acd5362f1815a4ad5d2f4001487ebc6c96497002c68314c0c491b9"
+  },
+  "1C": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 394473,
+   "end_offset": 402514,
+   "text_sha256": "b6df5ec9aea797e1620d46e797010fff3935089a9689797c2d204d0609add1ca"
+  },
+  "2": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 402535,
+   "end_offset": 536545,
+   "text_sha256": "21b7300fa3d26ee7f0576d9bfcc5abda4f2cc90ebd7fccb9d250e33718028819"
+  },
+  "3": {
+   "state": "null",
+   "reason": "incorporated_by_reference"
+  },
+  "4": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 536963,
+   "end_offset": 540251,
+   "text_sha256": "2180c7e7e6d72cea37ccd947b2cf497135fe2dee92b54c04d4e5836a6182490f"
+  },
+  "5": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 540280,
+   "end_offset": 543339,
+   "text_sha256": "04f2393757208f9bd3b9dab889e7598799f34d87102f3b1294bda650e887b0de"
+  },
+  "6": {
+   "state": "null",
+   "reason": "reserved"
+  },
+  "7": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 543383,
+   "end_offset": 694193,
+   "text_sha256": "57dd756f9aaaa095baac5aee0246a1ba237df79697f2dc0d1de835c93dad5a84"
+  },
+  "7A": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 694193,
+   "end_offset": 704520,
+   "text_sha256": "5ae4a7181e44a1ffc611e0ac502c34c636a43954af0dd7b57408525209a69617"
+  },
+  "8": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 704542,
+   "end_offset": 958357,
+   "text_sha256": "f7eaf4c88aaf51568b42c129c4f8fb87d07fb27dcba5d8d319f8326b3fd339b5"
+  },
+  "9": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 958379,
+   "end_offset": 958478,
+   "text_sha256": "5c133b83b1a3ed5689c007a3007b4a2e71822b60559862adb282ea171c09eeb8"
+  },
+  "9A": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 958478,
+   "end_offset": 968100,
+   "text_sha256": "d9978b93f01789d7d14a2101066f85e9a1d810078b48aaa579d0c331be819740"
+  },
+  "9B": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 968122,
+   "end_offset": 972613,
+   "text_sha256": "af83fa827234b210c8346091f19fa92084fa6a36e18c609a203294497bb18a07"
+  },
+  "9C": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 972613,
+   "end_offset": 972706,
+   "text_sha256": "5134187311a36e8971484227561536992b4dbdf890cee9f77004f8b364c397c8"
+  },
+  "10": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 972737,
+   "end_offset": 984711,
+   "text_sha256": "ed8075e1d31dbdad6867146d952e239358552a1dd8501905fabbf15dda021718"
+  },
+  "11": {
+   "state": "null",
+   "reason": "incorporated_by_reference"
+  },
+  "12": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 985391,
+   "end_offset": 987273,
+   "text_sha256": "7744fcdb5b2d21725388670808e96d7900db192a271cb7ede4c901c8999c8cb2"
+  },
+  "13": {
+   "state": "null",
+   "reason": "incorporated_by_reference"
+  },
+  "14": {
+   "state": "null",
+   "reason": "incorporated_by_reference"
+  },
+  "15": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 988224,
+   "end_offset": 1010794,
+   "text_sha256": "ddabce33372a3064949d9b5e9f987d061116c61e78ebc16fd130ce18c3a59feb"
+  },
+  "16": {
+   "state": "present",
+   "status_frozen": "pass",
+   "offsets_excluded": "third-engine verdict=disagree \u2014 offsets not independently confirmed"
+  }
+ }
+}

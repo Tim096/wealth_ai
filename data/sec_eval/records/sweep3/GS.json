@@ -1,0 +1,371 @@
+{
+ "ticker": "GS",
+ "cik": 886982,
+ "accession": "0000886982-26-000091",
+ "form": "10-K",
+ "filing_date": "2026-02-25",
+ "report_date": "2025-12-31",
+ "filing_class": "standard",
+ "main_document": "gs-20251231.htm",
+ "main_document_score": 3.0,
+ "raw_chars": 9611165,
+ "normalized_chars": 1271915,
+ "latency_ms": 2246.0,
+ "candidates": 42,
+ "toc_rejected": 20,
+ "needs_review_items": [],
+ "pipeline_warnings": [],
+ "items": {
+  "1": {
+   "status": "pass",
+   "confidence": 0.967,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 1. Business",
+   "start_offset": 191657,
+   "end_offset": 343574,
+   "text_sha256": "4e2dd8455c8e043d2fce3af8745ef9fba726fcb5e9e130e8dfad1000bca5cf3f",
+   "toc_listed": true,
+   "span_chars": 151917,
+   "warnings": []
+  },
+  "1A": {
+   "status": "pass",
+   "confidence": 0.967,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 1A. Risk Factors",
+   "start_offset": 343574,
+   "end_offset": 485289,
+   "text_sha256": "9582d488be07c3fa8d2ab2a894c71612add3f72ea164bd937a09745ca9b51cf2",
+   "toc_listed": true,
+   "span_chars": 141715,
+   "warnings": [
+    "trimmed trailing page furniture: 60, Goldman Sachs 2025 Form 10-K, THE GOLDMAN SACHS GROUP, INC. AND SUBSIDIARIES"
+   ]
+  },
+  "1B": {
+   "status": "pass",
+   "confidence": 0.967,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 1B. Unresolved Staff Comments",
+   "start_offset": 485368,
+   "end_offset": 485610,
+   "text_sha256": "5bc66b7d866988bba427cbc46ce9ff6e235cbb593f171021a45486d37f97b68f",
+   "toc_listed": true,
+   "span_chars": 242,
+   "warnings": []
+  },
+  "1C": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.667,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 1C. Cybersecurity",
+   "start_offset": 485610,
+   "end_offset": 485857,
+   "text_sha256": "2da63fd638c76cf3764c05b5f447807a9d8acdcb80cf9bbe935a1dc1837ecc03",
+   "toc_listed": true,
+   "span_chars": 247,
+   "warnings": [
+    "body is a reference stub pointing to another item (Item 7) in this filing; the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "2": {
+   "status": "pass",
+   "confidence": 0.967,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 2. Properties",
+   "start_offset": 485857,
+   "end_offset": 487753,
+   "text_sha256": "f6fab683752e32f3b8b7c588748f0da50a2112ec7d35a4a2daa28e104e0dad5d",
+   "toc_listed": true,
+   "span_chars": 1896,
+   "warnings": []
+  },
+  "3": {
+   "status": "pass",
+   "confidence": 0.967,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 3. Legal Proceedings",
+   "start_offset": 487753,
+   "end_offset": 488976,
+   "text_sha256": "83aca145efb5692d855019faf0f036edd9369a42f5bfad1e4c7fb039767d6428",
+   "toc_listed": true,
+   "span_chars": 1223,
+   "warnings": []
+  },
+  "4": {
+   "status": "pass",
+   "confidence": 0.967,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 4. Mine Safety Disclosures",
+   "start_offset": 488976,
+   "end_offset": 489024,
+   "text_sha256": "3e48809444d15a76b269e79e52d9c6ea9bb9b8bbb3b7a551232fa01d19b72909",
+   "toc_listed": true,
+   "span_chars": 48,
+   "warnings": [
+    "trimmed trailing page furniture: Goldman Sachs 2025 Form 10-K, 61, THE GOLDMAN SACHS GROUP, INC. AND SUBSIDIARIES, PART II"
+   ]
+  },
+  "5": {
+   "status": "pass",
+   "confidence": 0.967,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 5. Market for Registrant's Common Equity, Related Stockholder Matters and Issuer Purchases of Equity Securities",
+   "start_offset": 489111,
+   "end_offset": 491459,
+   "text_sha256": "7a13edd1b1ee7a61215e1b09b7713beeb1b93fce7aea6caf80af14f597db025e",
+   "toc_listed": true,
+   "span_chars": 2348,
+   "warnings": []
+  },
+  "6": {
+   "status": "reserved",
+   "confidence": 0.0,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "",
+   "start_offset": 0,
+   "end_offset": 0,
+   "text_sha256": "",
+   "toc_listed": false,
+   "span_chars": 0,
+   "warnings": [
+    "no heading candidate found for item 6"
+   ]
+  },
+  "7": {
+   "status": "pass",
+   "confidence": 0.967,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 7. Management's Discussion and Analysis of Financial Condition and Results of Operations",
+   "start_offset": 491459,
+   "end_offset": 800755,
+   "text_sha256": "eaa360611e406e7a00f2daf9642d33bf74ee604a0ed6b34ddbb3c8131cbccf3e",
+   "toc_listed": true,
+   "span_chars": 309296,
+   "warnings": [
+    "trimmed trailing page furniture: 134, Goldman Sachs 2025 Form 10-K, THE GOLDMAN SACHS GROUP, INC. AND SUBSIDIARIES"
+   ]
+  },
+  "7A": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.667,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 7A. Quantitative and Qualitative Disclosures About Market Risk",
+   "start_offset": 800835,
+   "end_offset": 801123,
+   "text_sha256": "ccf4b886bfba1462f206018681f6fa2d8eac9ceaf6ec3d4073878e3dae5846e8",
+   "toc_listed": false,
+   "span_chars": 288,
+   "warnings": [
+    "body is a reference stub pointing to another item (Item 7) in this filing; the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "8": {
+   "status": "pass",
+   "confidence": 0.967,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "certified: 2/2 XBRL headline figures found in the span",
+   "heading": "Item 8. Financial Statements and Supplementary Data",
+   "start_offset": 801123,
+   "end_offset": 1247538,
+   "text_sha256": "490d30c7aac6995abda352cb088c04d53cc97c1dcc7a935d60164233c0c4fe5d",
+   "toc_listed": true,
+   "span_chars": 446415,
+   "warnings": [
+    "trimmed trailing page furniture: Goldman Sachs 2025 Form 10-K, 243, THE GOLDMAN SACHS GROUP, INC. AND SUBSIDIARIES"
+   ]
+  },
+  "9": {
+   "status": "pass",
+   "confidence": 0.967,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 9. Changes in and Disagreements with Accountants on Accounting and Financial Disclosure",
+   "start_offset": 1247618,
+   "end_offset": 1247836,
+   "text_sha256": "2248ae40d8d976e55e3a230ed4d24e783102e24242b6f21553b401605d9f7a39",
+   "toc_listed": true,
+   "span_chars": 218,
+   "warnings": []
+  },
+  "9A": {
+   "status": "pass",
+   "confidence": 0.967,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 9A. Controls and Procedures",
+   "start_offset": 1247836,
+   "end_offset": 1248877,
+   "text_sha256": "8fbeb854d5e7a1422e88d75ba7aaa656b76ff26b90823642d284b0ba490a122e",
+   "toc_listed": true,
+   "span_chars": 1041,
+   "warnings": []
+  },
+  "9B": {
+   "status": "pass",
+   "confidence": 0.967,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 9B. Other Information",
+   "start_offset": 1248877,
+   "end_offset": 1250241,
+   "text_sha256": "b16012c67c0a61aa34f9d8ffd57271d1b382f324ba83d049904ca27dbdf26271",
+   "toc_listed": true,
+   "span_chars": 1364,
+   "warnings": []
+  },
+  "9C": {
+   "status": "pass",
+   "confidence": 0.967,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 9C. Disclosure Regarding Foreign Jurisdictions that Prevent Inspections",
+   "start_offset": 1250241,
+   "end_offset": 1250334,
+   "text_sha256": "02d67987d7ccb1842f86640b89d8ff3480bdfba017368be796b1942e81f0fc99",
+   "toc_listed": true,
+   "span_chars": 93,
+   "warnings": [
+    "trimmed trailing page furniture: PART III"
+   ]
+  },
+  "10": {
+   "status": "pass",
+   "confidence": 0.967,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 10. Directors, Executive Officers and Corporate Governance",
+   "start_offset": 1250343,
+   "end_offset": 1251637,
+   "text_sha256": "c04384a98d5130046e30c1075e6d10812b9720f11b64f2b77053f93085b4f059",
+   "toc_listed": true,
+   "span_chars": 1294,
+   "warnings": [
+    "trimmed trailing page furniture: 244, Goldman Sachs 2025 Form 10-K, THE GOLDMAN SACHS GROUP, INC. AND SUBSIDIARIES"
+   ]
+  },
+  "11": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.667,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 11. Executive Compensation",
+   "start_offset": 1251717,
+   "end_offset": 1251953,
+   "text_sha256": "dbc4f0ffb39339944b2d3f3e3ed21391bf44cc84d04df043afc5363004dc3faa",
+   "toc_listed": true,
+   "span_chars": 236,
+   "warnings": [
+    "body is a reference stub pointing to the definitive proxy statement (external document, not fetched); the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "12": {
+   "status": "pass",
+   "confidence": 0.967,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 12. Security Ownership of Certain Beneficial Owners and Management and Related Stockholder Matters",
+   "start_offset": 1251953,
+   "end_offset": 1254166,
+   "text_sha256": "b7fe711f53fcc6e6591f612f70df0b5154fe4c798a88f9ad5089c25497720a0c",
+   "toc_listed": true,
+   "span_chars": 2213,
+   "warnings": []
+  },
+  "13": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.667,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 13. Certain Relationships and Related Transactions, and Director Independence",
+   "start_offset": 1254166,
+   "end_offset": 1254432,
+   "text_sha256": "2b5c9d0d27d19e2b64a5da539e45973c611fe23120af23215021ec862738aaf9",
+   "toc_listed": true,
+   "span_chars": 266,
+   "warnings": [
+    "body is a reference stub pointing to the definitive proxy statement (external document, not fetched); the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "14": {
+   "status": "incorporated_by_reference",
+   "confidence": 0.667,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 14. Principal Accountant Fees and Services",
+   "start_offset": 1254432,
+   "end_offset": 1254629,
+   "text_sha256": "f4ec738767976868640387b9955d1a72f89eac12ab9a8569cb353ef6a0ee7e86",
+   "toc_listed": true,
+   "span_chars": 197,
+   "warnings": [
+    "trimmed trailing page furniture: PART IV",
+    "body is a reference stub pointing to the definitive proxy statement (external document, not fetched); the span is the pointer text only, not the referenced content"
+   ]
+  },
+  "15": {
+   "status": "pass",
+   "confidence": 0.959,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 15. Exhibit and Financial Statement Schedules",
+   "start_offset": 1254637,
+   "end_offset": 1269738,
+   "text_sha256": "cf0ecfccaab31a3f11efb9e51332d7795c97b87badd0e73138cd1d7961c2361a",
+   "toc_listed": true,
+   "span_chars": 15101,
+   "warnings": [
+    "trimmed trailing page furniture: Goldman Sachs 2025 Form 10-K, 249"
+   ]
+  },
+  "16": {
+   "status": "missing",
+   "confidence": 0.0,
+   "provenance": "offset_exact_span",
+   "needs_review": false,
+   "xbrl_check": "",
+   "heading": "",
+   "start_offset": 0,
+   "end_offset": 0,
+   "text_sha256": "",
+   "toc_listed": false,
+   "span_chars": 0,
+   "warnings": [
+    "no heading candidate found for item 16"
+   ]
+  }
+ }
+}

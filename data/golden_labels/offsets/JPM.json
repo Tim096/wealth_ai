@@ -1,0 +1,143 @@
+{
+ "ticker": "JPM",
+ "cik": 19617,
+ "accession": "0001628280-26-008131",
+ "form": "10-K",
+ "report_date": "2025-12-31",
+ "normalized_chars": 1395823,
+ "labeling": "semi-automatic: pipeline offsets frozen only where the independent third engine (edgartools triangulation, data/sec_eval/triangulation/triangulation.json) returned verdict=agree AND needs_review=false; disagree/unavailable items keep state=present but are excluded from offset F1; missing-with-TOC-claim items are state=unverified. Frozen spans were human spot-checked before commit. Offsets address NormalizedDocument.text (map to raw HTML via doc.raw_offset).",
+ "frozen_at": "2026-07-10",
+ "items": {
+  "1": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 230303,
+   "end_offset": 269414,
+   "text_sha256": "6832adcda4456338ad4d5998d324ec7f07d723008f6e145b945658216c86a742"
+  },
+  "1A": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 269416,
+   "end_offset": 381544,
+   "text_sha256": "d558e0594c1367486b26b5f4a931620ad9ac3ff1f113e46fd7bf411a8cc411db"
+  },
+  "1B": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 381544,
+   "end_offset": 381586,
+   "text_sha256": "aab4472de0c66721419b593614b15b81488b48ac39031d20f80b19cf2f6432d3"
+  },
+  "1C": {
+   "state": "null",
+   "reason": "incorporated_by_reference"
+  },
+  "2": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 381756,
+   "end_offset": 383856,
+   "text_sha256": "74e84139fd1c428ec53508ef8c1a4a7783a148e0676baaffc31ead98f88d4617"
+  },
+  "3": {
+   "state": "null",
+   "reason": "incorporated_by_reference"
+  },
+  "4": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 383960,
+   "end_offset": 384009,
+   "text_sha256": "1a8b4373ffb709aed969b4a9fe32cdd99ab51c5dd52ac39b591873120d53153d"
+  },
+  "5": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 384012,
+   "end_offset": 386661,
+   "text_sha256": "e60bff9464ac2a0a90ee00a474a7e31df7c7670ab8a7f2091aa678f08f0b093a"
+  },
+  "6": {
+   "state": "null",
+   "reason": "reserved"
+  },
+  "7": {
+   "state": "null",
+   "reason": "incorporated_by_reference"
+  },
+  "7A": {
+   "state": "null",
+   "reason": "incorporated_by_reference"
+  },
+  "8": {
+   "state": "null",
+   "reason": "incorporated_by_reference"
+  },
+  "9": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 387713,
+   "end_offset": 387813,
+   "text_sha256": "c2185308db38e1a1310e879e5eda70963405f30e23dff3e7a432377f62e72937"
+  },
+  "9A": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 387813,
+   "end_offset": 390038,
+   "text_sha256": "5af78c3c35d8dc1dc73b4690569b8b9d9a5ac6ddb4f5ec1ccf6f7bb7a47a14a0"
+  },
+  "9B": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 390041,
+   "end_offset": 395429,
+   "text_sha256": "9a3b5969e590c73794346a6197dd63e9d4cc27c1ba5b4eb8c4f4758c331f7906"
+  },
+  "9C": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 395429,
+   "end_offset": 395523,
+   "text_sha256": "3617a413ed037bdc6bc838cfe38ecb249c0e18e77b044e289a84b3951da150a5"
+  },
+  "10": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 395526,
+   "end_offset": 399471,
+   "text_sha256": "4d912d2bd7c4901f5de56e20d0958cf686f852c30acefd1bffd1f65541e5b408"
+  },
+  "11": {
+   "state": "null",
+   "reason": "incorporated_by_reference"
+  },
+  "12": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 399522,
+   "end_offset": 400859,
+   "text_sha256": "30835867ac658a8e06714e2948b50254f317656525627a8bf2b8975d5a2d3581"
+  },
+  "13": {
+   "state": "null",
+   "reason": "incorporated_by_reference"
+  },
+  "14": {
+   "state": "null",
+   "reason": "incorporated_by_reference"
+  },
+  "15": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 401031,
+   "end_offset": 416564,
+   "text_sha256": "04ae54095af137da00b9205a2bd48a31b6e1ea88cc941b67a8e84bee3c8e741a"
+  },
+  "16": {
+   "state": "null",
+   "reason": "absent from filing (no TOC claim)"
+  }
+ }
+}

@@ -1,0 +1,155 @@
+{
+ "ticker": "KO",
+ "cik": 21344,
+ "accession": "0001628280-26-010047",
+ "form": "10-K",
+ "report_date": "2025-12-31",
+ "normalized_chars": 656931,
+ "labeling": "semi-automatic: pipeline offsets frozen only where the independent third engine (edgartools triangulation, data/sec_eval/triangulation/triangulation.json) returned verdict=agree AND needs_review=false; disagree/unavailable items keep state=present but are excluded from offset F1; missing-with-TOC-claim items are state=unverified. Frozen spans were human spot-checked before commit. Offsets address NormalizedDocument.text (map to raw HTML via doc.raw_offset).",
+ "frozen_at": "2026-07-10",
+ "items": {
+  "1": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 66423,
+   "end_offset": 121619,
+   "text_sha256": "66444dfeb0e81571af6ab9da5d0eb4e07af0d7a77407a4bbce8f0268e4d62b40"
+  },
+  "1A": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 121619,
+   "end_offset": 213871,
+   "text_sha256": "70dcaee74277d63d726cd5b10daa9df734436c56601286c0ba8016afa7dd8eeb"
+  },
+  "1B": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 213871,
+   "end_offset": 213922,
+   "text_sha256": "5c431869ee65334d16ae58c8d5ad833793695bbd650f361bcabce4c6aa87f442"
+  },
+  "1C": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 213922,
+   "end_offset": 221829,
+   "text_sha256": "5b0f5f6d0354d673ac8d2e26bb50ad3b34082f34a991ccfed7a605850db91a20"
+  },
+  "2": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 221829,
+   "end_offset": 224332,
+   "text_sha256": "7794bafc379f065fc9cf223850568a248b69aae5bba12b5b7995c3d07e77d037"
+  },
+  "3": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 224332,
+   "end_offset": 246426,
+   "text_sha256": "608ab4173abdcd6f3cb3165e7ae8e91866887cfdccf78868be2d79a6a57bf0b1"
+  },
+  "4": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 246426,
+   "end_offset": 253132,
+   "text_sha256": "26fd59da1173cbb78e9d1891a42b45fb050bbc4314db84ba432e56b242a1c826"
+  },
+  "5": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 253143,
+   "end_offset": 256667,
+   "text_sha256": "e537ba9190830d19fcdcf180a50fa12d9ca6a2d2da883934a89e3884cc08e421"
+  },
+  "6": {
+   "state": "null",
+   "reason": "reserved"
+  },
+  "7": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 256684,
+   "end_offset": 366290,
+   "text_sha256": "04efc87aac61d5f7224a4fa24d395593d8ce747cd1b2c83c7fc016b78d8dc067"
+  },
+  "7A": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 366290,
+   "end_offset": 372301,
+   "text_sha256": "553fbc225aae467e675d3f9083e9f834f9f838638026fa78ff0ec93646e28e72"
+  },
+  "8": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 372304,
+   "end_offset": 604242,
+   "text_sha256": "9e63b4df47f18b151c396c7f8d832b74f3ade21f346f52b9d34eadafb420d108"
+  },
+  "9": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 604246,
+   "end_offset": 604355,
+   "text_sha256": "57064e265fde31ba3d45ffb2f2ec8a9eb01897afc636d1d04b342e4f3b3173b1"
+  },
+  "9A": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 604355,
+   "end_offset": 605773,
+   "text_sha256": "02aceff40685a7a4cf06597e205fe471a7831f4304035c005e9f4fb44bdf332d"
+  },
+  "9B": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 605773,
+   "end_offset": 606095,
+   "text_sha256": "f749dce57fd87be0076defe769730cf29d4f6c167ac1c7c060ae7b2d754fdf05"
+  },
+  "9C": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 606095,
+   "end_offset": 606188,
+   "text_sha256": "5134187311a36e8971484227561536992b4dbdf890cee9f77004f8b364c397c8"
+  },
+  "10": {
+   "state": "null",
+   "reason": "incorporated_by_reference"
+  },
+  "11": {
+   "state": "null",
+   "reason": "incorporated_by_reference"
+  },
+  "12": {
+   "state": "null",
+   "reason": "incorporated_by_reference"
+  },
+  "13": {
+   "state": "null",
+   "reason": "incorporated_by_reference"
+  },
+  "14": {
+   "state": "null",
+   "reason": "incorporated_by_reference"
+  },
+  "15": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 607658,
+   "end_offset": 655328,
+   "text_sha256": "5b5a8cbd525253776425cb72228d2577ceb7ff61dde1665dec324a4756e29443"
+  },
+  "16": {
+   "state": "present",
+   "status_frozen": "pass",
+   "start_offset": 655328,
+   "end_offset": 655361,
+   "text_sha256": "8e8dfd7549eac758f41533326da325b3a598ccd82de2eaca8319d152d96522cb"
+  }
+ }
+}

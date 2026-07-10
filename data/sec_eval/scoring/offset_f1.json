@@ -1,0 +1,1226 @@
+{
+ "generated_by": "tools/score_offsets.py",
+ "records_dir": "data/sec_eval/records/sweep3",
+ "gold_dir": "data/golden_labels/offsets",
+ "totals": {
+  "filings_scored": 5,
+  "filings_skipped": 0,
+  "offset_items": 80,
+  "macro_precision_items": 1.0,
+  "macro_recall_items": 1.0,
+  "macro_f1_items": 1.0,
+  "macro_f1_filings": 1.0,
+  "outcome_counts": {
+   "matched": 82,
+   "correct_null": 33
+  }
+ },
+ "filings": [
+  {
+   "ticker": "AAPL",
+   "accession": "0000320193-25-000079",
+   "accession_match": true,
+   "gold_items": 23,
+   "offset_items": 16,
+   "macro_precision": 1.0,
+   "macro_recall": 1.0,
+   "macro_f1": 1.0,
+   "outcome_counts": {
+    "matched": 17,
+    "correct_null": 6
+   },
+   "items": [
+    {
+     "item": "1",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "1A",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "1B",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "1C",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "2",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "3",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "4",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "5",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "6",
+     "gold_state": "null",
+     "pred_status": "reserved",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "7",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "7A",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "8",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9A",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9B",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9C",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "10",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "11",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "12",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "13",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "14",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "15",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "16",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched"
+    }
+   ]
+  },
+  {
+   "ticker": "JPM",
+   "accession": "0001628280-26-008131",
+   "accession_match": true,
+   "gold_items": 23,
+   "offset_items": 13,
+   "macro_precision": 1.0,
+   "macro_recall": 1.0,
+   "macro_f1": 1.0,
+   "outcome_counts": {
+    "matched": 13,
+    "correct_null": 10
+   },
+   "items": [
+    {
+     "item": "1",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "1A",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "1B",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "1C",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "2",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "3",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "4",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "5",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "6",
+     "gold_state": "null",
+     "pred_status": "reserved",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "7",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "7A",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "8",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "9",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9A",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9B",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9C",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "10",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "11",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "12",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "13",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "14",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "15",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "16",
+     "gold_state": "null",
+     "pred_status": "missing",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    }
+   ]
+  },
+  {
+   "ticker": "KO",
+   "accession": "0001628280-26-010047",
+   "accession_match": true,
+   "gold_items": 23,
+   "offset_items": 17,
+   "macro_precision": 1.0,
+   "macro_recall": 1.0,
+   "macro_f1": 1.0,
+   "outcome_counts": {
+    "matched": 17,
+    "correct_null": 6
+   },
+   "items": [
+    {
+     "item": "1",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "1A",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "1B",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "1C",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "2",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "3",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "4",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "5",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "6",
+     "gold_state": "null",
+     "pred_status": "reserved",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "7",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "7A",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "8",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9A",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9B",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9C",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "10",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "11",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "12",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "13",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "14",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "15",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "16",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    }
+   ]
+  },
+  {
+   "ticker": "MSFT",
+   "accession": "0000950170-25-100235",
+   "accession_match": true,
+   "gold_items": 23,
+   "offset_items": 17,
+   "macro_precision": 1.0,
+   "macro_recall": 1.0,
+   "macro_f1": 1.0,
+   "outcome_counts": {
+    "matched": 17,
+    "correct_null": 6
+   },
+   "items": [
+    {
+     "item": "1",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "1A",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "1B",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "1C",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "2",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "3",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "4",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "5",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "6",
+     "gold_state": "null",
+     "pred_status": "reserved",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "7",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "7A",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "8",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9A",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9B",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9C",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "10",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "11",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "12",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "13",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "14",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "15",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "16",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    }
+   ]
+  },
+  {
+   "ticker": "NEM",
+   "accession": "0001164727-26-000010",
+   "accession_match": true,
+   "gold_items": 23,
+   "offset_items": 17,
+   "macro_precision": 1.0,
+   "macro_recall": 1.0,
+   "macro_f1": 1.0,
+   "outcome_counts": {
+    "matched": 18,
+    "correct_null": 5
+   },
+   "items": [
+    {
+     "item": "1",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "1A",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "1B",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "1C",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "2",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "3",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "4",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "5",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "6",
+     "gold_state": "null",
+     "pred_status": "reserved",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "7",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "7A",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "8",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9A",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9B",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "9C",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "10",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "11",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "12",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "13",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "14",
+     "gold_state": "null",
+     "pred_status": "incorporated_by_reference",
+     "pred_state": "null",
+     "outcome": "correct_null"
+    },
+    {
+     "item": "15",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched",
+     "sha_check": "sha_exact",
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0
+    },
+    {
+     "item": "16",
+     "gold_state": "present",
+     "pred_status": "pass",
+     "pred_state": "present",
+     "outcome": "matched"
+    }
+   ]
+  }
+ ],
+ "skipped": []
+}

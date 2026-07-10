@@ -187,7 +187,9 @@ class LLMPlanner:
             return PlannerDecision(kind=kind, reason=decision.get("reason", ""), llm=rec, raw=decision)
         act = _build_action(decision, obs)
         if act is None:
-            return PlannerDecision(kind="give_up", reason="model returned an unusable action",
+            # recoverable: the model emitted a malformed action (e.g. click with
+            # no aid). Signal a noop so the loop re-plans rather than ending.
+            return PlannerDecision(kind="noop", reason="model returned an unusable action; re-planning",
                                    llm=rec, raw=decision)
         return PlannerDecision(kind="action", action=act, reason=decision.get("reason", ""),
                                llm=rec, raw=decision)

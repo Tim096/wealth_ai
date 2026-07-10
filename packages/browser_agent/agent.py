@@ -150,19 +150,28 @@ class BrowserAgent:
         obs = self.observer.observe()
         if not obs.modal_present:
             return
-        rr = repair_target("submit_button", obs, want_value="accept")
-        # find an accept/dismiss control among candidates
+        # find an accept/dismiss/close control among candidates
+        cues = ("accept", "agree", "dismiss", "close", "ok", "got it", "no thanks",
+                "not now", "later", "skip", "continue", "×", "✕", "x")
         for c in obs.candidates:
-            blob = f"{c.id} {c.aria_label} {c.text}".lower()
-            if any(w in blob for w in ("accept", "agree", "dismiss", "close", "ok")):
+            blob = f"{c.id} {c.aria_label} {c.text}".lower().strip()
+            if any(w in blob for w in cues) and len(blob) < 40:
                 out = self.executor.execute(ClickAction(
                     target=ElementTarget(selector=c.css(), selector_type="css")))
-                trace.append(StepTrace(step="dismiss_modal", action="click", ok=out.ok,
-                                       mode="repair", detail="dismissed blocking modal",
-                                       diagnosis="modal_blocking", selector_used=c.css(),
-                                       latency_ms=out.latency_ms,
-                                       screenshot=self._screenshot("modal-dismissed")))
-                return
+                if out.ok:
+                    trace.append(StepTrace(step="dismiss_modal", action="click", ok=True,
+                                           mode="repair", detail=f"dismissed blocking modal via '{blob[:20]}'",
+                                           diagnosis="modal_blocking", selector_used=c.css(),
+                                           latency_ms=out.latency_ms,
+                                           screenshot=self._screenshot("modal-dismissed")))
+                    return
+        # universal fallback: most modals close on Escape
+        try:
+            self.page.keyboard.press("Escape")
+            trace.append(StepTrace(step="dismiss_modal", action="press", ok=True, mode="repair",
+                                   detail="pressed Escape to dismiss modal", diagnosis="modal_blocking"))
+        except Exception:  # noqa: BLE001
+            pass
 
     def _resolve_and_run(self, step: Step, trace: list[StepTrace]) -> ActionOutcome:
         # Script Mode: try the remembered / fallback selector first
@@ -295,6 +304,14 @@ class BrowserAgent:
         _emit(f"🧠 想任務:{contract.natural_language_task}")
         for _ in range(max_steps):
             obs = self.observer.observe()
+            # A popup/interstitial can appear AFTER any navigation (this is the
+            # "跳出一個頁面 agent 點不掉" failure): auto-dismiss it every step,
+            # not just once at the start, so the following action isn't eaten
+            # by an overlay the planner can't see well.
+            if obs.modal_present:
+                _emit("🧹 偵測到彈出視窗,先關掉…")
+                self._dismiss_modal_if_present(trace)
+                obs = self.observer.observe()
             verdict = verify_contract(contract, obs, {})
             if verdict.status == "pass":
                 break
@@ -304,6 +321,14 @@ class BrowserAgent:
                 [f"{c.type}:{c.value}" for c in contract.success_conditions], obs, history)
             if decision.llm is not None:
                 llm_cost += decision.llm.cost_usd
+            # a malformed/unusable action is recoverable — give the model another
+            # turn instead of ending the whole run (the old give_up was too brittle)
+            if decision.kind == "noop":
+                history.append(f"noop({decision.reason})")
+                trace.append(StepTrace(step="planner", action="noop", ok=False, mode="agent",
+                                       detail=decision.reason))
+                _emit(f"↻ 重試:{decision.reason}")
+                continue
             if decision.kind in ("done", "give_up"):
                 history.append(f"{decision.kind}({decision.reason})")
                 trace.append(StepTrace(step="planner", action=decision.kind, ok=decision.kind == "done",

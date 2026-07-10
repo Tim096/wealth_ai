@@ -156,11 +156,27 @@ def sec_item_text(code: str) -> dict:
             "warnings": seg.warnings, "text": text}
 
 
+_FIND_MAX_HITS = 500
+
+
+def _region_for(offset: int, segments, gaps) -> tuple[str, int]:
+    """Return (region_code, region_start) that contains a document offset —
+    an item code, or a gap:<a>-<b> code, so any hit anywhere is addressable."""
+    for s in segments:
+        if s.end_offset > s.start_offset and s.start_offset <= offset < s.end_offset:
+            return s.item_code, s.start_offset
+    for g in gaps:
+        if g.start <= offset < g.end:
+            return f"gap:{g.start}-{g.end}", g.start
+    return "", 0
+
+
 def sec_find(q: str) -> dict:
-    """Full-document find for Ctrl+F: search the ENTIRE normalized text (not
-    just the item currently shown) and report which region — an item span OR
-    an unclassified gap — contains the first match, so the viewer can jump
-    there even if the user was not already on that item."""
+    """Full-document find for Ctrl+F. Searches the ENTIRE normalized text and
+    returns EVERY occurrence in document order, each tagged with the region
+    (item span OR unclassified gap) that holds it and its occurrence index
+    WITHIN that region — so the viewer can step prev/next across all hits,
+    jumping between items/gaps, not just the one currently shown."""
     result = _SEC_STATE["result"]
     if result is None:
         return {"ok": False, "error": "尚未抽取任何 filing"}
@@ -168,21 +184,18 @@ def sec_find(q: str) -> dict:
     if not q:
         return {"ok": False, "error": "empty query"}
     text = result.doc.text
-    at = text.lower().find(q.lower())
-    if at < 0:
-        return {"ok": True, "found": False, "count": 0}
-    count = text.lower().count(q.lower())
-    # which item span contains the first hit?
-    for s in result.segments:
-        if s.end_offset > s.start_offset and s.start_offset <= at < s.end_offset:
-            return {"ok": True, "found": True, "code": s.item_code,
-                    "title": s.canonical_title, "count": count}
-    # else it is in a gap — return the gap code covering the hit
-    for g in compute_gaps(text, result.segments):
-        if g.start <= at < g.end:
-            return {"ok": True, "found": True, "code": f"gap:{g.start}-{g.end}",
-                    "title": "未分類內容", "count": count}
-    return {"ok": True, "found": True, "code": "", "title": "(全文)", "count": count}
+    low, needle = text.lower(), q.lower()
+    gaps = compute_gaps(text, result.segments)
+    hits, per_region, at = [], {}, low.find(needle)
+    while at >= 0 and len(hits) < _FIND_MAX_HITS:
+        code, rstart = _region_for(at, result.segments, gaps)
+        k = per_region.get(code, 0)
+        per_region[code] = k + 1
+        hits.append({"code": code, "k": k})   # k-th occurrence within that region
+        at = low.find(needle, at + max(1, len(needle)))
+    total = low.count(needle)
+    return {"ok": True, "found": bool(hits), "count": total, "hits": hits,
+            "capped": total > len(hits)}
 
 
 # ---------------------------------------------------------------- Agent side
@@ -227,6 +240,28 @@ def _ensure_gateway(base_url: str) -> str:
 # DuckDuckGo's HTML endpoint doesn't gate automation with a CAPTCHA the way
 # Google/Bing do — a friendlier default when the task needs a web search.
 DEFAULT_START = "https://duckduckgo.com/html/"
+
+
+import re as _re
+_SEC_CUE = _re.compile(r"10-?k|10-?q|\bsec\b|edgar|filing|財報|年報", _re.I)
+_TICKER_STOP = {"SEC", "EDGAR", "AND", "THE", "USA", "PDF", "CEO", "CFO", "USD",
+                "API", "URL", "HTML", "AI", "US", "UK", "NEW"}
+
+
+def _sec_start_url(task: str) -> str:
+    """Deterministic EDGAR entry for an obvious 'find company X's 10-K' task.
+    The LLM preflight is unreliable at constructing this (it fell back to a
+    search engine), so when the task clearly names a SEC filing AND a ticker,
+    build the plain-HTML company-filing list URL directly — general enough
+    (any ticker), and only the START point; extraction stays untouched."""
+    if not _SEC_CUE.search(task):
+        return ""
+    for tok in _re.findall(r"\b[A-Z]{2,5}\b", task):
+        if tok in _TICKER_STOP:
+            continue
+        return ("https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany"
+                f"&CIK={tok}&type=10-K&dateb=&owner=include&count=10")
+    return ""
 
 
 def agent_submit(task: str, url: str, success: str) -> dict:
@@ -304,7 +339,9 @@ def _agent_worker() -> None:
                     except Exception:  # noqa: BLE001 — model unavailable → fall back
                         pass
                     if not url:
-                        url = p_url or DEFAULT_START
+                        # a deterministic EDGAR deep-link (when the task clearly
+                        # names a ticker + SEC filing) beats the LLM's guess
+                        url = _sec_start_url(task) or p_url or DEFAULT_START
                     if conds is None:
                         conds = p_conds or derive_success(task)
                     if not conds:

@@ -95,7 +95,8 @@ class PageObserver:
         raw = self.page.evaluate(_ENUMERATE_JS)
         candidates = [ElementCandidate(**c) for c in raw]
         modal = self.page.evaluate(
-            "() => !!document.querySelector('.cookie-modal,[role=dialog],.modal,#cookie')"
+            "() => !!document.querySelector('.cookie-modal,[role=dialog],[aria-modal=\"true\"],"
+            ".modal,#cookie,.popup,.overlay,.interstitial')"
         )
         try:
             body_text = self.page.inner_text("body")[:5000]

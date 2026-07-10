@@ -1,0 +1,464 @@
+{
+  "oracle": "CYD iXBRL block-tags (mandatory for fiscal years ending >= 2024-12-15)",
+  "filings": 11,
+  "verdicts": {
+    "agree": 9,
+    "disagree": 2,
+    "unavailable": 0,
+    "not_required": 0
+  },
+  "disagreements": [
+    "JPM",
+    "GS"
+  ],
+  "coverage_mean_over_available": 0.8182,
+  "records": [
+    {
+      "ticker": "AAPL",
+      "cik": 320193,
+      "accession": "0000320193-25-000079",
+      "report_date": "2025-09-27",
+      "mandatory": true,
+      "filing_class": "standard",
+      "our_status": "pass",
+      "our_offsets": [
+        105712,
+        108411
+      ],
+      "our_chars": 2699,
+      "official_intervals": [
+        [
+          105735,
+          108411
+        ]
+      ],
+      "official_chars": 2676,
+      "n_text_blocks": 9,
+      "n_fragments": 11,
+      "n_hidden": 0,
+      "coverage": 1.0,
+      "containment": 0.9915,
+      "verdict": "agree",
+      "detail": "our segment covers 100% of the official CYD-tagged span (2,676 chars, 9 text blocks)",
+      "needs_review_after": false
+    },
+    {
+      "ticker": "MSFT",
+      "cik": 789019,
+      "accession": "0000950170-25-100235",
+      "report_date": "2025-06-30",
+      "mandatory": true,
+      "filing_class": "standard",
+      "our_status": "pass",
+      "our_offsets": [
+        157532,
+        166730
+      ],
+      "our_chars": 9198,
+      "official_intervals": [
+        [
+          157532,
+          161588
+        ],
+        [
+          161606,
+          166707
+        ]
+      ],
+      "official_chars": 9157,
+      "n_text_blocks": 9,
+      "n_fragments": 13,
+      "n_hidden": 0,
+      "coverage": 1.0,
+      "containment": 0.9955,
+      "verdict": "agree",
+      "detail": "our segment covers 100% of the official CYD-tagged span (9,157 chars, 9 text blocks)",
+      "needs_review_after": false
+    },
+    {
+      "ticker": "NVDA",
+      "cik": 1045810,
+      "accession": "0001045810-26-000021",
+      "report_date": "2026-01-25",
+      "mandatory": true,
+      "filing_class": "standard",
+      "our_status": "pass",
+      "our_offsets": [
+        192504,
+        196453
+      ],
+      "our_chars": 3949,
+      "official_intervals": [
+        [
+          192556,
+          194684
+        ],
+        [
+          194695,
+          196453
+        ]
+      ],
+      "official_chars": 3886,
+      "n_text_blocks": 9,
+      "n_fragments": 9,
+      "n_hidden": 0,
+      "coverage": 1.0,
+      "containment": 0.984,
+      "verdict": "agree",
+      "detail": "our segment covers 100% of the official CYD-tagged span (3,886 chars, 9 text blocks)",
+      "needs_review_after": false
+    },
+    {
+      "ticker": "JPM",
+      "cik": 19617,
+      "accession": "0001628280-26-008131",
+      "report_date": "2025-12-31",
+      "mandatory": true,
+      "filing_class": "standard",
+      "our_status": "incorporated_by_reference",
+      "our_offsets": [
+        381586,
+        381756
+      ],
+      "our_chars": 170,
+      "official_intervals": [
+        [
+          762318,
+          764896
+        ],
+        [
+          764896,
+          765093
+        ],
+        [
+          765121,
+          765867
+        ],
+        [
+          765867,
+          766458
+        ],
+        [
+          768909,
+          769622
+        ],
+        [
+          769857,
+          770082
+        ],
+        [
+          770082,
+          771903
+        ]
+      ],
+      "official_chars": 6871,
+      "n_text_blocks": 9,
+      "n_fragments": 12,
+      "n_hidden": 0,
+      "coverage": 0.0,
+      "containment": 0.0,
+      "verdict": "disagree",
+      "detail": "our segment covers only 0% of the official CYD-tagged span (6,871 chars, 9 text blocks) \u2014 the SEC-mandated Item 1C content lies outside our boundaries",
+      "needs_review_after": false
+    },
+    {
+      "ticker": "GS",
+      "cik": 886982,
+      "accession": "0000886982-26-000091",
+      "report_date": "2025-12-31",
+      "mandatory": true,
+      "filing_class": "standard",
+      "our_status": "incorporated_by_reference",
+      "our_offsets": [
+        485610,
+        485857
+      ],
+      "our_chars": 247,
+      "official_intervals": [
+        [
+          781048,
+          782095
+        ],
+        [
+          782095,
+          784439
+        ],
+        [
+          784556,
+          785413
+        ],
+        [
+          785425,
+          786281
+        ],
+        [
+          786282,
+          786645
+        ],
+        [
+          786645,
+          788326
+        ],
+        [
+          788326,
+          788580
+        ]
+      ],
+      "official_chars": 7402,
+      "n_text_blocks": 9,
+      "n_fragments": 16,
+      "n_hidden": 0,
+      "coverage": 0.0,
+      "containment": 0.0,
+      "verdict": "disagree",
+      "detail": "our segment covers only 0% of the official CYD-tagged span (7,402 chars, 9 text blocks) \u2014 the SEC-mandated Item 1C content lies outside our boundaries",
+      "needs_review_after": false
+    },
+    {
+      "ticker": "WMT",
+      "cik": 104169,
+      "accession": "0000104169-26-000055",
+      "report_date": "2026-01-31",
+      "mandatory": true,
+      "filing_class": "standard",
+      "our_status": "pass",
+      "our_offsets": [
+        168759,
+        176409
+      ],
+      "our_chars": 7650,
+      "official_intervals": [
+        [
+          168782,
+          169709
+        ],
+        [
+          169775,
+          170020
+        ],
+        [
+          170225,
+          171041
+        ],
+        [
+          171128,
+          172394
+        ],
+        [
+          172426,
+          176409
+        ]
+      ],
+      "official_chars": 7237,
+      "n_text_blocks": 9,
+      "n_fragments": 10,
+      "n_hidden": 0,
+      "coverage": 1.0,
+      "containment": 0.946,
+      "verdict": "agree",
+      "detail": "our segment covers 100% of the official CYD-tagged span (7,237 chars, 9 text blocks)",
+      "needs_review_after": false
+    },
+    {
+      "ticker": "CAT",
+      "cik": 18230,
+      "accession": "0000018230-26-000008",
+      "report_date": "2025-12-31",
+      "mandatory": true,
+      "filing_class": "standard",
+      "our_status": "pass",
+      "our_offsets": [
+        215542,
+        225752
+      ],
+      "our_chars": 10210,
+      "official_intervals": [
+        [
+          215762,
+          219723
+        ],
+        [
+          219723,
+          221149
+        ],
+        [
+          221178,
+          222394
+        ],
+        [
+          222394,
+          223258
+        ]
+      ],
+      "official_chars": 7467,
+      "n_text_blocks": 9,
+      "n_fragments": 12,
+      "n_hidden": 0,
+      "coverage": 1.0,
+      "containment": 0.7313,
+      "verdict": "agree",
+      "detail": "our segment covers 100% of the official CYD-tagged span (7,467 chars, 9 text blocks)",
+      "needs_review_after": false
+    },
+    {
+      "ticker": "XOM",
+      "cik": 34088,
+      "accession": "0000034088-26-000045",
+      "report_date": "2025-12-31",
+      "mandatory": true,
+      "filing_class": "standard",
+      "our_status": "pass",
+      "our_offsets": [
+        102406,
+        106334
+      ],
+      "our_chars": 3928,
+      "official_intervals": [
+        [
+          102429,
+          105820
+        ],
+        [
+          105820,
+          106206
+        ],
+        [
+          106206,
+          106285
+        ]
+      ],
+      "official_chars": 3856,
+      "n_text_blocks": 9,
+      "n_fragments": 11,
+      "n_hidden": 0,
+      "coverage": 1.0,
+      "containment": 0.9817,
+      "verdict": "agree",
+      "detail": "our segment covers 100% of the official CYD-tagged span (3,856 chars, 9 text blocks)",
+      "needs_review_after": false
+    },
+    {
+      "ticker": "NEM",
+      "cik": 1164727,
+      "accession": "0001164727-26-000010",
+      "report_date": "2025-12-31",
+      "mandatory": true,
+      "filing_class": "standard",
+      "our_status": "pass",
+      "our_offsets": [
+        394473,
+        402514
+      ],
+      "our_chars": 8041,
+      "official_intervals": [
+        [
+          394525,
+          395451
+        ],
+        [
+          395472,
+          399999
+        ],
+        [
+          400010,
+          400644
+        ],
+        [
+          400644,
+          402053
+        ],
+        [
+          402074,
+          402514
+        ]
+      ],
+      "official_chars": 7936,
+      "n_text_blocks": 9,
+      "n_fragments": 13,
+      "n_hidden": 0,
+      "coverage": 1.0,
+      "containment": 0.9869,
+      "verdict": "agree",
+      "detail": "our segment covers 100% of the official CYD-tagged span (7,936 chars, 9 text blocks)",
+      "needs_review_after": false
+    },
+    {
+      "ticker": "MRNA",
+      "cik": 1682852,
+      "accession": "0001682852-26-000033",
+      "report_date": "2025-12-31",
+      "mandatory": true,
+      "filing_class": "standard",
+      "our_status": "pass",
+      "our_offsets": [
+        407465,
+        411508
+      ],
+      "our_chars": 4043,
+      "official_intervals": [
+        [
+          407523,
+          409030
+        ],
+        [
+          409030,
+          409492
+        ],
+        [
+          409535,
+          411508
+        ]
+      ],
+      "official_chars": 3942,
+      "n_text_blocks": 9,
+      "n_fragments": 11,
+      "n_hidden": 0,
+      "coverage": 1.0,
+      "containment": 0.975,
+      "verdict": "agree",
+      "detail": "our segment covers 100% of the official CYD-tagged span (3,942 chars, 9 text blocks)",
+      "needs_review_after": false
+    },
+    {
+      "ticker": "KO",
+      "cik": 21344,
+      "accession": "0001628280-26-010047",
+      "report_date": "2025-12-31",
+      "mandatory": true,
+      "filing_class": "standard",
+      "our_status": "pass",
+      "our_offsets": [
+        213922,
+        221829
+      ],
+      "our_chars": 7907,
+      "official_intervals": [
+        [
+          213988,
+          215021
+        ],
+        [
+          215024,
+          218691
+        ],
+        [
+          218730,
+          221319
+        ],
+        [
+          221322,
+          221828
+        ]
+      ],
+      "official_chars": 7795,
+      "n_text_blocks": 10,
+      "n_fragments": 13,
+      "n_hidden": 0,
+      "coverage": 1.0,
+      "containment": 0.9858,
+      "verdict": "agree",
+      "detail": "our segment covers 100% of the official CYD-tagged span (7,795 chars, 10 text blocks)",
+      "needs_review_after": false
+    }
+  ]
+}

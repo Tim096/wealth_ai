@@ -80,3 +80,4 @@ class ItemSegment(BaseModel):
     xbrl_check: str = ""        # independent-oracle result, set by xbrl cross-validation
     topic_check: str = ""       # per-item lexical topic-consistency verdict (all items)
     engine_check: str = ""      # third-engine (edgartools) triangulation verdict
+    cyd_check: str = ""         # CYD iXBRL official Item 1C span agreement (Item 1C only)

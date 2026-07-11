@@ -25,6 +25,8 @@ from sec_core.pipeline import extract_from_html
 from sec_core.resolver import FilingFile, FilingRef, FilingResolver
 from sec_core.toc import assess_toc
 
+FIXTURES = Path(__file__).resolve().parents[1] / "data" / "sec_eval" / "fixtures"
+
 # --- synthetic-filing builders (padded to realistic item lengths) ----------
 
 _FILLER = (
@@ -370,3 +372,181 @@ def test_large_filing_offsets_stay_source_exact():
         assert result.doc.raw_html[raw_start] == result.doc.text[seg.start_offset]
         checked += 1
     assert checked >= 3  # all three large items round-tripped
+
+
+# ===========================================================================
+# Landmine 11 — STRATS/CorTS trust filer: MD&A is LEGITIMATELY 'Not Applicable'
+# (P0-6). ABS trust 10-Ks rely on CABCO-class no-action letters and answer most
+# items 'Not Applicable' — a correct extractor must treat that as the complete,
+# legitimate answer (boilerplate pass), never flag it suspect, and never
+# fabricate an MD&A. Real excerpts fetched from EDGAR (provenance in-file).
+# ===========================================================================
+
+def test_trust_filer_not_applicable_md_and_a_is_legitimate_boilerplate_pass():
+    """Structured Products Corp (CorTS/TIERS depositor), 10-K FY2002, accession
+    0001068238-03-000185 — HTML. Item 7 is 'Not Applicable' by SEC staff
+    position; the expected outcome is a boilerplate pass, not needs_review and
+    not a hallucinated MD&A body."""
+    raw = (FIXTURES / "corts_trust_10k_excerpt.htm").read_text(encoding="utf-8")
+    result = extract_from_html(raw, "corts-trust-fy2002")
+    assert result.filing_class == "standard"
+
+    seg7 = result.segment("7")
+    assert seg7.status == "pass"
+    body7 = result.text_of("7")
+    assert "Not Applicable" in body7
+    assert len(body7) < 200  # the complete short answer — no fabricated MD&A
+    assert seg7.needs_review is False  # legitimate absence must NOT read as suspect
+    assert seg7.topic_check.startswith("boilerplate")
+    span = result.doc.slice(seg7.start_offset, seg7.end_offset)
+    assert sha256_text(span) == seg7.text_sha256  # source-exact, LLM never wrote it
+
+    # the same holds across the other 'Not Applicable' items of the trust class
+    for code in ("1", "7A", "8"):
+        seg = result.segment(code)
+        assert seg.status == "pass"
+        assert seg.needs_review is False
+        assert "Not Applicable" in result.text_of(code)
+
+
+def test_trust_filer_plain_text_strats_is_honest_unsupported_never_fabricated():
+    """STRATS Trust for BellSouth (CIK 1281001), 10-K FY2005, accession
+    0000905148-06-002999 — plain-text SGML primary document. The HTML pipeline
+    cannot anchor headings in it; the honest outcome is non_10k with zero
+    fabricated spans, not a fake extraction."""
+    raw = (FIXTURES / "strats_trust_10k_excerpt.txt").read_text(encoding="utf-8")
+    result = extract_from_html(raw, "strats-trust-fy2005")
+    assert result.filing_class == "non_10k"
+    assert all(s.end_offset == s.start_offset for s in result.segments)
+    assert all(s.text_sha256 == "" for s in result.segments)
+    assert any("no item heading candidates" in w for w in result.warnings)
+
+
+# ===========================================================================
+# Landmine 12 — 'Item No. 1' heading variant (edgar-crawler open issue #37)
+# ===========================================================================
+
+def test_item_no_variant_is_honest_or_correct_never_a_wrong_body():
+    """The filer writes 'Item No. 1. Business' instead of 'Item 1. Business'.
+    The invariant pinned here is honest-or-correct: each item either carries a
+    body that really is that item's content, or an honest empty 'missing' —
+    never a fabricated/mislocated body. (Recognising the variant is P1-1 in
+    headings.py; this test stays green before and after that fix, and goes red
+    only if a wrong body is ever emitted.)"""
+    markers = {"1": "BIZ_MARKER", "1A": "RISK_MARKER", "2": "PROP_MARKER", "7": "MDNA_MARKER"}
+    html = _doc(
+        "<div>PART I</div>",
+        _sec("Item No. 1. Business", f"{markers['1']} Alpha designs widgets in Delaware."),
+        _sec("Item No. 1A. Risk Factors", f"{markers['1A']} Investing involves risk and uncertainty."),
+        _sec("Item No. 2. Properties", f"{markers['2']} We own facilities and lease offices."),
+        _sec("Item No. 7. Management's Discussion and Analysis of Financial Condition and "
+             "Results of Operations", f"{markers['7']} Net revenue increased eleven percent."),
+    )
+    result = extract_from_html(html, "item-no-variant")
+    for code, marker in markers.items():
+        seg = result.segment(code)
+        if seg.status in ("pass", "partial"):
+            assert marker in result.text_of(code)  # extracted => must be the real body
+        else:
+            assert seg.status == "missing"  # honest miss, not a wrong span
+            assert seg.text_sha256 == ""
+            assert seg.end_offset == seg.start_offset
+
+
+# ===========================================================================
+# Landmine 13 — mislabeled heading: Item 9A content filed under 'Item 14'
+# (NTU 2502.08875 error class where every automatic method fails). Full
+# content-based re-assignment is out of scope (P2-7); the pinned bar is that
+# the mislabel is at least FLAGGED needs_review, never a silently trusted pass.
+# ===========================================================================
+
+def test_mislabeled_9a_content_under_item_14_is_flagged_needs_review():
+    html = _doc(
+        "<div>PART II</div>",
+        _sec("Item 9. Changes in and Disagreements With Accountants on Accounting and "
+             "Financial Disclosure", "None."),
+        # the filer numbered their Controls-and-Procedures section 'Item 14'
+        _sec("Item 14. Controls and Procedures",
+             "Our management, with the participation of our principal executive officer and "
+             "principal financial officer, evaluated the effectiveness of our disclosure "
+             "controls and procedures as of the end of the period covered by this report. "
+             "Based on that evaluation, the officers concluded that our disclosure controls "
+             "and procedures were effective at the reasonable assurance level. There were no "
+             "changes in our internal control over financial reporting that materially "
+             "affected, or are reasonably likely to materially affect, our internal control "
+             "over financial reporting."),
+        _sec("Item 15. Exhibits, Financial Statement Schedules",
+             "The following documents are filed as part of this report: exhibit index below."),
+    )
+    result = extract_from_html(html, "mislabel-9a-as-14")
+    seg14 = result.segment("14")
+    assert seg14.needs_review is True  # the bar: at least flagged, never trusted silently
+    assert seg14.topic_check.startswith("inconsistent")
+    assert any("mislabel" in w for w in seg14.warnings)
+    # the real 9A never got a heading — honest missing, not a stolen span
+    seg9a = result.segment("9A")
+    assert seg9a.status == "missing"
+    assert seg9a.text_sha256 == ""
+
+
+# ===========================================================================
+# Landmine 14 — <100-line stub 10-K (sec-api admitted hard case): near-empty
+# item bodies must never come back as trusted passes
+# ===========================================================================
+
+def test_sub_100_line_stub_items_are_all_flagged_never_trusted():
+    stub = _doc(
+        "<div>PART I</div>",
+        "<p><b>Item 1. Business</b></p>\n<p>The Trust holds notes.</p>\n",
+        "<p><b>Item 1A. Risk Factors</b></p>\n<p>Certificates may lose value.</p>\n",
+        "<p><b>Item 3. Legal Proceedings</b></p>\n<p>None known.</p>\n",
+        "<div>PART II</div>",
+        "<p><b>Item 7. Management's Discussion and Analysis of Financial Condition and "
+        "Results of Operations</b></p>\n<p>Distributions were made.</p>\n",
+        "<p><b>Item 8. Financial Statements and Supplementary Data</b></p>\n<p>Attached.</p>\n",
+    )
+    assert stub.count("\n") + 1 < 100  # the landmine really is a sub-100-line document
+
+    result = extract_from_html(stub, "stub-10k")
+    extracted = [s for s in result.segments if s.end_offset > s.start_offset]
+    assert len(extracted) == 5
+    for seg in extracted:
+        # a 4-word 'body' trivially satisfies the structural checks; the topic
+        # oracle must still flag every one — no stub item is a trusted pass
+        assert seg.needs_review is True
+        span = result.doc.slice(seg.start_offset, seg.end_offset)
+        assert sha256_text(span) == seg.text_sha256  # and nothing was fabricated
+    # sub-50-char bodies additionally fail the length-sanity confidence gate
+    length_gate = next(c for c in result.confidence["1"].components
+                       if c.name == "boundary_length_sanity")
+    assert length_gate.score == 0.0
+
+
+# ===========================================================================
+# Landmine 15 — Item 7A nested inside Item 7's MD&A (7A-in-7): the market-risk
+# subsection must get its own span, not be swallowed by the MD&A
+# ===========================================================================
+
+def test_7a_nested_inside_7_gets_its_own_span_not_swallowed():
+    html = _doc(
+        "<div>PART II</div>",
+        _sec("Item 7. Management's Discussion and Analysis of Financial Condition and "
+             "Results of Operations",
+             "MDNA_MARKER Net revenue grew eleven percent; liquidity remains strong; "
+             "results of operations improved.", 6000),
+        # filed as a subsection INSIDE the MD&A flow, before Item 8
+        _sec("Item 7A. Quantitative and Qualitative Disclosures About Market Risk",
+             "MARKET_RISK_MARKER We are exposed to interest rate risk and foreign currency "
+             "risk; a hypothetical 100 basis point move would not be material."),
+        _sec("Item 8. Financial Statements and Supplementary Data",
+             "Report of Independent Registered Public Accounting Firm. Consolidated balance "
+             "sheets follow."),
+    )
+    result = extract_from_html(html, "7a-in-7")
+    s7, s7a = result.segment("7"), result.segment("7A")
+    assert s7.status == "pass" and s7a.status == "pass"
+    # non-overlapping, contiguous: 7 ends exactly where 7A begins
+    assert s7.end_offset <= s7a.start_offset
+    assert "MARKET_RISK_MARKER" in result.text_of("7A")
+    assert "MARKET_RISK_MARKER" not in result.text_of("7")  # 7 did not swallow 7A
+    assert "MDNA_MARKER" not in result.text_of("7A")  # and 7A did not steal 7's body

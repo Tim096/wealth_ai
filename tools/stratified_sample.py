@@ -218,6 +218,9 @@ ERA_SEEDS = [
     ("text_pre2001", "KO", 21344, "0000021344-98-000004"),      # FY1997 plain text
     ("html_2001_2008", "AAPL", 320193, "0001047469-04-035975"),  # FY2004 pre-XBRL HTML
     ("xbrl_2009_2018", "AAPL", 320193, "0001193125-13-416534"),  # FY2013 XBRL-era HTML
+    # trust/ABS filers: MD&A legitimately 'Not Applicable' (landmine L11, P0-6)
+    ("trust_filer", "CORTS", 894356, "0001068238-03-000185"),    # Structured Products Corp FY2002 HTML
+    ("trust_filer", "STRATS", 1281001, "0000905148-06-002999"),  # STRATS Trust BellSouth FY2005 plain text
 ]
 
 

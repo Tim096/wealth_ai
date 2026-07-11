@@ -1,0 +1,262 @@
+<DOCUMENT>
+<TYPE>10-K
+<SEQUENCE>1
+<FILENAME>efc6-1106_5853136form10k.txt
+<TEXT>
+
+                                 UNITED STATES
+                      SECURITIES AND EXCHANGE COMMISSION
+                            WASHINGTON, D.C. 20549
+
+                                     ----
+
+                                   FORM 10-K
+                       FOR ANNUAL AND TRANSITION REPORTS
+                    PURSUANT TO SECTIONS 13 OR 15(d) OF THE
+                        SECURITIES EXCHANGE ACT OF 1934
+
+(Mark One)
+
+      [X]   ANNUAL REPORT PURSUANT TO SECTION 13 OR 15(d) OF THE SECURITIES
+            EXCHANGE ACT OF 1934
+
+      For the fiscal year ended December 31, 2005
+
+                                      or
+
+      [ ]   TRANSITION REPORT PURSUANT TO SECTION 13 OR 15(d) OF THE
+            SECURITIES EXCHANGE ACT OF 1934
+
+      For the transition period from ________ to ________
+
+               Commission File Numbers: 333-70808-04, 001-32029
+
+                    Synthetic Fixed-Income Securities, Inc.
+
+                                 on behalf of:
+
+  STRATS(SM) Trust For BellSouth Telecommunications Securities, Series 2003-1
+            ------------------------------------------------------
+            (Exact name of registrant as specified in its charter)
+
+                Delaware                                 52-2316339
+-------------------------------------------------------------------------------
+ (State or other jurisdiction of          (I.R.S. Employer Identification No.)
+  incorporation or organization)
+
+
+ 301 South College, Charlotte, North Carolina                28288
+-------------------------------------------------------------------------------
+  (Address of principal executive offices)                (Zip Code)
+
+Registrant's telephone number, including area code: (704) 383-7727
+
+Securities registered pursuant to Section 12(b) of the Act:
+
+<TABLE>
+<CAPTION>
+Title of each class                                       Name of exchange on which registered
+-------------------                                       -----------------------------------------------
+<S>                                                      <C>
+STRATS(SM) BellSouth Telecommunications Certificates,     New York Stock Exchange ("NYSE")
+Series 2003-1, Class A-1
+</TABLE>
+
+
+
+                                          1
+<PAGE>
+
+
+Securities registered pursuant to Section 12(g) of the Act:   None
+
+Indicate by check mark if the registrant is a well-known seasoned issuer, as
+defined in Rule 405 of the Securities Act.
+Yes [  ]   No [X]
+
+
+Indicate by check mark if the registrant is not required to file reports
+pursuant to Section 13 or Section 15(d) of the Act.
+Yes [  ]   No [X]
+
+
+Indicate by check mark whether the registrant: (1) Has filed all reports
+required to be filed by section 13 or 15(d) of the Securities Exchange Act of
+1934 during the preceding 12 months (or for such shorter period that the
+registrant was required to file such reports), and (2) has been subject to
+such filing requirements for the past 90 days.
+Yes [X]   No [ ]
+
+
+Indicate by check mark if disclosure of delinquent filers pursuant to Item 405
+of Regulation S-K is not contained herein, and will not be contained, to the
+best of registrant's knowledge, in definitive proxy or information statements
+incorporated by reference in Part III of this Form 10-K or any amendment to
+this Form 10-K.
+Not applicable.
+
+Indicate by check mark whether the registrant is large accelerated filer, an
+accelerated filer or a non-accelerated filer. See the definition of
+"accelerated filer and large accelerated filer" in Rule 12b-2 of the Exchange
+Act. (check one):
+Large accelerated filer [  ]  Accelerated filer [  ]  Non-accelerated filer [X]
+
+Indicate by check mark whether the registrant is a shell company (as defined
+in Rule 12b-2 of the Act).
+Yes [  ]   No [X]
+
+State the aggregate market value of the voting and non-voting common equity
+held by non-affiliates computed by reference to the price at which the common
+equity was last sold, or the average bid and asked price of such common
+equity, as of the last business day of the registrant's most recently
+completed second fiscal quarter:
+Not Applicable.
+
+The registrant has no voting stock or class of common stock that is held by
+non-affiliates.
+
+
+                      DOCUMENTS INCORPORATED BY REFERENCE
+
+The following documents are incorporated by reference into Part IV of this
+Annual Report: The distribution reports to security holders filed on Form 8-K
+during the fiscal year, in lieu of reports on Form 10-Q, which include the
+
+[EXCERPT for adversarial regression tests (tests/test_landmines.py, Landmine 11).
+ Source: SEC EDGAR, STRATS TRUST FOR BELLSOUTH TELECOM SEC SER 2003-1, CIK 1281001,
+ Form 10-K FY2005, accession 0000905148-06-002999, file efc6-1106_5853136form10k.txt
+ https://www.sec.gov/Archives/edgar/data/1281001/000090514806002999/efc6-1106_5853136form10k.txt
+ Fetched 2026-07-10. Public-domain SEC filing. Elided: cover checkboxes, guarantor
+ paragraph, exhibit tables, signatures.]
+
+                                    PART I
+
+Item 1. Business.
+----------------
+
+      Not Applicable
+
+Item 1A.  Risk Factors.
+----------------------
+      Not Applicable
+
+Item 1B.  Unresolved Staff Comments.
+-----------------------------------
+      Not Applicable
+
+Item 2. Properties.
+------------------
+
+      Not Applicable
+
+Item 3. Legal Proceedings.
+-------------------------
+
+      None
+
+Item 4. Submission of Matters to a Vote of Security Holders.
+-----------------------------------------------------------
+
+      None
+
+
+                                    PART II
+
+Item 5. Market for Registrant's Common Equity, Related Stockholder Matters and
+------------------------------------------------------------------------------
+Issuer Purchases of Equity Securities.
+--------------------------------------
+
+      The Class A-1 Certificates representing investors' interest in the Trust
+are represented by one or more physical Certificates registered in the name of
+"Cede & Co.", the nominee of The Depository Trust Company. The Class A-1
+Certificates are listed on the NYSE.
+
+Item 6. Selected Financial Data.
+-------------------------------
+
+      Not Applicable
+
+
+                                      3
+
+
+
+<PAGE>
+
+
+Item 7. Management's Discussion and Analysis of Financial Condition and
+-----------------------------------------------------------------------
+Results of Operations.
+----------------------
+
+      Not Applicable
+
+Item 7A. Quantitative and Qualitative Disclosures About Market Risk.
+-------------------------------------------------------------------
+
+      Not Applicable
+
+Item 8. Financial Statements and Supplementary Data.
+---------------------------------------------------
+
+      Not Applicable
+
+Item 9. Changes in and Disagreements With Accountants on Accounting and
+-----------------------------------------------------------------------
+Financial Disclosure.
+---------------------
+
+      None
+
+Item 9A.  Controls and Procedures.
+---------------------------------
+
+      Not Applicable
+
+Item 9B. Other Information.
+--------------------------
+
+      None
+
+
+
+                                   PART III
+
+Item 10. Directors and Executive Officers of the Registrant.
+-----------------------------------------------------------
+
+      Not Applicable
+
+Item 11. Executive Compensation.
+-------------------------------
+
+      Not Applicable
+
+Item 12. Security Ownership of Certain Beneficial Owners and Management and
+---------------------------------------------------------------------------
+Related Stockholder Matters.
+----------------------------
+
+      Not Applicable
+
+Item 13. Certain Relationships and Related Transactions.
+-------------------------------------------------------
+
+      None
+
+Item 14. Principal Accounting Fees and Services.
+-----------------------------------------------
+
+      Not Applicable
+
+
+
+                                      4
+<PAGE>
+
+                                    PART IV
+
+Item 15. Exhibits, Financial Statement Schedules.
+------------------------------------------------
+

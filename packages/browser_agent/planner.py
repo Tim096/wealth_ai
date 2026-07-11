@@ -37,6 +37,7 @@ CHOOSING ELEMENTS
 - Use ONLY listed aids. Each candidate shows tag, role, type, id and label — weigh ALL of them.
 - Prefer semantically-right controls: a real submit (type=submit / role=button with a search/submit label) over a random clickable; an input/textarea/searchbox for typing.
 - AVOID traps: ids/labels containing decoy/fake/ad/promo/sponsor, login/sign-in prompts, cookie-notice links.
+- A candidate prefixed with `*` is NEW since your last action — it appeared BECAUSE of it (a dropdown/autocomplete option, a revealed panel, a new dialog). If a * element serves the task (an option to pick, a suggestion to click), act on it now; a * dialog/overlay must be dismissed first.
 - DISMISS OVERLAYS FIRST: any modal, popup, cookie/consent banner, newsletter, "unusual traffic" notice, or interstitial that covers the page must be closed before the task can proceed — click its close/×/dismiss/accept/agree/"no thanks"/"not now" control. A blocking popup is a step to clear, not a reason to stop.
 
 PLAYBOOK
@@ -59,6 +60,7 @@ WHEN BLOCKED
 
 PROGRESS DISCIPLINE
 - Check ACTIONS SO FAR before deciding: never repeat an action that already failed the same way — change strategy instead (different element, press instead of click, dismiss a modal).
+- Entries in ACTIONS SO FAR carry an env note ("| env: …") of what each action actually changed. "page unchanged" after a click means it silently did nothing — do not repeat it; use a different element or method.
 - Modern sites are SPAs: the URL/content may have changed after your last action even without a full reload. Re-read the CURRENT state before acting.
 - One action per turn; keep steps minimal — do not add exploratory clicks that don't serve the task.
 
@@ -98,8 +100,12 @@ def _candidate_lines(obs: Observation) -> str:
         if not c.visible:
             continue
         label = c.aria_label or c.placeholder or c.text or c.name or c.id
-        line = (f'aid={c.index} <{c.tag}{" role="+c.role if c.role else ""}> '
-                f'type={c.type or "-"} id="{c.id[:30]}" label="{label[:50]}"')
+        # P0-4 (BU `*[index]` new-element mark): a leading '*' flags an element
+        # that was NOT in the previous observation — it appeared as a RESULT of
+        # the last action (a dropdown option, an autocomplete suggestion).
+        line = (("*" if c.is_new else "")
+                + f'aid={c.index} <{c.tag}{" role="+c.role if c.role else ""}> '
+                  f'type={c.type or "-"} id="{c.id[:30]}" label="{label[:50]}"')
         # selection state of a choice control: tells the planner an option is
         # ALREADY chosen so it won't click it again and toggle it back off.
         if c.checked in ("true", "false", "mixed"):

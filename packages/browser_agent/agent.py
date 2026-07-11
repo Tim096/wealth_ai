@@ -23,7 +23,7 @@ from browser_agent.capability import screen_action, screen_task
 from browser_agent.executor import ActionExecutor, ActionOutcome
 from browser_agent.marks import set_of_marks
 from browser_agent.memory_store import MemoryStore
-from browser_agent.observer import PageObserver
+from browser_agent.observer import PageObserver, diff_observations
 from browser_agent.repair import diagnose_failure, repair_target
 from browser_agent.trajectory import repetition_report
 from browser_agent.verifier import subtract_baseline, verify_contract
@@ -119,6 +119,7 @@ def vision_escalation_reason(history: list[str], page_hashes: list[str],
     multimodal model); actions stay schema-validated and the verifier stays
     the only judge."""
     def _no_progress(h: str) -> bool:
+        h = h.split(" | env:")[0]     # P0-4 appends an env note after the status
         return h.startswith(("noop(", "give_up_rejected(")) or h.endswith(":fail")
     if len(history) >= window and all(_no_progress(h) for h in history[-window:]):
         return f"連續 {window} 步無進展"
@@ -135,7 +136,9 @@ _REPLAN_FAILS = 3
 
 def _no_progress_entry(h: str) -> bool:
     """A history entry that advanced nothing: a failed action, a planner noop,
-    or a rejected give_up/done."""
+    or a rejected give_up/done. The P0-4 env note (' | env: …') is stripped
+    first so the status token stays the thing being tested."""
+    h = h.split(" | env:")[0]
     return (h.startswith(("noop(", "give_up_rejected(", "done_rejected("))
             or h.endswith(":fail"))
 
@@ -561,6 +564,7 @@ class BrowserAgent:
         _sv = getattr(planner, "supports_vision", None)
         vision_capable = bool(_sv and callable(_sv) and _sv()) and self.artifact_dir is not None
         page_hashes: list[str] = []
+        prev_obs = None      # P0-4: the previous observation, for the env diff
         _emit(f"🧠 想任務:{contract.natural_language_task}")
         for step_i in range(max_steps):
             # A popup/interstitial can appear AFTER any navigation on ANY site
@@ -571,6 +575,23 @@ class BrowserAgent:
                 _emit("🧹 偵測到彈出視窗,已清除")
                 self.page.wait_for_timeout(200)
             obs = self.observer.observe()
+            # P0-4 env-change evidence (AE change observation as precedent, done
+            # as an identity-key diff of consecutive observations — no 100ms
+            # race, catches disappearances too): mark elements that APPEARED
+            # since the last turn ('*' in the planner's candidate list) and
+            # append what the last action actually changed to its history
+            # entry. An empty diff after a click/press that reported ok is the
+            # silent-failure signal — recorded in that step's diagnosis.
+            env = diff_observations(prev_obs, obs)
+            prev_obs = obs
+            if env and history and history[-1].endswith((":ok", ":fail")):
+                if env == "page unchanged" and history[-1].startswith(("click:ok", "press:ok")):
+                    env += " — the action may have silently failed"
+                    for s in reversed(trace):
+                        if s.step == "planner" and s.action in ("click", "press"):
+                            s.diagnosis = s.diagnosis or "silent_failure_suspected"
+                            break
+                history[-1] += f" | env: {env}"
             page_hashes.append(sha256_text(obs.url + "|" + obs.visible_text))
             # the loop verdict sees the SAME evidence surface as the final one
             # (answer + download), so a satisfied deliverable ends the run here

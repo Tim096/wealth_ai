@@ -601,6 +601,135 @@ def test_stagnation_nudge_fires_on_page_stagnation():
     assert n.startswith("NUDGE(") and "page unchanged" in n
 
 
+def test_diff_observations_marks_new_elements_and_reports():
+    # P0-4: identity-key diff of two consecutive observations — the element
+    # that appeared gets is_new=True and the summary counts it (this is OUR
+    # variant of Agent-E's change observation: no MutationObserver, no race).
+    from browser_agent.observer import diff_observations
+
+    old = cand(index=0, tag="input", name="q", x=10, y=10)
+    prev = Observation(url="u", title="t", visible_text="a\nb", candidates=[old])
+    same = cand(index=0, tag="input", name="q", x=10, y=10)
+    fresh = cand(index=1, tag="div", role="option", text="Suggestion 1", x=10, y=40)
+    cur = Observation(url="u", title="t", visible_text="a\nb", candidates=[same, fresh])
+    env = diff_observations(prev, cur)
+    assert "1 new element" in env
+    assert fresh.is_new is True and same.is_new is False
+
+
+def test_diff_observations_first_obs_and_url_change():
+    from browser_agent.observer import diff_observations
+
+    cur = Observation(url="https://x/2", title="t", visible_text="",
+                      candidates=[cand(index=0)])
+    assert diff_observations(None, cur) == ""            # nothing to diff against
+    prev = Observation(url="https://x/1", title="t", visible_text="", candidates=[])
+    env = diff_observations(prev, cur)
+    assert env.startswith("URL -> https://x/2")
+    # a navigation replaces everything — '*' on every element would be noise
+    assert cur.candidates[0].is_new is False
+
+
+def test_diff_observations_reports_gone_text_and_unchanged():
+    from browser_agent.observer import diff_observations
+
+    a = cand(index=0, tag="button", text="Go", x=5, y=5)
+    prev = Observation(url="u", title="t", visible_text="hello\nworld", candidates=[a])
+    b = cand(index=0, tag="button", text="Go", x=5, y=5)
+    cur = Observation(url="u", title="t", visible_text="hello\nchanged", candidates=[b])
+    env = diff_observations(prev, cur)
+    assert 'text changed: "changed"' in env
+    # element disappeared
+    empty = Observation(url="u", title="t", visible_text="hello\nworld", candidates=[])
+    assert "1 element(s) gone" in diff_observations(prev, empty)
+    # nothing at all changed -> the literal silent-failure signal
+    cur2 = Observation(url="u", title="t", visible_text="hello\nworld",
+                       candidates=[cand(index=0, tag="button", text="Go", x=5, y=5)])
+    assert diff_observations(prev, cur2) == "page unchanged"
+
+
+def test_candidate_line_marks_new_element_with_star():
+    # P0-4 (b): a new element reaches the planner with a leading '*'
+    from browser_agent.planner import _candidate_lines
+
+    old = cand(index=0, tag="input", name="q")
+    fresh = cand(index=1, tag="div", role="option", text="Sug", is_new=True)
+    lines = _candidate_lines(Observation(url="u", title="t", visible_text="",
+                                         candidates=[old, fresh])).splitlines()
+    assert lines[0].startswith("aid=0")
+    assert lines[1].startswith("*aid=1")
+
+
+def test_system_prompt_teaches_star_and_env_note():
+    from browser_agent.planner import _SYSTEM
+    assert "prefixed with `*` is NEW" in _SYSTEM
+    assert '"| env:' in _SYSTEM and "page unchanged" in _SYSTEM
+
+
+def test_no_progress_detection_ignores_env_note():
+    # the env suffix must not break P0-1/P3 status-token detection
+    from browser_agent.agent import _no_progress_entry, vision_escalation_reason
+
+    assert _no_progress_entry("click:fail | env: page unchanged")
+    assert not _no_progress_entry("click:ok | env: URL -> https://x")
+    hist = ["click:fail | env: page unchanged"] * 3
+    assert vision_escalation_reason(hist, []) != ""
+
+
+class _ClickInertButtonPlanner:
+    """Clicks the only button once, then gives up — records the history it was
+    shown so the test can see the env note the loop appended."""
+    def __init__(self):
+        self.seen: list[list[str]] = []
+
+    def available(self):
+        return True
+
+    def next_action(self, task, success_conditions, obs, history,
+                    plan_steps=None, image_path=None):
+        from browser_core import ElementTarget
+        from browser_core.actions import ClickAction
+        from browser_agent.planner import PlannerDecision
+        self.seen.append(list(history))
+        if len(self.seen) == 1:
+            c = obs.candidates[0]
+            return PlannerDecision(kind="action", action=ClickAction(
+                target=ElementTarget(selector=c.aid_selector(), selector_type="css")),
+                reason="click the button")
+        return PlannerDecision(kind="give_up", reason="nothing works")
+
+
+@pytest.mark.integration
+def test_silent_click_failure_gets_env_note_and_diagnosis(tmp_path):
+    # P0-4 (a)+(c) wiring: a click that reports ok but changes NOTHING gets its
+    # history entry upgraded with 'env: page unchanged … silently failed' (seen
+    # by the planner next turn) and the step's diagnosis records the suspicion.
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from browser_agent.agent import BrowserAgent
+    from browser_agent.memory_store import MemoryStore
+
+    contract = BrowserTaskContract(
+        task_id="inert", natural_language_task="press the magic button",
+        expected_outcome="magic happens",
+        success_conditions=[SuccessCondition(type="text_visible", value="NEVER_THERE_XYZ")])
+    planner = _ClickInertButtonPlanner()
+    with sync_playwright() as p:
+        b = p.chromium.launch(headless=True)
+        page = b.new_page()
+        page.set_content("<button id='b'>does nothing</button>")
+        agent = BrowserAgent(page, MemoryStore(tmp_path / "m.json"), "live", "agentic")
+        run = agent.run_agentic("inert", contract, planner, max_steps=4)
+        b.close()
+    # the turn AFTER the click sees the env note appended to its entry
+    entry = planner.seen[1][0]
+    assert entry.startswith("click:ok | env: page unchanged")
+    assert "silently failed" in entry
+    click = next(s for s in run.steps if s.step == "planner" and s.action == "click")
+    assert click.diagnosis == "silent_failure_suspected"
+
+
 class _NoopLoopPlanner:
     """Scripted planner that noops every turn AND records the history it was
     shown — proves the nudge is injected into the planner's view mid-run."""

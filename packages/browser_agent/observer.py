@@ -73,6 +73,7 @@ class ElementCandidate:
     y: int
     checked: str = ""       # aria-checked / .checked for radio/checkbox options
     form: str = ""          # enclosing form id / index ('' = outside any form)
+    is_new: bool = False    # P0-4: not present in the PREVIOUS observation
 
     def css(self) -> str:
         """A durable selector to REMEMBER this element across runs — prefers a
@@ -101,6 +102,55 @@ class Observation:
     visible_text: str
     candidates: list[ElementCandidate] = field(default_factory=list)
     modal_present: bool = False
+
+
+def _identity_key(c: ElementCandidate) -> tuple:
+    return (c.tag, c.id, c.name, c.text, c.x, c.y)
+
+
+def diff_observations(prev: Observation | None, cur: Observation) -> str:
+    """P0-4 env-change evidence. Mechanism precedent: Agent-E's
+    dom_mutation_observer (MutationObserver + a 100ms post-action sleep), which
+    is blind to attribute/style changes and races slow async updates. Diffing
+    two CONSECUTIVE OBSERVATIONS by an element identity key instead needs no
+    timing window and also sees disappearances. Side effect: candidates of
+    `cur` absent from `prev` get is_new=True ('*' in the planner's candidate
+    list). Returns a one-sentence summary of what the last action changed —
+    URL change / elements appeared or gone / first changed visible-text line —
+    or the literal "page unchanged" (the silent-failure signal after a click).
+    '' on the first observation (nothing to diff against)."""
+    if prev is None:
+        return ""
+    if cur.url != prev.url:
+        # a navigation replaces everything; '*' on every element would be noise
+        return f"URL -> {cur.url[:120]}"
+    prev_keys = {_identity_key(c) for c in prev.candidates}
+    cur_keys = set()
+    new = 0
+    for c in cur.candidates:
+        k = _identity_key(c)
+        cur_keys.add(k)
+        if k not in prev_keys:
+            c.is_new = True
+            new += 1
+    gone = len(prev_keys - cur_keys)
+    parts = []
+    if new:
+        parts.append(f"{new} new element(s) appeared (marked * in the candidate list)")
+    if gone:
+        parts.append(f"{gone} element(s) gone")
+    prev_lines = prev.visible_text.splitlines()
+    cur_lines = cur.visible_text.splitlines()
+    for a, b in zip(prev_lines, cur_lines):
+        if a != b:
+            parts.append(f'text changed: "{b.strip()[:60]}"')
+            break
+    else:
+        if len(cur_lines) > len(prev_lines):
+            parts.append(f'text added: "{cur_lines[len(prev_lines)].strip()[:60]}"')
+        elif len(cur_lines) < len(prev_lines):
+            parts.append("text removed")
+    return "; ".join(parts) if parts else "page unchanged"
 
 
 class PageObserver:

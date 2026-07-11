@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -41,6 +42,8 @@ from observability_core import EvidenceStore
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "runs" / "agent_live"
+sys.path.insert(0, str(ROOT))                    # `tools.` imports when run as a script
+from tools.run_manifest import DirtyTreeError, write_manifest  # noqa: E402  (P1-2 repro manifest)
 
 
 def _preflight_gateway(base_url: str) -> tuple[bool, str]:
@@ -153,9 +156,15 @@ def main() -> None:
     ap.add_argument("--query", default="widget", help="query for MockPlanner")
     ap.add_argument("--headed", action="store_true", help="show the browser window")
     ap.add_argument("--max-steps", type=int, default=8)
+    ap.add_argument("--strict-repro", action="store_true",
+                    help="P1-2: refuse to run on a dirty git tree (tracked changes)")
     args = ap.parse_args()
 
     OUT.mkdir(parents=True, exist_ok=True)
+    try:
+        print(f"manifest: {write_manifest(OUT, budget_caps={'max_steps': args.max_steps}, strict=args.strict_repro)}")
+    except DirtyTreeError as e:   # refusal, not a crash
+        raise SystemExit(str(e)) from None
     mp = OUT / "selector_memory.json"
     if mp.exists():
         mp.unlink()

@@ -1,0 +1,87 @@
+# CI for ai-coding-test-2026.
+#
+# HONESTY NOTE: this workflow has NOT run yet — it executes for the first time
+# only after this file is pushed to GitHub. All "verified" claims below refer
+# to local verification on the dev machine (Windows, Python 3.12 venv):
+#   - ruff check .                    -> All checks passed
+#   - pytest -m "not integration"     -> 743 passed, 50 deselected
+# Linux-specific issues (path casing, missing system libs) can only surface on
+# the first real run.
+#
+# Job design:
+#   unit        — lint + non-integration tests. Installs the playwright *pip
+#                 package* (tools/browser_eval.py imports it at module level,
+#                 and tests/test_run_manifest.py imports that module) but NOT
+#                 the ~300MB browser binaries — those are only needed by
+#                 integration tests.
+#   integration — Playwright browser tests (pytest -m integration). Marked
+#                 continue-on-error because these drive real browsers against
+#                 live/local sites that are inherently flaky in CI (timing,
+#                 site availability); a red integration job is advisory, not
+#                 blocking. Also runnable manually via workflow_dispatch.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unit:
+    name: lint + unit tests (non-integration)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          # pyproject.toml requires-python = ">=3.12"; local dev venv is 3.12
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies
+        # dev     -> pytest, ruff
+        # sec     -> httpx/lxml/bs4/edgartools/datamule (sec_core + its tests)
+        # browser -> playwright pip package (module-level import in tools/;
+        #            browser binaries deliberately NOT installed here)
+        # apps/services/sec/requirements.txt -> fastapi/uvicorn/python-multipart
+        #            (tests/test_sec_service.py imports fastapi at module level)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,sec,browser]" -r apps/services/sec/requirements.txt
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Unit tests
+        # Marker per pyproject [tool.pytest.ini_options]:
+        #   "integration: tests that drive a real browser (Playwright)"
+        # Locally verified: 743 passed, 50 deselected (2026-07-11).
+        run: pytest -m "not integration"
+
+  integration:
+    name: integration tests (Playwright, advisory)
+    runs-on: ubuntu-latest
+    # Advisory: live sites / real-browser timing are not stable enough to
+    # gate merges on. Failures here are visible but non-blocking.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies (incl. Playwright browsers)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,sec,browser]" -r apps/services/sec/requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Integration tests
+        run: pytest -m integration

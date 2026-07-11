@@ -155,7 +155,7 @@ def list_artifacts(task_id: str) -> list[dict]:
 def artifact_file(task_id: str, rel: str) -> Path | None:
     base = task_dir(task_id).resolve()
     p = (base / rel).resolve()
-    if not str(p).startswith(str(base)) or not p.is_file():
+    if not p.is_relative_to(base) or not p.is_file():
         return None
     return p
 

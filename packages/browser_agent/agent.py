@@ -1174,7 +1174,7 @@ class BrowserAgent:
                 detail="開場即成立、已剔除的條件(不能作為完成證據):" + "; ".join(baseline_dropped)))
         repairs = 0
         for step in steps:
-            out = self._resolve_and_run(step, trace)
+            self._resolve_and_run(step, trace)
             if trace and trace[-1].mode == "repair" and trace[-1].diagnosis:
                 repairs += 1
             if self.executor.page is not self.page:

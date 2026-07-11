@@ -26,7 +26,7 @@ os.environ.setdefault("SEC_EDGAR_USER_AGENT", "ai-coding-test-2026 viewer contac
 from sec_core.fetcher import EdgarFetcher            # noqa: E402
 from sec_core.main_doc import pick_main_document      # noqa: E402
 from sec_core.pipeline import extract_from_html       # noqa: E402
-from sec_core.resolver import FilingResolver, FilingRef  # noqa: E402
+from sec_core.resolver import FilingResolver  # noqa: E402
 from sec_core.xbrl import certify_item8               # noqa: E402
 
 _STATUS_COLOR = {
@@ -166,7 +166,8 @@ class SecViewer:
             self.result = result
 
             class _Ref:  # minimal shim for the header
-                form = "upload"; report_date = Path(path).name
+                form = "upload"
+                report_date = Path(path).name
             self.q.put(("result", {"ticker": Path(path).name, "ref": _Ref(),
                                     "cls": result.filing_class, "xbrl": ""}))
             npass = sum(1 for s in result.segments if s.status == "pass")
@@ -185,7 +186,8 @@ class SecViewer:
             filings = resolver.annual_filings(cik)
             ref = next((f for f in filings if not f.is_amendment), None)
             if ref is None:
-                self.q.put(("error", f"{q} 找不到 10-K")); return
+                self.q.put(("error", f"{q} 找不到 10-K"))
+                return
             resolver.load_files(ref)
             best = pick_main_document(ref)
             self._set_status(f"抽取 {q} {ref.accession}…")

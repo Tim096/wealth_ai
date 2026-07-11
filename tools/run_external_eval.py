@@ -36,7 +36,7 @@ import time
 from pathlib import Path
 
 from browser_core import BrowserTaskContract, ForbiddenCondition, SuccessCondition
-from browser_agent.agent import BrowserAgent, DEFAULT_MAX_STEPS, resolve_max_steps
+from browser_agent.agent import BrowserAgent, resolve_max_steps
 from browser_agent.memory_store import MemoryStore
 from browser_agent.observer import PageObserver
 from browser_agent.planner import LLMPlanner, MockPlanner

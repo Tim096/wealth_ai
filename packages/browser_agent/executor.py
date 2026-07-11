@@ -303,7 +303,7 @@ class ActionExecutor:
                     self.page.wait_for_load_state("networkidle", timeout=c.timeout_ms)
                 return ActionOutcome(ok=True, action_type=at, detail=f"{c.kind}:{c.value}",
                                      url_before=url_before, url_after=self.page.url)
-            except Exception as e:  # noqa: BLE001
+            except Exception:  # noqa: BLE001
                 return ActionOutcome(ok=False, action_type=at, error=f"timeout: {c.kind}:{c.value}",
                                      url_before=url_before, url_after=self.page.url)
 

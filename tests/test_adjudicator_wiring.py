@@ -152,7 +152,6 @@ def _record(ticker: str, with_cost: bool) -> dict:
 
 
 def test_sweep_metrics_aggregates_cost_columns(tmp_path, monkeypatch, capsys):
-    import sweep_metrics
 
     (tmp_path / "a.json").write_text(json.dumps(_record("AAA", with_cost=True)), encoding="utf-8")
     (tmp_path / "b.json").write_text(json.dumps(_record("BBB", with_cost=False)), encoding="utf-8")

@@ -21,7 +21,6 @@ from __future__ import annotations
 import json
 import os
 import queue
-import shutil
 import subprocess
 import threading
 import time
@@ -344,8 +343,7 @@ def _ensure_gateway(base_url: str) -> str:
 DEFAULT_START = "https://duckduckgo.com/html/"
 
 
-import re as _re
-_SEC_CUE = _re.compile(r"10-?k|10-?q|\bsec\b|edgar|filing|財報|年報", _re.I)
+_SEC_CUE = re.compile(r"10-?k|10-?q|\bsec\b|edgar|filing|財報|年報", re.I)
 _TICKER_STOP = {"SEC", "EDGAR", "AND", "THE", "USA", "PDF", "CEO", "CFO", "USD",
                 "API", "URL", "HTML", "AI", "US", "UK", "NEW"}
 
@@ -358,7 +356,7 @@ def _sec_start_url(task: str) -> str:
     (any ticker), and only the START point; extraction stays untouched."""
     if not _SEC_CUE.search(task):
         return ""
-    for tok in _re.findall(r"\b[A-Z]{2,5}\b", task):
+    for tok in re.findall(r"\b[A-Z]{2,5}\b", task):
         if tok in _TICKER_STOP:
             continue
         return ("https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany"
@@ -389,7 +387,7 @@ def _agent_worker() -> None:
     from browser_core import BrowserTaskContract, SuccessCondition
     from browser_agent.agent import BrowserAgent
     from browser_agent.memory_store import MemoryStore
-    from browser_agent.planner import LLMPlanner, MockPlanner
+    from browser_agent.planner import LLMPlanner
     from llm_core.openai_client import OpenAIClient
     from observability_core import EvidenceStore
 

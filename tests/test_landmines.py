@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 
 from observability_core import sha256_text
 from sec_core.headings import detect_candidates

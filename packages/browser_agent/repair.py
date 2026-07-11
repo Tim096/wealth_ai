@@ -109,31 +109,39 @@ def _score_candidate(cand: ElementCandidate, purpose: str, want_value: str,
     if not _feasible(cand, purpose):
         return -1.0, f"infeasible for {purpose} (no actionable tag/role)"
     if cand.tag in hints["tags"]:
-        score += 2.0; reasons.append(f"tag={cand.tag}")
+        score += 2.0
+        reasons.append(f"tag={cand.tag}")
     if cand.type in hints["types"]:
         score += 0.5
     if cand.role in hints["roles"]:
-        score += 1.5; reasons.append(f"role={cand.role}")
+        score += 1.5
+        reasons.append(f"role={cand.role}")
     blob = f"{cand.aria_label} {cand.placeholder} {cand.name} {cand.text} {cand.id}".lower()
     word_hit = any(w in blob for w in hints["words"])
     if word_hit:
-        score += 2.0; reasons.append("purpose word match")
+        score += 2.0
+        reasons.append("purpose word match")
     # for a submit button, a real form button beats a bare icon with no semantics
     if purpose == "submit_button" and cand.type == "submit":
-        score += 1.0; reasons.append("type=submit")
+        score += 1.0
+        reasons.append("type=submit")
     if want_value and want_value.lower() in blob:
-        score += 1.0; reasons.append("value hint match")
+        score += 1.0
+        reasons.append("value hint match")
     if purpose in _FILL_PURPOSES:
         # form-context signal (FG-BROWSER-005): the field sharing a form with a
         # submit control beats a free-floating bait field of identical wording
         if cand.form and cand.form in submit_forms:
-            score += 1.0; reasons.append("same form as a submit control")
+            score += 1.0
+            reasons.append("same form as a submit control")
         elif cand.form:
-            score += 0.5; reasons.append("inside a form")
+            score += 0.5
+            reasons.append("inside a form")
         # bait wording never helps a search/query purpose; without a purpose
         # word it actively counts against the candidate
         if not word_hit and any(w in blob for w in _BAIT_WORDS):
-            score -= 1.0; reasons.append("bait-like wording (promo/coupon/discount)")
+            score -= 1.0
+            reasons.append("bait-like wording (promo/coupon/discount)")
     return score, ", ".join(reasons) or "weak match"
 
 

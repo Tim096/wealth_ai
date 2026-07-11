@@ -72,7 +72,6 @@ def detect_cross_reference_index(
     if len(candidates) < _MIN_CLUSTERED_ITEMS:
         return CrossRefIndex(detected=False, reason="too few item headings")
 
-    starts = sorted(c.start for c in candidates)
     # find the densest window containing the most distinct item codes
     best_lo, best_hi, best_codes = 0, 0, set()
     for c in candidates:

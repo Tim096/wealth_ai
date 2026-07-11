@@ -11,7 +11,6 @@ LLM generality for unknown sites without giving up the reliability spine.
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from typing import Protocol
 

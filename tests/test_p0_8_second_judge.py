@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from browser_core import BrowserTaskContract, SuccessCondition
+from browser_core import SuccessCondition
 from browser_agent import second_judge as sj
 
 ROOT = Path(__file__).resolve().parents[1]

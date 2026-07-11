@@ -97,6 +97,36 @@ OpenClaw / Hermes 這類「LLM 自主驅動瀏覽器」的核心迴圈就是:看
 
 **共同優化主線**:真實網站廣度(接 WebArena/WebVoyager 對標)、把 XBRL/topic 這種「獨立結構化 oracle」的思路推廣到更多 item / 更多網站驗證面。
 
+## 6.5 從量化到使用情境(2026-07-10)
+
+> 完整情境表(24 個具體情境,含程式碼佐證與 cheap fixes)在 `docs/usage_scenarios.md`。這裡收核心論點與下一波優先序。
+
+### 兩個核心論點
+
+**Browser Agent:人不是用 pass rate 信任 agent。** 人類(含評分者)用三個量化指標看不到的判準:(1) **結論與人眼是否一致**——silent false pass(preflight 自選 landmark 太早為真)、明明在播卻 FAIL(媒體任務)、誤殺 REFUSED(裸字 `post` 命中 guard),每次背離都是信任歸零事件,而它們在 eval 數字裡分別記成 pass、fail、refused,全部「正常」;(2) **失敗時系統知不知道自己為什麼失敗**——REFUSED+理由、unknown+trace 是誠實,raw `TimeoutError` 裸奔、新分頁追丟後自述「點了沒效果」是出糗,分界不在結局對錯,在自述與事實是否一致;(3) **成果有沒有交到人手上**——extract_text 的答案被丟棄(`agent.py` 只回傳 `__download__`)、截圖存了不顯示、下載檔只給 server 本機路徑,90% 工程投資花在 verdict 可信,deliverable 卻沒接到人面前,造成「pass rate 完美、使用者價值為零」的結構性盲區。最大的兩個一日內可修的信任洞:capability guard 的英文裸字誤殺與中文穿透——直接打穿 README 最引以為傲的「code-enforced 責任邊界」宣稱,是面試必問點。
+
+**SEC Extractor:人用「錯誤的形狀」決定信不信。** 人靠兩件事建立信任:抽查一兩個自己熟的 item 看邊界對不對;丟一個刁鑽輸入(20-F、pre-2001、wrapper)看系統「知不知道自己不知道」。本系統的誠實內核(三態 status、XBRL/topic oracle、gap 保底)正中這兩點,但表達層仍是機器語彙(`filing_class=non_10k`、`conf 0.67`)。量化沒捕捉到的是錯誤的形狀:「誠實拒絕+說明原因+指出內容位置」與「靜默給錯」在 F1 上可能同分,對人卻是 A 級與 C 級的分水嶺。各族的一票否決各不同:律師要可獨立重驗的 offset 配方(sha256 對 normalized text 算,raw 下載卻是原始 HTML——斷鏈)、量化要無共享狀態的批次 API(全域 `_SEC_STATE` 併發下會串台)、基本面分析師要 stub 一鍵跳到正文(誠實但沒用=沒用)、評分者要系統對不支援輸入的第一句話。修這些多半不是改 pipeline,是把已存在的證據(warnings、gap offsets、filing_class、accession)翻譯成人話並接上連結。
+
+### 下一波優先序(依嚴重度)
+
+**breaks_trust(先修,多數半天內)**
+1. guard 裸字誤殺:`post/publish/pay` 改需接受詞 pattern + 誤殺回歸測試(`capability.py`)
+2. guard 中文穿透:三個 regex 加中文詞(登入/購買/結帳/密碼/信用卡)+ 中文 refused 測試
+3. SEC 併發串台:/api/sec/item 帶 accession 與全域 state 比對,不符明講(`test_center.py`)
+4. SEC 拒絕要有理由:20-F 公司回「foreign private issuer,申報 20-F 非 10-K」而非「找不到 10-K」
+5. 律師的驗證配方:/api/sec/normalized + item 標頭附 sha256 重現 one-liner
+6. answer channel:extract_text 結果回傳 UI(問答/翻譯類任務目前 pass 也交不出答案)
+7. verifier 條件品質(premature landmark、media_playing)——與本日平行 workflow 的 verifier/repair 修復同步,勿重工
+
+**friction(其次,多為 UI 接線)**
+- 最終截圖進 UI(unknown 從「機器聳肩」變「邀請人裁決」——最便宜的信任槓桿)
+- error 人話映射(raw TimeoutError 不裸奔)、下載檔 HTTP route、queue_position、mock 模式二次確認
+- EDGAR URL 直接餵入、IBR stub→gap 跳轉、不支援格式的敘事 banner、review_summary 總覽
+- scroll prompt(PageDown 一行 PLAYBOOK)、新分頁跟隨、YoY diff、批次路徑文件化
+
+**polish(最後)**
+- verifier reason 人話翻譯、unknown 不顯示偽精度 confidence、amendment 在 picker 現身、pipeline_rev 版本戳記、表格核對導引
+
 ## 7. 給評審的一頁總結
 
 - 我沒有向你們要 API key(資安考量);SEC 走公開 EDGAR,Browser 的 Codex 由**你自己的 OAuth** 經 gateway 驅動,key 從不進 repo。

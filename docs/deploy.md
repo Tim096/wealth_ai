@@ -26,6 +26,7 @@ Zeabur project(單一 project,兩個 service)
 | `SEC_EDGAR_USER_AGENT` | 是 | 本地 PowerShell session 手動設定(`$env:SEC_EDGAR_USER_AGENT`,格式 `姓名 email`,見 README killer demos 段) | EDGAR 要求的 UA;`/api/health` 的 `sec_user_agent_configured` 會回報是否已設 |
 | `ACCESS_TOKEN` | 否 | 部署時自訂(隨機字串),只存在 Zeabur | 設定後除 `/api/health` 外均需 `X-Access-Token` header 或 `?token=`;不設 = 公開(評測者免 auth) |
 | `MAX_CONCURRENCY` | 否 | — | 抽取 worker 數,預設 2 |
+| `PREWARM_TICKERS` | 否 | — | 容器啟動時背景預熱的 tickers,預設 `INTC,AAPL,MSFT`;設空字串停用 |
 
 ### wealth-agent
 
@@ -101,6 +102,7 @@ npx zeabur@latest deploy --project-id <project-id> --service-id <agent-service-i
 | health | `GET /api/health` | 200,`sec_user_agent_configured: true` |
 | dashboard | `GET /` 與 `GET /dashboard` | 200 HTML |
 | 抽取 | `POST /api/extract` body `{"ticker":"AAPL"}` | job → done,23 items,coverage ≈ 0.89 |
+| 抽取(重複查詢) | 同上再打一次 | **同一 response 直接 `status=done` + 完整 payload**(result memo cache hit,零輪詢;實測 ~0.6s,舊版需輪詢 1.6–2.8s)|
 | item 內文 | `GET /api/jobs/<id>/item?code=1A` | source-exact 全文 |
 | 誠實拒絕 | `POST /api/extract` body `{"ticker":"TSM"}` | error job,`NotA10KFilerError`(20-F) |
 | auth(若設 ACCESS_TOKEN) | `GET /api/jobs` 無 token | 401;帶 `X-Access-Token` → 200 |
@@ -125,6 +127,11 @@ npx zeabur@latest deploy --project-id <project-id> --service-id <agent-service-i
 | wealth-agent Service ID | `6a50ea7ff04125ac9a34799b` |
 | **wealth-sec URL** | **https://wealth-sec-ncku.zeabur.app** |
 | **wealth-agent URL** | **https://wealth-agent-ncku.zeabur.app** |
+
+### 效能(2026-07-10 redeploy 後實測)
+
+- wealth-sec:JobStore result memo(done job 依 kind/label/accession 直接命中)+ `POST /api/extract` cache hit 內嵌完整 payload(零輪詢)+ GZipMiddleware + 啟動 prewarm(`PREWARM_TICKERS`)。AAPL warm repeat:**0.6s / 0 polls / gzip ~1.3KB**(redeploy 前 1.6–2.8s / 需輪詢)。
+- 前端:poll 首查即刻、間隔 400ms(原 1500ms);loadYears 改背景執行(省最多 2.1s);find 輸入 debounce 300ms。
 
 ### 上線驗證(response-content 實測)
 

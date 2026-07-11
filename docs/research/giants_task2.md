@@ -298,3 +298,46 @@ anchor 的距離,或 per-item gold-free 長度先驗(相對於 filing 總長的�
   但 F1 是副產品,主目標是讓信心軸重新有訊號。
 - **流程修正**:calibration 重跑前必須驗 head_to_head.json 的 engine schema(4-engine)與 mtime
   晚於 pipeline wave 完成時間,否則就是這次的「數字全同」假象重演。
+
+### 終判 2026-07-10 18:05(end-boundary fix `a72ec43` 之後,fresh foreground rerun)
+
+**結論先講:raw 單引擎 macro-F1 我們沒有贏。** ours 0.5964 < edgar_crawler 0.6332(差 0.0368)
+< 也輸 datamule 0.6244(差 0.0280)。end-boundary fix(scoped next-item rescan + terminal
+signature cut)已上線且 707 tests 全過,但防誤切閘門(title-similarity ≥0.6、TOC-link/
+numbered-list 排除)在 30-slice 上 **rescan cut 觸發 0 次**——診斷出的 A-bucket 案例
+(2713014 item 14、3775802 item 9A、18189986 item 5)per-item F1 delta 全為 0。修法落地
+但在量測 slice 上無效,這是實測事實,照錄。artifact: `data/sec_eval/scoring/head_to_head.json`
+(mtime 18:05,30 filings,4 engines;與前次量測逐位元一致,engine diff = 0)。
+adapter 未做任何 convention-trim;若未來加,必須標註為 adapter-only 且對所有引擎對稱套用。
+
+#### 單引擎 F1 與驗證軸對照(誠實框架:F1 是單軸,可靠性是另一軸)
+
+| 系統 | macro-F1(NTU 30-slice) | scored / failures | 多 oracle 驗證(XBRL/CYD/topic/2-of-N) | 誠實 needs_review / 棄權 | 覆蓋保證(capture-first) | mutation harness |
+|---|---|---|---|---|---|---|
+| **ours** | 0.5964 | 28 / 2 | **有** | **有**(coverage 0.7754,false-pass 100/397 如實記) | **有**(先 100% 擷取再分類) | recall 1.0 全六類(truncate/misalign/toc_anchor/wrapper_swallow/jitter/cross_swap),clean false-alarm ≤0.0056 |
+| edgar_crawler | **0.6332** | 30 / 0 | 無 | 無(silent,錯了不知道錯) | 無 | 無 |
+| datamule | 0.6244 | 28 / 2 | 無 | 無 | 無 | 無 |
+| edgartools (5.42.0) | 0.4386 | 26 / 4 | 無 | 無 | 無 | 無 |
+
+正確的敘事**不是**「我們每個數字都贏」——那是假的。是:我們用 precision 換 capture-first
+recall(bleed 是這個 trade 的帳單),而換來的是全場**唯一**有驗證層的系統:錯誤會被量化
+(false-pass 100 筆是我們自己量出來自己公布的;其他引擎的 false-pass rate 是「未知」,
+因為它們根本沒有這個概念)。edgar_crawler 的 0.6332 是一個無法自我審計的數字;我們的
+0.5964 帶著 AUROC、ECE、coverage、mutation recall 一整組可審計配套。單軸比 F1 我們輸
+0.037;比「你敢不敢把輸出直接餵下游」,對面三家連參賽資格都沒有。
+
+#### 殘餘 + 下一個訊號(誠實列帳)
+
+1. **Heading-undetectable cascade 仍是主血源**:rescan tier-2 靠「下一個 expected item 的
+   canonical heading 在 span body 內找得到」,但 NTU 主導桶的 bleed 多為 heading 形態偵測
+   不到(bare/表格內/變體 heading),閘門一擋就是 0 觸發。counterfactual ceiling 只有
+   +0.0026,本來就要求近乎全收 A-bucket 才翻盤——現實是收了 0 筆。
+2. **2 筆「no items extracted」filings**:edgar_crawler 在這兩筆拿 ~0.9–0.99,我們拿 0。
+   修回任何一筆的邊際貢獻大於整個 A-bucket ceiling,是下一個最高槓桿目標。
+3. **Containment adapter 的 furniture-line 重複計數**(C-bucket,6/15):重複頁眉每次出現
+   都算 fp,單筆可灌 100–200 fp。對雙方對稱(6 筆 C-bucket 上我們與 edgar_crawler fp 逐筆
+   相同),head-to-head 公平,不改;但引用「87% boundary bleed」診斷時必須註明含此 artifact 膨脹。
+4. **下一個訊號(gold-free)**:不依賴 heading 可偵測性的 per-item 長度先驗——span 長度
+   相對 filing 總長的占比分布,超出 p95 即封頂 confidence + needs_review;或候選有
+   next-item-anchor 時量 span 終點與 anchor 距離。這是 AUROC 0.63→0.75 與攔截率 ≥50%
+   兩個 MISS gate 的同一把鑰匙。

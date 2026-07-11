@@ -3,6 +3,8 @@
 Wraps packages/browser_agent behind a job-queue API:
   GET  /                    UI (natural-language task in, live trace out)
   GET  /api/health          liveness + planner/queue info (never token-gated)
+  GET  /api/demo            keyless 示範任務 presets (never token-gated)
+  POST /api/demo/{id}       queue a preset demo run (MockPlanner forced, no key)
   POST /api/tasks           {"task": "...", "url"?, "success"?, "max_steps"?} -> 202 {task_id}
   GET  /api/tasks           recent tasks
   GET  /api/tasks/{id}      status + live steps + verifier verdict + full trace
@@ -39,7 +41,7 @@ app = FastAPI(title="wealth-agent", lifespan=lifespan)
 
 
 # --------------------------------------------------------------- token gate
-_OPEN_PATHS = {"/", "/index.html", "/api/health", "/favicon.ico"}
+_OPEN_PATHS = {"/", "/index.html", "/api/health", "/api/demo", "/favicon.ico"}
 
 
 @app.middleware("http")
@@ -64,8 +66,36 @@ class TaskIn(BaseModel):
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "service": "wealth-agent", **worker.INFO,
-            "queue_depth": worker.queue_depth()}
+    out = {"ok": True, "service": "wealth-agent", **worker.INFO,
+           "queue_depth": worker.queue_depth(),
+           "demo_tasks": len(worker.DEMO_TASKS)}
+    if not worker.INFO.get("llm_ok"):
+        # demo mode: spell out exactly what enables arbitrary NL tasks
+        out["llm_env_required"] = {
+            "AGENT_LLM_MODE": "direct",
+            "OPENAI_BASE_URL": "https://openrouter.ai/api/v1(OpenRouter)或其他 OpenAI-compatible endpoint",
+            "OPENAI_API_KEY": "<your key>",
+            "OPENAI_MODEL": "<model slug,如 openai/gpt-4o-mini>",
+        }
+    return out
+
+
+@app.get("/api/demo")
+def demo_tasks():
+    return {"ok": True, "mode": worker.INFO.get("mode", ""),
+            "llm_ok": worker.INFO.get("llm_ok", False),
+            "demo_tasks": worker.DEMO_TASKS}
+
+
+@app.post("/api/demo/{demo_id}", status_code=202)
+def run_demo(demo_id: str):
+    try:
+        rec = worker.submit_demo(demo_id)
+    except worker.QueueFull as e:
+        raise HTTPException(status_code=429, detail=str(e)) from None
+    if rec is None:
+        raise HTTPException(status_code=404, detail="unknown demo_id")
+    return {"ok": True, "task_id": rec["task_id"]}
 
 
 @app.post("/api/tasks", status_code=202)

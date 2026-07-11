@@ -143,3 +143,20 @@ npx zeabur@latest deploy --project-id <project-id> --service-id <agent-service-i
 | `OPENAI_MODEL` | endpoint 支援的 model 名 |
 
 補完後 restart wealth-agent(`service restart --id 6a50ea7ff04125ac9a34799b -y -i=false`)即生效;`/api/health` 的 `mode` 會變 `direct`、planner 不再是 MockPlanner。
+
+### OpenRouter(建議)
+
+LLM client 走標準 OpenAI-compatible `/chat/completions` + Bearer key,OpenRouter 直接可用。Zeabur variables 設這 4 個(缺 key 時 `/api/health` 會回 `llm_env_required` 列出同樣 4 個變數,UI 顯示示範模式 banner):
+
+| 變數 | 值 |
+|---|---|
+| `AGENT_LLM_MODE` | `direct` |
+| `OPENAI_BASE_URL` | `https://openrouter.ai/api/v1` |
+| `OPENAI_API_KEY` | OpenRouter key(`sk-or-v1-…`,只存 Zeabur variables,勿進 repo) |
+| `OPENAI_MODEL` | OpenRouter model slug,如 `openai/gpt-4o-mini` |
+
+注意:client 每次呼叫都帶 `response_format: {"type":"json_object"}`,vision 升級時附 base64 截圖 — 選支援 structured output(+vision 更佳)的模型。設定後 restart,`/api/health` 應顯示 `mode: "direct"` 與 `model`。
+
+### 免 key 示範(示範任務)
+
+未設任何 LLM 變數(或 `AGENT_LLM_MODE=mock`)時,UI 顯示「示範任務」區:4 個一鍵 preset(v1 基準搜尋、v2 介面漂移自我修復、注入防禦、capability guard 誠實拒絕)以內建 mock 網站 + 確定性 MockPlanner 完整跑通(live 進度 / 軌跡 / 截圖與真實 run 相同)。API:`GET /api/demo` 列 preset、`POST /api/demo/{id}` 派工。設了 key 之後示範按鈕仍固定走 MockPlanner(穩定展示、零 token 成本),自然語言任務才走 LLM。

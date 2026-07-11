@@ -323,6 +323,12 @@ def run_eval(entries: list[dict], planner, run_dir: Path, *, extractor,
                         row["harness_status"] = "done"
                         row["resumed"] = True
                         rows.append(row)
+                        # A resumed done row is a successful attempt of this run:
+                        # without this, tasks with persistent env errors become the
+                        # first N attempts of every relaunch and the abort guard
+                        # deadlocks the run (observed: 3 unreachable sites froze the
+                        # full-300 sweep at 46 done).
+                        n_attempted += 1
                         continue
                 if isinstance(planner, MockPlanner):
                     planner = MockPlanner(_query_hint(entry["natural_language_task"]))

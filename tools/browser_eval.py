@@ -197,6 +197,7 @@ def run_script_pass(page, tasks: list[dict], mem_path: Path, evidence=None,
                 row["harness_status"] = "done"
                 row["resumed"] = True
                 rows.append(row)
+                n_attempted += 1  # resumed done = successful attempt, keeps the abort guard from deadlocking on persistent-error tasks
                 continue
 
         def _one(task=task):

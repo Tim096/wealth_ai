@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from browser_core import BrowserTaskContract, ElementTarget, RepairEvent
+from browser_core import BrowserTaskContract, Budget, ElementTarget, RepairEvent
 from browser_core.actions import (
     ClickAction, FillAction, PressAction, WaitForAction, WaitCondition,
 )
@@ -232,6 +232,15 @@ class TaskRun:
     repairs: int = 0
     total_latency_ms: float = 0.0
     confidence: float = 0.0         # numeric, derived from verifier + repair cost
+    # P0-6 cost accounting (BG cache-aware cost accounting): the accumulated
+    # planner LLM spend used to be summed in run_agentic and then dropped —
+    # eval rows carried zero cost. It now lands here, next to the verdict, so
+    # cost-per-success can be computed in the same artifact.
+    llm_cost_usd: float = 0.0
+    llm_tokens: int = 0             # input+output tokens across planner calls
+    # phase timings (ms): where the wall-clock went — planner_ms (LLM calls),
+    # action_ms (executor), verify_ms (per-step rescan + contract verdicts)
+    phase_timings: dict[str, float] = field(default_factory=dict)
     # Answer channel (P2): text the agent DELIVERED via extract_text actions,
     # concatenated in extraction order. This is page evidence, not the LLM's
     # self-report — the verifier's answer_matches condition judges it, and the
@@ -247,6 +256,9 @@ class TaskRun:
             "confidence": round(self.confidence, 3),
             "answer": self.answer,
             "repairs": self.repairs, "total_latency_ms": round(self.total_latency_ms, 1),
+            "llm_cost_usd": round(self.llm_cost_usd, 6),
+            "llm_tokens": self.llm_tokens,
+            "phase_timings_ms": {k: round(v, 1) for k, v in self.phase_timings.items()},
             # T1-4 repetitiveness: derived purely from the recorded steps, so it is
             # computed here (observation only, never influences agent behaviour).
             "repetition": repetition_report(self.steps),
@@ -322,7 +334,7 @@ class BrowserAgent:
             run_id=run_id, app="browser_agent", step_id=f"{task_id}-verdict",
             timestamp=self._now(), input_hash=sha256_text(task_id),
             output_hash=sha256_text(run.status), tool_used="browser_agent.verify_contract",
-            latency_ms=run.total_latency_ms, cost_usd=0.0,
+            latency_ms=run.total_latency_ms, cost_usd=run.llm_cost_usd,
             status=run.status if run.status in ("pass", "fail", "unknown") else "unknown",
             evidence_type="metric", artifact_path="", verifier_result=run.verifier,
         ))
@@ -510,7 +522,8 @@ class BrowserAgent:
         raise ValueError(f"unknown step kind {step.kind}")
 
     def run_agentic(self, task_id: str, contract: BrowserTaskContract, planner,
-                    max_steps: int = 8, on_step=None, plan_steps=None) -> TaskRun:
+                    max_steps: int = 8, on_step=None, plan_steps=None,
+                    budget: Budget | None = None) -> TaskRun:
         """Agent Mode (SPEC 6.2): an LLM planner chooses actions from the
         controlled schema; each is capability-screened and executed; the
         verifier — not the LLM — decides the outcome. Falls back cleanly if the
@@ -535,6 +548,9 @@ class BrowserAgent:
         trace: list[StepTrace] = []
         history: list[str] = []
         llm_cost = 0.0
+        llm_tokens = 0
+        # P0-6 phase timings: where the wall-clock goes, accumulated per phase
+        phase = {"planner_ms": 0.0, "action_ms": 0.0, "verify_ms": 0.0}
         give_ups = 0
         dones = 0    # P0-3: premature-done rejections spent (front gate fires once)
         # Answer channel (P2): every successful extract_text APPENDS here — the
@@ -592,6 +608,20 @@ class BrowserAgent:
             return st
         _emit(f"🧠 想任務:{contract.natural_language_task}")
         for step_i in range(max_steps):
+            # P0-6 hard budget (SK 四維硬預算), checked at the loop HEAD so an
+            # over-budget run stops BEFORE spending another LLM call or action;
+            # the final verdict below still comes from the verifier, never from
+            # the budget stop itself.
+            if budget is not None:
+                over = budget.exceeded(steps=step_i, tokens=llm_tokens,
+                                       usd=llm_cost,
+                                       wall_clock_s=time.perf_counter() - t0)
+                if over:
+                    trace.append(StepTrace(step="budget", action="stop", ok=False,
+                                           mode="agent",
+                                           detail=f"budget exceeded: {over}"))
+                    _emit(f"⛔ 預算用盡:{over}")
+                    break
             # A popup/interstitial can appear AFTER any navigation on ANY site
             # (this is the "跳出一個頁面 agent 點不掉" failure). Detect it by
             # geometry — not a class allow-list — and clear it every step, so the
@@ -621,6 +651,7 @@ class BrowserAgent:
             # P0-5 latch: rescan every not-yet-banked success condition against
             # THIS observation (WC per-step rescan, score=max(old,new)); one
             # observed pass is banked permanently with its step number.
+            _tv = time.perf_counter()
             for key, st in check_conditions(contract, obs, _extracted()).items():
                 if st == "pass" and key not in latched:
                     latched[key] = step_i
@@ -628,6 +659,7 @@ class BrowserAgent:
             # (answer + download + latch ledger), so a satisfied deliverable
             # ends the run here instead of waiting for the model to claim done
             verdict = verify_contract(contract, obs, _extracted(), latched=latched)
+            phase["verify_ms"] += (time.perf_counter() - _tv) * 1000
             if verdict.status == "pass":
                 break
             # P3 auto-vision escalation: when the text channel is going nowhere
@@ -665,13 +697,16 @@ class BrowserAgent:
                 somp = self.artifact_dir / f"som-{len(trace)}.png"
                 if set_of_marks(self.page, str(somp)):
                     image_path = str(somp)
+            _tp = time.perf_counter()
             decision = planner.next_action(
                 contract.natural_language_task,
                 [f"{c.type}:{c.value}" for c in contract.success_conditions], obs,
                 history + [nudge] if nudge else history,
                 plan_steps=plan_steps, image_path=image_path)
+            phase["planner_ms"] += (time.perf_counter() - _tp) * 1000
             if decision.llm is not None:
                 llm_cost += decision.llm.cost_usd
+                llm_tokens += decision.llm.input_tokens + decision.llm.output_tokens
             # a malformed/unusable action is recoverable — give the model another
             # turn instead of ending the whole run (the old give_up was too brittle)
             if decision.kind == "noop":
@@ -727,6 +762,7 @@ class BrowserAgent:
                 _emit(f"🛑 拒絕(責任邊界):{ascreen.reason}")
                 break
             out = self.executor.execute(action)
+            phase["action_ms"] += out.latency_ms
             if out.followed_url:
                 # F12: the click's effect lives in a NEW tab — repoint the agent
                 # and observer so the loop keeps seeing where the journey went.
@@ -773,11 +809,15 @@ class BrowserAgent:
                 step="latch", action="ledger", ok=True, mode="agent",
                 detail="satisfied-at-step ledger: "
                        + "; ".join(f"{k} @step{v}" for k, v in latched.items())))
+        _tv = time.perf_counter()
         verdict = verify_contract(contract, obs, extracted, latched=latched)
+        phase["verify_ms"] += (time.perf_counter() - _tv) * 1000
         base = {"pass": 1.0, "unknown": 0.4, "fail": 0.0}[verdict.status]
         run = TaskRun(task_id=task_id, site=self.site, status=verdict.status, verifier=verdict,
                       steps=trace, repairs=0, confidence=base,
                       answer=extracted.get("answer", ""),
+                      llm_cost_usd=llm_cost, llm_tokens=llm_tokens,
+                      phase_timings=phase,
                       total_latency_ms=(time.perf_counter() - t0) * 1000)
         self._emit_evidence(f"agent-{self.site}-{task_id}", task_id, run)
         return run

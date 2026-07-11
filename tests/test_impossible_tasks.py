@@ -120,18 +120,16 @@ def test_impossible_tasks_honest_outcomes_and_refused_separation():
 
 
 @pytest.mark.integration
-def test_known_silent_failure_teleporter_is_surfaced():
-    # KNOWN, DELIBERATELY-UNFIXED silent failure (measure-first, cf. T1-1's
-    # filename-needle FP). 'imp-product-teleporter' has no product but the
-    # results echo "0 results for 'teleporter'" contains the success needle
-    # "Teleporter", so text_visible matches the query echo -> false PASS. When
-    # the verifier is hardened (exclude the results-status echo region / require
-    # a product row), this test flips and the committed artifact must be
-    # regenerated with tools/impossible_tasks.py.
+def test_teleporter_query_echo_is_honest_fail():
+    """FIX-2 (FG-BROWSER-003) 前後對照。修復前:v3 結果頁 0-hit 回顯
+    '0 results for "teleporter"' 內含 success needle "Teleporter",text_visible
+    吃到查詢回顯 → 假 PASS(silent failure;silent_failure_rate 0.1)。修復後:
+    verifier 遮罩 zero-result 查詢回顯行,needle 僅出現在回顯行內不算命中 →
+    誠實 fail,silent_failure_rate 0.0。"""
     pytest.importorskip("playwright.sync_api")
     if not (ROOT / "data" / "mock_sites" / "v3_heldout" / "index.html").exists():
         pytest.skip("mock sites not present")
     rows = it.run_all(_subset({"imp-product-teleporter"}))
     r = rows[0]
-    assert r["status"] == "pass"           # the surfaced silent failure
-    assert r["silent_failure"] is True
+    assert r["status"] == "fail"           # the former silent failure, now honest
+    assert r["silent_failure"] is False

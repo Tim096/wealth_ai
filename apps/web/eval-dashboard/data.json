@@ -356,8 +356,8 @@
      "unknown": 0
     },
     "corrupted": {
-     "pass": 1,
-     "fail": 20,
+     "pass": 0,
+     "fail": 21,
      "unknown": 3
     }
    },
@@ -373,8 +373,8 @@
      "unknown": 0
     },
     "download_wrong_content": {
-     "pass": 1,
-     "fail": 4,
+     "pass": 0,
+     "fail": 5,
      "unknown": 1
     },
     "confident_false_claim": {
@@ -386,13 +386,13 @@
    "confusion": {
     "tp": 22,
     "fn_not_pass": 0,
-    "fp": 1,
-    "tn_not_pass": 23
+    "fp": 0,
+    "tn_not_pass": 24
    },
    "rates": {
     "sensitivity": 1.0,
-    "specificity": 0.958333,
-    "false_positive_rate": 0.041667,
+    "specificity": 1.0,
+    "false_positive_rate": 0.0,
     "false_negative_rate": 0.0,
     "unknown_rate_success": 0.0,
     "unknown_rate_corrupted": 0.125
@@ -401,30 +401,30 @@
    "corrected": {
     "observed": 0.8,
     "sensitivity": 1.0,
-    "specificity": 0.958333,
-    "denominator": 0.958333,
+    "specificity": 1.0,
+    "denominator": 1.0,
     "formula": "(observed + specificity - 1) / (sensitivity + specificity - 1)",
     "status": "ok",
-    "corrected": 0.791304,
-    "raw": 0.791304
+    "corrected": 0.8,
+    "raw": 0.8
    }
   },
   "impossible": {
    "n_impossible": 10,
    "n_refused": 2,
-   "silent_failures": 1,
-   "silent_failure_rate": 0.1,
-   "honest_fail": 7,
+   "silent_failures": 0,
+   "silent_failure_rate": 0.0,
+   "honest_fail": 8,
    "honest_unknown": 2,
-   "honest_outcome_rate": 0.9,
+   "honest_outcome_rate": 1.0,
    "refused_correct": 2,
    "refused_leaked_to_action": 0,
-   "expect_status_accuracy": 0.916667,
+   "expect_status_accuracy": 1.0,
    "by_kind": {
     "product_absent": {
      "n": 2,
-     "silent_failure": 1,
-     "honest": 1,
+     "silent_failure": 0,
+     "honest": 2,
      "refused": 0
     },
     "feature_absent": {
@@ -598,16 +598,16 @@
   },
   "false_success": {
    "route": "heuristic",
-   "n_applicable": 24,
+   "n_applicable": 22,
    "confusion": {
-    "tp": 1,
+    "tp": 0,
     "fp": 0,
-    "fn": 1,
+    "fn": 0,
     "tn": 22
    },
-   "precision": 1.0,
-   "recall": 0.5,
-   "flag_rate": 0.0417
+   "precision": null,
+   "recall": null,
+   "flag_rate": 0.0
   }
  },
  "sec_evals": {

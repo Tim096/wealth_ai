@@ -100,6 +100,37 @@ def test_download_verified_by_file_content_not_path(tmp_path):
     assert verify_contract(c, obs([]), {"__download__": str(wrong)}).status == "fail"
 
 
+def test_download_binary_with_filename_hit_is_unknown_not_pass(tmp_path):
+    """FIX-2 (FG-BROWSER-002)。不可讀 binary bytes 無法證明也無法否證內容:
+    檔名命中 needle 只是弱訊號 → unknown(修復前:檔名命中單獨就 pass);
+    檔名也不中 → fail。"""
+    blob = bytes(range(256)) * 20
+    hit = tmp_path / "risk factors.pdf"
+    hit.write_bytes(blob)
+    miss = tmp_path / "blob.pdf"
+    miss.write_bytes(blob)
+    c = _dl_contract("risk factors")
+    assert verify_contract(c, obs([]), {"__download__": str(hit)}).status == "unknown"
+    assert verify_contract(c, obs([]), {"__download__": str(miss)}).status == "fail"
+
+
+def test_text_visible_ignores_query_echo_lines():
+    """FIX-2 (FG-BROWSER-003)。修復前:'0 results for "teleporter"' 的查詢
+    回顯就能滿足 text_visible "Teleporter" → 假 pass。修復後:zero-result
+    回顯行被遮罩,needle 僅出現在回顯行內 → fail;出現在回顯行外照常 pass。"""
+    c = BrowserTaskContract(task_id="t", natural_language_task="x", expected_outcome="x",
+                            success_conditions=[SuccessCondition(type="text_visible", value="Teleporter")])
+    # needle only inside the zero-results echo -> not evidence
+    assert verify_contract(c, obs([], text='0 results for "teleporter"')).status == "fail"
+    assert verify_contract(c, obs([], text='找不到 "Teleporter" 的結果')).status == "fail"
+    # needle outside the echo line -> real evidence, still passes
+    assert verify_contract(
+        c, obs([], text='0 results for "teleporter"\nRelated: Teleporter Mini')).status == "pass"
+    # a NON-zero results echo is not masked (legit pages keep passing)
+    assert verify_contract(
+        c, obs([], text='2 results for "teleporter": Teleporter Mini')).status == "pass"
+
+
 def test_download_exists_states(tmp_path):
     real = tmp_path / "doc.htm"
     real.write_text("y" * 2000, encoding="utf-8")

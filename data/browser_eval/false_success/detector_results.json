@@ -10,17 +10,17 @@
   },
   "metrics": {
     "n_records": 58,
-    "n_applicable_claimed_success": 24,
-    "n_ground_truth_false_success_applicable": 2,
+    "n_applicable_claimed_success": 22,
+    "n_ground_truth_false_success_applicable": 0,
     "confusion": {
-      "tp": 1,
+      "tp": 0,
       "fp": 0,
-      "fn": 1,
+      "fn": 0,
       "tn": 22
     },
-    "precision": 1.0,
-    "recall": 0.5,
-    "flag_rate": 0.0417,
+    "precision": null,
+    "recall": null,
+    "flag_rate": 0.0,
     "feature_firing_counts": {
       "claim_evidence_gap": 2
     },
@@ -675,8 +675,8 @@
         "id": "cal-bad-dlname-annual-report",
         "source": "calibration",
         "evidence_reconstructed": false,
-        "ground_truth_false_success": true,
-        "applicable": true,
+        "ground_truth_false_success": false,
+        "applicable": false,
         "flag": false,
         "score": 0.0,
         "features": {
@@ -830,10 +830,10 @@
         "id": "imp-product-teleporter",
         "source": "impossible",
         "evidence_reconstructed": true,
-        "ground_truth_false_success": true,
-        "applicable": true,
-        "flag": true,
-        "score": 0.6,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
         "features": {
           "claim_evidence_gap": 1.0,
           "hallucinated_claim": 0.0,
@@ -1018,7 +1018,7 @@
     ]
   },
   "known_limitations": [
-    "download-content-vs-filename bypass (cal-bad-dlname-annual-report) is a false success the visible-text/trajectory features do not target — the corruption lives in download bytes, not visible_text; an honest miss.",
+    "the verifier fixes for FG-BROWSER-002 (content-first downloads) and FG-BROWSER-003 (query-echo masking) removed every false success from the committed corpus: cal-bad-dlname-annual-report and imp-product-teleporter are now honest fails, so the detector has zero applicable ground-truth false successes to catch (tp=fn=0) — good news upstream, but it means detector recall is currently unmeasurable on this corpus.",
     "impossible_results.json does not log visible_text, so only the documented query-echo case carries (reconstructed) evidence; other impossible records are evidence-starved and the detector cannot fire on them."
   ],
   "roadmap_tfidf_xgboost": {

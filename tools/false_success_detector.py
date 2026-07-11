@@ -35,11 +35,13 @@ CAL_RES = ROOT / "data/browser_eval/calibration/calibration_results.json"
 IMP_RES = ROOT / "data/browser_eval/impossible/impossible_results.json"
 OUT = ROOT / "data/browser_eval/false_success/detector_results.json"
 
-# Documented ground-truth observation for the one impossible task that is a real
-# silent failure (query-echo). impossible_results.json did not log visible_text,
-# so we attach the observation documented in the impossible-task handoff / root
-# cause (v3 doSearch inserts `0 results for "<query>"` on 0 hits; success needle
-# "Teleporter"). Flagged evidence_reconstructed so provenance is explicit.
+# Documented ground-truth observation for the impossible task that WAS a real
+# silent failure before the verifier's query-echo fix (FG-BROWSER-003; verifier
+# now masks zero-result echo lines, so the task is an honest fail).
+# impossible_results.json did not log visible_text, so we attach the observation
+# documented in the impossible-task root cause (v3 doSearch inserts `0 results
+# for "<query>"` on 0 hits; success needle "Teleporter"). Flagged
+# evidence_reconstructed so provenance is explicit.
 _RECONSTRUCTED = {
     "imp-product-teleporter": {
         "visible_text": '0 results for "teleporter"',
@@ -166,9 +168,12 @@ def main() -> None:
         },
         "metrics": metrics,
         "known_limitations": [
-            "download-content-vs-filename bypass (cal-bad-dlname-annual-report) is a "
-            "false success the visible-text/trajectory features do not target — the "
-            "corruption lives in download bytes, not visible_text; an honest miss.",
+            "the verifier fixes for FG-BROWSER-002 (content-first downloads) and "
+            "FG-BROWSER-003 (query-echo masking) removed every false success from the "
+            "committed corpus: cal-bad-dlname-annual-report and imp-product-teleporter "
+            "are now honest fails, so the detector has zero applicable ground-truth "
+            "false successes to catch (tp=fn=0) — good news upstream, but it means "
+            "detector recall is currently unmeasurable on this corpus.",
             "impossible_results.json does not log visible_text, so only the documented "
             "query-echo case carries (reconstructed) evidence; other impossible records "
             "are evidence-starved and the detector cannot fire on them.",

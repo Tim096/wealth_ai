@@ -6,6 +6,7 @@ observed, the verdict is `unknown` — never a disguised pass.
 from __future__ import annotations
 
 import os
+import re
 
 from browser_core import BrowserTaskContract
 from browser_agent.observer import Observation
@@ -14,13 +15,33 @@ from observability_core import VerifierResult
 
 _MIN_DOWNLOAD_BYTES = 512          # smaller than this is not a real document
 _DOWNLOAD_SCAN_BYTES = 8_000_000   # read up to this much to confirm content
+_BINARY_REPLACEMENT_RATIO = 0.05   # more undecodable bytes than this -> not readable text
+
+# Zero/none-result status lines that ECHO the query back at the user
+# ('0 results for "teleporter"'). A needle inside such a line is the agent's
+# own query reflected, never page evidence (FG-BROWSER-003). Generic patterns,
+# not mock-site strings.
+_QUERY_ECHO_RE = re.compile(
+    r"\b(?:0|no|zero)\s+(?:results?|matches?|items?|hits?|products?)\b"
+    r"|\bnot(?:hing)?\s+found\b|\bdid\s+not\s+match\b"
+    r"|找不到|查無|沒有(?:結果|符合)|无结果|没有结果",
+    re.IGNORECASE)
+
+
+def _text_visible_hit(needle: str, visible_text: str) -> bool:
+    """True only when the needle appears OUTSIDE zero-result echo lines."""
+    kept = "\n".join(line for line in visible_text.splitlines()
+                     if not _QUERY_ECHO_RE.search(line))
+    return needle.lower() in kept.lower()
 
 
 def _download_ok(path: str, needle: str) -> str:
     """Trustworthy download check: the file must exist, be a non-trivial
-    document, and — when the task named the content — ACTUALLY CONTAIN it. A
-    wrong/blocked page written to disk (or a stub with the right name) must not
-    count as success, so we read the bytes, never just the path string."""
+    document, and — when the task named the content — ACTUALLY CONTAIN it.
+    Content-first (FG-BROWSER-002): readable bytes are the only proof strong
+    enough to pass. Readable content without the needle fails no matter how
+    right the filename looks; unreadable (binary) bytes plus a filename hit is
+    a weak signal → honest unknown, never a pass."""
     if not path or not os.path.exists(path):
         return "unknown"          # nothing downloaded → not observable
     try:
@@ -33,12 +54,15 @@ def _download_ok(path: str, needle: str) -> str:
         return "pass"             # download-only task: a real file is enough
     try:
         with open(path, "rb") as fh:
-            content = fh.read(_DOWNLOAD_SCAN_BYTES).decode("utf-8", errors="replace").lower()
+            raw = fh.read(_DOWNLOAD_SCAN_BYTES)
     except OSError:
         return "unknown"
     n = needle.lower()
-    # content is the real proof; the filename is a weak secondary signal
-    return "pass" if (n in content or n in os.path.basename(path).lower()) else "fail"
+    content = raw.decode("utf-8", errors="replace").lower()
+    if content.count("�") > len(content) * _BINARY_REPLACEMENT_RATIO:
+        # binary/undecodable bytes can neither prove nor disprove the content
+        return "unknown" if n in os.path.basename(path).lower() else "fail"
+    return "pass" if n in content else "fail"
 
 
 def _check_success(cond, obs: Observation, extracted: dict[str, str]) -> str:
@@ -46,7 +70,7 @@ def _check_success(cond, obs: Observation, extracted: dict[str, str]) -> str:
     if t == "url_contains":
         return "pass" if v in obs.url else "fail"
     if t == "text_visible":
-        return "pass" if v.lower() in obs.visible_text.lower() else "fail"
+        return "pass" if _text_visible_hit(v, obs.visible_text) else "fail"
     if t == "table_extracted":
         return "pass" if any(v.lower() in x.lower() for x in extracted.values()) else "unknown"
     if t == "field_value_equals":

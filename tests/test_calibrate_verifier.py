@@ -51,16 +51,17 @@ def test_needle_removed_and_wrong_url_all_caught():
         assert all(r["verdict"] == "fail" for r in rows)
 
 
-def test_known_fp_filename_needle_bypass_is_surfaced():
-    # KNOWN verifier gap: needle only in the FILENAME, bytes are a blocked page,
-    # and _download_ok accepts the basename as proof. Calibration must keep
-    # showing this FP until the verifier is actually fixed — if this test fails
-    # because the verdict became 'fail', the verifier was fixed: re-run
-    # tools/calibrate_verifier.py and update the committed artifacts.
+def test_filename_needle_bypass_fixed_content_first():
+    """FIX-2 (FG-BROWSER-002) 前後對照。修復前:needle 只出現在檔名、bytes 是
+    blocked page,_download_ok 接受 basename 當證據 → 假陽性 pass(FP=1,
+    specificity 0.958333)。修復後 content-first:內容可讀且不含 needle →
+    fail,檔名再像也不行;unknown 只留給不可讀 binary + 檔名命中的弱訊號。
+    FP=0,specificity 1.0。"""
     result = calibrate(build_cases())
     row = next(r for r in result["per_case"] if r["case_id"] == "cal-bad-dlname-annual-report")
-    assert row["verdict"] == "pass"
-    assert result["confusion"]["fp"] == 1
+    assert row["verdict"] == "fail"
+    assert result["confusion"]["fp"] == 0
+    assert result["rates"]["specificity"] == 1.0
 
 
 def test_missing_download_path_is_unknown_not_fail_not_pass():

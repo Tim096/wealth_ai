@@ -202,10 +202,10 @@ def build_cases() -> list[dict]:
                             "visible_text": "Filing viewer", "modal_present": False},
             "download_file": {"name": f"aapl-10k-{slug}.htm", "content": "stub"},
         })
-    # needle appears ONLY in the filename, bytes are a blocked page. Today the
-    # verifier accepts the filename as proof -> a REAL false positive this
-    # calibration is designed to surface. Kept unfixed on purpose: the matrix
-    # must show the verifier as it is, not as we wish it were.
+    # needle appears ONLY in the filename, bytes are a blocked page. This used
+    # to be a REAL false positive (the verifier accepted the basename as
+    # proof, FG-BROWSER-002); the content-first fix reads the bytes: readable
+    # content without the needle -> fail, however right the filename looks.
     cases.append({
         "case_id": "cal-bad-dlname-annual-report", "label": "corrupted",
         "corruption_class": "download_wrong_content",

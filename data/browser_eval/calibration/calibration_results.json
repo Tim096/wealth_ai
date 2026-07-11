@@ -37,8 +37,8 @@
       "unknown": 0
     },
     "corrupted": {
-      "pass": 1,
-      "fail": 20,
+      "pass": 0,
+      "fail": 21,
       "unknown": 3
     }
   },
@@ -54,8 +54,8 @@
       "unknown": 0
     },
     "download_wrong_content": {
-      "pass": 1,
-      "fail": 4,
+      "pass": 0,
+      "fail": 5,
       "unknown": 1
     },
     "confident_false_claim": {
@@ -68,13 +68,13 @@
   "confusion": {
     "tp": 22,
     "fn_not_pass": 0,
-    "fp": 1,
-    "tn_not_pass": 23
+    "fp": 0,
+    "tn_not_pass": 24
   },
   "rates": {
     "sensitivity": 1.0,
-    "specificity": 0.958333,
-    "false_positive_rate": 0.041667,
+    "specificity": 1.0,
+    "false_positive_rate": 0.0,
     "false_negative_rate": 0.0,
     "unknown_rate_success": 0.0,
     "unknown_rate_corrupted": 0.125
@@ -88,12 +88,12 @@
   "rogan_gladen_corrected_success_rate": {
     "observed": 0.8,
     "sensitivity": 1.0,
-    "specificity": 0.958333,
-    "denominator": 0.958333,
+    "specificity": 1.0,
+    "denominator": 1.0,
     "formula": "(observed + specificity - 1) / (sensitivity + specificity - 1)",
     "status": "ok",
-    "corrected": 0.791304,
-    "raw": 0.791304
+    "corrected": 0.8,
+    "raw": 0.8
   },
   "per_case": [
     {
@@ -328,7 +328,7 @@
       "case_id": "cal-bad-dlname-annual-report",
       "label": "corrupted",
       "corruption_class": "download_wrong_content",
-      "verdict": "pass"
+      "verdict": "fail"
     },
     {
       "case_id": "cal-bad-dlmissing",

@@ -114,36 +114,47 @@ def test_two_proxies_accumulate_to_flag():
 # --- committed-corpus eval: shape + honest known catch/miss ---
 
 def test_corpus_eval_is_deterministic_and_honest():
+    """FIX-2 前後對照。修復前 corpus 有 2 個 ground-truth false success
+    (teleporter query-echo → tp=1;dlname filename-bypass → fn=1)。修復後
+    verifier 端已消滅這兩個假 pass(誠實 fail),corpus 內 detector 可套用的
+    false success 歸零 — tp=fn=0 是上游修好的好消息,不是 detector 退步;
+    fp=0(不過度舉報)不變。"""
     corpus = build_corpus()
     m1 = evaluate(corpus)
     m2 = evaluate(corpus)
     assert m1 == m2  # pure function, reproducible
     # zero false positives on legit claimed passes (no over-flagging)
     assert m1["confusion"]["fp"] == 0
-    # catches at least the query-echo silent failure; the download-content bypass
-    # is an honest out-of-scope miss (fn>=1)
-    assert m1["confusion"]["tp"] >= 1
-    assert m1["confusion"]["fn"] >= 1
+    # the verifier fixes removed every ground-truth false success from the corpus
+    assert m1["n_ground_truth_false_success_applicable"] == 0
+    assert m1["confusion"]["tp"] == 0
+    assert m1["confusion"]["fn"] == 0
 
 
-def test_known_miss_download_content_bypass_is_surfaced():
-    """The filename-bypass FP (download bytes are a captcha, filename matches the
-    needle) is OUT of the visible-text/trajectory feature scope -> the detector
-    does not flag it. Locking this documents the limitation; extending the
-    detector to a download-content channel will flip this test."""
+def test_download_content_bypass_fixed_upstream_no_longer_false_success():
+    """FIX-2 (FG-BROWSER-002) 前後對照。修復前:cal-bad-dlname-annual-report
+    是 verifier 假 pass(gt false success),且 detector 的 visible-text 特徵
+    掃不到 download bytes → 誠實 miss(fn)。修復後:verifier content-first
+    直接判 fail → 不再是 claimed pass,detector 不適用(applicable False),
+    gt false success 為 False — 弱點在上游被消滅,不需要 detector 撈。"""
     corpus = build_corpus()
     rows = {r["id"]: r for r in evaluate(corpus)["per_record"]}
     r = rows["cal-bad-dlname-annual-report"]
-    assert r["ground_truth_false_success"] is True
-    assert r["applicable"] is True
-    assert r["flag"] is False  # honest miss, by feature scope
+    assert r["ground_truth_false_success"] is False
+    assert r["applicable"] is False   # verifier now says fail -> not a claimed pass
+    assert r["flag"] is False
 
 
-def test_known_catch_teleporter_query_echo():
+def test_teleporter_query_echo_fixed_upstream_not_applicable():
+    """FIX-2 (FG-BROWSER-003) 前後對照。修復前:teleporter 是 verifier 假 pass,
+    detector 靠 claim_evidence_gap(query-echo)成功撈到(tp)。修復後:
+    verifier 遮罩查詢回顯行 → 任務誠實 fail → 不是 claimed pass,detector
+    不適用、gt false success 為 False。detector 的 query-echo 特徵本身仍有效
+    (見 test_query_echo_needle_in_negative_line_flagged 的手工 record)。"""
     corpus = build_corpus()
     rows = {r["id"]: r for r in evaluate(corpus)["per_record"]}
     r = rows["imp-product-teleporter"]
-    assert r["ground_truth_false_success"] is True
+    assert r["ground_truth_false_success"] is False
     assert r["evidence_reconstructed"] is True
-    assert r["flag"] is True
-    assert r["features"]["claim_evidence_gap"] == 1.0
+    assert r["applicable"] is False   # honest fail -> triage does not apply
+    assert r["flag"] is False

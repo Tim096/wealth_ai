@@ -64,8 +64,8 @@
 | F8 | 下載檔最後一哩(#7) | 加 `/api/agent/download` route(照抄 /api/sec/raw pattern,test_center.py:543-548),📁 改下載連結 | 兩小時 | 待做 |
 | F9 | queue 回饋(#8) | status API 帶 queue_position,UI 顯示「前面還有 N 個任務」 | 兩小時 | 待做 |
 | F10 | mock 模式攔截(#9) | backend 非 codex 時 submit 需二次確認 | 兩小時 | 待做 |
-| F11 | 捲動(#10) | 純 prompt 改動:PLAYBOOK 加「目標可能在視窗外時,keyboard keys="PageDown"/"End" 捲動後重看」 | 一小時 | 待做 |
-| F12 | 新分頁跟隨(#11) | executor click 後檢查 page.context.pages,有新頁則切換並記一步「↪ 跟隨新分頁」 | 半天 | 待做 |
+| F11 | 捲動(#10) | 純 prompt 改動:PLAYBOOK 加「目標可能在視窗外時,keyboard keys="PageDown"/"End" 捲動後重看」 | 一小時 | 完成(P3:planner.py PLAYBOOK「OFF-SCREEN TARGETS」) |
+| F12 | 新分頁跟隨(#11) | executor click 後檢查 page.context.pages,有新頁則切換並記一步「↪ 跟隨新分頁」 | 半天 | 完成(P3:executor `_follow_new_page` + agent 同步 observer,tests/test_auto_vision_and_tabs.py) |
 | F13 | 呈現層外洩(#13) | UI 翻譯 `text_visible:X`→「頁面需出現『X』」;noop 訊息改中文;unknown 不顯示 confidence 數字 | 半天 | 待做 |
 
 ---

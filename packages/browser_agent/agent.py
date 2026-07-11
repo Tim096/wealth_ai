@@ -106,6 +106,27 @@ _OVERLAY_HIDE_JS = r"""
 """
 
 
+def vision_escalation_reason(history: list[str], page_hashes: list[str],
+                             window: int = 3) -> str:
+    """P3 auto-vision escalation trigger — a PURE function so the stuck
+    heuristic is unit-testable. Returns a human-readable reason when the run
+    looks stuck, '' otherwise. Stuck means either:
+      (a) the last `window` planner turns made no progress — every entry is a
+          failed action (":fail"), a noop re-plan, or a rejected give_up; or
+      (b) the page looked identical for `window` consecutive steps
+          (window+1 equal observation hashes).
+    Escalation only upgrades PERCEPTION (a Set-of-Marks screenshot for a
+    multimodal model); actions stay schema-validated and the verifier stays
+    the only judge."""
+    def _no_progress(h: str) -> bool:
+        return h.startswith(("noop(", "give_up_rejected(")) or h.endswith(":fail")
+    if len(history) >= window and all(_no_progress(h) for h in history[-window:]):
+        return f"連續 {window} 步無進展"
+    if len(page_hashes) >= window + 1 and len(set(page_hashes[-(window + 1):])) == 1:
+        return f"頁面連續 {window} 步未變化"
+    return ""
+
+
 @dataclass
 class Step:
     purpose: str          # search_box / submit_button / ...
@@ -192,11 +213,15 @@ class BrowserAgent:
         self.artifact_dir = Path(artifact_dir) if artifact_dir else None
         if self.artifact_dir:
             self.artifact_dir.mkdir(parents=True, exist_ok=True)
-        # opt-in vision channel: only send Set-of-Marks screenshots to the
-        # planner when explicitly enabled (it costs image tokens and needs a
-        # multimodal model, e.g. the gpt-5.5 default behind the codex gateway)
+        # Vision channel (SoM screenshots for a multimodal model):
+        #   AGENT_VISION=1  -> always on (every turn, costs image tokens)
+        #   AGENT_VISION=0  -> never (operator declares a non-vision backend)
+        #   unset (default) -> AUTO: off until the run looks stuck, then
+        #                      escalate (P3) if the planner supports vision.
         import os as _os
-        self._vision = _os.environ.get("AGENT_VISION", "") == "1"
+        _v = _os.environ.get("AGENT_VISION", "")
+        self._vision = _v == "1"
+        self._vision_auto = _v != "0"
 
     def _emit_evidence(self, run_id: str, task_id: str, run: "TaskRun") -> None:
         """Route the browser run through the SAME EvidenceRecord contract the SEC
@@ -465,6 +490,14 @@ class BrowserAgent:
                 detail="開場即成立、已剔除的條件(不能作為完成證據):" + "; ".join(baseline_dropped)))
             _emit(f"🚫 條件在開場就成立(vacuous),已剔除:{'; '.join(baseline_dropped)}")
         verdict = VerifierResult(status="unknown", reason="no steps taken")
+        # P3 auto-vision: starts in the env-selected mode; can only escalate
+        # (off -> on) when the run is stuck AND the planner is multimodal AND
+        # there is an artifact dir to write the SoM screenshot into. Planners
+        # without supports_vision (mock/scripted) never escalate.
+        vision_on = self._vision
+        _sv = getattr(planner, "supports_vision", None)
+        vision_capable = bool(_sv and callable(_sv) and _sv()) and self.artifact_dir is not None
+        page_hashes: list[str] = []
         _emit(f"🧠 想任務:{contract.natural_language_task}")
         for _ in range(max_steps):
             # A popup/interstitial can appear AFTER any navigation on ANY site
@@ -475,18 +508,32 @@ class BrowserAgent:
                 _emit("🧹 偵測到彈出視窗,已清除")
                 self.page.wait_for_timeout(200)
             obs = self.observer.observe()
+            page_hashes.append(sha256_text(obs.url + "|" + obs.visible_text))
             # the loop verdict sees the SAME evidence surface as the final one
             # (answer + download), so a satisfied deliverable ends the run here
             # instead of waiting for the model to claim done
             verdict = verify_contract(contract, obs, _extracted())
             if verdict.status == "pass":
                 break
+            # P3 auto-vision escalation: when the text channel is going nowhere
+            # (repeated failures/noops or a page that never changes), switch the
+            # SoM screenshot on for the REST of the run. Perception only — the
+            # action space and the verifier are untouched.
+            if not vision_on and self._vision_auto and vision_capable:
+                why = vision_escalation_reason(history, page_hashes)
+                if why:
+                    vision_on = True
+                    trace.append(StepTrace(
+                        step="vision", action="escalate", ok=True, mode="agent",
+                        detail=f"偵測到卡住({why}),自動切換視覺模式:"
+                               "後續每步附 Set-of-Marks 截圖"))
+                    _emit(f"🔍 切換視覺模式({why})")
             _emit("💭 看畫面、決定下一步…")
-            # Vision channel (opt-in): render a Set-of-Marks screenshot so a
-            # multimodal model can SEE the page and ground a coordinate click.
-            # Gated by env + an artifact dir so the default text path is unchanged.
+            # Vision channel: render a Set-of-Marks screenshot so a multimodal
+            # model can SEE the page and ground a coordinate click. On when
+            # AGENT_VISION=1, or after auto-escalation; needs an artifact dir.
             image_path = None
-            if self._vision and self.artifact_dir:
+            if vision_on and self.artifact_dir:
                 somp = self.artifact_dir / f"som-{len(trace)}.png"
                 if set_of_marks(self.page, str(somp)):
                     image_path = str(somp)
@@ -530,6 +577,14 @@ class BrowserAgent:
                 _emit(f"🛑 拒絕(責任邊界):{ascreen.reason}")
                 break
             out = self.executor.execute(action)
+            if out.followed_url:
+                # F12: the click's effect lives in a NEW tab — repoint the agent
+                # and observer so the loop keeps seeing where the journey went.
+                self.page = self.executor.page
+                self.observer.page = self.page
+                trace.append(StepTrace(step="follow_tab", action="switch", ok=True, mode="agent",
+                                       detail=f"↪ 跟隨新分頁:{out.followed_url}"))
+                _emit(f"↪ 跟隨新分頁:{out.followed_url}")
             history.append(f"{action.type}:{'ok' if out.ok else 'fail'}")
             detail = decision.reason
             if action.type == "download" and out.ok:
@@ -594,6 +649,13 @@ class BrowserAgent:
             out = self._resolve_and_run(step, trace)
             if trace and trace[-1].mode == "repair" and trace[-1].diagnosis:
                 repairs += 1
+            if self.executor.page is not self.page:
+                # F12: a script-mode click opened a new tab and the executor
+                # followed it — keep observer/verifier on the same page.
+                self.page = self.executor.page
+                self.observer.page = self.page
+                trace.append(StepTrace(step="follow_tab", action="switch", ok=True, mode="script",
+                                       detail=f"↪ 跟隨新分頁:{self.page.url}"))
         # small settle for lazy content, then observe + verify
         self.page.wait_for_timeout(400)
         obs = self.observer.observe()

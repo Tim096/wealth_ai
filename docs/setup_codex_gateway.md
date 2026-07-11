@@ -78,12 +78,17 @@ codex login
 $env:OPENAI_BASE_URL = "http://127.0.0.1:9000/v1"   # 換 gateway 位址/埠
 $env:OPENAI_MODEL    = "gpt-5-codex-mini"
 $env:AGENT_LLM_MODE  = "direct"                      # 改成直連(需 OPENAI_API_KEY)
-$env:AGENT_VISION    = "1"                            # 開視覺:每步送 Set-of-Marks 截圖
+$env:AGENT_VISION    = "1"                            # 視覺:1=每步都送 SoM 截圖;0=全關;不設=卡住自動升級
 ```
 
-## 視覺通道(選用,`AGENT_VISION=1`)
+## 視覺通道(`AGENT_VISION`:1 / 0 / 不設=auto)
 
-混合架構的「眼睛」:開啟後,agent 每步把畫面渲成 **Set-of-Marks 截圖**(每個可互動元素畫上編號框,編號=candidate 的 aid),隨 prompt 一起送給模型。gateway 的 codex 後端會用 `codex exec --image <som.png>` 把圖交給帳號預設的 **gpt-5.5(多模態)**,模型看圖挑元素;挑不到 aid 的自訂 widget 就讀框中心座標發 `mouse` 動作。座標來自真實 layout,不是幻覺;成敗仍由 verifier 判定,status 不受影響。需要 `--headed` 或有 `artifact_dir` 才會產生截圖;預設(不設 `AGENT_VISION`)走純文字路徑,不花圖像 token。
+混合架構的「眼睛」:開啟後,agent 每步把畫面渲成 **Set-of-Marks 截圖**(每個可互動元素畫上編號框,編號=candidate 的 aid),隨 prompt 一起送給模型。gateway 的 codex 後端會用 `codex exec --image <som.png>` 把圖交給帳號預設的 **gpt-5.5(多模態)**,模型看圖挑元素;挑不到 aid 的自訂 widget 就讀框中心座標發 `mouse` 動作。座標來自真實 layout,不是幻覺;成敗仍由 verifier 判定,status 不受影響。需要 `--headed` 或有 `artifact_dir` 才會產生截圖。
+
+三種模式:
+- `AGENT_VISION=1`:每步都送截圖(圖像 token 花費最高)。
+- 不設(預設,**auto**):平時走純文字;偵測到卡住(連續 3 步失敗/noop/give_up 被駁回,或頁面連續 3 步未變化)且 planner 支援多模態時,**自動切入視覺模式**,trace 記「🔍 切換視覺模式」,之後每步附截圖。mock/scripted planner 不會升級。
+- `AGENT_VISION=0`:全關(backend 不支援圖像時由操作者明確宣告)。
 
 ## 誠實邊界(我無法在此環境替你完成的部分)
 

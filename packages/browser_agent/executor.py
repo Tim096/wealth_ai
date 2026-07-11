@@ -23,6 +23,7 @@ class ActionOutcome:
     extracted_text: str = ""
     url_before: str = ""
     url_after: str = ""
+    followed_url: str = ""   # F12: set when the click opened a NEW tab we switched to
 
 
 def _locator(page, target: ElementTarget):
@@ -55,6 +56,14 @@ class ActionExecutor:
     def execute(self, action) -> ActionOutcome:
         t0 = time.perf_counter()
         url_before = self.page.url
+        # F12 new-tab follow: count tabs before a click so a target=_blank
+        # navigation is detectable afterwards.
+        pages_before = -1
+        if getattr(action, "type", "") in ("click", "mouse"):
+            try:
+                pages_before = len(self.page.context.pages)
+            except Exception:  # noqa: BLE001 — non-Playwright fakes in tests
+                pages_before = -1
         try:
             outcome = self._dispatch(action, url_before)
         except Exception as e:  # noqa: BLE001 — surfaced as a structured outcome, not raised
@@ -63,8 +72,39 @@ class ActionExecutor:
                 error=f"{type(e).__name__}: {str(e)[:200]}", url_before=url_before,
                 url_after=self.page.url,
             )
+        if outcome.ok and pages_before >= 0:
+            followed = self._follow_new_page(pages_before)
+            if followed:
+                outcome.followed_url = followed
+                outcome.url_after = followed
         outcome.latency_ms = (time.perf_counter() - t0) * 1000
         return outcome
+
+    def _follow_new_page(self, pages_before: int) -> str:
+        """F12 (usage_scenarios #11): a target=_blank click puts the result in a
+        NEW tab while self.page still shows the old one — the next observation
+        would report "nothing changed", the planner would loop and give_up with
+        a self-report ("click had no effect") that contradicts reality. If the
+        click grew context.pages, switch to the newest tab so every later
+        action/observation follows where the journey actually went. Returns the
+        new tab's URL ('' = no new tab)."""
+        try:
+            pages = self.page.context.pages
+            if len(pages) <= pages_before:
+                # popup registration is async — one short recheck, no busy loop
+                self.page.wait_for_timeout(200)
+                pages = self.page.context.pages
+            if len(pages) <= pages_before or pages[-1] is self.page:
+                return ""
+            new = pages[-1]
+            try:
+                new.wait_for_load_state("domcontentloaded", timeout=self.timeout)
+            except Exception:  # noqa: BLE001 — best-effort settle
+                pass
+            self.page = new
+            return new.url
+        except Exception:  # noqa: BLE001
+            return ""
 
     def _download(self, action, url_before: str) -> ActionOutcome:
         """Save the target file. Three ways, in priority order: an explicit URL

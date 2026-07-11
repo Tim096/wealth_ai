@@ -50,6 +50,7 @@ PLAYBOOK
 - Navigation: "goto" with a URL you can see on the page, one given in the task, or an obvious well-known domain for a named site. Never invent a deep/guessed path — go to the site root and navigate from there.
 - USE LINK HREFS: on a list/results/index page, candidates that are links show their href=. To reach a specific row (a filing, a document, an article), "goto" that row's href directly, or "click" that exact aid — do NOT go back to a search box. On EDGAR you land on the company's filing list: goto the newest 10-K's ...-index.htm href, then on that index page goto/click the primary document (the .htm), then "download" it.
 - Reading: "extract_text" on the element that holds the answer when the task asks for information.
+- OFF-SCREEN TARGETS: a ranked-list entry, a footer contact, or a section deep in a long page may be OUTSIDE the current viewport — missing from the candidates and the visible text. Scroll with "keyboard" keys="PageDown" (repeat as needed; keys="End" jumps to the page bottom) and re-read the NEW state next turn. A first-screen miss is a reason to scroll, not to give_up.
 - ANSWER TASKS (find a number / look up a price / answer a question): the extracted text IS the deliverable — the verifier judges what you extracted, never what you say in "reason". Once the answer is on screen you MUST "extract_text" the element containing it (do this BEFORE "done"); a run that never extracts the answer cannot pass, no matter how visible the answer was.
 - SCREEN-LEVEL FALLBACK (mouse / keyboard): prefer aid-based click/fill/press — they are precise and verifiable. Use "mouse" (with x,y copied from a candidate's at=(x,y)) ONLY when no aid can address the thing you must click: a custom widget, a canvas/image hit-area, an option the DOM doesn't expose as its own element. Use "keyboard" to type at the current focus (value) or press a key/chord (keys: "Enter"/"Tab"/"Escape") when a widget took focus from a click but offers no fillable target — e.g. Tab between fields, Enter to confirm. Do NOT invent coordinates; only use an at=(x,y) shown in the candidate list.
 
@@ -193,6 +194,16 @@ class LLMPlanner:
 
     def available(self) -> bool:
         return self.client.available()
+
+    def supports_vision(self) -> bool:
+        """The OpenAI-compatible channel carries images (complete_json's
+        image_path -> multimodal content) and the default codex gateway hands
+        them to the account's multimodal model via `codex exec --image`, so
+        auto vision escalation (P3) may switch the SoM screenshot on when the
+        run is stuck. Planners without this method (mock/scripted) answer
+        False via the agent's getattr default; an operator on a text-only
+        backend disables escalation with AGENT_VISION=0."""
+        return True
 
     def plan_preflight(self, task: str) -> tuple[str, list[str], dict]:
         """Ask the model, once, to think the task through (goal / obstacles /

@@ -94,7 +94,12 @@ prompts/    所有影響開發的 prompt + 決策(含 rejected)
 tests/      813 tests(快跑 lane 763 + integration 50)
 ```
 
-## 部署(Zeabur)
+## 部署(Zeabur)— 線上可直接用
+
+| 服務 | URL | 狀態(2026-07-11 實測) |
+|---|---|---|
+| SEC Extractor + dashboard | **https://wealth-sec-ncku.zeabur.app** | 完整可用、免 auth(AAPL 23 items、warm repeat ~0.6s) |
+| Browser Agent | **https://wealth-agent-ncku.zeabur.app** | **真實 LLM(OpenRouter `x-ai/grok-4.5`)**,live Wikipedia 任務實跑 pass;另有 4 個免 key 示範任務 |
 
 兩個 service 各自容器化(Docker 本地驗證通過,零修正):**wealth-sec**(SEC Extractor API + dashboard,`Dockerfile.wealth-sec`)與 **wealth-agent**(Browser Agent + Playwright Chromium,`Dockerfile.wealth-agent`),同一 repo root 為 build context,根目錄 `.dockerignore` 排除 `.venv` / `data/raw_filings` / `runs`(context 縮小約 830MB)。
 

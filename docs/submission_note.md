@@ -6,7 +6,7 @@
 |---|---|
 | Repo URL | https://github.com/Tim096/wealth (66 commits 待 push;若 repo 為 private 需改公開或給面試官權限) |
 | Task 2(SEC 10-K Extractor)線上 demo | https://wealth-sec-ncku.zeabur.app (完整可用,免 auth) |
-| Task 1(Browser Agent)線上 demo | https://wealth-agent-ncku.zeabur.app (示範任務一鍵可跑;自然語言任務需在 Zeabur 補 OpenRouter key,見 docs/deploy.md) |
+| Task 1(Browser Agent)線上 demo | https://wealth-agent-ncku.zeabur.app (**真實 LLM 上線:OpenRouter x-ai/grok-4.5**,自然語言任務直接可跑;另有 4 個免 key 示範任務) |
 
 ## 補充說明(可直接貼)
 
@@ -20,4 +20,4 @@
 ## 提交狀態(2026-07-11)
 
 1. ~~push + tag~~ **已完成**:`main` 已推上 `github.com/Tim096/wealth`,release tag `v1.0-submission`;GitHub Actions CI 首輪修復後綠(run 29134525031 於 tag 樹:ruff 全過 + 743 selected → 742 passed / 1 skipped;其後本地新增 length-prior 20 tests → 763,下次 push 由 CI 驗證)。
-2. wealth-agent **已 redeploy**(帶最新 browser_agent 修復;health `ready:true`、4 個免 key 示範任務)。仍為 mock 模式——(可選)Zeabur 補 OpenRouter key 轉真實 LLM,見 `docs/deploy.md`。wealth-sec 如需帶上最新 dashboard 數字(XBRL 10/1)可再 redeploy。
+2. 兩服務 **已 redeploy(2026-07-11)**:wealth-agent 為 **direct 模式(OpenRouter `x-ai/grok-4.5`)**,live Wikipedia 任務實跑 pass(全鏈路驗證);wealth-sec 帶上最新 code 與 dashboard 數字(XBRL 10/1)。key 只存 Zeabur variables。

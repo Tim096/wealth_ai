@@ -136,7 +136,7 @@ npx zeabur@latest deploy --project-id <project-id> --service-id <agent-service-i
 ### 上線驗證(response-content 實測)
 
 - **wealth-sec** — `GET /api/health` → `{"ok":true,"sec_user_agent_configured":true,"auth_required":false}`;`POST /api/extract {"ticker":"AAPL"}` → job `done`,**23 items**;`GET /` → 200(dashboard)。**完全可用,免 auth。**
-- **wealth-agent** — `GET /api/health` → `{"ok":true,"ready":true,"mode":"mock"}`(MockPlanner);`GET /` → 200(UI)。服務已起、UI/health 正常,但**目前為 mock 模式**:repo 內無雲端可用的 LLM 憑證(本地走 codex OAuth gateway,容器連不到)。
+- **wealth-agent** — 2026-07-11 起為 **direct 模式(OpenRouter `x-ai/grok-4.5`)**:`GET /api/health` → `{"ok":true,"ready":true,"mode":"direct","llm_ok":true,"model":"x-ai/grok-4.5"}`;live smoke test 實跑 Wikipedia 查詢任務(Eiffel Tower 完工年份)→ **status=pass**,`answer_matches:[0-9]{4}` 命中,容器 egress + OpenRouter + verifier 全鏈路驗證(task `t3738698837-0`)。key 只存 Zeabur variables,不進 repo。免 key 示範任務(4 preset)照常走 MockPlanner。歷史紀錄:2026-07-10 上線時為 mock 模式(repo 內無雲端 LLM 憑證)。
 
 ### wealth-agent:改用真實 LLM 需在 Zeabur dashboard 補的變數
 

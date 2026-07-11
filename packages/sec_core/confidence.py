@@ -15,9 +15,23 @@ class ConfidenceComponent(BaseModel):
     reason: str
 
 
+# Weight of a zero-scored overshoot component (boundary.py containment guard /
+# size_bands.py size-ratio guard), appended post-hoc only when the signal
+# fires — like third_engine_agreement. The base breakdown maxes at 10.0, so a
+# single firing signal caps an otherwise-perfect item at 10/13.5 ≈ 0.74:
+# below the 0.75 review line, and it de-saturates the 0.9-1.0 confidence bin
+# the NTU boundary-bleed errors hide in.
+OVERSHOOT_COMPONENT_MAX = 3.5
+
+
 class ConfidenceBreakdown(BaseModel):
     components: list[ConfidenceComponent] = Field(default_factory=list)
 
+    # Always-present base components (built by boundary._confidence). Guard
+    # layers append CONDITIONAL components post-hoc only when their signal
+    # fires: 'third_engine_agreement' (third_engine.py), and the overshoot
+    # signals 'overshoot_containment' (boundary.py) / 'overshoot_size_ratio'
+    # (size_bands.py) — calibration sees them through the same breakdown.
     COMPONENT_NAMES: tuple[str, ...] = (
         "heading_strength",
         "title_similarity",

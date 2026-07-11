@@ -42,6 +42,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from statistics import median
 
+from sec_core.confidence import (
+    OVERSHOOT_COMPONENT_MAX,
+    ConfidenceBreakdown,
+    ConfidenceComponent,
+)
 from sec_core.items import ItemSegment
 from sec_core.normalize import NormalizedDocument
 from sec_core.refine import is_boilerplate_none
@@ -139,17 +144,25 @@ def check_size_band(
     return band
 
 
+OVERSHOOT_SIZE_COMPONENT = "overshoot_size_ratio"
+
+
 def apply_size_bands(
     segments: list[ItemSegment],
     doc: NormalizedDocument,
     form: str = "10-K",
     schema: str = "MODERN",
     bands: dict[tuple[str, str, str], SizeBand] | None = None,
+    breakdowns: dict[str, ConfidenceBreakdown] | None = None,
 ) -> int:
     """Hard guardrail: a substantive offset-exact pass item whose span length
     falls outside the empirical band is forced to needs_review. Boilerplate
     "None." answers, combined spans, stubs and non-pass items keep their
     existing handling (they are already flagged or legitimately short).
+    A HIGH-side violation (span above the band's upper bound — the p95-proxy)
+    is the boundary-bleed direction: when `breakdowns` is given it additionally
+    caps confidence via a zero-scored `overshoot_size_ratio` component
+    (total ≤ ~0.74) so calibration sees the overshoot, not just the flag.
     Returns the number of segments flagged."""
     if len(doc.text) < MIN_DOC_CHARS:
         return 0  # excerpt / toy document: bands would be out-of-distribution
@@ -174,6 +187,21 @@ def apply_size_bands(
             f"agree-and-pass band [{band.lo:,}, {band.hi:,}] for item {seg.item_code} "
             f"({band.form}/{band.schema}, p50={band.p50:,}, n={band.n}) — hard needs_review"
         )
+        if span_chars > band.hi:
+            ratio = span_chars / band.p50
+            seg.warnings.append(
+                f"overshoot: size {ratio:.1f}x band median (p50 {band.p50:,} chars) — "
+                f"the span tail likely swallows following content")
+            bd = (breakdowns or {}).get(seg.item_code)
+            if bd is not None:
+                if not any(c.name == OVERSHOOT_SIZE_COMPONENT for c in bd.components):
+                    bd.components.append(ConfidenceComponent(
+                        name=OVERSHOOT_SIZE_COMPONENT, score=0.0,
+                        max_score=OVERSHOOT_COMPONENT_MAX,
+                        reason=f"span is {ratio:.1f}x the empirical band median for "
+                               f"item {seg.item_code} (above the band upper bound "
+                               f"{band.hi:,}) — boundary overshoot"))
+                seg.confidence = bd.total
         flagged += 1
     return flagged
 

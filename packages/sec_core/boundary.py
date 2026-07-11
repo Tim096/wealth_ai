@@ -7,16 +7,17 @@ reference / missing / ambiguous) honestly instead of faking pass.
 from __future__ import annotations
 
 import re
+from array import array
 from dataclasses import dataclass, field, replace
 
 from eval_core import ConditionCheck, combine_checks
 from observability_core import sha256_text
 from sec_core.adjudicator import BoundaryEvidence
-from sec_core.confidence import ConfidenceBreakdown
+from sec_core.confidence import OVERSHOOT_COMPONENT_MAX, ConfidenceBreakdown
 from sec_core.confidence import ConfidenceComponent as CC
-from sec_core.headings import VALID_CODES, HeadingCandidate
+from sec_core.headings import VALID_CODES, HeadingCandidate, detect_candidates
 from sec_core.items import CANONICAL_ITEM_TITLES, ItemSegment
-from sec_core.normalize import NormalizedDocument
+from sec_core.normalize import Line, NormalizedDocument
 from sec_core.refine import (
     classify_reference_stub,
     detect_appended_section_cut,
@@ -213,6 +214,124 @@ def _confidence(doc: NormalizedDocument, item: ResolvedItem, start: int, end: in
             else "verifier did not pass")),
     ]
     return ConfidenceBreakdown(components=comps)
+
+
+# --- overshoot guard (NTU boundary-bleed fix) --------------------------------
+# The dominant NTU-fold failure mode (123/141 errors) is boundary bleed: the
+# span STARTS right (recall≈1) but the tail swallows the next item(s) while
+# confidence saturates at 1.0. This guard flags a pass span whose BODY contains
+# a plausible LATER-item heading — that heading should have ended the span.
+
+OVERSHOOT_CONTAINMENT_COMPONENT = "overshoot_containment"
+# chars after the span start exempt from containment: the item's own heading
+# line (and a combined partner's heading) legitimately live there
+OVERSHOOT_HEAD_MARGIN = 300
+
+
+def _plausible_body_heading(c: HeadingCandidate) -> bool:
+    """Would this candidate read as a real later-item BODY heading — not a
+    TOC/reference line and not a heading quoted inside prose?"""
+    if c.toc_rejected or c.toc_reasons or c.in_toc_link or c.trailing_page_number:
+        return False  # TOC / index / reference-line shaped
+    if "strict_regex" not in c.detectors:
+        return False  # mid-prose mentions never match the anchored strict form
+    if not ({"dom_heading", "visual_layout"} & c.detectors):
+        return False  # no emphasis or layout evidence — likely quoted in prose
+    # the title must resemble the canonical one (or be a bare 'Item N.' line)
+    return c.title_similarity >= 0.4 or not c.title_text
+
+
+def find_contained_later_heading(
+    code: str,
+    candidates: list[HeadingCandidate],
+    start: int,
+    end: int,
+    head_margin: int = OVERSHOOT_HEAD_MARGIN,
+) -> HeadingCandidate | None:
+    """Earliest plausible LATER-item heading strictly inside the span body
+    (beyond the head margin). Its presence means the span is overshooting:
+    the resolver derived `end` from a next-chosen start that lies too late
+    (wrong later duplicate chosen, or the real heading dropped by the
+    document-order filter)."""
+    idx = VALID_CODES.index(code)
+    later = set(VALID_CODES[idx + 1:])
+    hits = [c for c in candidates
+            if c.code in later and start + head_margin <= c.start
+            and c.start < end and c.end <= end and _plausible_body_heading(c)]
+    return min(hits, key=lambda c: c.start) if hits else None
+
+
+def _span_doc(text: str) -> NormalizedDocument:
+    """Wrap already-normalized span text (identity offsets, no DOM flags) so
+    the line-based heading detectors can run on a span's own text."""
+    doc = NormalizedDocument(
+        raw_html=text, text=text,
+        norm_to_raw=array("q", range(len(text))),
+        flags=bytearray(len(text)), anchor_targets={},
+    )
+    start = 0
+    for i, ch in enumerate(text):
+        if ch == "\n":
+            doc.lines.append(Line(start=start, end=i, text=text[start:i]))
+            start = i + 1
+    if start < len(text):
+        doc.lines.append(Line(start=start, end=len(text), text=text[start:]))
+    return doc
+
+
+def scan_span_overshoot(code: str, span_text: str) -> HeadingCandidate | None:
+    """Re-run the headings.py detectors + TOC assessment on a span's own text
+    (offsets relative to the span) and return the earliest plausible
+    later-item heading in its body. For verification layers that only hold
+    the span text (e.g. the mutation harness); the pipeline path uses the
+    richer document-level candidates (DOM anchor-link flags) directly."""
+    from sec_core.toc import assess_toc  # local: toc imports headings, not us
+
+    doc = _span_doc(span_text)
+    cands = detect_candidates(doc)
+    assess_toc(doc, cands)
+    return find_contained_later_heading(code, cands, 0, len(span_text))
+
+
+def apply_overshoot_guard(
+    segments: list[ItemSegment],
+    breakdowns: dict[str, ConfidenceBreakdown],
+    candidates: list[HeadingCandidate],
+) -> int:
+    """Boundary-bleed guard: a substantive offset-exact pass span whose body
+    contains a plausible later-item heading is overshooting — force
+    needs_review and cap confidence via a zero-scored heavy component
+    (total ≤ ~0.74). Combined spans (status partial), reference stubs,
+    reassembled wrapper bodies and already-degraded items keep their existing
+    handling. Returns the number of segments flagged."""
+    flagged = 0
+    for seg in segments:
+        if seg.status != "pass" or seg.provenance != "offset_exact_span":
+            continue
+        if seg.end_offset <= seg.start_offset:
+            continue
+        hit = find_contained_later_heading(
+            seg.item_code, candidates, seg.start_offset, seg.end_offset)
+        if hit is None:
+            continue
+        seg.needs_review = True
+        seg.warnings.append(
+            f"overshoot: contains later item heading {hit.code} "
+            f"({hit.heading_text[:60]!r} at offset {hit.start}) — the span tail has "
+            f"swallowed the next item's body; needs_review")
+        bd = breakdowns.get(seg.item_code)
+        if bd is not None:
+            if not any(c.name == OVERSHOOT_CONTAINMENT_COMPONENT for c in bd.components):
+                bd.components.append(CC(
+                    name=OVERSHOOT_CONTAINMENT_COMPONENT, score=0.0,
+                    max_score=OVERSHOOT_COMPONENT_MAX,
+                    reason=f"span body contains a plausible later item heading "
+                           f"({hit.code} at offset {hit.start}) — boundary overshoot"))
+            seg.confidence = bd.total
+        else:
+            seg.confidence = min(seg.confidence, 0.75)
+        flagged += 1
+    return flagged
 
 
 def resolve_items(doc: NormalizedDocument, candidates: list[HeadingCandidate],

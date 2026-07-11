@@ -12,6 +12,13 @@ significantly. The layers re-run here are all shipped code, not test doubles:
 - heading_at_segment_start      (boundary.py ConditionCheck; fail zeroes the
                                  verifier_result confidence component)
 - boundary_length_sanity band   (boundary.py: 50..3,000,000 chars)
+- overshoot containment guard   (boundary.scan_span_overshoot: a plausible
+                                 later-item heading in the span body ->
+                                 needs_review + zero-scored 3.5-weight
+                                 component). Note: the span-text scan carries
+                                 no DOM flags, so it only sees uppercase-layout
+                                 headings here — an additional channel, not the
+                                 primary detector for any class.
 
 Mutation classes — closed (named in the spec): truncate, misalign, toc_anchor,
 wrapper_swallow; open (spec's open-class requirement): jitter (random
@@ -41,6 +48,7 @@ from pathlib import Path
 
 import pytest
 
+from sec_core.boundary import scan_span_overshoot
 from sec_core.pipeline import extract_from_html
 from sec_core.third_engine import compare_item
 from sec_core.topic_check import check_topic
@@ -104,6 +112,15 @@ def runtime_verify(code: str, heading: str, text: str, reference_text: str,
         if check_topic(code, body).verdict == "inconsistent":
             signals.append("topic_check=inconsistent")
             needs_review = True
+
+    # boundary.py overshoot containment guard: a plausible later-item heading
+    # inside the span body forces needs_review and appends a zero-scored
+    # 3.5-weight overshoot_containment component (drop 3.5/13.5).
+    hit = scan_span_overshoot(code, text)
+    if hit is not None:
+        signals.append(f"overshoot_containment={hit.code}")
+        needs_review = True
+        drop += 3.5 / 13.5
 
     # third_engine.apply_triangulation semantics: disagree raises needs_review
     # and appends a zero-scored third_engine_agreement component.

@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 
 from observability_core import EvidenceRecord, EvidenceStore, VerifierResult, sha256_text
 from sec_core.adjudicator import BoundaryEvidence
-from sec_core.boundary import resolve_items
+from sec_core.boundary import apply_overshoot_guard, resolve_items
 from sec_core.confidence import ConfidenceBreakdown
 from sec_core.cross_ref import (
     build_cross_reference_segments,
@@ -233,12 +233,20 @@ def extract_from_html(
                 f"topic-consistency oracle: extracted span has no canonical "
                 f"'{seg.canonical_title}' language — possible mislabel/mis-boundary; needs_review")
 
+    # Overshoot guard (NTU boundary-bleed fix): a pass span whose body contains
+    # a plausible later-item heading is overshooting — needs_review + capped
+    # confidence (zero-scored overshoot_containment component, total ≤ ~0.74).
+    # TOC-like reference lines, quoted headings in prose and combined spans are
+    # excluded (boundary._plausible_body_heading / status filters).
+    apply_overshoot_guard(segments, breakdowns, candidates)
+
     # Per-(form,item) empirical size-band guardrail (P0-11): a substantive
     # offset-exact pass span far outside the agree-and-pass empirical band
     # (p50/5..p50*8, data/sec_eval/size_bands/) is forced to needs_review.
     # Bands are era-keyed; the pipeline enforces the MODERN 10-K group (the
     # supported class) — pre-2003 schemas get their own group once sampled.
-    apply_size_bands(segments, doc)
+    # A high-side violation also caps confidence (overshoot_size_ratio).
+    apply_size_bands(segments, doc, breakdowns=breakdowns)
 
     # Discoverability: when Item 8 is only a pointer stub, tell the reader WHERE
     # the financial statements actually are (often Item 15) instead of leaving

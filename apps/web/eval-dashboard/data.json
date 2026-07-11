@@ -625,12 +625,12 @@
   },
   "false_success": {
    "route": "heuristic",
-   "n_applicable": 22,
+   "n_applicable": 24,
    "confusion": {
     "tp": 0,
     "fp": 0,
     "fn": 0,
-    "tn": 22
+    "tn": 24
    },
    "precision": null,
    "recall": null,

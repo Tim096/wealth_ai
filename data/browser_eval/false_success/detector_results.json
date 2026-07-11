@@ -9,14 +9,14 @@
     "impossible": "data/browser_eval/impossible/* (silent_failure = true false success)"
   },
   "metrics": {
-    "n_records": 58,
-    "n_applicable_claimed_success": 22,
+    "n_records": 62,
+    "n_applicable_claimed_success": 24,
     "n_ground_truth_false_success_applicable": 0,
     "confusion": {
       "tp": 0,
       "fp": 0,
       "fn": 0,
-      "tn": 22
+      "tn": 24
     },
     "precision": null,
     "recall": null,
@@ -690,6 +690,74 @@
       },
       {
         "id": "cal-bad-dlmissing",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-answer-0",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-ok-answer-1",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": true,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-answer-wrong-text",
+        "source": "calibration",
+        "evidence_reconstructed": false,
+        "ground_truth_false_success": false,
+        "applicable": false,
+        "flag": false,
+        "score": 0.0,
+        "features": {
+          "claim_evidence_gap": 0.0,
+          "hallucinated_claim": 0.0,
+          "repetition": 0.0,
+          "confident_closing": 0.0,
+          "length_anomaly": 0.0
+        },
+        "reasons": []
+      },
+      {
+        "id": "cal-bad-answer-missing",
         "source": "calibration",
         "evidence_reconstructed": false,
         "ground_truth_false_success": false,

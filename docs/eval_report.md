@@ -221,7 +221,7 @@ checkpoint 解離訊號仍定位失敗位置:action/execution-heavy ckpt=1.0(失
 
 #### 輕量 false-success detector(T1-6,heuristic 路線)
 
-labeled full trajectory <60(論文 2606.09863 的 train 門檻)→ 誠實走 heuristic 前哨,不硬 train。**2026-07-10 修復後**:兩個 ground-truth false success(teleporter query-echo、filename-bypass)在 verifier 上游(c4ac7cd)被消滅,detector 已無假 pass 可抓——applicable claimed-pass 24→**22**、confusion {tp1/fp0/fn1/tn22}→**{tp0/fp0/fn0/tn22}**、flag_rate 0.0417→**0.0**、precision 1.0→**null**、recall 0.5→**null**(分母歸零,已在 artifact `known_limitations` 寫明:代價是此 corpus 上 recall 暫不可量測——上游把 false success 修光是好事,但也讓下游 detector 在此 corpus 失去可量測樣本)。表面 proxy(closing 語氣、序列長度)刻意單獨不足以 flag——直接對應論文警告「judge 過度倚賴表面訊號」。TF-IDF+XGBoost 版寫進 artifact 的 roadmap(前置條件:≥60 labeled trajectory + trajectory log 補存 agent 自述)。detector 是 opt-in triage hint,**絕不改判定**(verdict_unchanged invariant 有 test 鎖)。
+labeled full trajectory <60(論文 2606.09863 的 train 門檻)→ 誠實走 heuristic 前哨,不硬 train。**2026-07-10 修復後**:兩個 ground-truth false success(teleporter query-echo、filename-bypass)在 verifier 上游(c4ac7cd)被消滅,detector 已無假 pass 可抓——applicable claimed-pass 24→**22**、confusion {tp1/fp0/fn1/tn22}→**{tp0/fp0/fn0/tn22}**、flag_rate 0.0417→**0.0**、precision 1.0→**null**、recall 0.5→**null**(P2 answer-channel 擴充 corpus 後重跑:corpus 62、applicable **24**、{tp0/fp0/fn0/tn**24**},結論不變)(分母歸零,已在 artifact `known_limitations` 寫明:代價是此 corpus 上 recall 暫不可量測——上游把 false success 修光是好事,但也讓下游 detector 在此 corpus 失去可量測樣本)。表面 proxy(closing 語氣、序列長度)刻意單獨不足以 flag——直接對應論文警告「judge 過度倚賴表面訊號」。TF-IDF+XGBoost 版寫進 artifact 的 roadmap(前置條件:≥60 labeled trajectory + trajectory log 補存 agent 自述)。detector 是 opt-in triage hint,**絕不改判定**(verdict_unchanged invariant 有 test 鎖)。
 
 - 重跑:`.venv/Scripts/python -m tools.false_success_detector`(script 形式亦可,sys.path bootstrap 已補,commit `2fc9f06`)
 - Artifact:`data/browser_eval/false_success/detector_results.json`
@@ -247,7 +247,7 @@ labeled full trajectory <60(論文 2606.09863 的 train 門檻)→ 誠實走 heu
 | impossible honest_outcome_rate | 0.9 | **1.0** | c4ac7cd | 同上 |
 | degradation perception curve | 1.0→1.0→1.0→0.0 | **1.0→1.0→1.0→1.0** | 3f0b1e9 | `artifacts/degradation_curve.json` |
 | degradation action-heavy | fail(silent wrong click)| **fail(honest_refusals=1)** | 3f0b1e9 | 同上 |
-| detector confusion | tp1/fp0/fn1/tn22 | **tp0/fp0/fn0/tn22**(recall 0.5→null)| c4ac7cd | `false_success/detector_results.json` |
+| detector confusion | tp1/fp0/fn1/tn22 | **tp0/fp0/fn0/tn24**(recall 0.5→null;P2 corpus 擴充後 tn22→24)| c4ac7cd | `false_success/detector_results.json` |
 | 開放式任務 | crash / vacuous-pass 風險 | **honest_unknown_rate 1.0,crashes 0** | 2fec949 | `open_ended/open_ended_results.json` |
 
 FG-BROWSER-002~006 的逐條 Repair 說明見 `docs/failure_gallery.md`。

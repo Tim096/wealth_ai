@@ -129,12 +129,12 @@ def sec_filings(query: str) -> dict:
         resolver = FilingResolver(fetcher)
         try:
             cik = int(query) if query.isdigit() else resolver.cik_for_ticker(query)
+            out = [{"accession": f.accession, "form": f.form,
+                    "filing_date": f.filing_date, "report_date": f.report_date,
+                    "year": (f.report_date or f.filing_date or "")[:4]}
+                   for f in resolver.annual_filings(cik) if not f.is_amendment]
         except Exception as e:  # noqa: BLE001
             return {"ok": False, "error": f"{query}: {e}"}
-        out = [{"accession": f.accession, "form": f.form,
-                "filing_date": f.filing_date, "report_date": f.report_date,
-                "year": (f.report_date or f.filing_date or "")[:4]}
-               for f in resolver.annual_filings(cik) if not f.is_amendment]
         return {"ok": True, "source": query.upper(), "filings": out}
 
 

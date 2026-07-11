@@ -60,6 +60,16 @@ pipeline 產生的**確切字串值**(非概念):
 
 見 [README](../README.md#支援範圍browser-agent)。核心:公開搜尋/導航/擷取/下載支援;登入、CAPTCHA、購買、送出正式表單、付費資料**不支援**(責任邊界,不是能力不足)。Phase 2 實作中。
 
+### 任務可驗證性分類(2026-07-10)
+
+| 任務類型 | 行為 | verdict | 依據 |
+|---|---|---|---|
+| 有可機讀成功/禁止條件(搜尋、導航、下載、擷取)| preflight 導出條件 → verifier 對照 evidence | `pass` / `fail` | 主路徑 |
+| **開放式 / 不可驗證任務**(如「隨便逛逛看有什麼有趣的」、成功條件無法事先機讀)| **支援執行**、照錄完整 trace + screenshots,verifier 因無可機讀證據回 unknown + 明講交人工審 trace | **`unknown`**(絕不 vacuous pass、絕不 crash)| FG-BROWSER-006(commit 2fec949);artifact `data/browser_eval/open_ended/open_ended_results.json`(3/3 honest_unknown,crashes 0)|
+| 責任邊界(登入/購買/正式表單/付費)| capability guard code-enforced 攔截 | `refused` | `packages/browser_agent/capability.py` |
+
+> 三態鐵律的落地:缺可機讀證據 → `unknown`(交人工),結構上不能升級成 pass。開放式任務「執行得了但無法自動判成功」是誠實 unknown,不是失敗、也不是不支援執行。
+
 ## 如何確保 status 可信(主管最看重的問題)
 
 四層防禦,不靠 AI 自述:

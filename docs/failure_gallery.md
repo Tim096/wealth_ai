@@ -136,7 +136,7 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 
 # 2026-07-10 eval 升級波新增
 
-以下 8 條由 11 項 eval 升級(verifier 校準、擾動矩陣、impossible set、三角驗證、CYD oracle、分層抽樣)量測抓出。Browser 4 條為 **measure-first 刻意不修**:校準/量測必須呈現系統現狀,每條各有 pure-logic test 鎖住——未來修復時 test 會翻面提醒重跑對應 artifact。
+以下 8 條由 11 項 eval 升級(verifier 校準、擾動矩陣、impossible set、三角驗證、CYD oracle、分層抽樣)量測抓出。Browser 4 條(FG-BROWSER-002~005)原為 **measure-first 刻意不修**——先讓校準/量測誠實呈現系統現狀,每條各有 pure-logic test 鎖住。**2026-07-10 修復波已全數修復**(commit c4ac7cd / 3f0b1e9),原 `test_known_*` 已翻寫為 `test_fixed_*` 並重跑 artifact;每條的「Status」「Repair」欄已更新為修復後量測。這正是 measure-fix-remeasure 方法論的收尾:弱點先被誠實量測、再被修掉、再重新量測驗證。
 
 ---
 
@@ -220,13 +220,13 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | App | browser_agent / verifier(download_exists)|
 | Input | calibration case `cal-bad-dlname-annual-report`——needle="annual report",檔名 "annual report 2025.htm",檔案內容是 captcha 擋頁("Are you a robot?...")|
 | Expected | fail(內容不含 needle)|
-| Actual | pass(verifier FP;T1-1 校準 46 triples 中唯一 FP,即 specificity 0.9583 的來源)|
-| Status | 未修,刻意保留(measure-first:校準必須呈現 verifier 現狀)|
+| Actual(修復前) | pass(verifier FP;T1-1 校準 46 triples 中唯一 FP,即 specificity 0.9583 的來源)|
+| Status | 已修(commit c4ac7cd)|
 | Failure Type | verifier filename-needle bypass |
-| Evidence | `data/browser_eval/calibration/calibration_results.json` per_case `cal-bad-dlname-annual-report` verdict=pass;`tests/test_calibrate_verifier.py::test_known_fp_filename_needle_bypass_is_surfaced` |
-| Root Cause | `packages/browser_agent/verifier.py` `_download_ok` 第 41 行 `return "pass" if (n in content or n in os.path.basename(path).lower()) else "fail"`——basename 單獨即可授予 pass,與檔頭註解「filename is a weak secondary signal」矛盾 |
-| Repair Attempt | 無:移除 filename fallback 會讓 binary PDF 合法下載變 FN,是 FP/FN trade-off,留待決策。修 verifier 後需重跑 `tools/calibrate_verifier.py` 更新 artifacts(test 會翻面提醒)|
-| Related Commit | 3e9034a |
+| Evidence | `data/browser_eval/calibration/calibration_results.json` per_case `cal-bad-dlname-annual-report` verdict=fail;`tests/test_calibrate_verifier.py::test_filename_needle_bypass_fixed_content_first` |
+| Root Cause | `packages/browser_agent/verifier.py` `_download_ok` 舊版 `return "pass" if (n in content or n in os.path.basename(path).lower()) else "fail"`——basename 單獨即可授予 pass,與檔頭註解「filename is a weak secondary signal」矛盾 |
+| Repair(commit c4ac7cd) | 改為 content-first:內容**可讀**(UTF-8 decode 後 U+FFFD 替換字元比例 ≤5%)時只認內容,檔名不再單獨授 pass。本 case 的 captcha bytes 是可讀 UTF-8 且不含 needle → 正確判 **fail**。filename fallback 僅保留給不可讀 binary + 檔名命中的路徑(回 unknown 而非 pass,新單元測試覆蓋)。**量測後果**:此 case pass(FP)→fail;校準 specificity 0.9583→**1.0**、FP rate 0.0417→**0.0**、confusion FP 1→**0**、corrupted 三態 {pass1,fail20,unknown3}→{pass0,fail21,unknown3}、Rogan-Gladen corrected 0.7913→**0.8**(sensitivity 1.0 不變)。重跑 `.venv/Scripts/python tools/calibrate_verifier.py`,artifact `data/browser_eval/calibration/calibration_results.json` |
+| Related Commit | 3e9034a(引入)→ c4ac7cd(修復)|
 
 ---
 
@@ -238,13 +238,13 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | App | browser_agent / verifier(text_visible)|
 | Input | impossible case `imp-product-teleporter`——site=v3_heldout,query="teleporter"(catalog 無此商品),success_conditions=[text_visible "Teleporter"],無 forbidden |
 | Expected | fail(商品不存在,0 hits,無 Teleporter 商品列)|
-| Actual | pass(verifier FP → silent failure;silent_failure_rate 0.1 的那 1/10)|
-| Status | 未修,刻意保留 |
+| Actual(修復前) | pass(verifier FP → silent failure;silent_failure_rate 0.1 的那 1/10)|
+| Status | 已修(commit c4ac7cd)|
 | Failure Type | needle-in-query-echo(success needle 命中「結果頁回顯的查詢字串」而非真商品列)|
-| Evidence | `data/browser_eval/impossible/impossible_results.json` per-task imp-product-teleporter status=pass;`tests/test_impossible_tasks.py::test_known_silent_failure_teleporter_is_surfaced` |
-| Root Cause | v3 doSearch 對 0 hits 仍插入 status 文字 `0 results for "teleporter"`;verifier text_visible 做 substring 比對,needle 命中回顯而非商品。同家族:commit eeff01b「stop mining a URL token as success needle」、論文 One-Token-to-Fool-Judge(arxiv 2507.08794)。對照組 imp-product-hoverboard 同樣 leak,但因帶 forbidden `error_text_visible "0 results"` 被擋下——證明空結果 silent failure 目前靠 forbidden 守,text_visible 本身擋不住 query-echo |
-| Repair Attempt | 無。修法候選:text_visible 排除 results-status 回顯區 / 要求命中真 product-row 元素 / product_absent 任務一律附 forbidden 0-results。修後需重跑 `tools/impossible_tasks.py` |
-| Related Commit | 12ccf34 |
+| Evidence | `data/browser_eval/impossible/impossible_results.json` per-task imp-product-teleporter status=fail;`tests/test_impossible_tasks.py::test_teleporter_query_echo_is_honest_fail` |
+| Root Cause | v3 doSearch 對 0 hits 仍插入 status 文字 `0 results for "teleporter"`;verifier text_visible 做 substring 比對,needle 命中回顯而非商品。同家族:commit eeff01b「stop mining a URL token as success needle」、論文 One-Token-to-Fool-Judge(arxiv 2507.08794)。對照組 imp-product-hoverboard 同樣 leak,但因帶 forbidden `error_text_visible "0 results"` 被擋下 |
+| Repair(commit c4ac7cd) | text_visible 逐行遮罩空結果回顯行(通用 regex:0/no/zero + results/matches/items/hits/products、not(hing) found、did not match、找不到/查無/沒有結果…),needle 只在被遮罩行內命中就不算 pass。非零結果回顯(如 "3 results for widget")不遮罩,合法 pass 全保留。**量測後果**:imp-product-teleporter pass→**fail**;silent_failure_rate 0.1→**0.0**、honest_fail 7→**8**、honest_outcome_rate 0.9→**1.0**、expect_status_accuracy 0.9167→**1.0**。校準 sensitivity 維持 1.0(合法 pass 不受影響)。重跑 `.venv/Scripts/python tools/impossible_tasks.py` |
+| Related Commit | 12ccf34(引入)→ c4ac7cd(修復)|
 
 ---
 
@@ -256,13 +256,13 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | App | browser_agent / repair(repair_target submit_button)|
 | Input | mutation 矩陣 action-heavy cell——submit 是無 role 的 `<span onclick>`,不進 a11y 枚舉;頁上唯一候選是搜尋 input(aria-label "Search products")|
 | Expected | repair 回報 no viable candidate(誠實找不到)|
-| Actual | repair「修復」到搜尋 input 並點擊之,click 回 ok(silent wrong-element click),trace 全綠,只有最終 verifier 擋下(fail)|
-| Status | 未修,刻意保留 |
+| Actual(修復前) | repair「修復」到搜尋 input 並點擊之,click 回 ok(silent wrong-element click),trace 全綠,只有最終 verifier 擋下(fail)|
+| Status | 已修(commit 3f0b1e9)|
 | Failure Type | repair fallback to non-actionable element(weak word-match score 2.0 > 0 門檻)|
-| Evidence | `data/browser_eval/artifacts/degradation_curve.json` runs[action-heavy] repairs=2 status=fail;`tests/test_mutation_sites.py::test_known_weakness_submit_repair_falls_back_to_input` |
+| Evidence | `data/browser_eval/artifacts/degradation_curve.json` runs[action-heavy] repairs=2 status=fail honest_refusals=1;`tests/test_mutation_sites.py::test_fixed_submit_repair_refuses_infeasible_input` |
 | Root Cause | `packages/browser_agent/repair.py` `_score_candidate`——submit_button purpose 對 input 仍給 word-match +2.0,repair_target 只要 score>0 就選,無「動作可行性」檢查 |
-| Repair Attempt | 無(修法候選:submit purpose 要求 tag/role 至少一項命中,或 score 門檻 >2)。修後需重跑 `tools/degradation_curve.py` |
-| Related Commit | 1bef360 |
+| Repair(commit 3f0b1e9) | FG-BROWSER-004 加**可行性 gate**(`_feasible()`):每種 purpose 對應可執行元素類別(submit/download→button/a/[role=button\|link]/input[type=submit…]、fill→可填 input/textarea/[role=searchbox\|textbox]、result_link→a/link、filter_dropdown→select/listbox/combobox),不符者 score=-1 直接出局,保證入選者至少一項結構訊號命中。**量測後果**:action-heavy 仍 fail(submit 真的不存在),但**fail 得誠實**——3/3 run honest_refusals=1(repair 回 "no viable candidate" 而非點 input 的 silent wrong click);checkpoint 1.0、curve monotone 均不變。degradation artifact 新增 `honest_refusals` 欄位把「誠實 fail vs silent wrong click」寫進 committed 數字。重跑 `.venv/Scripts/python tools/degradation_curve.py` |
+| Related Commit | 1bef360(引入)→ 3f0b1e9(修復)|
 
 ---
 
@@ -274,10 +274,28 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | App | browser_agent / repair(repair_target search_box)|
 | Input | mutation 矩陣 perception-heavy cell——可見 "Promo code" 誘餌欄位在前,真搜尋框無 aria、generic placeholder("Type here...")|
 | Expected | 填入真搜尋框(表單內、緊鄰 submit)|
-| Actual | 兩欄位同分 2.5,tie 由 DOM 順序決定 → query 填進 Promo 欄位 → 空查詢 → fail(checkpoint 也 fail:degradation curve 上可見失敗發生在輸入階段)|
-| Status | 未修,刻意保留 |
+| Actual(修復前) | 兩欄位同分 2.5,tie 由 DOM 順序決定 → query 填進 Promo 欄位 → 空查詢 → fail(checkpoint 也 fail:degradation curve 上可見失敗發生在輸入階段)|
+| Status | 已修(commit 3f0b1e9)|
 | Failure Type | bait-field DOM-order tie-break |
-| Evidence | `data/browser_eval/artifacts/degradation_curve.json` cells[perception-heavy] checkpoint_rate=0.0;`tests/test_mutation_sites.py::test_known_weakness_bait_field_wins_tie_by_dom_order` |
+| Evidence | `data/browser_eval/artifacts/degradation_curve.json` curves[perception] points[3] success_rate=1.0、cells[perception-heavy] checkpoint_rate=1.0;`tests/test_mutation_sites.py::test_fixed_bait_field_loses_to_form_context` |
 | Root Cause | `repair.py` `_score_candidate` 無 form-context/鄰近性訊號,unlabeled 真欄位無法勝出;want_value 對兩者皆不命中 |
-| Repair Attempt | 無(修法候選:form 內元素加分、與 submit 候選同 form 的欄位加分;vision channel 亦可解)。修後需重跑 `tools/degradation_curve.py` |
-| Related Commit | 1bef360 |
+| Repair(commit 3f0b1e9) | FG-BROWSER-005 由 observer 新增 `form` 欄位(closest('form') 的 id/index),repair 先算 submit_forms(含可行 submit 候選的 form 集合);fill 類 purpose 對同 form +1.0、任一 form 內 +0.5,bait 字樣(promo/coupon/discount/voucher/gift card)在無 purpose word 時 -1.0。真搜尋框在 submit 所在 form,誘餌 Promo 欄位在 form 外 → 真欄位勝出。**量測後果**:perception-heavy success 0.0→**1.0**、checkpoint 0.0→**1.0**、recovery 0.0→**1.0**;perception curve 1.0→1.0→1.0→0.0 變 **1.0→1.0→1.0→1.0**(仍 monotone non-increasing)。未引入 vision。重跑 `.venv/Scripts/python tools/degradation_curve.py` |
+| Related Commit | 1bef360(引入)→ 3f0b1e9(修復)|
+
+---
+
+## FG-BROWSER-006: 開放式(零條件)任務讓整個 run crash(ValidationError → status=ERROR)
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-BROWSER-006 |
+| App | browser_agent / contract + verifier(open-ended task 路徑)|
+| Input | 無可機讀驗證條件的開放式任務(如「隨便逛逛看有什麼有趣的」「看看現在流行什麼」)——success_conditions 應為空陣列 |
+| Expected | 執行、錄 trace,verifier 因無可機讀證據回 **unknown**(交人工審 trace)|
+| Actual(修復前) | `BrowserTaskContract` 的 `success_conditions` 有 `min_length=1`,空陣列直接 ValidationError → run status=**ERROR**,開放式任務 0% 可跑;且若繞過(給空 success + forbidden 全過),`combine_checks` 會 **vacuous pass**(什麼都沒證明卻回 pass)|
+| Status | 已修(commit 2fec949)|
+| Failure Type | crash on honest input + vacuous-pass 風險(誠實路徑被當非法輸入懲罰)|
+| Evidence | `data/browser_eval/open_ended/open_ended_results.json` metrics crashes=0 / vacuous_passes=0 / honest_unknown=3 / honest_unknown_rate=1.0 / traces_recorded=3;`tests/test_open_ended_tasks.py` |
+| Root Cause | contract schema `min_length=1` 把「誠實的空條件」當非法輸入;verifier `combine_checks` 在 forbidden-only 全過時會回 pass(結構性 vacuous pass 漏洞)|
+| Repair(commit 2fec949) | (1) contract `success_conditions` min_length 1→0(附註解:誠實路徑不可是非法輸入);(2) `verify_contract` 加結構性守門:空 success 時先跑 forbidden checks,違規照樣 fail,否則短路回 **unknown** + missing_evidence 明講需人工審 trace;(3) run 迴圈 verdict 起始即 unknown,agent 照常執行、trace/screenshots 照錄。**量測後果**:3/3 開放式 case status=unknown、crashes **0**、vacuous_passes **0**、honest_unknown_rate **1.0**,每個 case trace steps>0(2/3/2)。新 runner `tools/open_ended_tasks.py`。重跑 `.venv/Scripts/python tools/open_ended_tasks.py` |
+| Related Commit | 2fec949 |

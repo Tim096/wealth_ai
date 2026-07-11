@@ -1,0 +1,29 @@
+# Build-context excludes for Dockerfile.wealth-sec / Dockerfile.wealth-agent
+# (both build from repo root: `docker build -f <Dockerfile> .`).
+# Verified sizes 2026-07-10: .venv 461MB + data/raw_filings 359MB + runs 7MB
+# were entering the context (COPY layer ~890MB); none is needed at runtime.
+
+# local virtualenv / editors / VCS
+.venv/
+.git/
+.claude/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.egg-info/
+node_modules/
+dist/
+coverage/
+
+# runtime artifacts and caches (services re-create these at runtime;
+# wealth-sec fetches filings live from EDGAR into data/raw_filings)
+runs/
+data/raw_filings/
+data/artifacts/
+
+# secrets must never enter an image
+.env
+.env.*
+
+# NOTE: data/mock_sites is REQUIRED at runtime by wealth-agent — do not exclude.
+# data/golden_labels, data/sec_eval, data/browser_eval are small (<3MB) and kept.

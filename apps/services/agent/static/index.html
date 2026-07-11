@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>wealth-agent · Browser Agent</title>
+<style>
+  :root{
+    --bg:#0d1219; --panel:#141b25; --panel2:#101722; --ink:#e7ecf2; --muted:#93a0b0;
+    --line:#243040; --accent:#45b9c6; --accent-ink:#0d1219;
+    --pass:#4bbd80; --warn:#d9ad55; --fail:#e07a6d; --grey:#7f8b99;
+    --pass-bg:#12281d; --warn-bg:#2a2413; --fail-bg:#2c1815; --grey-bg:#1b232e;
+    --mono:ui-monospace,"Cascadia Code",Consolas,monospace;
+    --sans:"Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;color:var(--ink);font-family:var(--sans);line-height:1.5;
+    background:radial-gradient(1200px 600px at 78% -10%, #16222f 0%, var(--bg) 55%) fixed}
+  .wrap{max-width:1220px;margin:0 auto;padding:1.5rem 1.2rem 3rem}
+  header{display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap;margin-bottom:1.1rem}
+  .eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  h1{font-size:1.45rem;margin:.1rem 0 0;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:.85rem}
+  .chip{font-family:var(--mono);font-size:.72rem;border:1px solid var(--line);border-radius:999px;
+    padding:.15rem .6rem;color:var(--muted)}
+  .chip b{color:var(--accent);font-weight:600}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:1.2rem}
+  label{display:block;font-size:.78rem;color:var(--muted);margin:.6rem 0 .25rem}
+  input[type=text],input[type=password],textarea{width:100%;background:var(--panel2);border:1px solid var(--line);
+    border-radius:8px;color:var(--ink);padding:.55rem .7rem;font-size:.95rem;font-family:var(--sans)}
+  textarea{resize:vertical;min-height:64px}
+  input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .btn{background:var(--accent);color:var(--accent-ink);border:none;border-radius:8px;
+    padding:.6rem 1.3rem;font-weight:700;font-size:.95rem;cursor:pointer}
+  .btn:disabled{opacity:.45;cursor:default}
+  .grid2{display:grid;gap:1rem}
+  @media(min-width:900px){.grid2{grid-template-columns:5fr 7fr}}
+  .feed{background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+    height:min(52vh,500px);overflow-y:auto;padding:.8rem 1rem;font-family:var(--mono);font-size:.85rem}
+  .feed div{margin:.22rem 0;white-space:pre-wrap;word-break:break-word;line-height:1.55}
+  .feed .sys{color:var(--muted)} .feed .ok{color:var(--pass)} .feed .bad{color:var(--fail)}
+  .pill{display:inline-block;padding:.1rem .55rem;border-radius:999px;font-size:.72rem;
+    font-weight:700;font-family:var(--mono);white-space:nowrap}
+  .p-pass{background:var(--pass-bg);color:var(--pass)} .p-warn{background:var(--warn-bg);color:var(--warn)}
+  .p-fail{background:var(--fail-bg);color:var(--fail)} .p-grey{background:var(--grey-bg);color:var(--grey)}
+  .verdict{display:flex;gap:.6rem;align-items:center;margin-top:.8rem;flex-wrap:wrap;font-size:.9rem;
+    min-height:2rem;padding:.5rem .7rem;border:1px dashed var(--line);border-radius:8px;
+    background:var(--panel2)}
+  .verdict:empty{display:none}
+  .verdict .sub{color:var(--muted);word-break:break-word}
+  .mono{font-family:var(--mono)}
+  .hint{font-size:.78rem;color:var(--muted);margin-top:.5rem}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);
+    border-top-color:var(--accent);border-radius:50%;animation:r 1s linear infinite;vertical-align:-2px}
+  @keyframes r{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion: reduce){.spin{animation:none}}
+  a{color:var(--accent)}
+  table{width:100%;border-collapse:collapse;font-size:.8rem}
+  th{font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--muted);text-align:left;padding:.4rem .45rem;border-bottom:1px solid var(--line)}
+  td{padding:.35rem .45rem;border-bottom:1px solid var(--line);vertical-align:top;word-break:break-word}
+  .tbwrap{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:.6rem}
+  .shots{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem}
+  .shots a img{height:86px;border:1px solid var(--line);border-radius:6px;display:block}
+  details{margin-top:.8rem} summary{cursor:pointer;color:var(--accent);font-size:.85rem}
+  .row{display:flex;gap:.8rem;align-items:end;flex-wrap:wrap}
+  .row>.grow{flex:1 1 220px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">AI Coding Test 2026 · Task 1</div>
+      <h1>Browser Agent — 自然語言網頁任務</h1>
+      <div class="sub">結果由 verifier(程式)判定 pass / fail / unknown,不是 AI 自述;每一步含截圖與修復軌跡,失敗可完整檢視。</div>
+    </div>
+    <span class="chip">planner:<b id="plannerName">連線中…</b></span>
+  </header>
+
+  <section class="panel">
+    <div class="grid2">
+      <div>
+        <label>任務(自然語言,中英皆可)</label>
+        <textarea id="aTask" placeholder="例:Search Wikipedia for &quot;Reliability engineering&quot; and open the article;或:找 INTC 最新 10-K 並下載"></textarea>
+        <div class="row">
+          <div class="grow">
+            <label>起始 URL(可留空 → LLM 自行規畫;mock:v1 / mock:v2 / mock:v3 用內建示範站)</label>
+            <input type="text" id="aUrl" placeholder="留空自動規畫">
+          </div>
+          <div class="grow">
+            <label>成功條件(可留空 → 自動推斷;看到什麼文字算成功)</label>
+            <input type="text" id="aSucc" placeholder="留空自動推斷">
+          </div>
+        </div>
+        <div class="row" id="tokRow" style="display:none">
+          <div class="grow">
+            <label>Access token(本站有設 ACCESS_TOKEN 時才需要)</label>
+            <input type="password" id="aTok">
+          </div>
+        </div>
+        <div class="hint">💡 只輸入任務即可。開場由 LLM 規劃「起點網址 + 可驗證成功條件」;遇彈窗先關、遇 CAPTCHA / 登入 / 購買類任務由 capability guard 誠實拒絕(REFUSED)。無可驗證條件的開放式任務照跑,結果誠實標示 UNKNOWN。</div>
+        <div style="margin-top:.9rem;display:flex;gap:.7rem;align-items:center">
+          <button class="btn" id="aRun">派工 ▶</button>
+          <span class="hint">任務進入單一 worker 佇列,依序執行(headless Chromium)。</span>
+        </div>
+        <div class="verdict" id="aVerdict"></div>
+        <div class="shots" id="aShots"></div>
+        <details id="aTraceBox" style="display:none">
+          <summary>完整步驟軌跡(mode / diagnosis / repair / selector / screenshot)</summary>
+          <div class="tbwrap"><table id="aTrace">
+            <thead><tr><th>#</th><th>step</th><th>action</th><th>ok</th><th>mode</th><th>detail / diagnosis</th><th>shot</th></tr></thead>
+            <tbody></tbody>
+          </table></div>
+          <div class="hint" id="aArtLink"></div>
+        </details>
+      </div>
+      <div>
+        <label>執行過程(每一步:思考 → 動作 → 驗證)</label>
+        <div class="feed" id="aFeed"><div class="sys">待命。輸入任務後按「派工」。</div></div>
+        <div class="hint">拒絕範例:任務含登入 / 購買 / 送出個資會被 capability guard 直接 REFUSED —— 責任邊界由程式強制,非模型自律。</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const PILL={pass:'p-pass',unknown:'p-warn',running:'p-warn',queued:'p-grey',
+  fail:'p-fail',refused:'p-fail',error:'p-fail'};
+const pill=t=>`<span class="pill ${PILL[t]||'p-grey'}">${t}</span>`;
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const tok=()=>$('#aTok').value.trim();
+const withTok=u=>tok()?u+(u.includes('?')?'&':'?')+'token='+encodeURIComponent(tok()):u;
+
+$('#aTok').value=localStorage.getItem('agent_token')||'';
+if($('#aTok').value)$('#tokRow').style.display='';
+fetch('/api/health').then(r=>r.json()).then(d=>{$('#plannerName').textContent=d.planner||'?';});
+setInterval(()=>fetch('/api/health').then(r=>r.json())
+  .then(d=>{$('#plannerName').textContent=d.planner||'?';}).catch(()=>{}),5000);
+
+let pollTimer=null;
+function feed(kind,text){const d=document.createElement('div');d.className=kind;d.textContent=text;
+  const f=$('#aFeed');f.appendChild(d);f.scrollTop=f.scrollHeight;}
+
+function renderTrace(id,trace){
+  if(!trace||!trace.steps||!trace.steps.length)return;
+  $('#aTraceBox').style.display='';
+  const tb=$('#aTrace tbody');tb.innerHTML='';
+  trace.steps.forEach((s,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="mono">${i+1}</td><td class="mono">${esc(s.step)}</td>
+      <td class="mono">${esc(s.action)}</td><td>${s.ok?'✓':'<span style="color:var(--fail)">✗</span>'}</td>
+      <td class="mono">${esc(s.mode)}</td>
+      <td>${esc(s.detail||'')}${s.diagnosis?`<div class="sub mono">diagnosis: ${esc(s.diagnosis)}${s.repair_chosen?' → '+esc(s.repair_chosen):''}</div>`:''}</td>
+      <td>${s.screenshot?`<a href="${withTok('/api/tasks/'+id+'/artifacts/'+s.screenshot)}" target="_blank">shot</a>`:''}</td>`;
+    tb.appendChild(tr);
+  });
+  $('#aArtLink').innerHTML=`所有產物(截圖 / evidence / run.json / 下載檔):`
+    +`<a href="${withTok('/api/tasks/'+id+'/artifacts')}" target="_blank">/api/tasks/${id}/artifacts</a>`;
+  const shots=trace.steps.filter(s=>s.screenshot).slice(-8);
+  $('#aShots').innerHTML=shots.map(s=>{
+    const u=withTok('/api/tasks/'+id+'/artifacts/'+s.screenshot);
+    return `<a href="${u}" target="_blank" title="${esc(s.step)}"><img src="${u}" loading="lazy"></a>`;}).join('');
+}
+
+$('#aRun').onclick=async()=>{
+  const task=$('#aTask').value.trim(); if(!task)return;
+  if(tok())localStorage.setItem('agent_token',tok());
+  $('#aRun').disabled=true;$('#aFeed').innerHTML='';$('#aShots').innerHTML='';
+  $('#aTraceBox').style.display='none';
+  $('#aVerdict').innerHTML='<span class="spin"></span>';
+  feed('sys','你 › '+task);
+  const succ=$('#aSucc').value.trim();
+  const body={task,url:$('#aUrl').value.trim(),
+    success:succ?['text_visible:'+succ]:null};
+  let d;
+  try{
+    const r=await fetch(withTok('/api/tasks'),{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    d=await r.json();
+    if(!r.ok){
+      if(r.status===401){$('#tokRow').style.display='';feed('bad','需要 access token(右下輸入後重試)');}
+      else feed('bad','提交失敗:'+(d.detail||r.status));
+      $('#aRun').disabled=false;$('#aVerdict').innerHTML='';return;
+    }
+  }catch(e){feed('bad','連線失敗:'+e);$('#aRun').disabled=false;$('#aVerdict').innerHTML='';return;}
+  feed('sys','task_id='+d.task_id+' — 已排入佇列');
+  let seen=0;
+  pollTimer=setInterval(async()=>{
+    let s;
+    try{s=await(await fetch(withTok('/api/tasks/'+d.task_id))).json();}catch(e){return;}
+    (s.steps||[]).slice(seen).forEach(t=>feed('',t)); seen=(s.steps||[]).length;
+    if(!['queued','running'].includes(s.status)){
+      clearInterval(pollTimer);$('#aRun').disabled=false;
+      const ok=s.status==='pass';
+      $('#aVerdict').innerHTML=pill(s.status)
+        +(s.confidence!=null?` <span class="mono">confidence ${s.confidence.toFixed(2)}</span>`:'')
+        +` <span class="sub">${esc(s.verifier||'')}</span>`
+        +(s.answer?`<div style="margin-top:.3rem;white-space:pre-wrap;word-break:break-word">📋 擷取內容:${esc(s.answer.slice(0,1200))}${s.answer.length>1200?'…':''}</div>`:'')
+        +(s.download?`<div class="mono" style="margin-top:.3rem">📁 <a href="${withTok('/api/tasks/'+d.task_id+'/artifacts/'+s.download)}" target="_blank">${esc(s.download)}</a></div>`:'');
+      feed(ok?'ok':'bad','結果:'+s.status.toUpperCase()+' — '+(s.verifier||''));
+      renderTrace(d.task_id,s.trace);
+    }
+  },800);
+};
+</script>
+</body>
+</html>

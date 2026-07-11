@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEC 10-K Extractor · wealth-sec</title>
+<style>
+  :root{
+    --bg:#0d1219; --panel:#141b25; --panel2:#101722; --ink:#e7ecf2; --muted:#93a0b0;
+    --line:#243040; --accent:#45b9c6; --accent-ink:#0d1219;
+    --pass:#4bbd80; --warn:#d9ad55; --fail:#e07a6d; --grey:#7f8b99;
+    --pass-bg:#12281d; --warn-bg:#2a2413; --fail-bg:#2c1815; --grey-bg:#1b232e;
+    --mono:ui-monospace,"Cascadia Code",Consolas,monospace;
+    --sans:"Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;color:var(--ink);font-family:var(--sans);line-height:1.5;
+    background:radial-gradient(1200px 600px at 78% -10%, #16222f 0%, var(--bg) 55%) fixed}
+  .wrap{max-width:1220px;margin:0 auto;padding:1.5rem 1.2rem 3rem}
+  header{display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap;margin-bottom:1.1rem}
+  .eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  h1{font-size:1.45rem;margin:.1rem 0 0;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:.85rem}
+  .chip{font-family:var(--mono);font-size:.72rem;border:1px solid var(--line);border-radius:999px;
+    padding:.15rem .6rem;color:var(--muted);cursor:pointer;background:none}
+  .chip b{color:var(--accent);font-weight:600}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:1.2rem;margin-top:.9rem}
+  .hidden{display:none}
+  label{display:block;font-size:.78rem;color:var(--muted);margin:.6rem 0 .25rem}
+  input[type=text]{width:100%;background:var(--panel2);border:1px solid var(--line);
+    border-radius:8px;color:var(--ink);padding:.55rem .7rem;font-size:.95rem;font-family:var(--sans)}
+  select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);
+    padding:.55rem .5rem;font-size:.9rem}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .btn{background:var(--accent);color:var(--accent-ink);border:none;border-radius:8px;
+    padding:.6rem 1.3rem;font-weight:700;font-size:.95rem;cursor:pointer}
+  .btn:disabled{opacity:.45;cursor:default}
+  .btn.ghost{background:var(--panel2);color:var(--ink);border:1px solid var(--line);font-weight:600}
+  .row{display:flex;gap:.8rem;align-items:end;flex-wrap:wrap}
+  .row>.grow{flex:1 1 220px}
+  .grid2{display:grid;gap:1rem}
+  @media(min-width:900px){.grid2{grid-template-columns:5fr 7fr}}
+  .pill{display:inline-block;padding:.1rem .55rem;border-radius:999px;font-size:.72rem;
+    font-weight:700;font-family:var(--mono);white-space:nowrap}
+  .p-pass{background:var(--pass-bg);color:var(--pass)} .p-warn{background:var(--warn-bg);color:var(--warn)}
+  .p-fail{background:var(--fail-bg);color:var(--fail)} .p-grey{background:var(--grey-bg);color:var(--grey)}
+  table{width:100%;border-collapse:collapse;font-size:.84rem}
+  th{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--muted);text-align:left;padding:.45rem .5rem;border-bottom:1px solid var(--line)}
+  td{padding:.4rem .5rem;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  tbody tr{cursor:pointer} tbody tr:hover{background:var(--panel2)}
+  tbody tr.sel{background:#18222f}
+  .mono{font-family:var(--mono)}
+  .meta{display:flex;gap:1rem;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin:.6rem 0}
+  .meta b{color:var(--ink)}
+  .doc{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:.9rem 1rem;
+    height:min(62vh,640px);overflow-y:auto;font-family:var(--mono);font-size:.82rem;
+    white-space:pre-wrap;word-break:break-word;line-height:1.6}
+  .doc .head{color:var(--accent)}
+  .doc mark{background:#3a4a5e;color:#e8eef5;border-radius:2px;padding:0 1px}
+  .doc mark.cur{background:var(--accent);color:#0b0f14;outline:2px solid var(--accent)}
+  .tbwrap{max-height:min(62vh,640px);overflow-y:auto;border:1px solid var(--line);border-radius:10px}
+  .tbwrap table{border-collapse:separate}
+  .tbwrap thead th{position:sticky;top:0;background:var(--panel);z-index:1}
+  .hint{font-size:.78rem;color:var(--muted);margin-top:.5rem}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);
+    border-top-color:var(--accent);border-radius:50%;animation:r 1s linear infinite;vertical-align:-2px}
+  @keyframes r{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion: reduce){.spin{animation:none}}
+  a{color:var(--accent)}
+  .scroll{overflow-x:auto}
+  .jobs{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem}
+  .job{font-family:var(--mono);font-size:.74rem;border:1px solid var(--line);border-radius:8px;
+    padding:.25rem .6rem;cursor:pointer;background:var(--panel2);color:var(--muted)}
+  .job.cur{border-color:var(--accent);color:var(--ink)}
+  .job.err{border-color:var(--fail);color:var(--fail)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">AI Coding Test 2026 · Task 2</div>
+      <h1>SEC 10-K Item-Level Extractor</h1>
+      <div class="sub">每個 item 帶 status / confidence / provenance / needs_review;三態誠實判定 + topic oracle + Item 8 XBRL 認證,非 AI 自述。</div>
+    </div>
+    <a class="chip" href="/dashboard" target="_blank">📊 <b>評測 dashboard</b></a>
+  </header>
+
+  <section class="panel">
+    <div class="row">
+      <div class="grow">
+        <label>Ticker / CIK(例:INTC · AAPL · XOM · JPM · C;TSM 會示範誠實拒絕)</label>
+        <input type="text" id="sQuery" value="INTC">
+      </div>
+      <div>
+        <label>年度(預設最新)</label>
+        <select id="sYear" style="min-width:150px"><option value="">最新</option></select>
+      </div>
+      <button class="btn" id="sGo">抽取 ▶</button>
+      <button class="btn ghost" id="sUpBtn" title="上傳本機 10-K HTML,離線抽取(不連 EDGAR)">上傳 HTML ⬆</button>
+      <input type="file" id="sUpFile" accept=".htm,.html,.txt" style="display:none">
+      <button class="btn ghost" id="sDlBtn" disabled title="下載目前分析中的 10-K 原始檔(byte-for-byte)">下載原始檔 ⬇</button>
+      <span id="sBusy"></span>
+    </div>
+    <div class="hint">建議代號:
+      <button class="chip" data-q="INTC">INTC</button>
+      <button class="chip" data-q="AAPL">AAPL</button>
+      <button class="chip" data-q="MSFT">MSFT</button>
+      <button class="chip" data-q="XOM">XOM</button>
+      <button class="chip" data-q="JPM">JPM</button>
+      <button class="chip" data-q="C">C(cross-reference 版式)</button>
+      <button class="chip" data-q="TSM">TSM(20-F → 誠實拒絕)</button>
+      — 首次抽取為即時 EDGAR 抓取(限速 0.5s/請求),約 30–90 秒;背景執行、此頁輪詢進度。
+    </div>
+    <div class="jobs" id="sJobs"></div>
+    <div class="meta" id="sMeta"></div>
+    <div id="sFind" class="hidden" style="margin-top:.5rem;display:flex;gap:.5rem;align-items:center;
+         background:var(--panel2);border:1px solid var(--accent);border-radius:8px;padding:.4rem .6rem">
+      <span class="mono" style="font-size:.72rem;color:var(--accent)">搜尋全文</span>
+      <input type="text" id="sFindQ" placeholder="打 item 代號或任何內文:1A · risk factor · property, plant…"
+             style="flex:1;min-width:0" autocomplete="off">
+      <span class="mono sub" id="sFindInfo" style="white-space:nowrap"></span>
+      <button class="btn ghost" id="sFindPrev" title="上一處 (Shift+Enter)" style="padding:.2rem .55rem">▲</button>
+      <button class="btn ghost" id="sFindNext" title="下一處 (Enter)" style="padding:.2rem .55rem">▼</button>
+      <button class="btn ghost" id="sFindX" style="padding:.2rem .6rem">✕</button>
+    </div>
+    <div class="grid2" style="margin-top:.6rem">
+      <div>
+        <div class="tbwrap scroll">
+          <table id="sTable">
+            <thead><tr><th>Item</th><th>Status</th><th>Conf</th><th>XBRL</th><th>Topic</th><th>字數</th></tr></thead>
+            <tbody><tr><td colspan="6" class="sub" style="padding:1rem">尚未抽取。輸入代號按「抽取」,或上傳本機 10-K HTML。</td></tr></tbody>
+          </table>
+        </div>
+        <div class="hint">⚠ = needs_review(失敗/可疑案例,點進去看 warnings)。未分類 gap 與獨立 exhibit 也列出 —— 完整優先於分類,整份 filing 無一處不可達。</div>
+      </div>
+      <div>
+        <div class="doc" id="sDoc"><span style="color:var(--muted)">點左側任一 Item,這裡顯示 source-exact 抽取原文(offset + sha256 定址,非 AI 生成)。錯誤的 job 會在此顯示原因與 traceback。</span></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const TOKEN=new URLSearchParams(location.search).get('token');
+const api=p=>TOKEN?p+(p.includes('?')?'&':'?')+'token='+encodeURIComponent(TOKEN):p;
+const PILL={pass:'p-pass',partial:'p-warn',incorporated_by_reference:'p-warn',ambiguous:'p-warn',
+  missing:'p-grey',reserved:'p-grey',unsupported:'p-fail',refused:'p-fail',fail:'p-fail',
+  certified:'p-pass',contradicted:'p-fail',consistent:'p-pass',weak:'p-warn',
+  inconsistent:'p-fail',boilerplate:'p-grey',unknown:'p-warn',error:'p-fail',running:'p-warn',
+  unclassified:'p-grey',exhibit:'p-warn'};
+const pill=t=>`<span class="pill ${PILL[t]||'p-grey'}">${t}</span>`;
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let CUR_JOB='';            // job whose result is on screen
+let SEC_ITEMS=[];          // extracted item list (code/title/…) for find
+let SEC_DOC={head:'',text:''};
+
+function renderSec(d){
+  $('#sFind').classList.add('hidden');SEC_SHOWN='';SEC_DOC={head:'',text:''};$('#sFindQ').value='';$('#sFindInfo').textContent='';
+  if(!d.ok){SEC_ITEMS=[];$('#sDlBtn').disabled=true;
+    $('#sMeta').innerHTML=`<span class="pill p-fail">錯誤</span> ${esc(d.error||'')}`;
+    $('#sDoc').textContent=(d.error||'')+(d.trace?'\n\n'+d.trace:'');
+    $('#sTable tbody').innerHTML='<tr><td colspan="6" class="sub" style="padding:1rem">此 job 失敗 — 右側顯示原因(失敗案例保留可檢視)。</td></tr>';
+    return;}
+  $('#sDlBtn').disabled=false;
+  SEC_ITEMS=(d.items||[]).concat(d.gaps||[]).concat(d.exhibits||[]);
+  $('#sFind').classList.remove('hidden');
+  const m=d.meta;
+  const cov=m.coverage!=null?`<span>本文覆蓋 <b class="mono">${(m.coverage*100).toFixed(1)}%</b>${(d.gaps||[]).length?` · 未分類 ${d.gaps.length} 段`:''}${(d.exhibits||[]).length?` · 附件 ${d.exhibits.length} 份`:''}</span>`:'';
+  $('#sMeta').innerHTML=`<span><b>${esc(m.source)}</b> · ${esc(m.form)} ${esc(m.report_date)}</span>
+    <span>filing_class <b class="mono">${esc(m.filing_class)}</b></span>
+    ${m.xbrl_item8?`<span>Item 8 XBRL ${pill(m.xbrl_item8)}</span>`:''}
+    ${cov}
+    <span>parse <b>${m.latency_ms} ms</b></span>
+    ${(m.pipeline_warnings||[]).length?`<span class="pill p-warn" title="${esc((m.pipeline_warnings||[]).join(' | '))}">pipeline warnings ${(m.pipeline_warnings||[]).length}</span>`:''}`;
+  const tb=$('#sTable tbody');tb.innerHTML='';
+  const itemRow=(it)=>{
+    const tr=document.createElement('tr');
+    tr.dataset.code=it.code;
+    tr.innerHTML=`<td class="mono">Item ${it.code}${it.needs_review?' ⚠':''}</td>
+      <td>${pill(it.status)}</td><td class="mono">${it.confidence.toFixed(2)}</td>
+      <td>${it.xbrl?pill(it.xbrl):'<span class="sub">–</span>'}</td>
+      <td>${it.topic?pill(it.topic):'<span class="sub">–</span>'}</td>
+      <td class="mono">${it.chars.toLocaleString()}</td>`;
+    tr.onclick=()=>{selectRow(it.code);showItem(it.code);};
+    tb.appendChild(tr);
+  };
+  const gapRow=(g)=>{
+    const tr=document.createElement('tr');
+    tr.dataset.code=g.code;
+    tr.innerHTML=`<td class="mono" style="color:var(--muted)">未分類</td>
+      <td>${pill('unclassified')}</td><td class="mono sub">–</td>
+      <td class="sub" colspan="1">${esc(g.title.replace('未分類內容 ',''))}</td>
+      <td class="sub" title="${esc((g.preview||'').replace(/"/g,''))}">${esc((g.preview||'').slice(0,18))}…</td>
+      <td class="mono">${g.chars.toLocaleString()}</td>`;
+    tr.onclick=()=>{selectRow(g.code);showItem(g.code);};
+    tb.appendChild(tr);
+  };
+  // gaps slot at their DOCUMENT POSITION (a gap between Item 2 and 3 renders
+  // right under Item 2); head gaps first, exhibits (separate files) at the end
+  const gaps=(d.gaps||[]).slice();
+  const byAfter={};gaps.forEach(g=>{(byAfter[g.after||'']=byAfter[g.after||'']||[]).push(g);});
+  (byAfter['']||[]).forEach(gapRow);
+  const placed=new Set(['']);
+  (d.items||[]).forEach(it=>{ itemRow(it); (byAfter[it.code]||[]).forEach(gapRow); placed.add(it.code); });
+  gaps.forEach(g=>{ if(!placed.has(g.after||'')) gapRow(g); });
+  (d.exhibits||[]).forEach(e=>{
+    const tr=document.createElement('tr');
+    tr.dataset.code=e.code;
+    tr.innerHTML=`<td class="mono" style="color:var(--accent)">附件</td>
+      <td>${pill('exhibit')}</td><td class="mono sub">–</td>
+      <td class="sub" colspan="2">${esc(e.title)}</td>
+      <td class="mono">${e.chars.toLocaleString()}</td>`;
+    tr.onclick=()=>{selectRow(e.code);showItem(e.code);};
+    tb.appendChild(tr);
+  });
+}
+
+async function showItem(code,highlight){
+  if(!CUR_JOB)return;
+  const d=await(await fetch(api(`/api/jobs/${CUR_JOB}/item?code=`+encodeURIComponent(code)))).json();
+  if(!d.ok){$('#sDoc').textContent=d.error;return d;}
+  const label=(d.code.startsWith('gap:')||d.code.startsWith('ex:'))?d.title:`Item ${d.code}. ${d.title}`;
+  const head=`${label}\n`+
+    `status=${d.status}  conf=${d.confidence}  provenance=${d.provenance}  needs_review=${d.needs_review}\n`+
+    `offset=[${d.offsets}]  sha256=${d.sha256}  chars=${(d.full_chars??0).toLocaleString()}\n`+
+    (d.xbrl?`xbrl: ${d.xbrl}\n`:'')+(d.topic?`topic: ${d.topic}\n`:'')+
+    (d.warnings.length?('warnings: '+d.warnings.join(' | ')+'\n'):'')+
+    '─'.repeat(56)+'\n';
+  SEC_DOC={head,text:d.text};SEC_SHOWN=d.code;
+  renderDoc(highlight);
+  return d;
+}
+let SEC_MARKS=[];
+function renderDoc(q){
+  const el=$('#sDoc');el.innerHTML='<span class="head"></span>';
+  el.firstChild.textContent=SEC_DOC.head;SEC_MARKS=[];
+  const body=SEC_DOC.text;
+  if(!q){el.appendChild(document.createTextNode(body));return 0;}
+  const low=body.toLowerCase(),needle=q.toLowerCase();let from=0;
+  while(true){const at=low.indexOf(needle,from);if(at<0)break;
+    if(at>from)el.appendChild(document.createTextNode(body.slice(from,at)));
+    const mk=document.createElement('mark');mk.textContent=body.slice(at,at+q.length);
+    el.appendChild(mk);SEC_MARKS.push(mk);from=at+q.length;}
+  el.appendChild(document.createTextNode(body.slice(from)));
+  return SEC_MARKS.length;
+}
+function focusMark(k){
+  SEC_MARKS.forEach(m=>m.classList.remove('cur'));
+  const m=SEC_MARKS[k];if(m){m.classList.add('cur');m.scrollIntoView({block:'center'});}
+}
+function secBusy(on,msg){$('#sBusy').innerHTML=on?`<span class="spin"></span> <span class="sub">${esc(msg||'')}</span>`:'';
+  $('#sGo').disabled=on;}
+
+// ---------- jobs (background extraction + polling; failures stay listed) ----------
+async function refreshJobs(){
+  try{
+    const d=await(await fetch(api('/api/jobs'))).json();
+    const box=$('#sJobs');box.innerHTML='';
+    (d.jobs||[]).slice(0,12).forEach(j=>{
+      const b=document.createElement('button');
+      b.className='job'+(j.job_id===CUR_JOB?' cur':'')+(j.status==='error'?' err':'');
+      const icon=j.status==='done'?'✓':(j.status==='error'?'✗':'…');
+      b.textContent=`${icon} ${j.label}${j.accession&&j.accession!=='-'?' '+j.accession.slice(-6):''} · ${j.status}`;
+      b.title=j.error||j.accession||'';
+      b.onclick=()=>loadJob(j.job_id);
+      box.appendChild(b);
+    });
+  }catch(e){/* transient */}
+}
+async function loadJob(id){
+  const d=await(await fetch(api('/api/jobs/'+id))).json();
+  if(d.status==='queued'||d.status==='running'){pollJob(id);return;}
+  CUR_JOB=id;renderSec(d);refreshJobs();
+}
+let pollTimer=null;
+function pollJob(id){
+  clearInterval(pollTimer);secBusy(true,'背景抽取中(EDGAR 限速抓取)…');
+  pollTimer=setInterval(async()=>{
+    try{
+      const d=await(await fetch(api('/api/jobs/'+id))).json();
+      if(d.status==='queued'||d.status==='running')return;
+      clearInterval(pollTimer);secBusy(false);
+      CUR_JOB=id;renderSec(d);refreshJobs();
+    }catch(e){/* keep polling */}
+  },1500);
+}
+
+// ---------- extract / upload / years ----------
+let SEC_YEARS_FOR='';
+async function loadYears(){
+  const q=$('#sQuery').value.trim(); const sel=$('#sYear');
+  if(!q){sel.innerHTML='<option value="">最新</option>';SEC_YEARS_FOR='';return;}
+  try{
+    const d=await(await fetch(api('/api/filings?query='+encodeURIComponent(q)))).json();
+    if(!d.ok||!(d.filings||[]).length){sel.innerHTML='<option value="">最新</option>';SEC_YEARS_FOR=q;
+      if(d.error)$('#sMeta').innerHTML=`<span class="pill p-warn">查詢</span> ${esc(d.error)}`;
+      return;}
+    sel.innerHTML=d.filings.map((f,i)=>
+      `<option value="${f.accession}">${f.year||f.filing_date} · ${f.form}${i===0?'(最新)':''}</option>`).join('');
+    SEC_YEARS_FOR=q;
+  }catch(e){/* leave default */}
+}
+$('#sGo').onclick=async()=>{
+  const q=$('#sQuery').value.trim();if(!q)return;
+  secBusy(true,'排入背景 job…');
+  try{
+    if(SEC_YEARS_FOR!==q) await loadYears();
+    const r=await(await fetch(api('/api/extract'),{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ticker:q,accession:$('#sYear').value})})).json();
+    if(!r.ok){secBusy(false);$('#sMeta').innerHTML=`<span class="pill p-fail">錯誤</span> ${esc(r.detail||r.error||'')}`;return;}
+    refreshJobs();pollJob(r.job_id);
+  }catch(e){secBusy(false);$('#sMeta').innerHTML=`<span class="pill p-fail">錯誤</span> ${esc(e)}`;}
+};
+$('#sUpBtn').onclick=()=>$('#sUpFile').click();
+$('#sUpFile').addEventListener('change',async e=>{
+  const f=e.target.files[0];if(!f)return;
+  secBusy(true,'上傳並離線抽取…');
+  try{
+    const fd=new FormData();fd.append('file',f);
+    const d=await(await fetch(api('/api/upload'),{method:'POST',body:fd})).json();
+    CUR_JOB=d.job_id||'';renderSec(d);refreshJobs();
+  }catch(err){$('#sMeta').innerHTML=`<span class="pill p-fail">錯誤</span> ${esc(err)}`;}
+  finally{secBusy(false);e.target.value='';}
+});
+document.querySelectorAll('.chip[data-q]').forEach(c=>c.onclick=()=>{
+  $('#sQuery').value=c.dataset.q;loadYears();});
+$('#sQuery').addEventListener('change',loadYears);
+$('#sQuery').addEventListener('keydown',e=>{if(e.key==='Enter')$('#sGo').click();});
+$('#sYear').addEventListener('change',()=>$('#sGo').click());
+
+// ---------- Ctrl+F find across items / gaps / exhibits ----------
+function selectRow(code){
+  document.querySelectorAll('#sTable tbody tr').forEach(x=>x.classList.remove('sel'));
+  const tr=document.querySelector(`#sTable tbody tr[data-code="${code}"]`);
+  if(tr){tr.classList.add('sel');tr.scrollIntoView({block:'nearest'});}
+}
+let secJumpSeq=0, SEC_HITS=[], SEC_HIT=0, SEC_HIT_Q='', SEC_SHOWN='';
+async function secJump(q){
+  q=q.trim();const info=$('#sFindInfo');
+  SEC_HITS=[];SEC_HIT=0;SEC_HIT_Q=q;
+  if(!q){renderDoc();info.textContent='';return;}
+  const code=q.replace(/^item\s*/i,'').trim().toLowerCase();
+  const byCode=SEC_ITEMS.find(it=>String(it.code).toLowerCase()===code);
+  if(byCode){selectRow(byCode.code);await showItem(byCode.code);SEC_SHOWN=byCode.code;
+    info.textContent=`→ Item ${byCode.code}`+(byCode.title?` · ${byCode.title}`:'');return;}
+  if(q.length<2)return;
+  const seq=++secJumpSeq;
+  const r=await(await fetch(api(`/api/jobs/${CUR_JOB}/find?q=`+encodeURIComponent(q)))).json();
+  if(seq!==secJumpSeq)return;
+  if(!r.ok){info.textContent=r.error||'錯誤';return;}
+  if(!r.found){info.textContent='全文查無此字串';return;}
+  SEC_HITS=(r.hits||[]).filter(h=>h.code!=='');
+  await gotoHit(0,r);
+}
+async function gotoHit(idx,r){
+  if(!SEC_HITS.length)return;
+  SEC_HIT=(idx+SEC_HITS.length)%SEC_HITS.length;
+  const h=SEC_HITS[SEC_HIT];
+  if(h.code!==SEC_SHOWN){selectRow(h.code);await showItem(h.code, SEC_HIT_Q);SEC_SHOWN=h.code;}
+  focusMark(h.k);
+  const c=String(h.code);
+  const where=c.startsWith('gap:')?'未分類':(c.startsWith('ex:')?'附件':('Item '+h.code));
+  $('#sFindInfo').textContent=`第 ${SEC_HIT+1}/${SEC_HITS.length} 處 · ${where}`
+    +((r&&r.capped)?` (全文共 ${r.count},顯示前 ${SEC_HITS.length})`:'');
+}
+function stepHit(d){if(SEC_HITS.length)gotoHit(SEC_HIT+d,null);}
+$('#sFindNext').onclick=()=>stepHit(1);
+$('#sFindPrev').onclick=()=>stepHit(-1);
+$('#sFindQ').addEventListener('input',e=>secJump(e.target.value));
+$('#sFindQ').addEventListener('keydown',e=>{
+  if(e.key==='Escape'){clearFind();}
+  else if(e.key==='Enter'){e.preventDefault();stepHit(e.shiftKey?-1:1);}});
+$('#sFindX').onclick=()=>clearFind();
+function openFind(){$('#sFind').classList.remove('hidden');const q=$('#sFindQ');q.focus();q.select();}
+function clearFind(){$('#sFindQ').value='';$('#sFindInfo').textContent='';SEC_HITS=[];renderDoc();$('#sFindQ').focus();}
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='f'){e.preventDefault();openFind();}
+});
+
+// download the ORIGINAL filing byte-for-byte; enabled once a job is on screen
+$('#sDlBtn').onclick=()=>{ if(!$('#sDlBtn').disabled&&CUR_JOB) window.location.href=api(`/api/jobs/${CUR_JOB}/raw`); };
+
+refreshJobs();setInterval(refreshJobs,5000);
+loadYears();
+</script>
+</body>
+</html>

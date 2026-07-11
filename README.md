@@ -90,6 +90,12 @@ prompts/    所有影響開發的 prompt + 決策(含 rejected)
 tests/      345 tests
 ```
 
+## 部署(Zeabur)
+
+兩個 service 各自容器化(Docker 本地驗證通過,零修正):**wealth-sec**(SEC Extractor API + dashboard,`Dockerfile.wealth-sec`)與 **wealth-agent**(Browser Agent + Playwright Chromium,`Dockerfile.wealth-agent`),同一 repo root 為 build context,根目錄 `.dockerignore` 排除 `.venv` / `data/raw_filings` / `runs`(context 縮小約 830MB)。
+
+拓撲、環境變數(`SEC_EDGAR_USER_AGENT`、`AGENT_LLM_MODE=direct` + `OPENAI_*`、選用 `ACCESS_TOKEN`;值只存 Zeabur,不進 repo)、`npx zeabur@latest` 部署/redeploy 指令與 smoke test 清單:見 [docs/deploy.md](docs/deploy.md)。
+
 ## 已知邊界(誠實揭露)
 
 - **Wrapper/index 正文還原未做**:Intel/Citi/JPM/XOM 的 Item 7/8 誠實標為指標 + needs_review,但未把真 MD&A/財報接回。刻意不出貨脆弱猜測(見 `docs/insights_and_directions.md` §2)。

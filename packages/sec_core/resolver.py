@@ -16,6 +16,44 @@ ARCHIVE_BASE = "https://www.sec.gov/Archives/edgar/data/{cik}/{acc_nodash}"
 
 _ACCESSION_RE = re.compile(r"^(\d{10})-?(\d{2})-?(\d{6})$")
 
+# Annual-report forms filed by foreign private issuers instead of a 10-K.
+_FOREIGN_ANNUAL_FORMS = ("20-F", "40-F")
+
+
+class NotA10KFilerError(LookupError):
+    """The company files with SEC EDGAR but has NO 10-K / 10-K/A at all.
+
+    Honest refusal (SPEC 三態誠實): instead of a bare "not found" we report
+    what the company ACTUALLY files (e.g. TSM/SONY/BABA file 20-F + 6-K as
+    foreign private issuers) and state plainly that only 10-K item extraction
+    is supported. Subclasses LookupError so existing handlers keep working.
+    """
+
+    def __init__(self, cik: int, company: str, tickers: list[str],
+                 form_counts: dict[str, int]) -> None:
+        self.cik = cik
+        self.company = company
+        self.tickers = tickers
+        self.form_counts = form_counts
+        ident = "/".join(tickers) or company or f"CIK {cik}"
+        if company and tickers:
+            ident = f"{ident}({company})"
+        dist = ", ".join(
+            f"{form}×{n}" for form, n in
+            sorted(form_counts.items(), key=lambda kv: (-kv[1], kv[0]))[:6])
+        foreign = next((f for f in _FOREIGN_ANNUAL_FORMS if f in form_counts), "")
+        if foreign:
+            msg = (f"{ident} 未申報 10-K;該公司以 {foreign}(外國私人發行人年報)申報。"
+                   f"實際 form 分布:{dist}。"
+                   f"本系統僅支援 10-K item 抽取,誠實拒絕而非硬抽。")
+        elif form_counts:
+            msg = (f"{ident} 未申報 10-K;實際 form 分布:{dist}。"
+                   f"本系統僅支援 10-K item 抽取,誠實拒絕而非硬抽。")
+        else:
+            msg = (f"{ident} 在 SEC EDGAR 查無任何申報紀錄。"
+                   f"本系統僅支援 10-K item 抽取,誠實拒絕而非硬抽。")
+        super().__init__(msg)
+
 
 @dataclass
 class FilingFile:
@@ -59,7 +97,8 @@ class FilingResolver:
         data = json.loads(self.fetcher.get(SUBMISSIONS_URL.format(cik=cik)).content)
         filings = data.get("filings", {})
         refs: list[FilingRef] = []
-        self._collect_10k(cik, filings.get("recent", {}), refs)
+        form_counts: dict[str, int] = {}
+        self._collect_10k(cik, filings.get("recent", {}), refs, form_counts)
         # The submissions API keeps only the most recent ~1000 filings inline;
         # a prolific filer's older 10-Ks live in separate paginated files. Pull
         # those too so EVERY historical 10-K is selectable (the year picker must
@@ -73,7 +112,17 @@ class FilingResolver:
                     f"https://data.sec.gov/submissions/{name}").content)
             except Exception:  # noqa: BLE001 — one bad page must not drop the rest
                 continue
-            self._collect_10k(cik, older, refs)
+            self._collect_10k(cik, older, refs, form_counts)
+        # Honest refusal: the company files with EDGAR, just never a 10-K
+        # (foreign private issuers file 20-F/40-F instead). Report the ACTUAL
+        # form mix instead of a bare "not found".
+        if not refs:
+            raise NotA10KFilerError(
+                cik=cik,
+                company=data.get("name", "") or "",
+                tickers=[t for t in (data.get("tickers") or []) if t],
+                form_counts=form_counts,
+            )
         # newest first, de-duplicated by accession
         seen: set[str] = set()
         out: list[FilingRef] = []
@@ -85,9 +134,12 @@ class FilingResolver:
         return out
 
     @staticmethod
-    def _collect_10k(cik: int, block: dict, refs: list[FilingRef]) -> None:
+    def _collect_10k(cik: int, block: dict, refs: list[FilingRef],
+                     form_counts: dict[str, int] | None = None) -> None:
         forms = block.get("form", [])
         for i, form in enumerate(forms):
+            if form_counts is not None and form:
+                form_counts[form] = form_counts.get(form, 0) + 1
             if form not in ("10-K", "10-K/A"):
                 continue
             refs.append(FilingRef(

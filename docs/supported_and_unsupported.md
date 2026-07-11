@@ -14,6 +14,7 @@ pipeline 產生的**確切字串值**(非概念):
 | **cross_reference_index**(Intel/Citi/GE) | 主文件是交叉引用索引,正文在另外裝訂的 annual report | `incorporated_by_reference`(needs_review, provenance `cross_reference_pointer`)/`missing`/`reserved` | 誠實標為指標,**不偽裝成內容** |
 | **non_10k** | 找不到任何 item heading(結構不符) | 全部 `missing` + 警告 | 誠實標為不支援 |
 | **unsupported_scanned_or_binary** | 掃描 PDF / 非 HTML / binary(**code-enforced**:`%PDF` 開頭、含 NUL、或無 HTML tag) | 空(無 segments)+ 警告 | 明確拒絕,建議 OCR path |
+| **non_10k_filer**(resolver 層,20-F/40-F 外國私人發行人:TSM/SONY/BABA)| 公司 EDGAR 紀錄中**零筆** 10-K/10-K/A → 不進 pipeline,`NotA10KFilerError`(`sec_core/resolver.py`)| —(未抽取,typed exception)| **明確拒絕 + 指出實際 form**:訊息列出該公司真正申報的 form 分布(如 TSM:20-F×26、6-K×1320)並明講「僅支援 10-K item 抽取」;live evidence:`data/sec_eval/rejection/foreign_filer_rejection.json` |
 
 > `ItemStatus` enum 亦定義 `unsupported`,但目前程式以 `filing_class` + `missing` 表達不支援,尚未在單一 item 上 emit `unsupported`——如實揭露此 doc/code 命名細節。
 

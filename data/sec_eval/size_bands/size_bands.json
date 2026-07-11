@@ -1,0 +1,371 @@
+{
+ "generated_at": "2026-07-10T08:18:39Z",
+ "spec": "P0-11: per-(form,schema,item) empirical size bands from agree-and-pass entries; band = [p50/5, p50*8]; out-of-band substantive pass item => hard needs_review (sec_core/size_bands.py)",
+ "band_rule": {
+  "lo": "p50/5",
+  "hi": "p50*8",
+  "min_samples": 5
+ },
+ "sources": {
+  "sweep": "sec_eval/records/sweep3 x triangulation agree (177 samples)",
+  "pseudo_gold": "pseudo_gold_3way pass items (140 samples; gitignored input, derived stats only)"
+ },
+ "samples_total": 317,
+ "in_band_fraction": 0.9164,
+ "bands": {
+  "10-K": {
+   "MODERN": {
+    "1": {
+     "n": 22,
+     "p50": 43325,
+     "lo": 8665,
+     "hi": 346600,
+     "min_seen": 6634,
+     "max_seen": 181776
+    },
+    "10": {
+     "n": 15,
+     "p50": 2372,
+     "lo": 474,
+     "hi": 18976,
+     "min_seen": 974,
+     "max_seen": 23066
+    },
+    "12": {
+     "n": 9,
+     "p50": 1882,
+     "lo": 376,
+     "hi": 15056,
+     "min_seen": 649,
+     "max_seen": 8777
+    },
+    "14": {
+     "n": 5,
+     "p50": 2862,
+     "lo": 572,
+     "hi": 22896,
+     "min_seen": 1148,
+     "max_seen": 3265
+    },
+    "15": {
+     "n": 13,
+     "p50": 15101,
+     "lo": 3020,
+     "hi": 120808,
+     "min_seen": 585,
+     "max_seen": 192140
+    },
+    "16": {
+     "n": 8,
+     "p50": 33,
+     "lo": 6,
+     "hi": 264,
+     "min_seen": 33,
+     "max_seen": 43
+    },
+    "1A": {
+     "n": 21,
+     "p50": 93176,
+     "lo": 18635,
+     "hi": 745408,
+     "min_seen": 15827,
+     "max_seen": 218843
+    },
+    "1B": {
+     "n": 11,
+     "p50": 41,
+     "lo": 8,
+     "hi": 328,
+     "min_seen": 41,
+     "max_seen": 271
+    },
+    "1C": {
+     "n": 9,
+     "p50": 7650,
+     "lo": 1530,
+     "hi": 61200,
+     "min_seen": 2699,
+     "max_seen": 10210
+    },
+    "2": {
+     "n": 21,
+     "p50": 2100,
+     "lo": 420,
+     "hi": 16800,
+     "min_seen": 257,
+     "max_seen": 134010
+    },
+    "3": {
+     "n": 12,
+     "p50": 4003,
+     "lo": 800,
+     "hi": 32024,
+     "min_seen": 309,
+     "max_seen": 22094
+    },
+    "4": {
+     "n": 14,
+     "p50": 48,
+     "lo": 9,
+     "hi": 384,
+     "min_seen": 48,
+     "max_seen": 6706
+    },
+    "5": {
+     "n": 22,
+     "p50": 2515,
+     "lo": 503,
+     "hi": 20120,
+     "min_seen": 404,
+     "max_seen": 6556
+    },
+    "6": {
+     "n": 10,
+     "p50": 2792,
+     "lo": 558,
+     "hi": 22336,
+     "min_seen": 128,
+     "max_seen": 9552
+    },
+    "7": {
+     "n": 21,
+     "p50": 58024,
+     "lo": 11604,
+     "hi": 464192,
+     "min_seen": 15813,
+     "max_seen": 309296
+    },
+    "7A": {
+     "n": 17,
+     "p50": 2928,
+     "lo": 585,
+     "hi": 23424,
+     "min_seen": 114,
+     "max_seen": 13366
+    },
+    "8": {
+     "n": 15,
+     "p50": 107874,
+     "lo": 21574,
+     "hi": 862992,
+     "min_seen": 196,
+     "max_seen": 446415
+    },
+    "9": {
+     "n": 20,
+     "p50": 99,
+     "lo": 19,
+     "hi": 792,
+     "min_seen": 98,
+     "max_seen": 2172
+    },
+    "9A": {
+     "n": 23,
+     "p50": 3639,
+     "lo": 727,
+     "hi": 29112,
+     "min_seen": 906,
+     "max_seen": 9622
+    },
+    "9B": {
+     "n": 13,
+     "p50": 1364,
+     "lo": 272,
+     "hi": 10912,
+     "min_seen": 278,
+     "max_seen": 5494
+    },
+    "9C": {
+     "n": 10,
+     "p50": 93,
+     "lo": 18,
+     "hi": 744,
+     "min_seen": 93,
+     "max_seen": 94
+    }
+   }
+  }
+ },
+ "sraf_invariant": {
+  "status": "measured",
+  "source": "Loughran-McDonald 10X Summaries (SRAF, Notre Dame). No explicit license; SRAF requests citation => three-tier rule tier 2: fetch-on-demand only, CSV never vendored/committed (see docs/ATTRIBUTION.md norms).",
+  "invariant": "sum of extracted item words (unique spans, alphabetic-token count) <= SRAF whole-submission N_Words * 1.25",
+  "tolerance": 1.25,
+  "joined": 17,
+  "measured": 15,
+  "violations": 0,
+  "max_ratio": 0.9856,
+  "filings": [
+   {
+    "accession": "0000010795-18-000036",
+    "label": "cik10795",
+    "sraf_n_words": 69043,
+    "skipped": "raw filing not in offline cache"
+   },
+   {
+    "accession": "0000320193-25-000079",
+    "label": "AAPL",
+    "sum_item_words": 26989,
+    "sraf_n_words": 33569,
+    "ratio": 0.804,
+    "ok": true
+   },
+   {
+    "accession": "0000888228-13-000009",
+    "label": "cik888228",
+    "sum_item_words": 70327,
+    "sraf_n_words": 109546,
+    "ratio": 0.642,
+    "ok": true
+   },
+   {
+    "accession": "0000950124-04-001349",
+    "label": "cik843368",
+    "sum_item_words": 13943,
+    "sraf_n_words": 20098,
+    "ratio": 0.6938,
+    "ok": true
+   },
+   {
+    "accession": "0000950124-07-001822",
+    "label": "cik1166003",
+    "sum_item_words": 24920,
+    "sraf_n_words": 25284,
+    "ratio": 0.9856,
+    "ok": true
+   },
+   {
+    "accession": "0000950170-25-100235",
+    "label": "MSFT",
+    "sum_item_words": 41864,
+    "sraf_n_words": 57560,
+    "ratio": 0.7273,
+    "ok": true
+   },
+   {
+    "accession": "0001096906-17-000639",
+    "label": "cik1514994",
+    "sum_item_words": 8506,
+    "sraf_n_words": 9641,
+    "ratio": 0.8823,
+    "ok": true
+   },
+   {
+    "accession": "0001104659-20-114567",
+    "label": "cik1420720",
+    "sum_item_words": 48165,
+    "sraf_n_words": 68572,
+    "ratio": 0.7024,
+    "ok": true
+   },
+   {
+    "accession": "0001144204-13-021904",
+    "label": "cik844985",
+    "sum_item_words": 29769,
+    "sraf_n_words": 43206,
+    "ratio": 0.689,
+    "ok": true
+   },
+   {
+    "accession": "0001193125-04-054961",
+    "label": "cik885720",
+    "sum_item_words": 23336,
+    "sraf_n_words": 24023,
+    "ratio": 0.9714,
+    "ok": true
+   },
+   {
+    "accession": "0001213900-18-014592",
+    "label": "cik1667313",
+    "sraf_n_words": 34456,
+    "skipped": "raw filing not in offline cache"
+   },
+   {
+    "accession": "0001328143-19-000011",
+    "label": "cik1328143",
+    "sum_item_words": 60010,
+    "sraf_n_words": 70954,
+    "ratio": 0.8458,
+    "ok": true
+   },
+   {
+    "accession": "0001493152-12-000732",
+    "label": "cik1020302",
+    "sum_item_words": 8231,
+    "sraf_n_words": 9931,
+    "ratio": 0.8288,
+    "ok": true
+   },
+   {
+    "accession": "0001558370-17-001835",
+    "label": "cik1412502",
+    "sum_item_words": 35152,
+    "sraf_n_words": 50456,
+    "ratio": 0.6967,
+    "ok": true
+   },
+   {
+    "accession": "0001558370-17-002307",
+    "label": "cik1042642",
+    "sum_item_words": 35474,
+    "sraf_n_words": 65442,
+    "ratio": 0.5421,
+    "ok": true
+   },
+   {
+    "accession": "0001564590-21-013607",
+    "label": "cik1325879",
+    "sum_item_words": 96164,
+    "sraf_n_words": 131535,
+    "ratio": 0.7311,
+    "ok": true
+   },
+   {
+    "accession": "0001564618-21-000025",
+    "label": "cik1564618",
+    "sum_item_words": 75304,
+    "sraf_n_words": 151652,
+    "ratio": 0.4966,
+    "ok": true
+   }
+  ]
+ },
+ "runtime_specificity": {
+  "filings_measured": 11,
+  "clean_pass_items": 178,
+  "flagged": 6,
+  "false_alarm_rate": 0.0337,
+  "flags": [
+   {
+    "ticker": "XOM",
+    "item": "1",
+    "span_chars": 6634
+   },
+   {
+    "ticker": "XOM",
+    "item": "2",
+    "span_chars": 35831
+   },
+   {
+    "ticker": "XOM",
+    "item": "4",
+    "span_chars": 3364
+   },
+   {
+    "ticker": "NEM",
+    "item": "2",
+    "span_chars": 134010
+   },
+   {
+    "ticker": "NEM",
+    "item": "4",
+    "span_chars": 3288
+   },
+   {
+    "ticker": "KO",
+    "item": "4",
+    "span_chars": 6706
+   }
+  ]
+ }
+}

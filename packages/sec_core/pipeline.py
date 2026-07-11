@@ -22,6 +22,7 @@ from sec_core.cross_ref import (
 from sec_core.headings import HeadingCandidate, detect_candidates
 from sec_core.items import ItemSegment
 from sec_core.normalize import NormalizedDocument, normalize_html
+from sec_core.size_bands import apply_size_bands
 from sec_core.toc import assess_toc
 from sec_core.topic_check import check_topic
 
@@ -231,6 +232,13 @@ def extract_from_html(
             seg.warnings.append(
                 f"topic-consistency oracle: extracted span has no canonical "
                 f"'{seg.canonical_title}' language — possible mislabel/mis-boundary; needs_review")
+
+    # Per-(form,item) empirical size-band guardrail (P0-11): a substantive
+    # offset-exact pass span far outside the agree-and-pass empirical band
+    # (p50/5..p50*8, data/sec_eval/size_bands/) is forced to needs_review.
+    # Bands are era-keyed; the pipeline enforces the MODERN 10-K group (the
+    # supported class) — pre-2003 schemas get their own group once sampled.
+    apply_size_bands(segments, doc)
 
     # Discoverability: when Item 8 is only a pointer stub, tell the reader WHERE
     # the financial statements actually are (often Item 15) instead of leaving

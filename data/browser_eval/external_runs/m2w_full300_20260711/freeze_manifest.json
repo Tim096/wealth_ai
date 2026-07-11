@@ -1,0 +1,42 @@
+{
+  "frozen_at": "2026-07-11",
+  "purpose": "OFFICIAL-scope full Online-Mind2Web run: all 300 tasks, zero exclusions. Frozen BEFORE any task is run.",
+  "task_file": {
+    "path": "data/browser_eval/external/m2w_full300_20260711.json",
+    "sha256": "c906f201752c9a0f02088397b1ef91427a8375c6a0efb8bb24a496d7b514b333",
+    "n_tasks": 300,
+    "order": "upstream raw.json order (runs/mind2web_import/raw.json, fetched 2026-07-10 from hud-evals/Online-Mind2Web datasets-server mirror, CC-BY-4.0)",
+    "difficulty_distribution": {"easy": 81, "medium": 141, "hard": 78},
+    "level_rule": "official level when present, else reference_length <=5 easy / 6-10 medium / >=11 hard (arXiv:2504.01382 §2.2) — identical to both committed 20-task subsets",
+    "conversion": "same normalize()/to_subset_entry() code path as tools/import_mind2web.py (BrowserTaskContract schema-gated per entry); official fields task_id/confirmed_task/website preserved as source_task_id/natural_language_task/website, level as difficulty"
+  },
+  "no_exclusion_declaration": {
+    "statement": "NO exclusions of any kind: the subset importer's excluded_domains list and login-task-text regex are deliberately NOT applied. Login/shopping/anti-bot-walled tasks are all included.",
+    "subset_filters_would_have_excluded": 42,
+    "handling": "When the capability guard refuses a login/purchase task or a site blocks automation, that refusal/block is recorded and reported honestly as part of the official-scope result (env-error taxonomy still classifies rows post-hoc; nothing is removed from the task set up front)."
+  },
+  "overlap_with_prior_subsets": {
+    "mind2web_subset.json": {"n": 20, "contained_in_full300": 20},
+    "m2w_heldout_20260711.json": {"n": 20, "contained_in_full300": 20},
+    "subset_vs_heldout_overlap": 0,
+    "statement": "All 40 previously-run tasks (20 dev subset + 20 held-out) are a strict subset of these 300. This full run is a separate OFFICIAL-scope measurement; it does not modify, rerun, or invalidate the two prior subset runs, whose conclusions stand as reported. The held-out set's no-rerun freeze applies to that set's own protocol, not to this independent official-scope pass."
+  },
+  "runner_semantics_verified": {
+    "file": "tools/run_external_eval.py",
+    "limit": "--limit N slices the first N ACTIVE tasks in task-file order (entries = [active tasks]; entries[:N]) — applied AFTER the status=='active' filter and BEFORE any resume check. All 300 full300 tasks are active, so --limit N == first N tasks in file order.",
+    "resume": "--resume checks, per task inside the (possibly limited) entry list, load_done_summary(task_id, out_root=--out): reuses the prior row iff <out>/summaries/<task_id> summary has harness_status=='done' AND a row (row gets resumed=True, not re-executed). Summaries with harness_status 'error' or 'incomplete' (pre-marker left by a mid-task crash) are NOT reused — those tasks re-run. scan_incomplete() reports crash leftovers separately.",
+    "combination": "--limit slices BEFORE resume filtering, so '--limit N --resume' never advances the window past completed tasks; chunked runs must use CUMULATIVE --limit values with the SAME --out dir (see chunk_plan). Resumed rows still enter metrics/results.json, so the final chunk's results.json covers all 300."
+  },
+  "chunk_plan": {
+    "out_dir": "runs/browser_eval/m2w_full300_20260711",
+    "shared_flags": "--tasks data/browser_eval/external/m2w_full300_20260711.json --out runs/browser_eval/m2w_full300_20260711 (gateway planner, second judge on)",
+    "chunks": [
+      {"chunk": 1, "cmd_flags": "--limit 60", "covers": "tasks 1-60"},
+      {"chunk": 2, "cmd_flags": "--limit 120 --resume", "covers": "tasks 61-120 (1-60 resumed)"},
+      {"chunk": 3, "cmd_flags": "--limit 180 --resume", "covers": "tasks 121-180 (1-120 resumed)"},
+      {"chunk": 4, "cmd_flags": "--limit 240 --resume", "covers": "tasks 181-240 (1-180 resumed)"},
+      {"chunk": 5, "cmd_flags": "--limit 300 --resume", "covers": "tasks 241-300 (1-240 resumed); its results.json is the full-300 rollup"}
+    ],
+    "abort_note": "should_abort (>ERROR_ABORT_RATE of attempted after ERROR_ABORT_MIN) can stop a chunk early; a re-launch of the same chunk with --resume re-runs only non-done tasks. Resumed rows do not count toward n_attempted, so the abort ratio resets per launch."
+  }
+}

@@ -29,6 +29,12 @@
 |---|---|---|---|
 | [osunlp/Online-Mind2Web](https://huggingface.co/datasets/osunlp/Online-Mind2Web)(OSU-NLP-Group,COLM 2025,arXiv:2504.01382) | **CC-BY-4.0**(2026-07-10 驗證:HF dataset card `license:cc-by-4.0` + GitHub README "Licensing Information";HF gate = auto click-through,無 CC-BY 以外附加條款)→ tier 1 署名即可 | `tools/import_mind2web.py` 分層抽 ~20 題(easy/medium/hard,排除 login/paywall/CAPTCHA 站),**只 commit 任務文字+metadata 子集**,每筆帶 attribution 與 `source_task_id`;完整資料集、軌跡、截圖一律不 commit。無 HF_TOKEN 時 fallback 到 ungated CC-BY mirror(hud-evals/Online-Mind2Web,來源記入 `source.fetched_from`)。live 任務失效維護協議見 `data/browser_eval/external/README.md` | `data/browser_eval/external/mind2web_subset.json`;shortcut 對照 `tools/naive_baseline.py` |
 
+## WebJudge 官方自動評審(advisory 第二口徑)
+
+| 來源 | 授權 | 使用方式 | 落地位置 |
+|---|---|---|---|
+| [OSU-NLP-Group/Online-Mind2Web](https://github.com/OSU-NLP-Group/Online-Mind2Web) `src/methods/webjudge_online_mind2web.py`(WebJudge,arXiv:2504.01382) | **MIT**(2026-07-11 於 GitHub 實讀 repo LICENSE 驗證;dataset 另為 CC-BY-4.0,見上節)→ 可改寫並保留出處 | 三階段協定(key-point 抽取 → 逐截圖 1-5 評分 → 軌跡總評)之 prompt 文字**逐字沿用**,僅將回應格式從自由文字改為 JSON(本機 codex gateway 之 action-schema 限制)。**與官方不可直接比數字**:judge model 為 gateway 帳號預設(gpt-5.5-class)非論文 o4-mini/WebJudge-7B;最終評審僅附 1 張最高分截圖(gateway 單圖限制);新增顯式 abstain(官方強制二元)。Advisory only,絕不改 runtime verifier 判決 | `tools/webjudge.py`;輸出 `runs/browser_eval/<run>/webjudge/webjudge_results.json`(deviations 全列於檔頭 docstring 與結果 JSON `deviations_from_official`) |
+
 ## 可安全深化的 permissive 依賴(roadmap)
 
 - [dgunning/edgartools](https://github.com/dgunning/edgartools)(MIT):可作 EDGAR fetch / XBRL 標準化的參考或選配依賴。

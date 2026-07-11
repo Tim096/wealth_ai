@@ -92,6 +92,53 @@ def test_build_action_mouse_and_keyboard():
     assert k2.type == "keyboard" and k2.keys == "Enter" and k2.text == ""
 
 
+def test_build_action_gates_hallucinated_aid():
+    # P0-2: an aid outside the observed candidate set must be caught BEFORE the
+    # executor — an error string, not an action, and never a generic None.
+    obs = Observation(url="u", title="t", visible_text="", candidates=[cand(index=3)])
+    for a in ("click", "fill", "press", "extract_text", "download"):
+        err = _build_action({"action": a, "aid": 999, "value": "x"}, obs)
+        assert isinstance(err, str) and "hallucinated aid" in err
+    # non-integer aid is equally hallucinated
+    assert isinstance(_build_action({"action": "click", "aid": "search-box"}, obs), str)
+    # a spurious aid on goto must NOT block the navigation (goto ignores target)
+    g = _build_action({"action": "goto", "aid": 999, "value": "https://x"}, obs)
+    assert g is not None and g.type == "goto"
+    # a valid aid still builds normally
+    ok = _build_action({"action": "click", "aid": 3}, obs)
+    assert ok.type == "click" and ok.target.selector == '[data-aid="3"]'
+
+
+def test_build_action_gates_hallucinated_mouse_coords():
+    # P0-2: mouse x,y must be grounded in the observed layout
+    obs = Observation(url="u", title="t", visible_text="",
+                      candidates=[cand(index=1, x=100, y=200)])
+    assert isinstance(_build_action({"action": "mouse", "x": -5, "y": 10}, obs), str)
+    err = _build_action({"action": "mouse", "x": 5000, "y": 9000}, obs)
+    assert isinstance(err, str) and "hallucinated coordinates" in err
+    # a coordinate near an observed candidate passes
+    assert _build_action({"action": "mouse", "x": 104, "y": 204}, obs).type == "mouse"
+    # no visible candidates -> nothing to ground against -> allowed (escape hatch)
+    empty = Observation(url="u", title="t", visible_text="", candidates=[])
+    assert _build_action({"action": "mouse", "x": 120, "y": 44}, empty).type == "mouse"
+
+
+def test_next_action_hallucinated_aid_is_noop():
+    # end-to-end through the planner: the gate string becomes a noop decision
+    # with the precise reason, so failure attribution is planner-side, not
+    # selector_not_found / UI-drift.
+    class _Fake:
+        def available(self):
+            return True
+
+        def complete_json(self, system, user, image_path=None):
+            return {"action": "click", "aid": 999}, None
+
+    obs = Observation(url="u", title="t", visible_text="", candidates=[cand(index=3)])
+    d = LLMPlanner(_Fake()).next_action("t", [], obs, [])
+    assert d.kind == "noop" and "hallucinated aid" in d.reason
+
+
 def test_candidate_line_shows_coordinate():
     from browser_agent.planner import _candidate_lines
     obs = Observation(url="u", title="t", visible_text="",

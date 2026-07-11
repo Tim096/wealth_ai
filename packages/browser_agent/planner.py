@@ -112,14 +112,37 @@ def _candidate_lines(obs: Observation) -> str:
     return "\n".join(out[:50]) or "(no visible interactive elements)"
 
 
+# P0-2 mouse-coordinate grounding margin: candidate x,y are top-left corners,
+# so a legitimate click (an element's centre, a SoM box centre read off the
+# screenshot) can land somewhat beyond the furthest observed corner — but a
+# coordinate FAR outside every observed element is invented, not observed.
+_MOUSE_MARGIN = 300
+
+
 def _build_action(decision: dict, obs: Observation):
+    """Validate the model's decision into a BrowserAction. Returns the action,
+    None (malformed — generic re-plan), or an error STRING when the model
+    referenced a target that does not exist in the observation (P0-2
+    pre-execution grounding gate, SG EncodedId contract): a hallucinated aid /
+    off-page mouse coordinate becomes a noop with a precise reason instead of
+    burning an executor step and being misdiagnosed as selector_not_found."""
     action = decision.get("action")
     aid = decision.get("aid")
     value = decision.get("value", "") or ""
     target = None
+    aid_error = ""
     if aid is not None:
-        target = ElementTarget(selector=f'[data-aid="{aid}"]', selector_type="css",
-                               description=f"aid {aid}")
+        known = {c.index for c in obs.candidates}
+        if (isinstance(aid, (int, float)) and not isinstance(aid, bool)
+                and int(aid) in known):
+            target = ElementTarget(selector=f'[data-aid="{int(aid)}"]', selector_type="css",
+                                   description=f"aid {int(aid)}")
+        else:
+            aid_error = f"hallucinated aid: {aid!r} is not in the observed candidate list"
+    # only actions that CONSUME the target are gated; a spurious aid on e.g.
+    # goto is ignored (the navigation itself is still well-grounded).
+    if aid_error and action in ("fill", "click", "press", "extract_text", "download"):
+        return aid_error
     if action == "fill" and target:
         return FillAction(target=target, value=value)
     if action == "click" and target:
@@ -139,6 +162,16 @@ def _build_action(decision: dict, obs: Observation):
     if action == "mouse":
         x, y = decision.get("x"), decision.get("y")
         if isinstance(x, (int, float)) and isinstance(y, (int, float)):
+            # P0-2: ground the coordinate against the observed layout — negative
+            # or far-beyond-every-candidate pixels were invented, not read from
+            # an at=(x,y) or a SoM box. No visible candidates -> nothing to
+            # ground against, don't false-block the only escape hatch.
+            vis = [c for c in obs.candidates if c.visible]
+            if x < 0 or y < 0 or (vis and (
+                    x > max(c.x for c in vis) + _MOUSE_MARGIN
+                    or y > max(c.y for c in vis) + _MOUSE_MARGIN)):
+                return (f"hallucinated coordinates: ({int(x)},{int(y)}) is outside "
+                        "every observed element — use an at=(x,y) from the candidate list")
             clicks = decision.get("clicks") or 1
             button = decision.get("button") if decision.get("button") in ("left", "right") else "left"
             return MouseAction(x=int(x), y=int(y), button=button, clicks=int(clicks))
@@ -293,6 +326,11 @@ class LLMPlanner:
         if kind in ("done", "give_up"):
             return PlannerDecision(kind=kind, reason=decision.get("reason", ""), llm=rec, raw=decision)
         act = _build_action(decision, obs)
+        if isinstance(act, str):
+            # P0-2 grounding gate fired: the target was hallucinated. Noop with
+            # the precise reason — never reaches the executor, and the reason
+            # lands in ACTIONS SO FAR so the model picks a real aid next turn.
+            return PlannerDecision(kind="noop", reason=act, llm=rec, raw=decision)
         if act is None:
             # recoverable: the model emitted a malformed action (e.g. click with
             # no aid). Signal a noop so the loop re-plans rather than ending.

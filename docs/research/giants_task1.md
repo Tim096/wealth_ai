@@ -238,7 +238,29 @@
 
 ## 3. 超越論證(per grading criterion)
 
-**我方 outcome-level 基線(before 數字,補批判 C7)**:offline deterministic mock 支援任務集(`data/browser_eval/tasks.json`,4 tasks)task success rate = **1.0**、verdict accuracy = 1.0、verifier FP rate = 0.0(`docs/eval_report.md`,`runs/browser_eval/results.json`);跨 5-task apparent 集 apparent_success_rate = **0.8**、Rogan-Gladen 校正後 = **0.8**(`calibration_results.json`)。**誠實界定**:此為小型自建 deterministic set 上的建構性數字,**不可與 bu-max 的 Online-Mind2Web live 97.0% 直接比較**(任務集、難度、判定協定皆不同);「超越 97.0%」的宣稱在匯入外部 live 任務(P1-1)並跑出可比基線前不成立——此為 measure-before-claim 的前置。degradation curve / impossible / open-ended / pass@k 的分項數字見 `docs/eval_report.md`。
+**我方 outcome-level 基線(before 數字,補批判 C7)**:offline deterministic mock 支援任務集(`data/browser_eval/tasks.json`,4 tasks)task success rate = **1.0**、verdict accuracy = 1.0、verifier FP rate = 0.0(`docs/eval_report.md`,`runs/browser_eval/results.json`);跨 5-task apparent 集 apparent_success_rate = **0.8**、Rogan-Gladen 校正後 = **0.8**(`calibration_results.json`)。**誠實界定**:此為小型自建 deterministic set 上的建構性數字,**不可與 bu-max 的 Online-Mind2Web live 97.0% 直接比較**(任務集、難度、判定協定皆不同)。
+
+### 外部量測 2026-07-10(Online-Mind2Web 20-task subset,live web,自跑)
+
+measure-before-claim 的前置已執行:P1-1 匯入的 20 題 live 子集,以我方 agent 實跑(serial、難度階梯 step budget、second judge advisory on;artifact `runs/browser_eval/m2w_rerun/`)。
+
+| 指標 | 數字 |
+|---|---|
+| success(pass / 可評分,排除環境失效) | **6/18 = 33.3%** |
+| success(raw pass / 20) | 6/20 = 30.0% |
+| 分難度 | easy 1/6、medium 4/8、hard 1/4 |
+| naive baseline 對照(同子集) | 4/20 = 20%(trivial pass) |
+| 環境失效(ERR_HTTP2,依維護協議排除) | 2/20(可重現,orphan 首跑同錯) |
+| 成本 | 平均 **$0.0058/task**、18 題共 $0.10;平均 wall ~77s/task |
+| second judge(advisory) | **18/18 全 abstain** |
+
+**誠實界定與失敗面**:
+- **不贏 SOTA**:33% 遠低於 leaderboard 頂端(bu-max live 97.0%,雲端重工程系統)。我方是小樣本(n=18)、自建、自驗的真實數字,勝過 paper naive 22% / 我方 naive 20%,證明機制有加值,但**「超越 97.0%」不成立**——如實記錄。
+- **advisory second judge 在 live 任務全 abstain**:對 open-ended live 任務零訊號——這是誠實暴露的限制(judge 為 mock contract 條件設計,未對 live 泛化);verifier 仍是唯一裁判,運作正常(pass/fail/unknown 三態齊全)。修法待辦:second judge 的 live-task key-point 抽取(WebJudge 式),見 P0-8 延伸。
+- **easy < medium 反常**(1/6 vs 4/8):小樣本雜訊 + easy 題落在較難自動化的站點;不粉飾。
+- **committed harness 無法驅動 live 外部集**(repo gap):`tools/browser_eval.py` 與 P0-11 pool 皆 mock-only,本次 live 跑靠 scratchpad 臨時腳本 `run_m2w.py`。下一步:產品化 `tools/run_external_eval.py`(讀 external/*.json + run_agentic + 難度階梯 + second judge),讓外部量測可重現、可 CI——這也是「面試官拿新任務來驗」的必要能力。
+
+degradation curve / impossible / open-ended / pass@k 的分項數字見 `docs/eval_report.md`。
 
 ### 3.1 Self-correction
 - **SOTA 做法**:BU 五級 locator cascade + loop detector;SK hash rebind + 修復預算;SG re-grounding 標準流程。

@@ -114,12 +114,32 @@ npx zeabur@latest deploy --project-id <project-id> --service-id <agent-service-i
 | mock task | 提交 `mock:v2` 任務 | status=pass,confidence=1.0,有 trace + screenshots |
 | 真實網站 | 提交 Wikipedia 查詢任務 | pass,證明容器 egress + LLM 鏈路 |
 
-## 部署 ID 記錄(首次部署後填入)
+## 部署 ID 記錄(2026-07-10 上線,Tencent Ashburn)
 
-| 項目 | ID |
+| 項目 | ID / URL |
 |---|---|
-| Project ID | _(待填)_ |
-| wealth-sec Service ID | _(待填)_ |
-| wealth-agent Service ID | _(待填)_ |
-| wealth-sec URL | _(待填)_ |
-| wealth-agent URL | _(待填)_ |
+| Server ID (Tencent Ashburn) | `6a50e77ae33921bfb5d0f994` |
+| Project ID | `6a50ea01f04125ac9a347957` |
+| Environment ID | `6a50ea01104975fcb46760b2` |
+| wealth-sec Service ID | `6a50ea51f04125ac9a34798c` |
+| wealth-agent Service ID | `6a50ea7ff04125ac9a34799b` |
+| **wealth-sec URL** | **https://wealth-sec-ncku.zeabur.app** |
+| **wealth-agent URL** | **https://wealth-agent-ncku.zeabur.app** |
+
+### 上線驗證(response-content 實測)
+
+- **wealth-sec** — `GET /api/health` → `{"ok":true,"sec_user_agent_configured":true,"auth_required":false}`;`POST /api/extract {"ticker":"AAPL"}` → job `done`,**23 items**;`GET /` → 200(dashboard)。**完全可用,免 auth。**
+- **wealth-agent** — `GET /api/health` → `{"ok":true,"ready":true,"mode":"mock"}`(MockPlanner);`GET /` → 200(UI)。服務已起、UI/health 正常,但**目前為 mock 模式**:repo 內無雲端可用的 LLM 憑證(本地走 codex OAuth gateway,容器連不到)。
+
+### wealth-agent:改用真實 LLM 需在 Zeabur dashboard 補的變數
+
+`AGENT_LLM_MODE=mock` 已設。要讓 planner 走真實 OpenAI-compatible LLM,將其改為 `direct` 並補以下三個(值只放 Zeabur variables,勿進 repo):
+
+| 變數 | 值 |
+|---|---|
+| `AGENT_LLM_MODE` | `direct`(把現有的 `mock` 改成 `direct`) |
+| `OPENAI_BASE_URL` | 你的 OpenAI-compatible endpoint(如 `https://api.openai.com/v1`) |
+| `OPENAI_API_KEY` | 你的 key |
+| `OPENAI_MODEL` | endpoint 支援的 model 名 |
+
+補完後 restart wealth-agent(`service restart --id 6a50ea7ff04125ac9a34799b -y -i=false`)即生效;`/api/health` 的 `mode` 會變 `direct`、planner 不再是 MockPlanner。

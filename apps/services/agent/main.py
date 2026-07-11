@@ -132,7 +132,7 @@ def task_artifact(task_id: str, rel: str):
     p = worker.artifact_file(task_id, rel)
     if p is None:
         raise HTTPException(status_code=404, detail="no such artifact")
-    return FileResponse(p)
+    return FileResponse(p, headers={"Cache-Control": "private, max-age=31536000, immutable"})
 
 
 # ---------------------------------------------------------------------- UI

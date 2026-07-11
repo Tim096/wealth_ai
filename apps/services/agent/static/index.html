@@ -208,7 +208,7 @@ function renderTrace(id,trace){
   });
   $('#aArtLink').innerHTML=`所有產物(截圖 / evidence / run.json / 下載檔):`
     +`<a href="${withTok('/api/tasks/'+id+'/artifacts')}" target="_blank">/api/tasks/${id}/artifacts</a>`;
-  const shots=trace.steps.filter(s=>s.screenshot).slice(-8);
+  const shots=trace.steps.filter(s=>s.screenshot).slice(-1);
   $('#aShots').innerHTML=shots.map(s=>{
     const u=withTok('/api/tasks/'+id+'/artifacts/'+s.screenshot);
     return `<a href="${u}" target="_blank" title="${esc(s.step)}"><img src="${u}" loading="lazy"></a>`;}).join('');

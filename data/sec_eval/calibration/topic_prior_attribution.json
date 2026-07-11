@@ -1,0 +1,72 @@
+{
+ "generated_at": "2026-07-11T03:37:03Z",
+ "purpose": "per-signal attribution for the gold-free span content-attribution prior (topic_prior.py) \u2014 giants_task2.md content-axis wave 2026-07-11",
+ "method": "foreground live-pipeline head_to_head reruns (ours engine, 30 cached NTU filings) per variant via SEC_TOPIC_PRIOR_{MARGIN,FLOOR,IBR} switches; correctness labels = line-F1 >= 0.5 (held-out measurement only, never parameters). Baseline = SEC_TOPIC_PRIOR=0 on identical code/cache; macro-F1 0.6245 bit-identical across all variants (the signal never moves offsets).",
+ "verdicts": {
+  "margin": "shipped \u2014 sweep3 clean false-alarm 0/176; NTU fires 10 (7 correct / 3 error), AUROC +0.0040, hi-conf errors -5",
+  "floor": "KILLED (dead key, anchor-distance precedent) \u2014 18 of 20 fires hit correct items, AUROC -0.0086; removed from the codebase, not shipped behind a switch",
+  "ibr": "shipped \u2014 structural pointer trust cap; interception 39->74/118, verifier false-pass 68->36; AUROC/ECE cost disclosed (correct stubs are capped too, 60/95)"
+ },
+ "variants": {
+  "baseline_no_topic_prior": {
+   "auroc": 0.6621,
+   "ece": 0.1133,
+   "caught_errors": "39/118",
+   "hi_conf_errors": 47,
+   "fired_on_correct": 0,
+   "fired_on_error": 0,
+   "false_pass": "68/332=0.2048",
+   "coverage": 0.6484
+  },
+  "margin_only": {
+   "auroc": 0.6661,
+   "ece": 0.1075,
+   "caught_errors": "42/118",
+   "hi_conf_errors": 42,
+   "fired_on_correct": 7,
+   "fired_on_error": 3,
+   "false_pass": "65/322=0.2019",
+   "coverage": 0.6289
+  },
+  "floor_only_KILLED": {
+   "auroc": 0.6535,
+   "ece": 0.1179,
+   "caught_errors": "41/118",
+   "hi_conf_errors": 43,
+   "fired_on_correct": 18,
+   "fired_on_error": 2,
+   "false_pass": "66/312=0.2115",
+   "coverage": 0.6094
+  },
+  "ibr_only": {
+   "auroc": 0.6602,
+   "ece": 0.1292,
+   "caught_errors": "74/118",
+   "hi_conf_errors": 47,
+   "fired_on_correct": 60,
+   "fired_on_error": 35,
+   "false_pass": "36/253=0.1423",
+   "coverage": 0.4941
+  },
+  "margin_plus_ibr_SHIPPED": {
+   "auroc": 0.6667,
+   "ece": 0.1235,
+   "caught_errors": "77/118",
+   "hi_conf_errors": 42,
+   "fired_on_correct": 67,
+   "fired_on_error": 38,
+   "false_pass": "33/243=0.1358",
+   "coverage": 0.4746
+  },
+  "margin_floor_ibr": {
+   "auroc": 0.6559,
+   "ece": 0.1293,
+   "caught_errors": "78/118",
+   "hi_conf_errors": 40,
+   "fired_on_correct": 85,
+   "fired_on_error": 39,
+   "false_pass": "32/224=0.1429",
+   "coverage": 0.4375
+  }
+ }
+}

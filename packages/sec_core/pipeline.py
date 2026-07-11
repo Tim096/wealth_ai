@@ -27,6 +27,7 @@ from sec_core.normalize import NormalizedDocument, normalize_html
 from sec_core.size_bands import apply_size_bands
 from sec_core.toc import assess_toc
 from sec_core.topic_check import check_topic
+from sec_core.topic_prior import apply_topic_prior
 
 
 @dataclass
@@ -274,6 +275,17 @@ def extract_from_html(
     # never changed. Kill-switch for attribution runs: SEC_LENGTH_PRIOR=0.
     if os.environ.get("SEC_LENGTH_PRIOR") != "0":
         apply_length_prior(segments, doc, breakdowns=breakdowns)
+
+    # Gold-free span content-attribution prior (the residual after the length
+    # axis: content misplacement, not size anomalies). Two sub-signals —
+    # (a) misattribution margin vs corpus-derived per-item lexicons,
+    # (b) incorporated-by-reference pointer trust cap (the item's content was
+    # never extracted, so no content oracle can verify it). needs_review +
+    # capped confidence; the span is never changed. Kill-switch
+    # SEC_TOPIC_PRIOR=0; per-signal switches SEC_TOPIC_PRIOR_{MARGIN,IBR}=0
+    # for attribution runs.
+    if os.environ.get("SEC_TOPIC_PRIOR") != "0":
+        apply_topic_prior(segments, doc, breakdowns=breakdowns)
 
     # Discoverability: when Item 8 is only a pointer stub, tell the reader WHERE
     # the financial statements actually are (often Item 15) instead of leaving

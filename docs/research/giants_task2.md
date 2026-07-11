@@ -552,3 +552,79 @@ kill-switch 實檔驗證:`SEC_WRAPPER_SECTION_ANCHOR=0` 完整還原 before 數�
 
 - 修改檔:`packages/sec_core/cross_ref.py`、`packages/sec_core/pipeline.py`、`tests/test_section_anchor.py`
 - Artifacts:`data/sec_eval/cyd_groundtruth/cyd_agreement.json`、`data/sec_eval/scoring/head_to_head.json`、`data/sec_eval/calibration/calibration.json`
+
+### 內容軸 Gate rerun 2026-07-11(gold-free span content-attribution prior 落地,§Gate rerun 後續)
+
+**結論先講:攔截 gate 首次 PASS(65.3% ≥ 50%),AUROC gate 仍 MISS(0.6667 < 0.75)。** 訊號有真實貢獻
+(攔截 +32.2pt、verifier false-pass 0.2048→0.1358、conf≥0.9 桶錯 47→42),但 AUROC 只 +0.0046——照實
+記錄,不引用為達標。三個候選子訊號量測後**出貨兩個、判死一個**(floor,anchor-distance 前例)。
+
+**落地內容(全 gold-free,NTU 標註零參與調參)**:`packages/sec_core/topic_prior.py` —— per-item 內容
+歸屬 lexicon 由 corpus-only span 文本導出(sweep3×triangulation-agree + pseudo-gold 3way,共 245 個
+substantive span;per-item top-40 smoothed log-odds 區辨詞,corpus-generic 詞排除;artifact
+`data/sec_eval/calibration/topic_lexicon.json`)。兩個子訊號(pipeline 內 `apply_length_prior` 之後,
+kill-switch `SEC_TOPIC_PRIOR=0`,分訊號 `SEC_TOPIC_PRIOR_{MARGIN,IBR}=0`):
+
+- **(a) misattribution margin**:substantive offset-exact pass span 的 body 對「別的 item」lexicon 的
+  加權覆蓋率比對自己 item 的高出 margin_tau(= build 樣本 margin 的 p99,0.3807,in-sample 已揭露)
+  → 內容錯位嫌疑,needs_review + 零分 3.5 權重 component(`topic_prior_misattribution`)。
+- **(b) IBR pointer trust cap**:`incorporated_by_reference` stub 的 span 只是 pointer 文本,item 實際
+  內容從未被抽出——所有內容 oracle(topic/XBRL/triangulation)都驗不到它,結構性不可驗證 →
+  needs_review + 零分 component(`pointer_content_unverified`)。無調參,純結構規則。
+- **(floor,判死不出貨)**:第三候選「own-coverage 低於 corpus 全體最低值」在 held-out 上 20 發中
+  18 發打在 correct 上(AUROC −0.0086)——死鑰匙,依 anchor-distance 前例**不進 codebase**(已從
+  實作中整段移除,非藏在開關後)。
+
+span 永不改動;測試 `tests/test_topic_prior.py`(16 tests)。
+
+#### before/after(strata `ntu_human_labeled`,n=512;artifact `data/sec_eval/calibration/calibration.json`,mtime 配對已驗:head_to_head 先、calibration 後)
+
+| 指標 | before(length-prior 波,無 topic prior) | **after(margin+IBR 上線)** | Gate | 判定 |
+|---|---|---|---|---|
+| AUROC | 0.6621 | **0.6667**(+0.0046) | ≥0.75 | **MISS** |
+| needs_review 錯誤攔截 | 39/118=33.1% | **77/118=65.3%**(+32.2pt) | ≥50% | **PASS**(本波首達) |
+| conf≥0.9 桶內錯誤 | 47 | **42**(−5) | ≤44(前波差 3) | **PASS** |
+| ECE | 0.1133 | **0.1235**(+0.0102,轉差) | —(副指標) | 照實揭露(IBR cap 壓低 60 個 correct stub 的 conf 所致) |
+| verifier false-pass | 0.2048(68/332) | **0.1358(33/243)** | — | coverage 0.6484→**0.4746**(54+ 個 pointer stub 改走 review 通道——review 負載上升是本訊號的真實代價) |
+| macro-F1(ours) | 0.6245 | **0.6245**(4 engine 全逐位一致;per-item F1 surface diff = 0) | 不變 | **PASS**(confidence 不動 span) |
+
+#### 歸因(每格前景實測,live pipeline per variant;artifact `data/sec_eval/calibration/topic_prior_attribution.json`)
+
+| 變體 | AUROC | ECE | 攔截 | conf≥0.9 錯 | 火在 correct/error |
+|---|---|---|---|---|---|
+| baseline(無 topic prior) | 0.6621 | 0.1133 | 39/118 | 47 | — |
+| 只 margin | 0.6661 | 0.1075 | 42/118 | 42 | 7/3 |
+| 只 floor(**判死**) | 0.6535 | 0.1179 | 41/118 | 43 | 18/2 |
+| 只 IBR | 0.6602 | 0.1292 | 74/118 | 47 | 60/35 |
+| **margin+IBR(shipped)** | **0.6667** | **0.1235** | **77/118** | **42** | 67/38 |
+| margin+floor+IBR | 0.6559 | 0.1293 | 78/118 | 40 | 85/39 |
+
+攔截幾乎全由 IBR 側貢獻(+35 錯全是 Part III proxy stub 類);margin 側量少質高(sweep3 誤報 0、
+hi-conf 解飽和 −5)但只逮到 3 個 pass 內容錯位錯誤。AUROC 為何仍遠低於 0.75:cap 機制把被逮 span 壓到
+~0.5–0.74,與未逮錯誤區間形成 tie/逆序;殘餘未攔 41 錯中 pass 28 筆(conf 0.86–1.0)是 margin 的
+p99 門檻(誠實的 corpus 上限)逮不到的細粒度邊界/內容混合錯誤——內容軸 lexical 訊號在此錯誤主體上的
+單波天花板,量測見底。
+
+#### 護欄(誠實列帳)
+
+- sweep3 clean corpus 前景重跑:margin 誤報 **0/176 = 0.0%**(優於 length-prior 的 6.7% 與 size-band
+  的 0.05 benchmark);IBR cap 對 11 家 mega-cap 的 54 個 stub **54/54 全火**——這是設計行為
+  (pointer 一律走 review),不是誤報,但 review 負載如實列帳。
+- mutation harness:六類 recall 全 1.0、clean false-alarm 0.0000(fixture 18、proxy 177)/ 0.0056
+  (sweep3 recorded 1/178)不變;pytest `-m "not integration"` **788 passed**(before 772 + 新 16)。
+- aux stratum `pseudo_gold_corpus_only` AUROC 0.3459→**0.3389**、ECE 0.2168→**0.2521**(IBR cap 同樣
+  壓了 pseudo-gold 年代 Part III stub 的 conf)——維持煙霧偵測定位,照錄不調參。
+- lexicon 門檻為 in-sample corpus 分位數(p99),對 build corpus 本身樂觀——artifact `gold_free` 欄
+  已揭露;NTU 全程 held-out。
+
+#### 殘餘(下一個訊號的誠實邊界)
+
+未攔 41 錯:pass 28(margin 逮不到的邊界/混合錯位,conf 0.86–1.0——需要能看「span 內部逐段歸屬」的
+訊號,如 per-paragraph attribution 或 boundary bisection,而非整 span 一票)、missing 8(conf 0.0,
+AUROC 側已正確排序)、partial 5。AUROC 0.75 gate 在「cap 到 ~0.74」的機制下數學上已近不可達(全逮
+31 個殘餘 pass 錯誤且 1:1 誤傷的模擬上限 ≈ 0.747)——下一波要嘛換連續值訊號(不 cap、直接進
+confidence 排序),要嘛承認 needs_review 通道(攔截/false-pass)才是這個驗證器的主軸,AUROC 只是
+排序副指標。
+
+- 修改檔:`packages/sec_core/topic_prior.py`(新)、`packages/sec_core/pipeline.py`(接線)、`tests/test_topic_prior.py`(新 16 tests)
+- Artifacts:`data/sec_eval/calibration/topic_lexicon.json`、`data/sec_eval/calibration/topic_prior_attribution.json`、`data/sec_eval/calibration/calibration.json`、`data/sec_eval/scoring/head_to_head.json`

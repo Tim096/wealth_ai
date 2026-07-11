@@ -22,9 +22,12 @@ stay honest pointers, because a wrong body is worse than an honest pointer.
 
 from __future__ import annotations
 
+import os
 import re
 import statistics
+from bisect import bisect_left
 from dataclasses import dataclass, field
+from difflib import SequenceMatcher
 
 from observability_core import sha256_text
 from sec_core.confidence import ConfidenceBreakdown
@@ -387,6 +390,166 @@ def _find_section_anchor(doc: NormalizedDocument, region_start: int, title: str)
     return None
 
 
+# --- page-top section anchoring (oracle-driven boundary convergence) ---------
+# Bound reports print a page-number marker plus the same short "furniture"
+# lines (company banner, running header) at every page top; a top-level section
+# starts where the FIRST non-furniture line of a page is itself a short heading
+# line (a continuation page starts with prose instead). The CYD iXBRL oracle
+# exposed two wrapper failure modes this printed structure fixes generically:
+# (a) a page-range stub resolves to whole pages that BEGIN at a parent section
+# while the item's own body is a later section on those pages (JPM Item 1C ->
+# "pages 146-149" begin at Operational Risk Management, but the CYD-tagged body
+# is the Cybersecurity risk section starting page 147), and (b) an in-document
+# pointer quotes the exact section heading living inside ANOTHER item's span
+# (GS Item 1C -> '... - Cybersecurity Risk Management' in Part II, Item 7).
+# Kill-switch: SEC_WRAPPER_SECTION_ANCHOR=0 disables both refinements.
+_SECTION_ANCHOR_ENV = "SEC_WRAPPER_SECTION_ANCHOR"
+_BARE_PAGE_NUM_RE = re.compile(r"\d{1,4}")
+_MAX_FURNITURE_LINE = 80     # furniture lines are short banner/header lines...
+_FURNITURE_MIN_REPEATS = 3   # ...repeated near at least this many page markers
+_MAX_SECTION_HEADING = 60    # a page-top section heading is a short line
+_PAGE_TOP_SCAN = 6           # non-blank lines examined at each page top
+_TOPIC_MATCH_MIN = 0.75      # canonical-title similarity for page-window snapping
+# quoted section path pointing into another item of the SAME filing:
+# 'See "MD&A - Risk Management - Cybersecurity Risk Management" in Part II,
+#  Item 7 of this Form 10-K'
+_INTRA_DOC_SECTION_REF_RE = re.compile(
+    r"[\"“]([^\"”]{4,200})[\"”]\s+in\s+part\s+[ivx]+\s*,?\s+item\s+(\d{1,2}[a-c]?)"
+    r"\s+of\s+this\s+form\s*10-k",
+    re.IGNORECASE,
+)
+
+
+def _section_anchoring_enabled() -> bool:
+    return os.environ.get(_SECTION_ANCHOR_ENV) != "0"
+
+
+def _norm_title(s: str) -> str:
+    return re.sub(r"\s+", " ", s.replace("’", "'").strip()).casefold()
+
+
+def _digits_stripped(s: str) -> str:
+    return re.sub(r"\d+", "", _norm_title(s))
+
+
+def _page_top_sections(
+    doc: NormalizedDocument, pm, lo: int, hi: int
+) -> tuple[list[tuple[int, int, str]], set[str]]:
+    """Top-level section headings printed at page tops inside [lo, hi).
+
+    Returns (sections, furniture): sections is [(line_index, offset, text), ...]
+    sorted by offset; furniture is the digit-stripped texts of the short lines
+    repeated near many page markers (company banner, running header). All
+    signals are printed page structure — no ticker- or filer-specific rules.
+    """
+    lines = doc.lines
+    starts = [ln.start for ln in lines]
+    marker_idx: list[int] = []
+    for page in sorted(pm.marker_start):
+        off = pm.marker_start[page]
+        if lo <= off < hi:
+            i = bisect_left(starts, off)
+            if i < len(lines) and lines[i].start == off:
+                marker_idx.append(i)
+    # furniture: short lines that repeat near several page markers
+    seen: dict[str, int] = {}
+    for i in marker_idx:
+        near: set[str] = set()
+        for j in range(max(0, i - 2), min(len(lines), i + 1 + _PAGE_TOP_SCAN)):
+            if j == i:
+                continue
+            t = lines[j].text.strip()
+            if t and len(t) <= _MAX_FURNITURE_LINE and not _BARE_PAGE_NUM_RE.fullmatch(t):
+                near.add(_digits_stripped(t))
+        for key in near:
+            seen[key] = seen.get(key, 0) + 1
+    furniture = {k for k, n in seen.items() if n >= _FURNITURE_MIN_REPEATS}
+    # the first non-furniture line of each page: short = section heading,
+    # long prose = the page continues the previous section
+    sections: list[tuple[int, int, str]] = []
+    for i in marker_idx:
+        scanned = 0
+        for j in range(i + 1, len(lines)):
+            t = lines[j].text.strip()
+            if not t:
+                continue
+            scanned += 1
+            if scanned > _PAGE_TOP_SCAN:
+                break
+            if _BARE_PAGE_NUM_RE.fullmatch(t) or _digits_stripped(t) in furniture:
+                continue
+            if len(t) <= _MAX_SECTION_HEADING:
+                sections.append((j, lines[j].start, t))
+            break
+    sections.sort(key=lambda s: s[1])
+    return sections, furniture
+
+
+def _trim_page_furniture(doc: NormalizedDocument, line_index: int, furniture: set[str]) -> int:
+    """Offset where body content ends before the page-top section heading at
+    line_index: walk back over the contiguous page-break block (banner/header
+    furniture lines, bare page numbers, blanks), so the previous section's span
+    does not swallow the furniture."""
+    end = doc.lines[line_index].start
+    for j in range(line_index - 1, -1, -1):
+        t = doc.lines[j].text.strip()
+        if (not t or _BARE_PAGE_NUM_RE.fullmatch(t)
+                or (len(t) <= _MAX_FURNITURE_LINE and _digits_stripped(t) in furniture)):
+            end = doc.lines[j].start
+            continue
+        break
+    return end
+
+
+def _item_topic_match(code: str, heading: str) -> bool:
+    """The anchored section heading must relate to the ITEM's own topic — this
+    guards against resolving a body from a quoted PARENT-chapter title (GS
+    Item 7A quotes 'MD&A - Risk Management': that page-top section is the risk
+    chapter's intro, not the item's market-risk content; a wrong body is worse
+    than an honest pointer)."""
+    canonical = _norm_title(CANONICAL_ITEM_TITLES.get(code, ""))
+    h = _norm_title(heading)
+    if not canonical or not h:
+        return False
+    if SequenceMatcher(None, canonical, h).ratio() >= 0.5:
+        return True
+    return bool(set(re.findall(r"[a-z]{6,}", h))
+                & set(re.findall(r"[a-z]{6,}", canonical)))
+
+
+def _snap_window_to_item_section(
+    doc: NormalizedDocument, pm, start: int, end: int, region_end: int, code: str
+) -> tuple[int, int, str] | None:
+    """A page-range stub can defer to pages that begin at a PARENT section while
+    the item's own body is a later section on those pages. If a page-top section
+    heading strictly inside the resolved window matches the item's canonical
+    title, snap the span to that section (end = next page-top section, page
+    furniture trimmed); otherwise leave the window untouched."""
+    canonical = _norm_title(CANONICAL_ITEM_TITLES.get(code, ""))
+    if not canonical:
+        return None
+    sections, furniture = _page_top_sections(doc, pm, start, region_end)
+    best: tuple[float, int, int, str] | None = None
+    for j, off, text in sections:
+        if not (start < off < end):
+            continue
+        sim = SequenceMatcher(None, canonical, _norm_title(text)).ratio()
+        if sim >= _TOPIC_MATCH_MIN and (best is None or sim > best[0]):
+            best = (sim, j, off, text)
+    if best is None:
+        return None
+    _, _, off, text = best
+    new_end = end
+    later = [(lj, loff) for lj, loff, _ in sections if loff > off]
+    if later:
+        trimmed = _trim_page_furniture(doc, later[0][0], furniture)
+        if off < trimmed <= end:
+            new_end = trimmed
+    if new_end - off <= _MIN_RESOLVED_SPAN:
+        return None
+    return off, new_end, text
+
+
 def reassemble_wrapper_bodies(
     doc: NormalizedDocument,
     segments: list[ItemSegment],
@@ -439,6 +602,16 @@ def reassemble_wrapper_bodies(
             end = later[0] if later else region_end
         if end - start <= _MIN_RESOLVED_SPAN:
             continue
+        if page_anchored and _section_anchoring_enabled():
+            # the pages may BEGIN at a parent section; if the item's own
+            # section heading is printed at a later page top inside the
+            # window, the body is that section, not the whole page range
+            snapped = _snap_window_to_item_section(doc, pm, start, end, region_end,
+                                                   seg.item_code)
+            if snapped is not None:
+                start, end, sect = snapped
+                how += (f", then snapped to the item's own page-top section "
+                        f"heading {sect!r} inside those pages")
         text = doc.slice(start, end)
         seg.start_offset, seg.end_offset = start, end
         seg.text_sha256 = sha256_text(text)
@@ -460,6 +633,81 @@ def reassemble_wrapper_bodies(
             CC(name="heading_strength", score=1.5, max_score=2.0,
                reason="anchor resolved from printed page-number footers" if page_anchored
                else "anchor resolved from the bound report's own section heading"),
+        ])
+        breakdowns[seg.item_code] = bd
+        seg.confidence = bd.total
+        resolved += 1
+    return resolved
+
+
+def resolve_intra_document_pointers(
+    doc: NormalizedDocument,
+    segments: list[ItemSegment],
+    breakdowns: dict[str, ConfidenceBreakdown],
+) -> int:
+    """Resolve incorporated_by_reference stubs that point at a quoted section
+    heading inside ANOTHER item of the SAME Form 10-K (the GS class: Item 1C
+    defers to 'See "MD&A - Risk Management - Cybersecurity Risk Management" in
+    Part II, Item 7 of this Form 10-K'). The quoted path's LAST component must
+    match a page-top section heading inside the referenced item's span exactly
+    (title-normalized); the body runs to the next page-top section heading,
+    page furniture trimmed. No exact match -> the stub stays an honest pointer
+    (a wrong body is worse than an honest pointer). Mutates matching segments
+    in place and returns how many were resolved.
+    Kill-switch: SEC_WRAPPER_SECTION_ANCHOR=0."""
+    if not _section_anchoring_enabled():
+        return 0
+    by_code = {s.item_code: s for s in segments}
+    resolved = 0
+    for seg in segments:
+        if seg.status != "incorporated_by_reference" or seg.provenance != "offset_exact_span":
+            continue
+        stub = doc.slice(seg.start_offset, seg.end_offset)
+        if _PROXY_STMT_RE.search(stub):
+            continue  # external target — stays an honest pointer
+        m = _INTRA_DOC_SECTION_REF_RE.search(stub)
+        if m is None:
+            continue
+        target = by_code.get(m.group(2).upper())
+        if (target is None or target is seg
+                or target.end_offset - target.start_offset <= _MIN_RESOLVED_SPAN):
+            continue
+        title = _norm_title(re.split(r"\s+[-–—]\s+", m.group(1))[-1])
+        pm = build_page_map(doc, start=target.start_offset, end=target.end_offset)
+        if not pm.ok:
+            continue
+        sections, furniture = _page_top_sections(
+            doc, pm, target.start_offset, target.end_offset)
+        hit = next(((j, off, t) for j, off, t in sections if _norm_title(t) == title), None)
+        if hit is None or not _item_topic_match(seg.item_code, hit[2]):
+            continue
+        j, start, text = hit
+        later = [(lj, loff) for lj, loff, _ in sections if loff > start]
+        end = (_trim_page_furniture(doc, later[0][0], furniture)
+               if later else target.end_offset)
+        if end - start <= _MIN_RESOLVED_SPAN:
+            continue
+        body = doc.slice(start, end)
+        seg.start_offset, seg.end_offset = start, end
+        seg.text_sha256 = sha256_text(body)
+        seg.status = "partial"
+        seg.provenance = "resolved_from_section_anchor"
+        seg.needs_review = True
+        seg.warnings = [w for w in seg.warnings
+                        if "the span is the pointer text only" not in w]
+        seg.warnings.append(
+            f"in-document pointer: this item's body lives inside Item "
+            f"{m.group(2).upper()}'s span under its own section heading; resolved from "
+            f"the quoted section title {text!r} found as a page-top section heading "
+            f"(source-exact span in the same document). Marked partial + needs_review "
+            f"because boundary alignment is heuristic — verify start/end against the filing."
+        )
+        bd = ConfidenceBreakdown(components=[
+            CC(name="content_substantiveness", score=1.4, max_score=2.0,
+               reason=f"resolved a {end - start}-char body span from the quoted "
+                      f"section heading {text!r}"),
+            CC(name="heading_strength", score=1.5, max_score=2.0,
+               reason="anchor is the referenced item's own page-top section heading"),
         ])
         breakdowns[seg.item_code] = bd
         seg.confidence = bd.total

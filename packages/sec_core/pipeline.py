@@ -17,6 +17,7 @@ from sec_core.cross_ref import (
     build_cross_reference_segments,
     detect_cross_reference_index,
     reassemble_wrapper_bodies,
+    resolve_intra_document_pointers,
     scan_bare_index,
 )
 from sec_core.headings import HeadingCandidate, detect_candidates
@@ -223,6 +224,11 @@ def extract_from_html(
         # a Financial Section / annual report bound after the last item are
         # resolved to source-exact spans inside that appended block.
         reassemble_wrapper_bodies(doc, segments, breakdowns)
+        # In-document quoted-section pointers (GS class): a stub deferring to
+        # a section heading inside ANOTHER item's span of the SAME filing
+        # ('See "... - Cybersecurity Risk Management" in Part II, Item 7 of
+        # this Form 10-K') is resolved to that section's source-exact span.
+        resolve_intra_document_pointers(doc, segments, breakdowns)
 
     # per-item topic-consistency oracle (independent, lexical, all items) —
     # a span labelled Item 1A that has no risk-factor language is suspect even

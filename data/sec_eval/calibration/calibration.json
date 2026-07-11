@@ -1,6 +1,6 @@
 {
  "generated_by": "tools/calibrate_sec_confidence.py",
- "generated_at": "2026-07-11T01:22:24Z",
+ "generated_at": "2026-07-11T02:15:47Z",
  "spec": "docs/research/giants_task2.md \u00a72 (P0-3)",
  "definitions": {
   "correct_ntu": "line-level item F1 >= 0.5 on NTU itemseg gold (arXiv 2502.08875; lower-bound metric, see head_to_head.py)",

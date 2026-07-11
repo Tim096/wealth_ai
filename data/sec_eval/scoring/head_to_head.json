@@ -33,7 +33,7 @@
    "company": "HNET NET",
    "date_filed": "2001/04/30",
    "link": "https://www.sec.gov/Archives/edgar/data/831232/000092838501500540/d10k.txt",
-   "fetch_ms": 1.2,
+   "fetch_ms": 1.6,
    "engines": {
     "ours": {
      "error": "no items extracted"
@@ -178,7 +178,7 @@
    "company": "DOBSON COMMUNICATIONS CORP",
    "date_filed": "2002/04/01",
    "link": "https://www.sec.gov/Archives/edgar/data/1035985/000095013402003064/d94706e10-k.htm",
-   "fetch_ms": 3.7,
+   "fetch_ms": 4.5,
    "engines": {
     "ours": {
      "items": {
@@ -839,7 +839,7 @@
    "company": "HALF ROBERT INTERNATIONAL INC /DE/",
    "date_filed": "2003/03/26",
    "link": "https://www.sec.gov/Archives/edgar/data/315213/000104746903010372/a2095565z10-k.htm",
-   "fetch_ms": 1.6,
+   "fetch_ms": 2.1,
    "engines": {
     "ours": {
      "items": {
@@ -1415,7 +1415,7 @@
    "company": "EON COMMUNICATIONS CORP",
    "date_filed": "2003/10/29",
    "link": "https://www.sec.gov/Archives/edgar/data/1084752/000119312503069303/d10k.htm",
-   "fetch_ms": 2.8,
+   "fetch_ms": 3.2,
    "engines": {
     "ours": {
      "items": {
@@ -2111,7 +2111,7 @@
    "company": "ISIS PHARMACEUTICALS INC",
    "date_filed": "2004/03/15",
    "link": "https://www.sec.gov/Archives/edgar/data/874015/000104746904007808/a2130713z10-k.htm",
-   "fetch_ms": 2.3,
+   "fetch_ms": 2.5,
    "engines": {
     "ours": {
      "items": {
@@ -2809,7 +2809,7 @@
    "company": "CATERPILLAR INC",
    "date_filed": "2005/02/24",
    "link": "https://www.sec.gov/Archives/edgar/data/18230/000001823005000218/form10k_2004.htm",
-   "fetch_ms": 2.0,
+   "fetch_ms": 1.9,
    "engines": {
     "ours": {
      "items": {
@@ -4240,7 +4240,7 @@
    "company": "GENERAL CABLE CORP /DE/",
    "date_filed": "2006/03/15",
    "link": "https://www.sec.gov/Archives/edgar/data/886035/000095015206002081/l18783ae10vk.htm",
-   "fetch_ms": 3.8,
+   "fetch_ms": 3.7,
    "engines": {
     "ours": {
      "items": {
@@ -5036,7 +5036,7 @@
    "company": "CITIZENS & NORTHERN CORP",
    "date_filed": "2007/03/02",
    "link": "https://www.sec.gov/Archives/edgar/data/810958/000095015207001718/l24216ae10vk.htm",
-   "fetch_ms": 3.0,
+   "fetch_ms": 5.2,
    "engines": {
     "ours": {
      "items": {
@@ -7407,7 +7407,7 @@
    "company": "AUDIOVOX CORP",
    "date_filed": "2008/05/14",
    "link": "https://www.sec.gov/Archives/edgar/data/807707/000080770708000022/form10k.htm",
-   "fetch_ms": 9.1,
+   "fetch_ms": 11.2,
    "engines": {
     "ours": {
      "items": {
@@ -8043,7 +8043,7 @@
    "company": "OMEGA PROTEIN CORP",
    "date_filed": "2009/03/10",
    "link": "https://www.sec.gov/Archives/edgar/data/1053650/000119312509049801/d10k.htm",
-   "fetch_ms": 3.3,
+   "fetch_ms": 4.0,
    "engines": {
     "ours": {
      "items": {
@@ -9633,7 +9633,7 @@
    "company": "GOLF ROUNDS COM INC",
    "date_filed": "2009/10/26",
    "link": "https://www.sec.gov/Archives/edgar/data/319016/000095012309053146/y02446e10vk.htm",
-   "fetch_ms": 1.2,
+   "fetch_ms": 1.4,
    "engines": {
     "ours": {
      "items": {
@@ -10329,7 +10329,7 @@
    "company": "TERADATA CORP /DE/",
    "date_filed": "2010/02/26",
    "link": "https://www.sec.gov/Archives/edgar/data/816761/000119312510043063/d10k.htm",
-   "fetch_ms": 3.8,
+   "fetch_ms": 3.6,
    "engines": {
     "ours": {
      "items": {
@@ -11124,7 +11124,7 @@
    "company": "Optelecom-NKF, Inc.",
    "date_filed": "2010/03/30",
    "link": "https://www.sec.gov/Archives/edgar/data/275858/000104746910002965/a2197673z10-k.htm",
-   "fetch_ms": 2.7,
+   "fetch_ms": 2.4,
    "engines": {
     "ours": {
      "items": {
@@ -11914,7 +11914,7 @@
    "company": "SK Shasta Acquisition Corp. 4",
    "date_filed": "2010/08/13",
    "link": "https://www.sec.gov/Archives/edgar/data/1439240/000114420410043781/v193300_10k.htm",
-   "fetch_ms": 2.0,
+   "fetch_ms": 1.8,
    "engines": {
     "ours": {
      "items": {
@@ -12706,7 +12706,7 @@
    "company": "Support.com, Inc.",
    "date_filed": "2011/03/11",
    "link": "https://www.sec.gov/Archives/edgar/data/1104855/000114036111016096/form10k.htm",
-   "fetch_ms": 6.1,
+   "fetch_ms": 6.4,
    "engines": {
     "ours": {
      "items": {
@@ -13505,7 +13505,7 @@
    "company": "SALLY HOLDINGS LLC",
    "date_filed": "2011/11/16",
    "link": "https://www.sec.gov/Archives/edgar/data/1385720/000110465911064552/a11-28372_110k.htm",
-   "fetch_ms": 7.7,
+   "fetch_ms": 7.8,
    "engines": {
     "ours": {
      "items": {
@@ -14303,7 +14303,7 @@
    "company": "Abtech Holdings, Inc.",
    "date_filed": "2012/03/30",
    "link": "https://www.sec.gov/Archives/edgar/data/1405858/000114420412018496/v307123_10k.htm",
-   "fetch_ms": 2.8,
+   "fetch_ms": 3.5,
    "engines": {
     "ours": {
      "items": {
@@ -14932,7 +14932,7 @@
    "company": "Carrier Alliance Holdings, Inc.",
    "date_filed": "2013/02/21",
    "link": "https://www.sec.gov/Archives/edgar/data/1027484/000101905613000267/carrier_10k11.htm",
-   "fetch_ms": 1.7,
+   "fetch_ms": 2.1,
    "engines": {
     "ours": {
      "items": {
@@ -15895,7 +15895,7 @@
    "company": "NEOGENOMICS INC",
    "date_filed": "2014/02/24",
    "link": "https://www.sec.gov/Archives/edgar/data/1077183/000119312514064714/d647097d10k.htm",
-   "fetch_ms": 3.3,
+   "fetch_ms": 4.2,
    "engines": {
     "ours": {
      "items": {
@@ -16689,7 +16689,7 @@
    "company": "FIRST BANCORP /PR/",
    "date_filed": "2014/03/17",
    "link": "https://www.sec.gov/Archives/edgar/data/1057706/000105770614000004/fbp12312013x10k.htm",
-   "fetch_ms": 36.2,
+   "fetch_ms": 31.1,
    "engines": {
     "ours": {
      "items": {
@@ -17331,7 +17331,7 @@
    "company": "Diversified Resources Inc.",
    "date_filed": "2015/02/13",
    "link": "https://www.sec.gov/Archives/edgar/data/1509692/000112785515000064/diversified10103114.htm",
-   "fetch_ms": 3.9,
+   "fetch_ms": 4.3,
    "engines": {
     "ours": {
      "items": {
@@ -18123,7 +18123,7 @@
    "company": "4Cable TV International, Inc.",
    "date_filed": "2015/04/15",
    "link": "https://www.sec.gov/Archives/edgar/data/1421901/000159406215000098/form10k.htm",
-   "fetch_ms": 3.7,
+   "fetch_ms": 4.4,
    "engines": {
     "ours": {
      "items": {
@@ -18915,7 +18915,7 @@
    "company": "Diplomat Pharmacy, Inc.",
    "date_filed": "2016/02/29",
    "link": "https://www.sec.gov/Archives/edgar/data/1610092/000110465916101031/a16-5240_110k.htm",
-   "fetch_ms": 6.4,
+   "fetch_ms": 6.0,
    "engines": {
     "ours": {
      "items": {
@@ -19711,7 +19711,7 @@
    "company": "FLUIDIGM CORP",
    "date_filed": "2016/04/27",
    "link": "https://www.sec.gov/Archives/edgar/data/1162194/000119312516559771/d183522d10ka.htm",
-   "fetch_ms": 1.6,
+   "fetch_ms": 1.7,
    "engines": {
     "ours": {
      "items": {
@@ -20055,7 +20055,7 @@
    "company": "WATTS WATER TECHNOLOGIES INC",
    "date_filed": "2017/02/24",
    "link": "https://www.sec.gov/Archives/edgar/data/795403/000155837017000970/wts-20161231x10k.htm",
-   "fetch_ms": 12.8,
+   "fetch_ms": 13.7,
    "engines": {
     "ours": {
      "items": {

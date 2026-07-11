@@ -2,15 +2,13 @@
   "oracle": "CYD iXBRL block-tags (mandatory for fiscal years ending >= 2024-12-15)",
   "filings": 11,
   "verdicts": {
-    "agree": 10,
-    "disagree": 1,
+    "agree": 11,
+    "disagree": 0,
     "unavailable": 0,
     "not_required": 0
   },
-  "disagreements": [
-    "GS"
-  ],
-  "coverage_mean_over_available": 0.9091,
+  "disagreements": [],
+  "coverage_mean_over_available": 1.0,
   "records": [
     {
       "ticker": "AAPL",
@@ -72,7 +70,7 @@
       "containment": 0.9955,
       "verdict": "agree",
       "detail": "our segment covers 100% of the official CYD-tagged span (9,157 chars, 9 text blocks)",
-      "needs_review_after": false
+      "needs_review_after": true
     },
     {
       "ticker": "NVDA",
@@ -116,10 +114,10 @@
       "filing_class": "standard",
       "our_status": "partial",
       "our_offsets": [
-        751329,
-        771939
+        762158,
+        771903
       ],
-      "our_chars": 20610,
+      "our_chars": 9745,
       "official_intervals": [
         [
           762318,
@@ -155,7 +153,7 @@
       "n_fragments": 12,
       "n_hidden": 0,
       "coverage": 1.0,
-      "containment": 0.3334,
+      "containment": 0.7051,
       "verdict": "agree",
       "detail": "our segment covers 100% of the official CYD-tagged span (6,871 chars, 9 text blocks)",
       "needs_review_after": true
@@ -167,12 +165,12 @@
       "report_date": "2025-12-31",
       "mandatory": true,
       "filing_class": "standard",
-      "our_status": "incorporated_by_reference",
+      "our_status": "partial",
       "our_offsets": [
-        485610,
-        485857
+        779931,
+        788581
       ],
-      "our_chars": 247,
+      "our_chars": 8650,
       "official_intervals": [
         [
           781048,
@@ -207,11 +205,11 @@
       "n_text_blocks": 9,
       "n_fragments": 16,
       "n_hidden": 0,
-      "coverage": 0.0,
-      "containment": 0.0,
-      "verdict": "disagree",
-      "detail": "our segment covers only 0% of the official CYD-tagged span (7,402 chars, 9 text blocks) \u2014 the SEC-mandated Item 1C content lies outside our boundaries",
-      "needs_review_after": false
+      "coverage": 1.0,
+      "containment": 0.8557,
+      "verdict": "agree",
+      "detail": "our segment covers 100% of the official CYD-tagged span (7,402 chars, 9 text blocks)",
+      "needs_review_after": true
     },
     {
       "ticker": "WMT",
@@ -416,7 +414,7 @@
       "containment": 0.975,
       "verdict": "agree",
       "detail": "our segment covers 100% of the official CYD-tagged span (3,942 chars, 9 text blocks)",
-      "needs_review_after": false
+      "needs_review_after": true
     },
     {
       "ticker": "KO",

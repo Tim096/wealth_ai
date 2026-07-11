@@ -11,6 +11,7 @@ coverage/
 # runtime artifacts (evidence blobs are large; JSONL indexes are committed selectively)
 data/raw_filings/
 data/artifacts/
+data/sec_eval/pseudo_gold/
 runs/
 
 # session/tool junk that must never enter the repo

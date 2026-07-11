@@ -15,6 +15,7 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "ruff>=0.5",
+    "py7zr>=1.0",  # NTU itemseg dataset unpack (tools/fetch_ntu_itemseg.py, lazy import)
 ]
 browser = [
     "playwright>=1.45",

@@ -17,7 +17,7 @@
 - **AI 協作**:`prompts/` 全程決策紀錄(含 rejected 取捨與事後驗證),`docs/ai_collaboration_report.md` 總結。
 - 建議閱讀順序:`README.md` → `docs/eval_report.md` → `docs/research/giants_task{1,2}.md` → `prompts/README.md`。
 
-## push 前檢查清單(使用者執行)
+## 提交狀態(2026-07-11)
 
-1. `git push origin main` + tag(需你確認;目前 66 commits 未 push,origin/main 停在 111/177)。
-2. (可選)Zeabur 補 OpenRouter key 讓 wealth-agent 走真實 LLM,並 redeploy 兩服務帶上最新 code 與 dashboard 數字。
+1. ~~push + tag~~ **已完成**:`main` 已推上 `github.com/Tim096/wealth`,release tag `v1.0-submission`;GitHub Actions CI 首輪修復後綠(ruff + 763 non-integration tests,run 29134525031)。
+2. wealth-agent **已 redeploy**(帶最新 browser_agent 修復;health `ready:true`、4 個免 key 示範任務)。仍為 mock 模式——(可選)Zeabur 補 OpenRouter key 轉真實 LLM,見 `docs/deploy.md`。wealth-sec 如需帶上最新 dashboard 數字(XBRL 10/1)可再 redeploy。

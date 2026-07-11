@@ -99,6 +99,104 @@ def test_combined_span_containing_engine_body_agrees():
     assert cmp.verdict == "agree"
 
 
+# --- engine-blind class (P0-5): items 10-16 + TOC-junk engine text ----------
+
+TOC_JUNK = ("ITEM 1.BUSINESS6Introduction6General Development8 "
+            "ITEM 1A.RISK FACTORS21 ITEM 2.PROPERTIES44 ITEM 3.LEGAL PROCEEDINGS45 "
+            "ITEM 7.MANAGEMENTS DISCUSSION AND ANALYSIS52 ITEM 8.FINANCIAL STATEMENTS60 "
+            "ITEM 15.EXHIBITS110 ITEM 16.FORM 10-K SUMMARY112")
+
+
+# Verbatim edgartools 5.42.0 output for NEM item 16 (FG-SEC-006): Item 1 TOC
+# lines with page numbers glued to headings — only ONE item ref, so the
+# multi-ref density signal alone would miss it (integration-gate regression).
+NEM_ITEM16_JUNK = ("ITEM\xa01.BUSINESS6Introduction6Segment Information6Products6"
+                   "Competition9Licenses and Concessions9Condition of Physical Assets "
+                   "and Insurance9Environmental, Social and Governance10Risk Factor "
+                   "Summary13Forward-Looking Statements15Available Information17")
+
+
+def test_real_nem_item16_single_ref_glued_toc_is_engine_suspect():
+    cmp = compare_item("16", "Item 16. Form 10-K Summary. None.", NEM_ITEM16_JUNK,
+                       "pass", engine_version="5.42.0")
+    assert cmp.verdict == "engine_suspect"
+
+
+def test_item16_toc_junk_becomes_engine_suspect_not_disagree():
+    # FG-SEC-006 class: our span is correct ("None."), edgartools' item 16
+    # section holds Item 1 TOC lines. Pinned 5.42.x -> engine_suspect.
+    cmp = compare_item("16", "Item 16. Form 10-K Summary. None.", TOC_JUNK, "pass",
+                       engine_version="5.42.0")
+    assert cmp.verdict == "engine_suspect"
+    assert "FG-SEC-006" in cmp.detail and "9C" in cmp.detail
+
+
+def test_engine_suspect_gate_disabled_on_unpinned_version():
+    # upgrade => down-weighting rationale must be re-verified, gate falls back
+    cmp = compare_item("16", "Item 16. Form 10-K Summary. None.", TOC_JUNK, "pass",
+                       engine_version="6.1.0")
+    assert cmp.verdict == "disagree"
+
+
+def test_blind_class_does_not_cover_items_below_10():
+    cmp = compare_item("3", "Item 3. Legal Proceedings. None pending.", TOC_JUNK, "pass",
+                       engine_version="5.42.0")
+    assert cmp.verdict == "disagree"
+
+
+def test_item16_body_text_mismatch_still_disagrees():
+    # NVDA/WMT class: engine text is misattributed BODY prose, not TOC junk —
+    # the narrow gate leaves this a real disagreement (needs_review path).
+    cmp = compare_item("16", "Item 16. Form 10-K Summary. None.", PROSE, "pass",
+                       engine_version="5.42.0")
+    assert cmp.verdict == "disagree"
+
+
+def test_missed_item_with_toc_junk_engine_text_is_suspect():
+    cmp = compare_item("14", "", TOC_JUNK, "missing", engine_version="5.42.0")
+    assert cmp.verdict == "engine_suspect"
+
+
+def test_prose_with_sparse_item_cross_references_is_not_toc_junk():
+    # "see Item 7A" style cross-references must not trigger the junk heuristic
+    body = PROSE + " See Item 7A for market risk and Item 8 and Item 15 for statements. "
+    cmp = compare_item("16", "Item 16. None.", body, "pass", engine_version="5.42.0")
+    assert cmp.verdict == "disagree"
+
+
+# --- source-aware corpus mode (P0-1): table-stripped teacher votes ----------
+
+TABLE_WORDS = " revenue 1234 5678 cost 910 1112 margin 1314 1516 total 1718 1920 " * 200
+
+
+def test_corpus_table_stripped_item8_agrees_where_default_mode_disagrees():
+    ours = PROSE + TABLE_WORDS          # our span keeps the tables
+    theirs = PROSE                      # corpus built with remove_tables=True
+    assert compare_item("8", ours, theirs, "pass", source="corpus").verdict == "agree"
+    # the same texts under the default boundary-aware mode are a mismatch —
+    # exactly the systematic Item 8 false disagree the corpus mode removes
+    assert compare_item("8", ours, theirs, "pass").verdict == "disagree"
+
+
+def test_corpus_mode_still_catches_our_truncation():
+    ours = " ".join(PROSE.split()[:40])
+    cmp = compare_item("7", ours, PROSE, "pass", source="corpus")
+    assert cmp.verdict == "disagree"
+    assert "corpus" in cmp.detail
+
+
+def test_corpus_empty_section_is_no_signal_not_disagreement():
+    # guardrail g2: an empty corpus section must never count against our span
+    cmp = compare_item("15", PROSE, "", "pass", source="corpus")
+    assert cmp.verdict == "engine_unavailable"
+
+
+def test_corpus_source_never_uses_edgartools_blind_gate():
+    cmp = compare_item("16", "Item 16. None.", TOC_JUNK, "pass",
+                       source="corpus", engine_version="5.42.0")
+    assert cmp.verdict == "disagree"
+
+
 # --- apply_triangulation writes back onto segments --------------------------
 
 def test_agreeing_engine_output_leaves_confidence_untouched(alpha):
@@ -130,6 +228,24 @@ def test_disagreement_deducts_confidence_and_flags_review(alpha):
     comp = next(c for c in breakdown.components if c.name == COMPONENT_NAME)
     assert comp.score == 0.0 and comp.reason
     assert seg.confidence == pytest.approx(breakdown.total)
+
+
+def test_engine_suspect_records_warning_without_penalty(alpha):
+    # pinned edgartools 5.42.0 is an installed dependency, so the auto-detected
+    # version activates the blind-class gate inside apply_triangulation
+    raw, _ = alpha
+    result = extract_from_html(raw, "alpha_10k")
+    seg = result.segment("14")
+    before = (seg.confidence, seg.needs_review)
+    comparisons = apply_triangulation(result, {"14": TOC_JUNK})
+    cmp = next(c for c in comparisons if c.item_code == "14")
+    assert cmp.verdict == "engine_suspect"
+    assert seg.engine_check.startswith("engine_suspect")
+    assert (seg.confidence, seg.needs_review) == before
+    assert any("engine-blind class" in w for w in seg.warnings)
+    breakdown = result.confidence.get("14")
+    if breakdown is not None:
+        assert not any(c.name == COMPONENT_NAME for c in breakdown.components)
 
 
 def test_triangulation_is_idempotent_on_rerun(alpha):

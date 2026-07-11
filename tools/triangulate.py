@@ -32,7 +32,8 @@ def main() -> None:
     resolver = FilingResolver(fetcher)
     OUT.mkdir(parents=True, exist_ok=True)
     records = []
-    print(f"{'ticker':<7} {'agree':>5} {'disagree':>8} {'unavail':>7}  disagreeing items")
+    print(f"{'ticker':<7} {'agree':>5} {'disagree':>8} {'suspect':>7} {'unavail':>7}  "
+          f"disagreeing items")
     for t in tickers:
         try:
             cik = resolver.cik_for_ticker(t)
@@ -46,10 +47,12 @@ def main() -> None:
             result = extract_from_html(raw, f"{t}-{ref.accession}")
             engine_items = extract_items_edgartools(raw)
             comparisons = apply_triangulation(result, engine_items)
-            by_verdict = {"agree": 0, "disagree": 0, "engine_unavailable": 0}
+            by_verdict = {"agree": 0, "disagree": 0, "engine_suspect": 0,
+                          "engine_unavailable": 0}
             for c in comparisons:
                 by_verdict[c.verdict] += 1
             disagreeing = [c.item_code for c in comparisons if c.verdict == "disagree"]
+            suspect = [c.item_code for c in comparisons if c.verdict == "engine_suspect"]
             records.append({
                 "ticker": t, "cik": cik, "accession": ref.accession,
                 "filing_class": result.filing_class,
@@ -68,7 +71,9 @@ def main() -> None:
                 },
             })
             print(f"{t:<7} {by_verdict['agree']:>5} {by_verdict['disagree']:>8} "
-                  f"{by_verdict['engine_unavailable']:>7}  {', '.join(disagreeing) or '-'}")
+                  f"{by_verdict['engine_suspect']:>7} {by_verdict['engine_unavailable']:>7}  "
+                  f"{', '.join(disagreeing) or '-'}"
+                  + (f"  [suspect: {', '.join(suspect)}]" if suspect else ""))
         except Exception as e:  # noqa: BLE001 - tool records failures, does not crash the sweep
             print(f"{t:<7} ERROR {type(e).__name__}: {e}")
 
@@ -80,11 +85,15 @@ def main() -> None:
     summary = {
         "engine": engine_ver,
         "filings": len(records),
-        "verdict_totals": {v: sum(r["verdicts"][v] for r in records)
-                           for v in ("agree", "disagree", "engine_unavailable")},
+        "verdict_totals": {v: sum(r["verdicts"].get(v, 0) for r in records)
+                           for v in ("agree", "disagree", "engine_suspect",
+                                     "engine_unavailable")},
         "disagreements": {r["ticker"]: [k for k, v in r["items"].items()
                                         if v["verdict"] == "disagree"]
                           for r in records if r["verdicts"]["disagree"]},
+        "engine_suspects": {r["ticker"]: [k for k, v in r["items"].items()
+                                          if v["verdict"] == "engine_suspect"]
+                            for r in records if r["verdicts"].get("engine_suspect")},
         "records": records,
     }
     (OUT / "triangulation.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")

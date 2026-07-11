@@ -127,6 +127,68 @@ def vision_escalation_reason(history: list[str], page_hashes: list[str],
     return ""
 
 
+# P0-1 stagnation ladder: step thresholds at which the nudge tone escalates,
+# and how many consecutive no-progress turns trigger a full REPLAN prompt.
+_NUDGE_LADDER = (5, 8, 12)
+_REPLAN_FAILS = 3
+
+
+def _no_progress_entry(h: str) -> bool:
+    """A history entry that advanced nothing: a failed action, a planner noop,
+    or a rejected give_up/done."""
+    return (h.startswith(("noop(", "give_up_rejected(", "done_rejected("))
+            or h.endswith(":fail"))
+
+
+def stagnation_nudge(planner_steps: list, page_hashes: list[str],
+                     history: list[str], step_i: int, max_steps: int,
+                     plan_steps: list[str] | None = None) -> str:
+    """P0-1 in-loop stagnation detection (BU ActionLoopDetector / Magentic-One
+    dual-ledger / SV deterministic loop detector / BU consecutive_failures →
+    REPLAN) — a PURE function so the trigger logic is unit-testable. Returns
+    the text to inject into the planner's history ('' = keep quiet). Two
+    triggers, strongest first:
+      (a) REPLAN — the last `_REPLAN_FAILS` turns all made no progress:
+          restate the facts (planned route, remaining budget) and demand a
+          genuinely different action.
+      (b) loop — repetition_report over the recent planner steps (until now a
+          post-run observation) flags a repeated move/cycle, or the page
+          fingerprint sat unchanged for 3 observations: nudge with a tone that
+          escalates along the 5/8/12 step ladder. Below the first rung the
+          agent is left alone — early repetition (scrolling, a retry after
+          dismissing a modal) is often legitimate.
+    Prompt-only: the action space stays schema-validated and the verifier
+    stays the only judge."""
+    remaining = max_steps - step_i
+    if (len(history) >= _REPLAN_FAILS
+            and all(_no_progress_entry(h) for h in history[-_REPLAN_FAILS:])):
+        route = f" Planned route: {'; '.join(plan_steps)}." if plan_steps else ""
+        return (f"REPLAN({_REPLAN_FAILS} consecutive turns made no progress; "
+                f"{remaining} steps left):{route} State what is already "
+                "achieved, then choose a genuinely different action — another "
+                "element, goto a visible href, dismiss an overlay, or scroll "
+                "to reveal the target.")
+    if step_i < _NUDGE_LADDER[0]:
+        return ""
+    rep = repetition_report(planner_steps[-6:])
+    stalled = len(page_hashes) >= 4 and len(set(page_hashes[-4:])) == 1
+    if not (rep["loop_detected"] or stalled):
+        return ""
+    why = ("page unchanged for 3 steps" if stalled
+           else f"same move repeated {max(rep['max_consecutive_repeat'], rep['loop_repeats'])}x")
+    if step_i >= _NUDGE_LADDER[2]:
+        return (f"NUDGE-FINAL({why}; only {remaining} steps left): you ARE "
+                "stuck. Abandon this approach NOW — take the most direct "
+                "different route (goto a target URL / extract what is already "
+                "on screen), or give_up honestly.")
+    if step_i >= _NUDGE_LADDER[1]:
+        return (f"NUDGE-STRONG({why}): this approach is not working. Switch "
+                "strategy THIS turn: a different element, press instead of "
+                "click, goto a seen href, or scroll to new content.")
+    return (f"NUDGE({why}): you may be looping — re-read ACTIONS SO FAR and "
+            "pick an action different from the repeated one.")
+
+
 @dataclass
 class Step:
     purpose: str          # search_box / submit_button / ...
@@ -529,6 +591,19 @@ class BrowserAgent:
                         detail=f"偵測到卡住({why}),自動切換視覺模式:"
                                "後續每步附 Set-of-Marks 截圖"))
                     _emit(f"🔍 切換視覺模式({why})")
+            # P0-1 in-loop stagnation: repetition_report + the page-hash
+            # counter now feed a MID-RUN nudge (tone escalating along the
+            # 5/8/12 ladder) or, on consecutive no-progress turns, a REPLAN
+            # prompt restating the route and remaining budget. Injected as a
+            # transient extra history entry so it lands in ACTIONS SO FAR
+            # without touching the planner signature.
+            nudge = stagnation_nudge([s for s in trace if s.step == "planner"],
+                                     page_hashes, history, step_i, max_steps,
+                                     plan_steps)
+            if nudge:
+                trace.append(StepTrace(step="stagnation", action="nudge", ok=True,
+                                       mode="agent", detail=nudge))
+                _emit(f"🧭 {nudge}")
             _emit("💭 看畫面、決定下一步…")
             # Vision channel: render a Set-of-Marks screenshot so a multimodal
             # model can SEE the page and ground a coordinate click. On when
@@ -540,7 +615,8 @@ class BrowserAgent:
                     image_path = str(somp)
             decision = planner.next_action(
                 contract.natural_language_task,
-                [f"{c.type}:{c.value}" for c in contract.success_conditions], obs, history,
+                [f"{c.type}:{c.value}" for c in contract.success_conditions], obs,
+                history + [nudge] if nudge else history,
                 plan_steps=plan_steps, image_path=image_path)
             if decision.llm is not None:
                 llm_cost += decision.llm.cost_usd

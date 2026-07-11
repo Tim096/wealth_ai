@@ -540,6 +540,115 @@ def test_done_on_last_step_is_not_rejected(tmp_path):
     assert actions == ["done"]
 
 
+def _ptrace(n, action="click", selector='[data-aid="3"]'):
+    # n identical planner moves — the raw material of a stuck loop
+    from browser_agent.agent import StepTrace
+    return [StepTrace(step="planner", action=action, ok=False, mode="agent",
+                      selector_used=selector) for _ in range(n)]
+
+
+def test_stagnation_nudge_replan_on_consecutive_failures():
+    # P0-1: three trailing no-progress turns (fail/noop/rejection) trigger a
+    # REPLAN prompt that restates the route and the remaining step budget.
+    from browser_agent.agent import stagnation_nudge
+
+    history = ["fill:ok", "noop(bad json)", "click:fail", "done_rejected(gap)"]
+    n = stagnation_nudge([], [], history, step_i=4, max_steps=10,
+                         plan_steps=["open EDGAR", "download the 10-K"])
+    assert n.startswith("REPLAN(")
+    assert "6 steps left" in n                      # remaining budget restated
+    assert "download the 10-K" in n                 # the route is restated too
+    # one success inside the window breaks the streak — no REPLAN
+    ok = stagnation_nudge([], [], ["click:fail", "click:ok", "noop(x)"], 4, 10)
+    assert not ok.startswith("REPLAN(")
+
+
+def test_stagnation_nudge_escalates_with_step_ladder():
+    # P0-1: the same detected loop nudges with an ESCALATING tone at the
+    # 5/8/12 rungs, and keeps quiet below the first rung.
+    from browser_agent.agent import stagnation_nudge
+
+    steps = _ptrace(4)                              # same move 4x -> loop_detected
+    hashes = [f"h{i}" for i in range(6)]            # page DID change: isolate the
+    history = ["click:fail", "click:ok"]            # repetition trigger, no REPLAN
+    assert stagnation_nudge(steps, hashes, history, 4, 20) == ""
+    assert stagnation_nudge(steps, hashes, history, 5, 20).startswith("NUDGE(")
+    assert stagnation_nudge(steps, hashes, history, 8, 20).startswith("NUDGE-STRONG(")
+    assert stagnation_nudge(steps, hashes, history, 12, 20).startswith("NUDGE-FINAL(")
+
+
+def test_stagnation_nudge_quiet_when_progressing():
+    # distinct moves + a changing page = healthy run, nothing is injected
+    from browser_agent.agent import StepTrace, stagnation_nudge
+
+    steps = [StepTrace(step="planner", action=a, ok=True, mode="agent",
+                       selector_used=f'[data-aid="{i}"]')
+             for i, a in enumerate(["goto", "fill", "click", "extract_text"])]
+    assert stagnation_nudge(steps, [f"h{i}" for i in range(5)],
+                            ["goto:ok", "fill:ok", "click:ok"], 6, 10) == ""
+
+
+def test_stagnation_nudge_fires_on_page_stagnation():
+    # the SECOND detector: distinct moves but a page fingerprint frozen for 3
+    # observations still counts as stuck (silent failures leave no :fail entry)
+    from browser_agent.agent import StepTrace, stagnation_nudge
+
+    steps = [StepTrace(step="planner", action=a, ok=True, mode="agent",
+                       selector_used=f'[data-aid="{i}"]')
+             for i, a in enumerate(["click", "fill", "press", "click"])]
+    n = stagnation_nudge(steps, ["h1", "h1", "h1", "h1"],
+                         ["click:ok", "fill:ok"], 5, 10)
+    assert n.startswith("NUDGE(") and "page unchanged" in n
+
+
+class _NoopLoopPlanner:
+    """Scripted planner that noops every turn AND records the history it was
+    shown — proves the nudge is injected into the planner's view mid-run."""
+    def __init__(self):
+        self.seen: list[list[str]] = []
+
+    def available(self):
+        return True
+
+    def next_action(self, task, success_conditions, obs, history,
+                    plan_steps=None, image_path=None):
+        from browser_agent.planner import PlannerDecision
+        self.seen.append(list(history))
+        return PlannerDecision(kind="noop", reason="stuck")
+
+
+@pytest.mark.integration
+def test_replan_nudge_reaches_the_planner(tmp_path):
+    # P0-1 wiring: after 3 no-progress turns the REPLAN prompt must appear as
+    # the LAST history entry the planner sees (transient — it does not pollute
+    # the permanent history), and the injection is recorded in the trace.
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from browser_agent.agent import BrowserAgent
+    from browser_agent.memory_store import MemoryStore
+
+    contract = BrowserTaskContract(
+        task_id="stuck", natural_language_task="find the secret page",
+        expected_outcome="secret visible",
+        success_conditions=[SuccessCondition(type="text_visible", value="NEVER_THERE_XYZ")])
+    planner = _NoopLoopPlanner()
+    with sync_playwright() as p:
+        b = p.chromium.launch(headless=True)
+        page = b.new_page()
+        page.set_content("<p>plain page</p>")
+        agent = BrowserAgent(page, MemoryStore(tmp_path / "m.json"), "live", "agentic")
+        run = agent.run_agentic("stuck", contract, planner, max_steps=5,
+                                plan_steps=["open the site", "read the secret"])
+        b.close()
+    # turn 3 is the first with 3 trailing noops in history -> REPLAN injected
+    assert planner.seen[3][-1].startswith("REPLAN(")
+    assert "read the secret" in planner.seen[3][-1]
+    # transient: the PERMANENT entries the planner saw are only noops
+    assert all(h.startswith("noop(") for h in planner.seen[3][:-1])
+    assert any(s.step == "stagnation" and s.action == "nudge" for s in run.steps)
+
+
 @pytest.mark.integration
 def test_agent_mode_loop_with_mock_planner(tmp_path):
     pytest.importorskip("playwright.sync_api")

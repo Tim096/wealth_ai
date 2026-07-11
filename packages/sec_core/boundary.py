@@ -9,15 +9,23 @@ from __future__ import annotations
 import re
 from array import array
 from dataclasses import dataclass, field, replace
+from difflib import SequenceMatcher
+from functools import lru_cache
 
 from eval_core import ConditionCheck, combine_checks
 from observability_core import sha256_text
 from sec_core.adjudicator import BoundaryEvidence
 from sec_core.confidence import OVERSHOOT_COMPONENT_MAX, ConfidenceBreakdown
 from sec_core.confidence import ConfidenceComponent as CC
-from sec_core.headings import VALID_CODES, HeadingCandidate, detect_candidates
+from sec_core.headings import (
+    _PAGE_NUMBER_RE,
+    _line_flag_ratio,
+    VALID_CODES,
+    HeadingCandidate,
+    detect_candidates,
+)
 from sec_core.items import CANONICAL_ITEM_TITLES, ItemSegment
-from sec_core.normalize import Line, NormalizedDocument
+from sec_core.normalize import FLAG_TOC_LINK, Line, NormalizedDocument
 from sec_core.refine import (
     classify_reference_stub,
     detect_appended_section_cut,
@@ -25,7 +33,17 @@ from sec_core.refine import (
     trim_trailing_furniture,
 )
 
-_SIGNATURES_RE = re.compile(r"^\s*signatures?\s*$", re.IGNORECASE | re.MULTILINE)
+# Terminal-item tail anchor: the SIGNATURES block heading, its letter-spaced
+# plain-text form, or the signature-page preamble sentence ("Pursuant to the
+# requirements of Section 13 or 15(d) ... duly caused this report to be
+# signed"). The cover page's "ANNUAL REPORT PURSUANT TO SECTION 13 OR 15(d)"
+# does NOT contain "the requirements of", so it never matches.
+_SIGNATURES_RE = re.compile(
+    r"^\s*signatures?\s*$"
+    r"|^\s*s\s+i\s+g\s+n\s+a\s+t\s+u\s+r\s+e\s+s?\s*$"
+    r"|^\s*pursuant\s+to\s+the\s+requirements\s+of\s+section\s+13\s+or\s+15\s*\(\s*d\s*\)",
+    re.IGNORECASE | re.MULTILINE,
+)
 _RESERVED_RE = re.compile(r"\breserved\b", re.IGNORECASE)
 
 AMBIGUITY_MARGIN = 0.85  # runner-up score / winner score above this => ambiguous
@@ -261,6 +279,117 @@ def find_contained_later_heading(
     return min(hits, key=lambda c: c.start) if hits else None
 
 
+# --- end-boundary rescan (NTU boundary-bleed EXTRACTION fix) -----------------
+# The overshoot guard above only caps confidence; the resolver's end offset was
+# still "start of the next DETECTED item", so one missed intermediate heading
+# made a span run through the next item's whole body. The rescan moves the fix
+# into extraction: before a span is emitted, its own body is rescanned for the
+# heading of a later EXPECTED item (known 10-K order, e.g. 9A->9B->10, 5->6,
+# 14->15) and the end is cut there. The cut can only SHORTEN a span — the
+# current item's own content is never dropped (recall stays 1.0), and the
+# trimmed tail is not lost: it falls to the next item or an unclassified gap
+# (coverage.partition_document tiles the whole document either way).
+
+# Pre-2011 item titles still common in the supported era's filings — the
+# canonical (post-2021) titles alone would miss these headings in the rescan.
+LEGACY_ITEM_TITLES: dict[str, tuple[str, ...]] = {
+    "4": ("Submission of Matters to a Vote of Security Holders",),
+    "6": ("Selected Financial Data",),
+    "10": ("Directors and Executive Officers of the Registrant",),
+    "14": ("Principal Accounting Fees and Services",),
+}
+
+# Looser line-anchored heading shape for the rescan: optional 'Item' prefix,
+# the item code (optional '(T)' transitional suffix), optional separator, then
+# the title text. Lines WITHOUT the 'Item' word (e.g. '9B. OTHER INFORMATION')
+# are exactly the ones detect_candidates cannot see.
+_RESCAN_LINE_RE = re.compile(
+    r"^\s*(?:item[\s.]+)?(\d{1,2})\s*([a-cA-C])?(?:\(t\))?\s*[.:\-–—]?\s*(.*)$",
+    re.IGNORECASE,
+)
+
+
+@lru_cache(maxsize=None)
+def _title_fragment_re(code: str) -> re.Pattern[str]:
+    """Match the first words of any known title variant for `code` — the
+    fragment gate that keeps the loose line shape from cutting at numbered
+    lists / dates / prose ('12,345 units', '10 May 2013')."""
+    frags = []
+    for title in (CANONICAL_ITEM_TITLES[code], *LEGACY_ITEM_TITLES.get(code, ())):
+        words = re.findall(r"[A-Za-z]+", title)[:2]
+        if words:
+            frags.append(r"[\W_]+".join(re.escape(w) for w in words))
+    return re.compile(r"(?:" + "|".join(frags) + r")\b", re.IGNORECASE)
+
+
+def _rescan_title_ok(code: str, rest: str) -> bool:
+    """Tier-2 title gate: the text after the code must BE the item's title
+    (canonical or legacy), not merely start with it — a numbered list line
+    like '3. Legal Proceedings are described in Note 12.' must never cut."""
+    rest = rest.strip().rstrip(".:").strip()
+    if not rest or not _title_fragment_re(code).match(rest):
+        return False
+    variants = (CANONICAL_ITEM_TITLES[code], *LEGACY_ITEM_TITLES.get(code, ()))
+    return any(
+        SequenceMatcher(None, v.casefold(), rest.casefold()).ratio() >= 0.6
+        for v in variants
+    )
+
+
+def _rescan_end_cut(
+    doc: NormalizedDocument,
+    candidates: list[HeadingCandidate],
+    code: str,
+    chosen: HeadingCandidate,
+    end: int,
+) -> tuple[int, str] | None:
+    """Scoped next-item rescan: earliest later-item heading inside the span
+    body. Two tiers, both line-anchored and both able only to shorten:
+
+    1. detected candidates — the earliest plausible later-item heading the
+       document-level detectors already produced (same predicate as the
+       overshoot guard: strict regex + emphasis/layout, never TOC-shaped);
+    2. looser text scan — a line the detectors could not see (no 'Item' word),
+       gated on the item code AND a canonical/legacy title fragment.
+
+    Returns (cut_offset, description) or None. TOC-link lines, trailing-page-
+    number lines and lines that already have a candidate (tier 1's
+    jurisdiction, with its plausibility rules) are never tier-2 cuts.
+    """
+    floor = max(chosen.start + OVERSHOOT_HEAD_MARGIN, chosen.end + 1)
+    best: tuple[int, str] | None = None
+
+    hit = find_contained_later_heading(code, candidates, chosen.start, end)
+    if hit is not None and hit.start >= floor:
+        best = (hit.start,
+                f"detected item {hit.code} heading {hit.heading_text[:60]!r}")
+
+    idx = VALID_CODES.index(code)
+    later = set(VALID_CODES[idx + 1:])
+    candidate_starts = {c.start for c in candidates}
+    hi = best[0] if best else end
+    for line in doc.lines:
+        if line.start < floor:
+            continue
+        if line.start >= hi:
+            break
+        txt = line.text.strip()
+        if not txt or len(txt) > 120 or line.start in candidate_starts:
+            continue
+        m = _RESCAN_LINE_RE.match(txt)
+        if not m:
+            continue
+        code2 = m.group(1) + (m.group(2) or "").upper()
+        if code2 not in later or not _rescan_title_ok(code2, m.group(3)):
+            continue
+        if _PAGE_NUMBER_RE.search(txt):
+            continue  # TOC/index stub line, not a body heading
+        if _line_flag_ratio(doc, line.start, line.end, FLAG_TOC_LINK) >= 0.5:
+            continue  # anchor-link line (mini index inside the body)
+        return (line.start, f"inferred item {code2} heading {txt[:60]!r}")
+    return best
+
+
 def _span_doc(text: str) -> NormalizedDocument:
     """Wrap already-normalized span text (identity offsets, no DOM flags) so
     the line-based heading detectors can run on a span's own text."""
@@ -348,6 +477,7 @@ def resolve_items(doc: NormalizedDocument, candidates: list[HeadingCandidate],
     terminal_code = chosen_items[-1][0] if chosen_items else None
     ends: dict[str, int] = {}
     appended_excluded: dict[str, tuple[int, int]] = {}  # code -> (cut_end, raw_end)
+    rescan_cut: dict[str, tuple[int, int, str]] = {}  # code -> (cut, raw_end, what)
     for code, r in chosen_items:
         assert r.chosen is not None
         later = [s for s in all_starts if s > r.chosen.start]
@@ -361,6 +491,14 @@ def resolve_items(doc: NormalizedDocument, candidates: list[HeadingCandidate],
             if cut is not None:
                 appended_excluded[code] = (cut, raw_end)
                 raw_end = cut
+        # Scoped next-item rescan (end-boundary bleed fix): a later expected
+        # item's heading inside this span means the resolver's end came from
+        # the wrong (too-late) anchor — cut at the intermediate heading. Can
+        # only shorten; the trimmed tail lands in the next item / a gap.
+        rescanned = _rescan_end_cut(doc, candidates, code, r.chosen, raw_end)
+        if rescanned is not None and rescanned[0] < raw_end:
+            rescan_cut[code] = (rescanned[0], raw_end, rescanned[1])
+            raw_end = rescanned[0]
         ends[code] = raw_end
 
     segments: list[ItemSegment] = []
@@ -395,6 +533,13 @@ def resolve_items(doc: NormalizedDocument, candidates: list[HeadingCandidate],
                 f"excluded {raw - cut} chars of an appended non-item section (bound financial "
                 f"statements / annual report) that followed this item's body; items that point "
                 f"into it are marked incorporated_by_reference"
+            )
+        if code in rescan_cut:
+            cut, raw, what = rescan_cut[code]
+            warnings.append(
+                f"end rescan: span cut at {what} (offset {cut}, was {raw}) — the raw end "
+                f"overshot a later item's heading; the trimmed tail is not dropped, it "
+                f"belongs to the following item(s) or the unclassified-gap view"
             )
 
         # body = text after the heading line — what we classify

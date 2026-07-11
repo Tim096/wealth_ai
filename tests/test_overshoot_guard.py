@@ -76,17 +76,29 @@ def _overshoot_result():
 
 
 class TestContainmentOvershoot:
-    def test_swallowing_span_is_flagged_with_the_contained_code(self):
+    def test_end_rescan_now_cuts_the_swallowing_span_at_the_contained_heading(self):
+        # extraction end-boundary fix: the resolver itself rescans the span
+        # body and CUTS at the contained 7A heading — the guard has nothing
+        # left to flag on the pipeline path (it stays as a safety net below)
         result = _overshoot_result()
         seg = result.segment("6")
-        assert seg.status == "pass"  # start was right — status stays honest
+        cand_7a = min(c.start for c in result.candidates if c.code == "7A")
+        assert seg.end_offset <= cand_7a
+        assert any("end rescan: span cut at" in w for w in seg.warnings)
+
+    def test_guard_still_flags_a_span_that_reaches_it_overshooting(self):
+        # safety net: if a swallowing span ever reaches the guard (any future
+        # path that bypasses the resolver's rescan), it is still flagged
+        result = _overshoot_result()
+        seg = result.segment("6")
+        seg.end_offset = result.segment("8").start_offset  # re-extend past 7A
+        seg.needs_review = False
+        seg.warnings.clear()
+        assert apply_overshoot_guard(result.segments, result.confidence,
+                                     result.candidates) >= 1
         assert seg.needs_review is True
         assert any("overshoot: contains later item heading 7A" in w
                    for w in seg.warnings)
-
-    def test_confidence_is_capped_below_review_line(self):
-        result = _overshoot_result()
-        seg = result.segment("6")
         bd = result.confidence["6"]
         comp = next(c for c in bd.components
                     if c.name == OVERSHOOT_CONTAINMENT_COMPONENT)

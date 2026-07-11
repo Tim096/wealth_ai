@@ -29,6 +29,15 @@ wall-clock watchdog in the parent terminates hung workers (the process-level
 carrier P0-9 deferred), and results.json gains a `scalability` block: the
 multi-session cost model (concurrency x per-session cold-start/busy/
 utilization, throughput, speedup vs the serial estimate).
+
+P0-8 advisory second judge: `--second-judge` (single-pass sequential run only)
+re-judges every finished task with per-condition binary micro-judgments
+(browser_agent/second_judge.py — LLM extractor when OPENAI_API_KEY is set,
+offline deterministic fallback otherwise), diffs them per condition against the
+primary verifier's scan of the SAME pre-cached snapshot, and writes the
+adjudication artifact runs/browser_eval/second_judge.json (disagreement →
+needs_review, the SEC triangulate.py pattern). Advisory only: the runtime
+verifier stays the sole judge; verdicts and metrics are untouched.
 """
 
 from __future__ import annotations
@@ -43,6 +52,12 @@ from playwright.sync_api import sync_playwright
 from browser_core import BrowserTaskContract, ForbiddenCondition, SuccessCondition
 from browser_agent.agent import BrowserAgent, Step
 from browser_agent.memory_store import MemoryStore
+from browser_agent.observer import PageObserver
+from browser_agent.second_judge import (
+    LLMExtractor, OfflineExtractor, SecondJudgeSmokeError, cache_evidence,
+    diff_with_primary, judge_open_ended, judge_task, load_evidence, smoke_test,
+)
+from browser_agent.verifier import check_conditions
 from observability_core import EvidenceStore
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -100,8 +115,45 @@ def _error_row(task: dict, summary: dict) -> dict:
             "harness_error": summary["error"]}
 
 
+def second_judge_task(page, contract, task_id: str, extractor) -> dict:
+    """P0-8: advisory second judgment of one FINISHED task. The final page
+    snapshot is pre-cached to runs/browser_eval/<task_id>/second_judge_evidence
+    .json and the judge rules strictly from that cache (replayable, auditable).
+    Per-condition diff runs against the primary verifier's check_conditions on
+    the SAME snapshot — apples to apples. Never touches the verdict."""
+    obs = PageObserver(page).observe()
+    ev_path = OUT / task_id / "second_judge_evidence.json"
+    cache_evidence(obs.url, obs.visible_text, ev_path)
+    ev = load_evidence(ev_path)              # judged from the cache, not the page
+    record: dict = {"task_id": task_id, "evidence_path": str(ev_path),
+                    "evidence_sha256": ev["sha256"]}
+    try:
+        # stub-pass smoke test first: a broken pipeline must not emit judgments
+        smoke_test(contract.success_conditions, ev)
+        record["smoke_ok"] = True
+    except SecondJudgeSmokeError as e:
+        record["smoke_ok"] = False
+        record["error"] = str(e)
+        return record
+    if not contract.success_conditions:
+        # open-ended unknown bucket: attach the advisory score channel
+        oj = judge_open_ended(contract.natural_language_task,
+                              contract.expected_outcome, ev, extractor)
+        record["open_ended"] = {**oj["judgment"].as_dict(), "score": oj["score"]}
+        return record
+    result = judge_task(contract.success_conditions, ev, extractor)
+    diff = diff_with_primary(result["judgments"], check_conditions(contract, obs))
+    record.update({
+        "aggregate": result["aggregate"],
+        "conditions": diff,
+        "disagreements": [d["condition"] for d in diff if d["agree"] is False],
+        "llm_cost_usd": round(sum(j.cost_usd for j in result["judgments"]), 6),
+    })
+    return record
+
+
 def run_script_pass(page, tasks: list[dict], mem_path: Path, evidence=None,
-                    resume: bool = False) -> list[dict]:
+                    resume: bool = False, judge_ctx: dict | None = None) -> list[dict]:
     """One full Script-Mode pass over the task set with FRESH selector memory.
     Clearing memory per pass makes each pass an independent, reproducible sample
     (memory accumulation would make repair counts drift across passes).
@@ -109,7 +161,13 @@ def run_script_pass(page, tasks: list[dict], mem_path: Path, evidence=None,
     P0-9: every task runs under the harness guard (per-task summary.json via
     try/finally + Playwright-level watchdog); a crashing task yields an error
     row instead of killing the pass, and >30% harness errors raise HarnessAbort
-    with the partial rows. resume=True masks tasks a prior launch finished."""
+    with the partial rows. resume=True masks tasks a prior launch finished.
+
+    P0-8: judge_ctx = {'extractor': ..., 'records': []} arms the advisory
+    second judge — each finished task is re-judged from its cached final
+    snapshot and the adjudication record appended to judge_ctx['records'].
+    A judge crash is recorded, never a harness error (the verdict already
+    exists); resumed tasks are not re-judged (their page state is gone)."""
     if mem_path.exists():
         mem_path.unlink()
     mem = MemoryStore(mem_path)
@@ -131,7 +189,20 @@ def run_script_pass(page, tasks: list[dict], mem_path: Path, evidence=None,
             agent = BrowserAgent(page, mem, site="mockshop", task_type="search",
                                  artifact_dir=OUT / task["task_id"], evidence_store=evidence)
             steps, contract = build(task)
-            return _row(agent.run(task["task_id"], steps, contract), task)
+            row = _row(agent.run(task["task_id"], steps, contract), task)
+            if judge_ctx is not None:
+                try:
+                    rec = second_judge_task(page, contract, task["task_id"],
+                                            judge_ctx["extractor"])
+                except Exception as e:  # noqa: BLE001 — advisory judge never fails the task
+                    rec = {"task_id": task["task_id"],
+                           "error": f"{type(e).__name__}: {e}"}
+                judge_ctx["records"].append(rec)
+                row["second_judge"] = {
+                    "verdict": rec.get("aggregate", {}).get("verdict"),
+                    "score": rec.get("aggregate", {}).get("score"),
+                    "disagreements": len(rec.get("disagreements", []))}
+            return row
 
         summary = run_guarded(task["task_id"], _one, out_root=OUT)
         n_attempted += 1
@@ -225,6 +296,29 @@ def run_parallel_pass(tasks: list[dict], workers: int, resume: bool = False):
     return rows, session_cost_model(pool_stats, n_done)
 
 
+def adjudication_summary(records: list[dict]) -> dict:
+    """P0-8 adjudication rollup over the per-task judge records. Leaf-level
+    (per-condition) accounting, Mind2Web 2's N-of-M style — not task-level
+    agreement: agree/disagree counted over conditions where a comparison was
+    possible; a disagreement flags its task needs_review (triangulate.py
+    disagree pattern). Pure function — unit-testable without a browser."""
+    diffs = [d for r in records for d in r.get("conditions", [])]
+    compared = [d for d in diffs if d["agree"] is not None]
+    n_agree = sum(d["agree"] for d in compared)
+    return {
+        "tasks_judged": len(records),
+        "conditions_judged": len(diffs),
+        "compared": len(compared),
+        "agree": n_agree,
+        "disagree": len(compared) - n_agree,
+        "abstain": sum(d["second"] == "abstain" for d in diffs),
+        "condition_agreement_rate": round(n_agree / len(compared), 3) if compared else None,
+        "tasks_needing_review": [r["task_id"] for r in records if r.get("disagreements")],
+        "judge_errors": [r["task_id"] for r in records if r.get("error")],
+        "llm_cost_usd": round(sum(r.get("llm_cost_usd", 0.0) for r in records), 6),
+    }
+
+
 def compute_metrics(rows: list[dict]) -> dict:
     """Single-pass VERDICT metrics — computed over harness-done rows ONLY;
     error/incomplete rows are reported in the separate harness block (P0-9).
@@ -301,8 +395,16 @@ def aggregate_passk(rows_by_task: dict, k: int) -> dict:
 
 
 def main(repeat: int = 1, agentic: bool = False, resume: bool = False,
-         workers: int = 1) -> None:
+         workers: int = 1, second_judge: bool = False) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
+    judge_ctx = None
+    if second_judge:
+        # LLM extractor iff a key is configured (never ask for one); otherwise
+        # the offline deterministic fallback keeps the pipeline demonstrable.
+        from llm_core.openai_client import OpenAIClient
+        client = OpenAIClient()
+        extractor = LLMExtractor(client) if client.available() else OfflineExtractor()
+        judge_ctx = {"extractor": extractor, "records": []}
     spec = json.loads(TASKS.read_text(encoding="utf-8"))
     tasks = spec["tasks"]
     # Agent Mode subset: the solvable (expected-pass) tasks, capped, so the
@@ -337,7 +439,8 @@ def main(repeat: int = 1, agentic: bool = False, resume: bool = False,
                 ev = evidence if rep == 0 else None
                 try:
                     script_passes.append(run_script_pass(
-                        page, tasks, OUT / "selector_memory.json", ev, resume=resume))
+                        page, tasks, OUT / "selector_memory.json", ev, resume=resume,
+                        judge_ctx=judge_ctx if rep == 0 else None))
                     if agentic:
                         agentic_passes.append(run_agentic_pass(
                             page, agentic_subset, OUT / "selector_memory_agentic.json"))
@@ -359,6 +462,20 @@ def main(repeat: int = 1, agentic: bool = False, resume: bool = False,
     payload = {"metrics": metrics, "harness": harness, "tasks": rows0}
     if scalability:
         payload["scalability"] = scalability   # P0-11 multi-session cost model
+    adjudication = None
+    if judge_ctx is not None:
+        # P0-8 adjudication artifact: advisory only — verdicts above are untouched
+        adjudication = {
+            "note": "advisory second judge (P0-8): the runtime verifier stays the "
+                    "sole judge; a per-condition disagreement flags needs_review "
+                    "for human adjudication, it never changes a verdict",
+            "judge_source": judge_ctx["extractor"].source,
+            "summary": adjudication_summary(judge_ctx["records"]),
+            "tasks": judge_ctx["records"],
+        }
+        payload["second_judge"] = adjudication["summary"]
+        (OUT / "second_judge.json").write_text(
+            json.dumps(adjudication, indent=2, ensure_ascii=False), encoding="utf-8")
     (OUT / "results.json").write_text(
         json.dumps(payload, indent=2), encoding="utf-8")
 
@@ -374,6 +491,12 @@ def main(repeat: int = 1, agentic: bool = False, resume: bool = False,
               f"wall={scalability['wall_clock_s']}s "
               f"speedup~{scalability['speedup_vs_serial_estimate']}x "
               f"(vs serial estimate {scalability['serial_estimate_s']}s)")
+    if adjudication:
+        s = adjudication["summary"]
+        print(f"  second judge ({adjudication['judge_source']}): "
+              f"conditions={s['conditions_judged']} agree={s['agree']} "
+              f"disagree={s['disagree']} abstain={s['abstain']} "
+              f"needs_review={s['tasks_needing_review'] or 'none'}")
     print()
     for r in rows0:
         if r.get("harness_status", "done") != "done":
@@ -383,6 +506,8 @@ def main(repeat: int = 1, agentic: bool = False, resume: bool = False,
         print(f"  {mark}{r['task_id']:<28} status={r['status']:<8} expected={r['expected']:<8} "
               f"repairs={r['repairs']} fp={r['false_positive']}")
     print(f"\nwrote {OUT / 'results.json'}")
+    if adjudication:
+        print(f"wrote {OUT / 'second_judge.json'}")
 
     if aborted:
         # partial results are persisted above; the committed pass@k artifact
@@ -432,6 +557,10 @@ if __name__ == "__main__":
     ap.add_argument("--workers", type=int, default=1,
                     help="P0-11: run the task set on N parallel subprocess workers, "
                          "each with its own persistent browser session")
+    ap.add_argument("--second-judge", action="store_true",
+                    help="P0-8: advisory second judge — per-condition micro-judgments "
+                         "diffed against the primary verifier; writes "
+                         "runs/browser_eval/second_judge.json (verdicts untouched)")
     args = ap.parse_args()
     if args.repeat < 1:
         ap.error("--repeat must be >= 1")
@@ -441,4 +570,7 @@ if __name__ == "__main__":
         ap.error("--workers must be >= 1")
     if args.workers > 1 and (args.repeat != 1 or args.agentic):
         ap.error("--workers applies to the single-pass Script-Mode run only")
-    main(repeat=args.repeat, agentic=args.agentic, resume=args.resume, workers=args.workers)
+    if args.second_judge and (args.repeat != 1 or args.agentic or args.workers > 1):
+        ap.error("--second-judge applies to the single-pass sequential Script-Mode run only")
+    main(repeat=args.repeat, agentic=args.agentic, resume=args.resume,
+         workers=args.workers, second_judge=args.second_judge)

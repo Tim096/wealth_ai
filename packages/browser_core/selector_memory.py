@@ -26,6 +26,11 @@ class SelectorVersion(BaseModel):
     success_count: int = 0
     fail_count: int = 0
     last_dom_fingerprint: str = ""
+    # P0-7 structural identity (BU cascading locator / SK cleaned-JSON SHA256
+    # rebind): hashes of the element this selector bound to when it last
+    # WORKED, so drift can be repaired by deterministic hash match first.
+    element_hash: str = ""          # EXACT level — full cleaned structural fields
+    element_hash_stable: str = ""   # STABLE level — drift-tolerant subset
 
 
 class RepairEvent(BaseModel):

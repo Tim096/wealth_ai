@@ -23,8 +23,10 @@ from browser_agent.capability import screen_action, screen_task
 from browser_agent.executor import ActionExecutor, ActionOutcome
 from browser_agent.marks import set_of_marks
 from browser_agent.memory_store import MemoryStore
-from browser_agent.observer import PageObserver, diff_observations
-from browser_agent.repair import diagnose_failure, repair_target
+from browser_agent.observer import (
+    _ELEMENT_FIELDS_JS, PageObserver, diff_observations, structural_hashes,
+)
+from browser_agent.repair import diagnose_failure, rebind_by_hash, repair_target
 from browser_agent.trajectory import repetition_report
 from browser_agent.verifier import check_conditions, subtract_baseline, verify_contract
 from observability_core import EvidenceRecord, EvidenceStore, VerifierResult, sha256_text
@@ -213,6 +215,9 @@ class StepTrace:
     selector_used: str = ""
     latency_ms: float = 0.0
     screenshot: str = ""
+    # P0-7 MatchLevel telemetry: which cascade level resolved this step's
+    # target — script / exact / stable / purpose / none ('' = not a resolution)
+    match_level: str = ""
     # P0-5 per-step obs persistence (SK action-history evidence / SG post-step
     # probe): the observation each planner decision was made against, kept in
     # the trace instead of being consumed and dropped — the per-step evidence
@@ -251,6 +256,13 @@ class TaskRun:
     side_effects: dict[str, Any] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:
+        # P0-7 MatchLevel hit rates: how each step's target was resolved,
+        # counted per cascade level — the telemetry that shows whether drift
+        # is being absorbed deterministically (hash) or expensively (purpose).
+        match_levels: dict[str, int] = {}
+        for s in self.steps:
+            if s.match_level:
+                match_levels[s.match_level] = match_levels.get(s.match_level, 0) + 1
         return {
             "task_id": self.task_id, "site": self.site, "status": self.status,
             "confidence": round(self.confidence, 3),
@@ -262,6 +274,7 @@ class TaskRun:
             # T1-4 repetitiveness: derived purely from the recorded steps, so it is
             # computed here (observation only, never influences agent behaviour).
             "repetition": repetition_report(self.steps),
+            "match_levels": match_levels,
             "side_effects": self.side_effects,
             "verifier": {
                 "status": self.verifier.status, "reason": self.verifier.reason,
@@ -273,6 +286,7 @@ class TaskRun:
                  "detail": s.detail, "diagnosis": s.diagnosis,
                  "repair_considered": s.repair_considered, "repair_chosen": s.repair_chosen,
                  "selector_used": s.selector_used, "latency_ms": round(s.latency_ms, 1),
+                 "match_level": s.match_level,
                  "screenshot": s.screenshot, "obs_hash": s.obs_hash,
                  "obs_excerpt": s.obs_excerpt, "obs_candidates": s.obs_candidates}
                 for s in self.steps
@@ -417,6 +431,16 @@ class BrowserAgent:
         except Exception:  # noqa: BLE001
             pass
 
+    def _element_hashes(self, selector: str) -> tuple[str, str]:
+        """P0-7: (exact, stable) structural hashes of the FIRST element the
+        selector currently binds to — computed from the live DOM so a working
+        selector's identity can be remembered. ('', '') when unresolvable."""
+        try:
+            fields = self.page.evaluate(_ELEMENT_FIELDS_JS, selector)
+        except Exception:  # noqa: BLE001 — non-Playwright fakes / dead page
+            return "", ""
+        return structural_hashes(fields) if fields else ("", "")
+
     def _resolve_and_run(self, step: Step, trace: list[StepTrace]) -> ActionOutcome:
         # Script Mode: try the remembered / fallback selector first
         remembered = self.memory.preferred(self.site, self.task_type, step.purpose)
@@ -434,12 +458,16 @@ class BrowserAgent:
         out = self.executor.execute(action)
 
         if out.ok:
+            # P0-7: hash the element the working selector bound to, so its
+            # identity is remembered and drift can be rebound deterministically
+            hx, hs = self._element_hashes(selector)
             self.memory.record(self.site, self.task_type, step.purpose, selector,
                                self._now(), success=True,
-                               dom_fingerprint=sha256_text(self.page.content())[:16])
+                               dom_fingerprint=sha256_text(self.page.content())[:16],
+                               element_hash=hx, element_hash_stable=hs)
             trace.append(StepTrace(step=step.purpose, action=step.kind, ok=True, mode="script",
                                    detail=out.detail, selector_used=selector,
-                                   latency_ms=out.latency_ms,
+                                   latency_ms=out.latency_ms, match_level="script",
                                    screenshot=self._screenshot(f"{step.purpose}-ok")))
             return out
 
@@ -481,13 +509,51 @@ class BrowserAgent:
                                    selector_used=selector, latency_ms=out_retry.latency_ms,
                                    screenshot=self._screenshot(f"{step.purpose}-waited")))
             return out_retry
-        # selector_not_found / multiple_candidates / wrong_page -> a11y-tree search
+        # selector_not_found / multiple_candidates / wrong_page: P0-7 hash-match
+        # fast path FIRST (BU cascading locator / SK cleaned-JSON SHA256
+        # rebind) — the remembered element's structural hash against the
+        # current candidates; exactly one EXACT (then STABLE) hit rebinds
+        # deterministically, 0 or >1 falls back to purpose scoring below.
+        known_exact, known_stable = self.memory.hashes(self.site, self.task_type, step.purpose)
+        cand, level = rebind_by_hash(known_exact, known_stable, obs)
+        if cand is not None:
+            action_hb = self._build_action(step, ElementTarget(
+                selector=cand.aid_selector(), selector_type="css",
+                description=f"hash-rebound {step.purpose}"))
+            out_hb = self.executor.execute(action_hb)
+            if out_hb.ok:
+                durable = cand.css()
+                hx, hs = structural_hashes(cand)
+                repair = RepairEvent(
+                    timestamp=self._now(), failed_selector=selector,
+                    failure_type=diag.failure_type, candidates_considered=[],
+                    chosen_selector=durable,
+                    choice_reason=f"hash-{level} rebind: exactly one structural match",
+                    verified=True, evidence_run_id="")
+                self.memory.record(self.site, self.task_type, step.purpose, durable,
+                                   self._now(), success=True,
+                                   dom_fingerprint=sha256_text(self.page.content())[:16],
+                                   repair=repair, element_hash=hx, element_hash_stable=hs)
+                trace.append(StepTrace(step=step.purpose, action=step.kind, ok=True, mode="repair",
+                                       diagnosis=diag.failure_type,
+                                       detail=f"hash-{level} rebind (deterministic, no scoring)",
+                                       repair_chosen=repair.choice_reason,
+                                       selector_used=durable, match_level=level,
+                                       latency_ms=out_hb.latency_ms,
+                                       screenshot=self._screenshot(f"{step.purpose}-hash-rebound")))
+                return out_hb
+            # the rebound element did not act — recorded, then purpose scoring
+            trace.append(StepTrace(step=step.purpose, action=step.kind, ok=False, mode="repair",
+                                   diagnosis=diag.failure_type, match_level=level,
+                                   detail=f"hash-{level} rebind matched but the action failed"
+                                          " -> purpose scoring"))
+        # a11y-tree purpose scoring (the cascade's last functional level)
         rr = repair_target(step.purpose, obs, want_value=step.value)
         considered = rr.considered
         if not rr.ok or rr.new_target is None:
             trace.append(StepTrace(step=step.purpose, action=step.kind, ok=False, mode="repair",
                                    diagnosis=diag.failure_type, detail="no viable candidate",
-                                   repair_considered=considered,
+                                   repair_considered=considered, match_level="none",
                                    screenshot=self._screenshot(f"{step.purpose}-repair-fail")))
             return out
         # small-step verify: act on the EXACT element (data-aid), remember the
@@ -500,13 +566,18 @@ class BrowserAgent:
             candidates_considered=considered, chosen_selector=durable,
             choice_reason=rr.chosen_reason, verified=out2.ok, evidence_run_id="",
         )
+        # P0-7: a verified purpose repair also banks the element's identity,
+        # so the NEXT drift can take the deterministic hash path
+        hx, hs = self._element_hashes(rr.new_target.selector) if out2.ok else ("", "")
         self.memory.record(self.site, self.task_type, step.purpose, durable,
                            self._now(), success=out2.ok,
-                           dom_fingerprint=sha256_text(self.page.content())[:16], repair=repair)
+                           dom_fingerprint=sha256_text(self.page.content())[:16], repair=repair,
+                           element_hash=hx, element_hash_stable=hs)
         trace.append(StepTrace(step=step.purpose, action=step.kind, ok=out2.ok, mode="repair",
                                diagnosis=diag.failure_type, detail=diag.detail,
                                repair_considered=considered, repair_chosen=rr.chosen_reason,
                                selector_used=durable, latency_ms=out2.latency_ms,
+                               match_level="purpose",
                                screenshot=self._screenshot(f"{step.purpose}-repaired")))
         return out2
 

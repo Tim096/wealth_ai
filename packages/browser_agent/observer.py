@@ -5,6 +5,8 @@ attributes — the raw material selector repair searches over.
 
 from __future__ import annotations
 
+import hashlib
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -48,12 +50,86 @@ _ENUMERATE_JS = r"""
       // selection state for a choice control, so the planner knows which option
       // is ALREADY chosen and does not click it again (that would unselect it)
       checked: el.getAttribute('aria-checked') || (el.checked === true ? 'true' : ''),
+      // P0-7 structural-identity raw material: class list + a short ancestor
+      // tag chain, so the element can be hashed and re-found after drift
+      classes: el.getAttribute('class') || '',
+      parent_path: (function () { const p = []; let n = el.parentElement;
+        for (let k = 0; k < 3 && n && n !== document.body; k++) {
+          p.unshift(n.tagName.toLowerCase()); n = n.parentElement; }
+        return p.join('>'); })(),
       visible: visible,
       x: Math.round(r.x), y: Math.round(r.y)
     };
   });
 }
 """
+
+# P0-7: extract ONE element's structural fields (same shape _ENUMERATE_JS
+# emits) so a selector that just WORKED can be hashed into selector memory.
+_ELEMENT_FIELDS_JS = r"""
+(sel) => {
+  let el = null;
+  try { el = document.querySelector(sel); } catch (e) { return null; }
+  if (!el) return null;
+  const p = []; let n = el.parentElement;
+  for (let k = 0; k < 3 && n && n !== document.body; k++) {
+    p.unshift(n.tagName.toLowerCase()); n = n.parentElement; }
+  return {
+    tag: el.tagName.toLowerCase(), type: el.getAttribute('type') || '',
+    id: el.id || '', name: el.getAttribute('name') || '',
+    role: el.getAttribute('role') || '', aria_label: el.getAttribute('aria-label') || '',
+    placeholder: el.getAttribute('placeholder') || '',
+    text: (el.textContent || '').trim().slice(0, 80),
+    href: el.getAttribute('href') || '',
+    classes: el.getAttribute('class') || '',
+    parent_path: p.join('>')
+  };
+}
+"""
+
+# P0-7 (BU 5-level cascading locator / SK cleaned-JSON SHA256 rebind):
+# transient CSS classes that churn between renders — state flags, CSS-in-JS /
+# framework-generated names, hashy or numbered suffixes. Filtered out before
+# hashing so a cosmetic re-render does not break the EXACT identity.
+DYNAMIC_CLASS_PATTERNS = (
+    re.compile(r"^(is-|has-)"),                              # state prefixes
+    re.compile(r"^(active|hover|focus|focused|selected|open|opened|show|shown"
+               r"|hidden|collapsed|expanded|disabled|checked|loading|animating"
+               r"|animated|visible|current|highlight|highlighted)$", re.I),
+    re.compile(r"^(css|jss|jsx|sc|svelte|ng|emotion|chakra|mui)-", re.I),
+    re.compile(r"\d{3,}"),                                   # ember123, uid-45821
+    re.compile(r"[0-9a-f]{6,}", re.I),                       # content-hash suffixes
+)
+
+# field sets for the two identity levels; position is in NEITHER (layout drift
+# must not change identity) and neither is `checked` (selection is transient)
+_EXACT_FIELDS = ("tag", "type", "id", "name", "role", "aria_label",
+                 "placeholder", "text", "href", "parent_path")
+_STABLE_FIELDS = ("tag", "type", "name", "role", "aria_label",
+                  "placeholder", "parent_path")
+
+
+def _clean_classes(raw: str) -> str:
+    kept = [c for c in (raw or "").split()
+            if not any(p.search(c) for p in DYNAMIC_CLASS_PATTERNS)]
+    return " ".join(sorted(kept))
+
+
+def structural_hashes(el: Any) -> tuple[str, str]:
+    """P0-7 per-element cleaned structural hash, two levels of the rebind
+    cascade. EXACT covers every structural field plus the cleaned class list;
+    STABLE keeps only the drift-tolerant subset (no id / text / href /
+    classes), so it survives an id rename or a copy change. Accepts an
+    ElementCandidate or the raw field dict the JS emits."""
+    if isinstance(el, dict):
+        get = lambda k: str(el.get(k, "") or "")            # noqa: E731
+    else:
+        get = lambda k: str(getattr(el, k, "") or "")       # noqa: E731
+    exact = "|".join(get(f) for f in _EXACT_FIELDS) + "|" + _clean_classes(get("classes"))
+    stable = "|".join(get(f) for f in _STABLE_FIELDS)
+    def h(s: str) -> str:
+        return hashlib.sha256(s.encode("utf-8")).hexdigest()[:16]
+    return h(exact), h(stable)
 
 
 @dataclass
@@ -74,6 +150,8 @@ class ElementCandidate:
     checked: str = ""       # aria-checked / .checked for radio/checkbox options
     form: str = ""          # enclosing form id / index ('' = outside any form)
     is_new: bool = False    # P0-4: not present in the PREVIOUS observation
+    classes: str = ""       # P0-7: raw class list (cleaned before hashing)
+    parent_path: str = ""   # P0-7: up-to-3-ancestor tag chain, e.g. "form>div"
 
     def css(self) -> str:
         """A durable selector to REMEMBER this element across runs — prefers a

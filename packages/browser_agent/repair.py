@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from browser_core import ElementTarget
 from browser_core.failures import FAILURE_TAXONOMY, FailureType
 from browser_agent.executor import ActionOutcome
-from browser_agent.observer import ElementCandidate, Observation
+from browser_agent.observer import ElementCandidate, Observation, structural_hashes
 
 # purpose -> what a matching element looks like
 _PURPOSE_HINTS = {
@@ -135,6 +135,32 @@ def _score_candidate(cand: ElementCandidate, purpose: str, want_value: str,
         if not word_hit and any(w in blob for w in _BAIT_WORDS):
             score -= 1.0; reasons.append("bait-like wording (promo/coupon/discount)")
     return score, ", ".join(reasons) or "weak match"
+
+
+# P0-7 MatchLevel telemetry values, in cascade order: script (remembered
+# selector worked directly) > exact / stable (deterministic hash rebind) >
+# purpose (a11y purpose scoring) > none (no viable candidate).
+MATCH_LEVELS = ("script", "exact", "stable", "purpose", "none")
+
+
+def rebind_by_hash(element_hash: str, element_hash_stable: str,
+                   obs: Observation) -> tuple[ElementCandidate | None, str]:
+    """P0-7 hash-match fast path (BU 5-level cascading locator / SK
+    cleaned-JSON SHA256 rebind): look the remembered element's structural
+    hash up in the CURRENT candidates before any purpose scoring. Exactly-1
+    rule per level — EXACT first, then STABLE; 0 hits means the element is
+    gone at that level, >1 means the hash is ambiguous, and both fall through
+    (ambiguity is purpose scoring's job, never a guess). Returns the matched
+    candidate and its MatchLevel, or (None, 'none')."""
+    for want, level in ((element_hash, "exact"), (element_hash_stable, "stable")):
+        if not want:
+            continue
+        idx = 0 if level == "exact" else 1
+        hits = [c for c in obs.candidates
+                if c.visible and structural_hashes(c)[idx] == want]
+        if len(hits) == 1:
+            return hits[0], level
+    return None, "none"
 
 
 @dataclass

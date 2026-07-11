@@ -118,6 +118,27 @@ Script Mode 另有 **shadow-mode cache 驗證**:remembered-selector 命中每 N 
 
 wall/throughput/冷啟/utilization 是實測;speedup 的分母 `serial_estimate`(= busy 時間總和)是估計對照,如實標註。P1-15 起 pool watchdog 隨 set 內最大 step budget 線性放大(8 步→90 s、15→168.75 s、25→281.25 s,`watchdog_timeout_s` 實算),hard task 不會被 easy task 的檔期殺掉。
 
+### Scalability 實測(2026-07-11,workers = 1/2/4/8 掃描)
+
+固定任務集:5 題 Script-Mode set 複製展開成 **20 個 task 實例**(unique task_id),file:// mock sites、無 LLM、$0。每個 worker 數跑 2 次;所有 run 20/20 done、20/20 verdict correct、0 harness error、0 watchdog kill。機器:i9-9900K(8C/16T)、64 GB RAM(量測時 available ~36 GB)、Windows 10。artifact:`runs/browser_eval/scalability/results.json`(逐 run 明細在 `runs/browser_eval/scalability/w{N}_rep{r}/bench.json`)。重現:`.venv\Scripts\python tools\scalability_bench.py --workers <N> --rep <r>`,全部跑完後 `--merge`。量測隔離:out_root/mem_dir 均在 scalability/ 下,不觸碰 `runs/browser_eval/results.json`、共享 evidence log 與 `data/browser_eval/passk/passk_results.json`。
+
+| workers | wall clock(2 reps)| throughput(tasks/min,2 reps)| mean | spread | **speedup vs w1** | avg task latency(ms)| session 冷啟 mean | per-session utilization |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 22.16 / 22.37 s | 54.2 / 53.6 | **53.9** | 0.9% | 1.00x | 973 / 984 | 446 ms | 0.90 |
+| 2 | 12.18 / 12.30 s | 98.5 / 97.6 | **98.0** | 1.0% | **1.82x** | 992 / 1,002 | 498 ms | 0.83 / 0.83 |
+| 4 | 8.03 / 8.12 s | 149.5 / 147.8 | **148.6** | 1.1% | **2.76x** | 1,024 / 1,040 | 577 ms | 0.62–0.69 |
+| 8 | 7.28 / 7.74 s | 164.9 / 155.1 | **160.0** | 6.2% | **2.97x** | 1,154 / 1,216 | 956 ms | 0.33–0.52 |
+
+(wall clock 含 process spawn + import + browser 冷啟;utilization/冷啟取 rep1 的 cost model,`w{N}_rep1/bench.json`。)
+
+**瓶頸判讀(只用量到的數據):**
+
+1. **CPU contention(主因)**:workers 加倍時 per-task busy latency 同步膨脹——w1 973 ms → w8 ~1,185 ms(**+22%**),busy 時間總和 19.8 s → 24.3 s;每個 worker = 1 個 Python 子行程 + 1 個 Chromium(本身多 process),w8 時同時競爭 8 顆實體核,單 task 變慢直接吃掉平行收益。
+2. **Playwright instance 冷啟 contention**:session 冷啟 mean 446 ms(w1)→ 956 ms(w8),**+114%**——8 個 Chromium 同時 launch 互相搶 I/O 與 CPU。
+3. **固定開銷攤提變差 + 尾端不平衡**:20 tasks / 8 workers 每 worker 只攤 2–3 題,spawn + import + 冷啟的固定成本占比升高;utilization 從 0.90(w1)掉到 0.33–0.52(w8),部分 worker 早早空轉等尾端。
+
+**外推極限(僅由實測外推):** w4→w8 邊際增益僅 +7.6%(148.6 → 160.0 tasks/min),曲線已平;在這台 8C/16T 機器上,吞吐上限約 **~160 tasks/min**,workers > 8 預期無增益(每 worker 已對應 1 實體核,再加只會加深 contention;未實測 w>8,不給數字)。效率甜蜜點是 **w4**(每 worker 效率 69%,latency 膨脹僅 ~5%);w8 每 worker 效率掉到 37%。RAM 非瓶頸(64 GB,量測全程無壓力)。此外推僅適用 mock(<1s/task、CPU-bound)場景;live 網站 task 是網路/LLM-latency-bound(wall 44–257 s/task,見上節),同機可支撐的併發 worker 數會遠高於 8,但需另行實測,不在此宣稱。
+
 ### 成本控制決策
 
 1. Serial prefetch → parallel analysis(避免多 process fetcher 超過 SEC rate limit)。

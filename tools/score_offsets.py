@@ -28,6 +28,15 @@ def _arg(flag: str, default: str) -> str:
     return sys.argv[sys.argv.index(flag) + 1] if flag in sys.argv else default
 
 
+def _rel(p: Path) -> str:
+    """repo-relative POSIX path when p is under ROOT, else the raw path —
+    keeps the artifact free of machine-specific absolute paths (no noise diff)."""
+    try:
+        return str(p.resolve().relative_to(ROOT)).replace("\\", "/")
+    except ValueError:
+        return str(p).replace("\\", "/")
+
+
 def main() -> None:
     records_dir = Path(sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith("--")
                        else "data/sec_eval/records/sweep3")
@@ -76,8 +85,8 @@ def main() -> None:
     }
     artifact = {
         "generated_by": "tools/score_offsets.py",
-        "records_dir": str(records_dir).replace("\\", "/"),
-        "gold_dir": str(gold_dir).replace("\\", "/"),
+        "records_dir": _rel(records_dir),
+        "gold_dir": _rel(gold_dir),
         "totals": totals,
         "filings": filings,
         "skipped": skipped,

@@ -3,8 +3,8 @@
   "generated_by": "tests/test_landmines.py (offline, deterministic, no network / no LLM)",
   "rerun": ".venv/Scripts/python -m pytest tests/test_landmines.py -q",
   "bar": "a landmine passes when the pipeline never fakes a pass: the correct outcome is an honest status (reserved / missing / incorporated_by_reference / partial+needs_review), never a fabricated body.",
-  "total_tests": 16,
-  "result": "16 passed",
+  "total_tests": 15,
+  "result": "15 passed",
   "landmines": [
     {
       "id": "L1-item6-era",

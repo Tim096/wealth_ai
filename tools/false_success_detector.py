@@ -22,12 +22,14 @@ triage flag separates real false successes from legit claimed passes.
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
-from packages.browser_agent.false_success import detect_false_success
-
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))  # run as `python tools/...` (script) or `-m tools....`
+
+from packages.browser_agent.false_success import detect_false_success  # noqa: E402
 CAL_CASES = ROOT / "data/browser_eval/calibration/calibration_cases.json"
 CAL_RES = ROOT / "data/browser_eval/calibration/calibration_results.json"
 IMP_RES = ROOT / "data/browser_eval/impossible/impossible_results.json"

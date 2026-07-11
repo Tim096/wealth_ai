@@ -25,7 +25,7 @@ Usage (network: fetches the slice's EDGAR HTML through the rate-limited,
 cached EdgarFetcher; SEC_EDGAR_USER_AGENT must be set):
   .venv/Scripts/python tools/head_to_head.py --slice 10 \
       [--dataset data/raw_filings/external/ntu_itemseg/itemseg10kdata] \
-      [--engines ours,edgartools,datamule] \
+      [--engines ours,edgartools,edgar_crawler,datamule] \
       [--out data/sec_eval/scoring/head_to_head.json]
 """
 
@@ -141,22 +141,33 @@ def run_edgartools(raw_html: str, filing_id: str) -> tuple[dict[str, str] | None
 
 
 def run_datamule(raw_html: str, filing_id: str) -> tuple[dict[str, str] | None, dict]:
-    """datamule/doc2dict (MIT, pinned @ 122fc54) — optional pip dep."""
-    try:
-        from doc2dict import html2dict  # noqa: F401
-    except ImportError:
-        raise EngineUnavailable("datamule/doc2dict not installed (pip install datamule)")
-    # Adapter intentionally unimplemented in the skeleton: doc2dict emits a
-    # nested section dict whose item keys need the same form-mapping treatment
-    # as P0-7c. Wire here when P0-7c lands its engine adapter.
-    raise EngineUnavailable("datamule adapter pending P0-7c engine module")
+    """datamule/doc2dict (MIT, pinned 5.0.1) — P0-7c engine adapter."""
+    from sec_core.engines import extract_items_datamule
+    items = extract_items_datamule(raw_html)
+    if items is None:
+        raise EngineUnavailable("datamule unavailable (not installed or parse crash)")
+    return items, {}
+
+
+def run_edgar_crawler(raw_html: str, filing_id: str) -> tuple[dict[str, str] | None, dict]:
+    """nlpaueb/edgar-crawler run arms-length as an unmodified subprocess (P0-7a)."""
+    from sec_core.engines import ensure_checkout, extract_items_edgar_crawler
+    checkout = ensure_checkout()
+    if checkout is None:
+        raise EngineUnavailable("edgar-crawler checkout missing "
+                                "(ensure_checkout(fetch=True) to clone)")
+    items = extract_items_edgar_crawler(raw_html, checkout=checkout)
+    if items is None:
+        raise EngineUnavailable("edgar-crawler subprocess failed or no items")
+    return items, {}
 
 
 class EngineUnavailable(RuntimeError):
     pass
 
 
-ENGINES = {"ours": run_ours, "edgartools": run_edgartools, "datamule": run_datamule}
+ENGINES = {"ours": run_ours, "edgartools": run_edgartools,
+           "edgar_crawler": run_edgar_crawler, "datamule": run_datamule}
 
 
 # -- slice selection -------------------------------------------------------------

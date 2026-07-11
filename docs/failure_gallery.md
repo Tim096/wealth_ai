@@ -299,3 +299,25 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Root Cause | contract schema `min_length=1` 把「誠實的空條件」當非法輸入;verifier `combine_checks` 在 forbidden-only 全過時會回 pass(結構性 vacuous pass 漏洞)|
 | Repair(commit 2fec949) | (1) contract `success_conditions` min_length 1→0(附註解:誠實路徑不可是非法輸入);(2) `verify_contract` 加結構性守門:空 success 時先跑 forbidden checks,違規照樣 fail,否則短路回 **unknown** + missing_evidence 明講需人工審 trace;(3) run 迴圈 verdict 起始即 unknown,agent 照常執行、trace/screenshots 照錄。**量測後果**:3/3 開放式 case status=unknown、crashes **0**、vacuous_passes **0**、honest_unknown_rate **1.0**,每個 case trace steps>0(2/3/2)。新 runner `tools/open_ended_tasks.py`。重跑 `.venv/Scripts/python tools/open_ended_tasks.py` |
 | Related Commit | 2fec949 |
+
+---
+
+## FG-BROWSER-007: INTC 營收任務 false pass(task-echo landmark + 無交付通道,使用者親測)
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-BROWSER-007 |
+| App | browser_agent / planner + verifier + agent(answer-type 任務全鏈)|
+| Input | 使用者親測任務:「找到 intc 10-k 的財報 找到裡面的最新的營收數字給我」;preflight 自選 success 條件 `text_visible:intc` |
+| Expected | 要嘛把營收數字交到使用者手上(pass + 答案),要嘛誠實說「無法機器驗證」(unknown)——絕不在沒交付任何答案時判 PASS |
+| Actual(修復前) | agent 開了 EDGAR 搜尋頁 → `text_visible:intc` 命中(任務句自帶 token)→ **PASS,confidence 高**;而即使 agent 有 extract_text 抓到營收,結果也被丟棄、從不回傳 |
+| Status | 已修(三重根因分別 commit f59c65d / 711f336 / 06eb46b)|
+| Failure Type | premature-landmark false pass + 答案交付通道缺失(silent value-zero pass)|
+| Evidence | `tests/test_premature_landmark.py`(baseline-subtraction:INTC repro pass→unknown,9 passed);`data/browser_eval/answer_channel/answer_channel_results.json`(silent_failures=0、matches_expected 3/3);`data/browser_eval/calibration/calibration_results.json`(answer_wrong class 0 pass)|
+| Root Cause | 三個獨立缺陷疊加:(1) **premature landmark** —— preflight 條件是任務句自帶 token,任何搜尋頁都為真;(2) **無交付通道** —— `run_agentic` 的 `extracted` 只放 `__download__`,extract_text 結果既不進 verifier 也不回 UI,答案型任務結構性零交付卻記 pass;(3) **卡住時無視覺升級** —— 找不到目標只能重試到 give_up。同族論文:One-Token-to-Fool-Judge(arxiv 2507.08794,needle 命中回顯而非事實)|
+| Repair(根因 1,f59c65d) | verifier **baseline-subtraction**:t0(agent 動作前)以空 extracted 跑 `_check_success`,t0 即成立的條件視為 landmark 剔除;全剔除後空條件流進 open-ended gate → 誠實 **unknown**,絕不 vacuous pass(`download_exists` t0=unknown 不誤剔)。planner 端 `_task_echo` guard 擋任務句 echo 條件 |
+| Repair(根因 2,711f336) | extract_text 成功結果 append 進 `extracted['answer']`(存 `TaskRun.answer` + UI「📋 擷取內容」);verifier 新條件型別 **answer_matches**(有 answer 且 regex match→pass;不 match→fail;沒 answer→fail,不吃自述;regex 不可編譯→unknown)。verifier 校準集加 answer_wrong corruption class(2 case 全 fail),46→50 |
+| Repair(根因 3,06eb46b) | `vision_escalation_reason` 卡住偵測 → auto 切入 Set-of-Marks + gpt-5.5 視覺(`AGENT_VISION` 未設=auto 新預設);scroll PLAYBOOK(off-screen 目標);executor 新分頁跟隨。vision 純感知,verifier 仍唯一裁判(escalation 測試斷言 status!=pass)|
+| Why It Still Failed | (已修結構性根因;wrapper 10-K 正文還原仍是 documented next step,見 FG-SEC-004/005)|
+| Related Prompt | prompts/browser_agent/(preflight 條件品質、answer channel 設計)|
+| Related Commit | f59c65d(baseline-subtraction)+ 711f336(answer channel)+ 06eb46b(auto vision / scroll / new-tab)|

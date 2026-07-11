@@ -8,12 +8,12 @@
 
 | 題目 | 內容 | 狀態 |
 |---|---|---|
-| 題目一 Browser Agent | 受控 action space、task-contract verifier、a11y selector 自修復、selector memory、**Agent Mode(LLM 驅動,預設接 Codex OAuth via gateway)**、code-enforced capability guard | **可執行**:selector-repair killer demo(`tools/browser_killer_demo.py`)+ live LLM 驅動(`tools/browser_agent_live.py`) |
+| 題目一 Browser Agent | 受控 action space、task-contract verifier、a11y selector 自修復、selector memory、**Agent Mode(LLM 驅動,預設接 Codex OAuth via gateway)**、**卡住時自動視覺升級(SoM 截圖 + gpt-5.5 視覺)**、**答案交付通道(查數字/問答)**、code-enforced capability guard | **可執行**:selector-repair killer demo(`tools/browser_killer_demo.py`)+ live LLM 驅動(`tools/browser_agent_live.py`) |
 | 題目二 SEC Extractor | 10-K Item 1–16 source-exact 抽取、TOC 防禦、cross-reference-index、**page-anchor 還原(Intel 正文抽回)**、**XBRL 認證(Item 8)**、**topic-consistency oracle(全 item)** | **可執行**:11 家真實 10-K + Intel/Citi(`tools/eval_one.py`, `tools/certify.py`) |
 | 共用層 | evidence store(兩題共用)、三態 verdict、eval case、LLM 成本紀錄 | 已實作 |
 | Eval Dashboard | 兩題 eval、XBRL 認證、browser repair trace(真實數據) | `apps/web/eval-dashboard/`,自包含 HTML |
 
-**303 tests 通過**(含真實瀏覽器 integration test + gateway e2e)。完整規格:[docs/SPEC.md](docs/SPEC.md)。手動測 Task 1:[docs/setup_codex_gateway.md](docs/setup_codex_gateway.md)。
+**345 tests 通過**(含真實瀏覽器 integration test + gateway e2e)。完整規格:[docs/SPEC.md](docs/SPEC.md)。手動測 Task 1:[docs/setup_codex_gateway.md](docs/setup_codex_gateway.md)。
 
 ## 核心原則(已在 code 層強制,不是文件宣示)
 
@@ -39,7 +39,7 @@ python -m venv .venv
 .venv\Scripts\python -m playwright install chromium
 $env:SEC_EDGAR_USER_AGENT = "your-name your@email"
 
-.venv\Scripts\python -m pytest                          # 303 passed
+.venv\Scripts\python -m pytest                          # 345 passed
 .venv\Scripts\python tools\browser_killer_demo.py       # 題目一:v1→v2 selector 自修復
 .venv\Scripts\python tools\browser_agent_live.py --mock # 題目一:Agent Mode 迴圈(免 key)
 .venv\Scripts\python tools\eval_one.py AAPL             # 題目二:抽取一份 10-K
@@ -61,6 +61,7 @@ Task 1 用你自己的 **Codex OAuth**(預設走 gateway)實測:見 [docs/setup_
 | 類型 | 支援狀態 |
 |---|---|
 | 公開網站搜尋、多頁導航、資料擷取、公開文件下載 | 支援 |
+| 答案型任務(查數字 / 問答,如「NVDA 現在股價多少」) | 支援:答案顯示於結果(📋 擷取內容);抓不到 → 誠實 **fail / unknown**,絕不無交付卻判 pass |
 | 表單填寫 | 部分支援:僅公開、可逆、無登入、無金流 |
 | 登入、CAPTCHA、購買/下單、發文/正式表單、付費資料 | **不支援**(責任邊界) |
 
@@ -86,7 +87,7 @@ data/       sec_eval(fixtures + records), golden_labels, mock_sites(v1/v2), raw_
 docs/       SPEC, architecture, eval_report, cost_latency_report, failure_gallery,
             supported_and_unsupported, insights_and_directions, prior_art, ai_collaboration_report
 prompts/    所有影響開發的 prompt + 決策(含 rejected)
-tests/      303 tests
+tests/      345 tests
 ```
 
 ## 已知邊界(誠實揭露)
@@ -96,6 +97,7 @@ tests/      303 tests
 - **token-level boundary 已量化(2026-07-10)**:char-offset F1(建構性 gold,regression baseline,敏感度注入驗證 0.9853)+ CYD 官方 iXBRL oracle(9/9 pass segment coverage 100%);人工標註的絕對正確率仍列 backlog。見 `docs/eval_report.md`。
 - **pre-2001 純文字 SGML filing:Unsupported**(heading detector 0 candidate,誠實全 missing,partition invariant 仍成立)。見 `docs/supported_and_unsupported.md` format-era 支援表。
 - **Browser 4 個 measure-first 弱點已於 2026-07-10 修復**(verifier filename-needle bypass、query-echo silent failure、repair fallback 到不可行元素、bait-field tie-break;commit c4ac7cd / 3f0b1e9):校準 specificity 0.9583→1.0、FP rate 0.0417→0.0、impossible silent_failure_rate 0.1→0.0、perception degradation curve 尾端 0.0→1.0。原 `test_known_*` 已翻寫為 `test_fixed_*` 並重跑 artifact。另修復開放式(零條件)任務 crash → 誠實 unknown(FG-BROWSER-006,commit 2fec949)。逐條前→後見 `docs/failure_gallery.md` FG-BROWSER-002~006 與 `docs/eval_report.md`「修復迭代」段。
+- **INTC 營收 false pass 三重根因已修復(2026-07-10,FG-BROWSER-007)**:使用者親測「找 intc 10-k 最新營收數字」被判 PASS 卻沒交付答案。三根因分別結構性修復——(1) premature-landmark → verifier baseline-subtraction(t0 即成立的條件視為 landmark 剔除,INTC repro pass→unknown;commit f59c65d);(2) 答案無交付通道 → answer channel + verifier `answer_matches`(沒抓到答案 → 誠實 fail,不偽 pass;commit 711f336);(3) 卡住無視覺升級 → auto vision escalation + scroll + 新分頁跟隨(commit 06eb46b)。見 `docs/eval_report.md`「修復迭代 2」段。
 
 ## AI 協作方式
 

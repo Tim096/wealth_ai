@@ -171,7 +171,7 @@ Eval set(`data/browser_eval/tasks.json`,4 tasks,分層,offline mock sites)+ runn
 
 #### Verifier 校準 + Rogan-Gladen 校正(T1-1)
 
-46 個 by-construction triple(22 success + 24 corrupted,4 種損毀 class:needle_removed / wrong_url / download_wrong_content / confident_false_claim)餵 verifier:
+50 個 by-construction triple(24 success + 26 corrupted,5 種損毀 class:needle_removed / wrong_url / download_wrong_content / confident_false_claim / **answer_wrong**)餵 verifier(answer_wrong + answer_matches 條件型別為 2026-07-10 answer channel P2 新增,見「修復迭代 2」):
 
 | Metric | 值(2026-07-10 修復後)|
 |---|---|
@@ -179,9 +179,9 @@ Eval set(`data/browser_eval/tasks.json`,4 tasks,分層,offline mock sites)+ runn
 | specificity | **1.0**（修復前 0.9583）|
 | FP rate | **0.0**（修復前 0.0417；唯一 FP filename-needle bypass 已於 c4ac7cd 修掉,FG-BROWSER-002）|
 | FN rate | 0.000 |
-| corrupted unknown rate | 0.125(unknown 單獨列,不併入 fail)|
+| corrupted unknown rate | 0.115385(unknown 單獨列,不併入 fail)|
 
-Rogan-Gladen 校正後成功率 = **0.8**(apparent 0.8,分母 1.0,status=ok;修復前 0.7913／分母 0.9583)。**校準範圍聲明**:僅涵蓋 url_contains / text_visible / download_exists + 4 種 forbidden;table_extracted / screenshot_region_changed / field_value_equals 為結構性 unknown,排除且寫進 artifact 的 `scope.excluded_condition_types`。confident_false_claim class 0 pass——證實 verifier 不吃 agent 自述。corrupted 三態現為 {pass 0 / fail 21 / unknown 3},confusion FP=0。
+Rogan-Gladen 校正後成功率 = **0.8**(apparent 0.8,分母 1.0,status=ok;修復前 0.7913／分母 0.9583)。**校準範圍聲明**:僅涵蓋 url_contains / text_visible / download_exists + 4 種 forbidden;table_extracted / screenshot_region_changed / field_value_equals 為結構性 unknown,排除且寫進 artifact 的 `scope.excluded_condition_types`。confident_false_claim class 0 pass、answer_wrong class 0 pass——證實 verifier 不吃 agent 自述、也不吃錯抓的答案。corrupted 三態現為 {pass 0 / fail 23 / unknown 3},confusion FP=0。
 
 - 重跑:`.venv/Scripts/python tools/calibrate_verifier.py`(零瀏覽器)
 - Artifacts:`data/browser_eval/calibration/calibration_results.json`(cases 自包含可跨機器重播:`calibration_cases.json`)
@@ -251,6 +251,65 @@ labeled full trajectory <60(論文 2606.09863 的 train 門檻)→ 誠實走 heu
 | 開放式任務 | crash / vacuous-pass 風險 | **honest_unknown_rate 1.0,crashes 0** | 2fec949 | `open_ended/open_ended_results.json` |
 
 FG-BROWSER-002~006 的逐條 Repair 說明見 `docs/failure_gallery.md`。
+
+### 修復迭代 2(2026-07-10):INTC 營收 false pass 的三重根因,逐一結構性修復
+
+上一波修的是「量測抓到的 verifier/repair 弱點」。這一波修的是**一個真實使用者親測的 false pass** —— 任務「找到 intc 10-k 的財報 找到裡面的最新的營收數字給我」被判 PASS conf 高,但答案從沒交到使用者手上。事後拆出三個獨立根因(見 FG-BROWSER-007),各以結構性防禦修復(非個案打補丁),前後行為對照如下。
+
+#### 根因 1:premature landmark —— 條件是任務句自帶 token(P1,commit f59c65d)
+
+preflight 產出的 success 條件 `text_visible:intc` 是任務句本身的字串,任何開著 EDGAR 搜尋頁的狀態都為真 → 尚未開始做事就 PASS。**結構性修復是 baseline-subtraction**:verifier 在 t0(agent 動作前)先用空 extracted 跑一次 `_check_success`,任何在 t0 就成立的條件是「landmark 而非 deliverable」,從有效 contract 中剔除;全剔除後空條件流進既有 open-ended gate → 誠實 **unknown**(絕不 vacuous pass)。`download_exists` 在 t0 是 unknown 不會被誤剔。planner 端另加 `_task_echo` guard:text_visible value 正規化後若是任務句子字串且 ≤3 詞則不採用。
+
+| 指標 | 修復前 | 修復後 |
+|---|---|---|
+| INTC 任務 repro | **PASS**(landmark 命中,conf 高)| **unknown**(條件被 baseline 剔除 → open-ended gate)|
+| 測試 | — | `tests/test_premature_landmark.py` **9 passed** |
+
+- 重跑:`.venv/Scripts/python -m pytest tests/test_premature_landmark.py -q`
+
+#### 根因 2:答案型任務無交付通道(P2,commit 711f336)
+
+`extract_text` 的結果被丟棄(`run_agentic` 的 `extracted` 只放 `__download__`),即使 agent 抓到營收數字也不進 verifier、不回 UI —— 「做到了但沒交到人手上」在 pass rate 上完美、使用者價值為零。**修復是把答案接成第一級 deliverable**:extract_text 成功結果 append 進 `extracted['answer']`(存 `TaskRun.answer`、UI「📋 擷取內容」區塊),verifier 新增條件型別 **answer_matches**(有 answer 且 regex match → pass;不 match → fail;**沒 answer → fail**,不吃自述;regex 不可編譯 → unknown)。baseline-subtraction 不會誤剔 answer_matches(t0 無 answer 是 fail 非 pass)。
+
+離線 fixture eval(`tools/answer_channel_eval.py`,ScriptedPlanner 無 LLM):
+
+| 指標 | 值 |
+|---|---|
+| n_answer_tasks / matches_expected | 3 / **3** |
+| silent_failures | **0** |
+| answers_delivered | 2(pass_with_answer 1 + 錯抓元素 fail 1)|
+| fail_without_delivery | 1(沒 extract → 誠實 fail,不偽 pass)|
+
+answer channel 也擴充了 verifier 校準集:新 corruption class **answer_wrong**(抓錯段落當答案,2 case 全 fail)、calibrated_condition_types 加 **answer_matches**,校準集 46→**50**(24 success + 26 corrupted),三態 corrupted {pass0/fail23/unknown3}、sensitivity/specificity 維持 **1.0/1.0**、FP rate **0.0**、Rogan-Gladen corrected **0.8**。
+
+- 重跑:`.venv/Scripts/python tools/answer_channel_eval.py`、`.venv/Scripts/python tools/calibrate_verifier.py`
+- Artifacts:`data/browser_eval/answer_channel/answer_channel_results.json`、`data/browser_eval/calibration/calibration_results.json`
+
+#### 根因 3:卡住時無視覺升級 + 首屏盲區 + 新分頁追丟(P3,commit 06eb46b)
+
+原本 agent 卡住只能重試到 give_up、目標在視窗外或內容開在新分頁時會失敗且自述與事實不符。三項自主性升級:
+
+- **Auto vision escalation**:純函式 `vision_escalation_reason(history, page_hashes)` —— 最近 3 步全無進展,或頁面 hash 連 4 觀察不變 → sticky 切入 Set-of-Marks 截圖 + gpt-5.5 視覺路徑。`AGENT_VISION` 語義改為 `1`=每步 / `0`=全關 / **未設=auto(新預設)**;舊行為(=1)完全保留。只掛在 LLMPlanner,離線 eval(Mock/Scripted 無 supports_vision)行為不變。
+- **Scroll(off-screen targets)**:planner PLAYBOOK 教 `keyboard keys="PageDown"/"End"` 捲動後重讀 —— 首屏沒找到是捲動理由不是 give_up 理由(純 prompt,keyboard 本就過 capability guard)。
+- **新分頁跟隨**:executor 在 click/mouse 後偵測 `context.pages` 成長 → 切到最新頁,agent 同步 `observer.page` 並記「↪ 跟隨新分頁」。修掉「內容在別分頁、agent 自述『點了沒效果』」的自述/事實背離。
+
+鐵律零破壞:vision 是純感知通道(image 只進 planner prompt),action 全走原 schema,**verifier 仍是唯一裁判**(escalation 測試明確斷言 `run.status != pass`)。
+
+- 重跑:`.venv/Scripts/python -m pytest tests/test_auto_vision_and_tabs.py -q`
+
+#### 迭代 2 前→後總表
+
+| 指標 / case | 修復前 | 修復後 | commit | artifact / test |
+|---|---|---|---|---|
+| INTC 營收任務 verdict | PASS(landmark false pass)| **unknown**(誠實,無交付則不偽 pass)| f59c65d | `tests/test_premature_landmark.py`(9 passed)|
+| 答案交付通道 | extract_text 結果被丟棄 | **answer → extracted['answer'] + UI + answer_matches verdict** | 711f336 | `answer_channel/answer_channel_results.json`(3/3、silent 0)|
+| answer 型任務 silent failure | 結構性盲區(pass 但零價值)| **0**(沒抓到 → 誠實 fail)| 711f336 | 同上 |
+| verifier 校準集 | 46(4 class)| **50(5 class,+answer_wrong)** | 711f336 | `calibration/calibration_results.json`(sens/spec 1.0)|
+| 卡住恢復 | 重試到 give_up | **auto 視覺升級(未設 AGENT_VISION=auto)** | 06eb46b | `tests/test_auto_vision_and_tabs.py` |
+| off-screen 目標 | 只看首屏 | **PageDown/End 捲動後重讀** | 06eb46b | 同上(prompt)|
+| 新分頁內容 | 追丟 + 自述背離 | **executor 跟隨最新分頁 + observer 同步** | 06eb46b | 同上 |
+
+逐條事故報告見 `docs/failure_gallery.md` FG-BROWSER-007。
 
 ### Browser held-out / 真實網站(誠實邊界)
 

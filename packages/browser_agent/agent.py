@@ -27,6 +27,9 @@ from browser_agent.observer import (
     _ELEMENT_FIELDS_JS, PageObserver, diff_observations, structural_hashes,
 )
 from browser_agent.repair import diagnose_failure, rebind_by_hash, repair_target
+from browser_agent.replay_cache import (
+    ReplayCache, ReplayStep, action_from_step, step_from_action,
+)
 from browser_agent.trajectory import repetition_report
 from browser_agent.verifier import check_conditions, subtract_baseline, verify_contract
 from observability_core import EvidenceRecord, EvidenceStore, VerifierResult, sha256_text
@@ -254,6 +257,10 @@ class TaskRun:
     # T1-4 observation-layer metric: pre/post persistent-state diff. Empty until a
     # runner captures snapshots around the run; on a real site it stays 'unknown'.
     side_effects: dict[str, Any] = field(default_factory=dict)
+    # P0-10 cache telemetry: replay hits/aborts (agent mode) and script-mode
+    # shadow-check counters — the raw numbers the cost report derives the
+    # cache FP-rate from. Empty when no cache was in play.
+    cache_stats: dict[str, int] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:
         # P0-7 MatchLevel hit rates: how each step's target was resolved,
@@ -263,6 +270,12 @@ class TaskRun:
         for s in self.steps:
             if s.match_level:
                 match_levels[s.match_level] = match_levels.get(s.match_level, 0) + 1
+        # P0-10 cache FP-rate: shadow divergences over shadow checks — the
+        # "does the cache lie" number, measured instead of assumed.
+        cache = dict(self.cache_stats)
+        if cache.get("shadow_checks"):
+            cache["fp_rate"] = round(
+                cache.get("shadow_divergence", 0) / cache["shadow_checks"], 3)
         return {
             "task_id": self.task_id, "site": self.site, "status": self.status,
             "confidence": round(self.confidence, 3),
@@ -275,6 +288,7 @@ class TaskRun:
             # computed here (observation only, never influences agent behaviour).
             "repetition": repetition_report(self.steps),
             "match_levels": match_levels,
+            "cache": cache,
             "side_effects": self.side_effects,
             "verifier": {
                 "status": self.verifier.status, "reason": self.verifier.reason,
@@ -298,7 +312,8 @@ class BrowserAgent:
     def __init__(self, page, memory: MemoryStore, site: str, task_type: str,
                  artifact_dir: Path | str | None = None,
                  evidence_store: EvidenceStore | None = None,
-                 downloads_dir: Path | str | None = None) -> None:
+                 downloads_dir: Path | str | None = None,
+                 replay_cache: ReplayCache | None = None) -> None:
         self.page = page
         self.downloads_dir = Path(downloads_dir) if downloads_dir else None
         if self.downloads_dir:
@@ -308,6 +323,13 @@ class BrowserAgent:
         self.memory = memory
         self.site = site
         self.task_type = task_type
+        # P0-10: the agent-mode replay cache lives next to the selector memory
+        # (same write-back pattern), so the two self-maintenance stores travel
+        # together; tests may inject their own instance.
+        self.replay = replay_cache or ReplayCache(
+            self.memory.path.with_name("replay_cache.json"))
+        # P0-10 per-run cache telemetry (reset at each run entry point)
+        self.cache_stats: dict[str, int] = {}
         self.evidence_store = evidence_store
         self.artifact_dir = Path(artifact_dir) if artifact_dir else None
         if self.artifact_dir:
@@ -441,6 +463,54 @@ class BrowserAgent:
             return "", ""
         return structural_hashes(fields) if fields else ("", "")
 
+    def _bump(self, key: str) -> None:
+        self.cache_stats[key] = self.cache_stats.get(key, 0) + 1
+
+    # P0-10 shadow-mode sampling: every Nth script-mode cache hit is
+    # re-derived from scratch and compared (CACHE_SHADOW_EVERY overrides;
+    # 0 disables sampling — dom_fingerprint drift still forces a check).
+    _SHADOW_EVERY = 4
+
+    def _shadow_check(self, step: Step, remembered: str, hit_hash: str,
+                      forced: bool, trace: list[StepTrace]) -> None:
+        """P0-10 shadow-mode cache verification (SV shadow-mode / WC
+        scheduled-replay failure report): a script-mode cache hit is sampled
+        and the SAME target re-derived by purpose scoring over a fresh
+        observation; the two answers are compared by element identity (P0-7
+        hash), not selector spelling. A divergence never changes the run —
+        the verifier stays the only judge — it is COUNTED, so the cache's
+        FP-rate is a measured number in the eval/cost artifact."""
+        import os as _os
+        self._bump("script_cache_hits")
+        hits = self.cache_stats["script_cache_hits"]
+        try:
+            every = int(_os.environ.get("CACHE_SHADOW_EVERY", self._SHADOW_EVERY))
+        except ValueError:
+            every = self._SHADOW_EVERY
+        if not (forced or (every > 0 and (hits - 1) % every == 0)):
+            return
+        self._bump("shadow_checks")
+        obs = self.observer.observe()
+        rr = repair_target(step.purpose, obs, want_value=step.value)
+        diverged = False
+        if rr.ok and rr.new_target is not None:
+            detail = f"cache {remembered!r} vs purpose choice {rr.durable_selector!r}"
+            if rr.durable_selector != remembered:
+                # same element under two selector spellings is agreement —
+                # only a different ELEMENT is a divergence
+                shadow_hx, _ = self._element_hashes(rr.new_target.selector)
+                diverged = bool(shadow_hx and hit_hash) and shadow_hx != hit_hash
+        else:
+            detail = f"cache {remembered!r}: purpose scorer found no candidate"
+        if forced:
+            detail = "dom_fingerprint drift forced the check — " + detail
+        if diverged:
+            self._bump("shadow_divergence")
+        trace.append(StepTrace(
+            step="shadow_check", action="compare", ok=not diverged, mode="script",
+            diagnosis="cache_divergence" if diverged else "",
+            detail=detail, selector_used=remembered))
+
     def _resolve_and_run(self, step: Step, trace: list[StepTrace]) -> ActionOutcome:
         # Script Mode: try the remembered / fallback selector first
         remembered = self.memory.preferred(self.site, self.task_type, step.purpose)
@@ -458,17 +528,27 @@ class BrowserAgent:
         out = self.executor.execute(action)
 
         if out.ok:
+            # P0-10 dom_fingerprint read-back: the fingerprint banked at the
+            # last verified success, read BEFORE record() overwrites it —
+            # drift since then makes this cache hit suspect (forced shadow).
+            prior_fp = self.memory.fingerprint(
+                self.site, self.task_type, step.purpose) if remembered else ""
+            cur_fp = sha256_text(self.page.content())[:16]
             # P0-7: hash the element the working selector bound to, so its
             # identity is remembered and drift can be rebound deterministically
             hx, hs = self._element_hashes(selector)
             self.memory.record(self.site, self.task_type, step.purpose, selector,
                                self._now(), success=True,
-                               dom_fingerprint=sha256_text(self.page.content())[:16],
+                               dom_fingerprint=cur_fp,
                                element_hash=hx, element_hash_stable=hs)
             trace.append(StepTrace(step=step.purpose, action=step.kind, ok=True, mode="script",
                                    detail=out.detail, selector_used=selector,
                                    latency_ms=out.latency_ms, match_level="script",
                                    screenshot=self._screenshot(f"{step.purpose}-ok")))
+            if remembered:
+                self._shadow_check(step, remembered, hx,
+                                   forced=bool(prior_fp) and prior_fp != cur_fp,
+                                   trace=trace)
             return out
 
         # Repair Mode: diagnose FIRST, then dispatch a strategy by failure type
@@ -637,6 +717,18 @@ class BrowserAgent:
             if self.executor.last_download_path:
                 ex["__download__"] = self.executor.last_download_path
             return ex
+        # P0-10 cross-run replay: a verified previous run of the SAME task
+        # banked its successful actions — replay them before paying for the
+        # planner. Every successful action of THIS run is re-recorded, so a
+        # passing run refreshes the entry (write-back on verifier pass only).
+        self.cache_stats = {}
+        replay_steps = self.replay.lookup(self.site, self.task_type,
+                                          contract.natural_language_task)
+        replay_i = 0
+        recorded: list[ReplayStep] = []   # this run's successful actions
+        replay_bankable = True            # False once an un-replayable action ran
+        if replay_steps:
+            _emit(f"⚡ 快取:上次驗證成功的 {len(replay_steps)} 步先重放,失效才問 LLM")
         self._dismiss_overlay(trace)
         # Baseline-subtraction (premature-landmark kill): a condition already
         # true on the OPENING page proves nothing about completion — e.g. the
@@ -733,6 +825,55 @@ class BrowserAgent:
             phase["verify_ms"] += (time.perf_counter() - _tv) * 1000
             if verdict.status == "pass":
                 break
+            # P0-10 replay fast path: execute the next banked action directly —
+            # no LLM call. Any resolution/execution failure abandons the cache
+            # for this run and invalidates the entry (WC scheduled-replay
+            # failure loop); the SAME turn then goes to the planner, and the
+            # verifier still owns the verdict either way.
+            if replay_i < len(replay_steps):
+                rs = replay_steps[replay_i]
+                r_action = action_from_step(rs, obs)
+                r_out = None
+                if r_action is not None and screen_action(r_action).allowed:
+                    r_out = self.executor.execute(r_action)
+                    phase["action_ms"] += r_out.latency_ms
+                if r_out is not None and r_out.ok:
+                    replay_i += 1
+                    self._bump("replay_hits")   # one planner LLM call saved
+                    if r_out.followed_url:
+                        self.page = self.executor.page
+                        self.observer.page = self.page
+                    history.append(f"{r_action.type}:ok")
+                    if r_action.type == "extract_text" and r_out.extracted_text:
+                        answers.append(r_out.extracted_text.strip())
+                    recorded.append(rs)
+                    trace.append(_stamp_obs(StepTrace(
+                        step="replay", action=r_action.type, ok=True, mode="cache",
+                        detail=f"replayed from cache: {rs.label or rs.action}",
+                        selector_used=getattr(getattr(r_action, "target", None),
+                                              "selector", "") or "",
+                        latency_ms=r_out.latency_ms)))
+                    _emit(f"⚡ 重放快取步驟:{r_action.type}({rs.label or rs.selector or rs.value})")
+                    if r_action.type in ("goto", "click", "press"):
+                        try:
+                            self.page.wait_for_load_state("networkidle", timeout=4000)
+                        except Exception:  # noqa: BLE001
+                            pass
+                    self.page.wait_for_timeout(300)
+                    continue
+                # divergence: the cached step no longer matches this page
+                self._bump("replay_aborted")
+                self.replay.invalidate(self.site, self.task_type,
+                                       contract.natural_language_task)
+                self.replay.save()
+                replay_steps = []
+                history.append(f"replay_abort({rs.action})")
+                trace.append(StepTrace(
+                    step="replay", action=rs.action, ok=False, mode="cache",
+                    diagnosis="cache_divergence",
+                    detail="cached step no longer resolves/executes — entry "
+                           "invalidated, planner takes over"))
+                _emit("⚡ 快取失效(頁面已漂移),改問 LLM")
             # P3 auto-vision escalation: when the text channel is going nowhere
             # (repeated failures/noops or a page that never changes), switch the
             # SoM screenshot on for the REST of the run. Perception only — the
@@ -851,6 +992,15 @@ class BrowserAgent:
                 # them together are the delivered answer
                 answers.append(out.extracted_text.strip())
                 detail = f"📋 擷取內容({len(out.extracted_text)} 字):{out.extracted_text[:120]}"
+            # P0-10: a successful action is recorded for the replay cache; one
+            # that cannot be replayed faithfully (mouse coordinates) poisons
+            # banking for this run rather than banking a broken sequence.
+            if out.ok:
+                rs_rec = step_from_action(action, obs, label=decision.reason[:80])
+                if rs_rec is not None:
+                    recorded.append(rs_rec)
+                else:
+                    replay_bankable = False
             trace.append(_stamp_obs(StepTrace(step="planner", action=action.type, ok=out.ok,
                                               mode="agent",
                                               detail=detail, selector_used=getattr(
@@ -883,18 +1033,26 @@ class BrowserAgent:
         _tv = time.perf_counter()
         verdict = verify_contract(contract, obs, extracted, latched=latched)
         phase["verify_ms"] += (time.perf_counter() - _tv) * 1000
+        # P0-10 write-back: only a VERIFIER-passed run banks its sequence —
+        # the cache can never contain an unverified trajectory.
+        if verdict.status == "pass" and recorded and replay_bankable:
+            self.replay.bank(self.site, self.task_type,
+                             contract.natural_language_task, recorded,
+                             timestamp=self._now())
+            self.replay.save()
         base = {"pass": 1.0, "unknown": 0.4, "fail": 0.0}[verdict.status]
         run = TaskRun(task_id=task_id, site=self.site, status=verdict.status, verifier=verdict,
                       steps=trace, repairs=0, confidence=base,
                       answer=extracted.get("answer", ""),
                       llm_cost_usd=llm_cost, llm_tokens=llm_tokens,
-                      phase_timings=phase,
+                      phase_timings=phase, cache_stats=dict(self.cache_stats),
                       total_latency_ms=(time.perf_counter() - t0) * 1000)
         self._emit_evidence(f"agent-{self.site}-{task_id}", task_id, run)
         return run
 
     def run(self, task_id: str, steps: list[Step], contract: BrowserTaskContract) -> TaskRun:
         t0 = time.perf_counter()
+        self.cache_stats = {}      # P0-10 per-run shadow/cache telemetry
         # capability guard (SPEC 6.3/6.4): refuse out-of-scope tasks in code
         cap = screen_task(contract.natural_language_task)
         if not cap.allowed:
@@ -938,6 +1096,7 @@ class BrowserAgent:
         run = TaskRun(
             task_id=task_id, site=self.site, status=verdict.status, verifier=verdict,
             steps=trace, repairs=repairs, confidence=confidence,
+            cache_stats=dict(self.cache_stats),
             total_latency_ms=(time.perf_counter() - t0) * 1000,
         )
         self._emit_evidence(f"browser-{self.site}-{task_id}", task_id, run)

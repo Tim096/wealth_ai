@@ -42,6 +42,18 @@ class MemoryStore:
                     if v.selector == m.preferred_selector), None)
         return (ver.element_hash, ver.element_hash_stable) if ver else ("", "")
 
+    def fingerprint(self, site: str, task_type: str, purpose: str) -> str:
+        """P0-10 dom_fingerprint read-back: the page fingerprint recorded when
+        the PREFERRED selector last worked. A mismatch with the current page
+        means the cache is suspect — the shadow check fires unconditionally.
+        '' when nothing usable is remembered."""
+        m = self.get(site, task_type, purpose)
+        if not m or not m.preferred_selector:
+            return ""
+        ver = next((v for v in m.selector_versions
+                    if v.selector == m.preferred_selector), None)
+        return ver.last_dom_fingerprint if ver else ""
+
     def record(self, site: str, task_type: str, purpose: str, selector: str,
                timestamp: str, success: bool, dom_fingerprint: str = "",
                repair: RepairEvent | None = None, element_hash: str = "",

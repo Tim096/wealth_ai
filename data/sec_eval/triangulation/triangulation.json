@@ -3,7 +3,8 @@
   "filings": 11,
   "verdict_totals": {
     "agree": 240,
-    "disagree": 12,
+    "disagree": 11,
+    "engine_suspect": 1,
     "engine_unavailable": 1
   },
   "disagreements": {
@@ -29,10 +30,12 @@
       "8",
       "16"
     ],
-    "NEM": [
-      "16"
-    ],
     "MRNA": [
+      "16"
+    ]
+  },
+  "engine_suspects": {
+    "NEM": [
       "16"
     ]
   },
@@ -71,6 +74,7 @@
       "verdicts": {
         "agree": 21,
         "disagree": 2,
+        "engine_suspect": 0,
         "engine_unavailable": 0
       },
       "items": {
@@ -340,6 +344,7 @@
       "verdicts": {
         "agree": 23,
         "disagree": 0,
+        "engine_suspect": 0,
         "engine_unavailable": 0
       },
       "items": {
@@ -609,6 +614,7 @@
       "verdicts": {
         "agree": 22,
         "disagree": 1,
+        "engine_suspect": 0,
         "engine_unavailable": 0
       },
       "items": {
@@ -876,6 +882,7 @@
       "verdicts": {
         "agree": 20,
         "disagree": 2,
+        "engine_suspect": 0,
         "engine_unavailable": 1
       },
       "items": {
@@ -1143,6 +1150,7 @@
       "verdicts": {
         "agree": 23,
         "disagree": 0,
+        "engine_suspect": 0,
         "engine_unavailable": 0
       },
       "items": {
@@ -1412,6 +1420,7 @@
       "verdicts": {
         "agree": 22,
         "disagree": 1,
+        "engine_suspect": 0,
         "engine_unavailable": 0
       },
       "items": {
@@ -1681,6 +1690,7 @@
       "verdicts": {
         "agree": 22,
         "disagree": 1,
+        "engine_suspect": 0,
         "engine_unavailable": 0
       },
       "items": {
@@ -1949,6 +1959,7 @@
       "verdicts": {
         "agree": 20,
         "disagree": 3,
+        "engine_suspect": 0,
         "engine_unavailable": 0
       },
       "items": {
@@ -2217,7 +2228,8 @@
       ],
       "verdicts": {
         "agree": 22,
-        "disagree": 1,
+        "disagree": 0,
+        "engine_suspect": 1,
         "engine_unavailable": 0
       },
       "items": {
@@ -2442,14 +2454,14 @@
           "needs_review": false
         },
         "16": {
-          "verdict": "disagree",
-          "detail": "content mismatch: only 0% of the shorter span's text appears in the longer one (ours 7w vs edgartools 19w)",
+          "verdict": "engine_suspect",
+          "detail": "edgartools (5.42.x pinned) item 16 is TOC-junk text (0% containment vs our 7w span) \u2014 its _ITEM_TITLE_PATTERNS end at 9C and items 10-16 are rescued from the TOC (FG-SEC-006); engine-side misattribution, not counted against our span; re-verify on engine upgrade",
           "our_words": 7,
           "engine_words": 19,
           "overlap": 0.0,
           "our_status": "pass",
-          "confidence_after": 0.909,
-          "needs_review": true
+          "confidence_after": 1.0,
+          "needs_review": false
         }
       }
     },
@@ -2487,6 +2499,7 @@
       "verdicts": {
         "agree": 22,
         "disagree": 1,
+        "engine_suspect": 0,
         "engine_unavailable": 0
       },
       "items": {
@@ -2756,6 +2769,7 @@
       "verdicts": {
         "agree": 23,
         "disagree": 0,
+        "engine_suspect": 0,
         "engine_unavailable": 0
       },
       "items": {

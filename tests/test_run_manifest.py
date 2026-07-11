@@ -157,3 +157,28 @@ def test_live_runner_imports_the_shared_manifest_writer():
     import tools.browser_agent_live as live
     assert live.write_manifest is rm.write_manifest
     assert live.DirtyTreeError is rm.DirtyTreeError
+
+
+def test_eval_runner_imports_the_shared_manifest_writer():
+    import tools.browser_eval as be
+    assert be.write_manifest is rm.write_manifest
+    assert be.DirtyTreeError is rm.DirtyTreeError
+
+
+def test_eval_strict_repro_refuses_before_any_browser_starts(monkeypatch):
+    """browser_eval.main(strict_repro=True) on a dirty tree must raise the
+    DirtyTreeError refusal from the manifest step — BEFORE sync_playwright
+    (or the worker pool) is ever touched."""
+    import tools.browser_eval as be
+
+    def boom(*a, **kw):
+        raise AssertionError("browser started despite strict-repro refusal")
+    monkeypatch.setattr(be, "sync_playwright", boom)
+    monkeypatch.setattr(be, "run_pool", boom)
+
+    def fake_write(out_dir, task_set=None, strict=False, **kw):
+        assert strict is True                    # flag reaches the writer
+        raise DirtyTreeError("--strict-repro refused: 1 tracked file(s) modified")
+    monkeypatch.setattr(be, "write_manifest", fake_write)
+    with pytest.raises(DirtyTreeError, match="strict-repro refused"):
+        be.main(strict_repro=True)

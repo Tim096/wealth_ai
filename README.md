@@ -52,6 +52,10 @@ $env:SEC_EDGAR_USER_AGENT = "your-name your@email"
 .venv\Scripts\python tools\certify_cyd.py               # 題目二:Item 1C 官方 CYD iXBRL span oracle(9/9 coverage 100%)
 .venv\Scripts\python tools\score_offsets.py data\sec_eval\records\sweep3   # 題目二:char-offset F1 + tri-state
 .venv\Scripts\python tools\stratified_sample.py         # 題目二:format-era × filing-agent 分層抽樣
+
+# 2026-07-10 波:對抗軸 + 外部基準
+.venv\Scripts\python -m pytest tests\test_adversarial_suite.py  # 題目一:prompt-injection 對抗 suite(5 攻擊型態,ASR 指標)
+.venv\Scripts\python tools\naive_baseline.py            # 題目一:Online-Mind2Web 20-task 外部子集 naive baseline(實測 trivial-pass 20%)
 ```
 
 Task 1 用你自己的 **Codex OAuth**(預設走 gateway)實測:見 [docs/setup_codex_gateway.md](docs/setup_codex_gateway.md)。
@@ -99,7 +103,7 @@ tests/      345 tests
 ## 已知邊界(誠實揭露)
 
 - **Wrapper/index 正文還原未做**:Intel/Citi/JPM/XOM 的 Item 7/8 誠實標為指標 + needs_review,但未把真 MD&A/財報接回。刻意不出貨脆弱猜測(見 `docs/insights_and_directions.md` §2)。
-- **Browser Agent 目前對本地 mock sites 完整驗證**;真實網站廣度 + WebArena/WebVoyager 對標列為 roadmap(`docs/prior_art.md`)。
+- **Browser Agent 對本地 mock sites 完整驗證;真實網站對標已起步(2026-07-10)**:外部基準子集 **Online-Mind2Web** 20 tasks(OSU-NLP-Group,**CC-BY-4.0**,COLM 2025,arXiv:2504.01382;`data/browser_eval/external/`)已引入,live naive baseline 實測 trivial-pass 20%(4/20)證明子集非 shortcut 集;另新增 **prompt-injection 對抗 suite**(5 攻擊型態 + ASR 指標,`data/browser_eval/adversarial.json`)。eval task 檔並新增 step-budget 欄位:`difficulty`(easy 8 / medium 15 / hard 25 步)或顯式 `max_steps`,CLI `--max-steps` 可覆寫。WebArena/WebVoyager 全量對標仍列 roadmap(`docs/prior_art.md`)。
 - **token-level boundary 已量化(2026-07-10)**:char-offset F1(建構性 gold,regression baseline,敏感度注入驗證 0.9853)+ CYD 官方 iXBRL oracle(9/9 pass segment coverage 100%);人工標註的絕對正確率仍列 backlog。見 `docs/eval_report.md`。
 - **pre-2001 純文字 SGML filing:Unsupported**(heading detector 0 candidate,誠實全 missing,partition invariant 仍成立)。見 `docs/supported_and_unsupported.md` format-era 支援表。
 - **Browser 4 個 measure-first 弱點已於 2026-07-10 修復**(verifier filename-needle bypass、query-echo silent failure、repair fallback 到不可行元素、bait-field tie-break;commit c4ac7cd / 3f0b1e9):校準 specificity 0.9583→1.0、FP rate 0.0417→0.0、impossible silent_failure_rate 0.1→0.0、perception degradation curve 尾端 0.0→1.0。原 `test_known_*` 已翻寫為 `test_fixed_*` 並重跑 artifact。另修復開放式(零條件)任務 crash → 誠實 unknown(FG-BROWSER-006,commit 2fec949)。逐條前→後見 `docs/failure_gallery.md` FG-BROWSER-002~006 與 `docs/eval_report.md`「修復迭代」段。

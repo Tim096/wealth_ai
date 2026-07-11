@@ -58,7 +58,7 @@ Item 8 對 companyfacts 交叉驗證:每家多 1 次 `companyfacts` fetch(cache 
 
 ## Browser Agent
 
-來源:`runs/browser_eval/results.json`(5 tasks,mock sites,offline)。重生:`tools\browser_eval.py`。
+來源:`runs/browser_eval/results.json`(5 tasks,mock sites,offline)。重生:`tools\browser_eval.py`。每次 run 併寫 `runs/browser_eval/manifest.json`(P1-2 repro manifest:git commit/dirty、model id、task-set sha256、套件版本;`--strict-repro` 對 dirty tree 直接拒跑,數字永遠可釘回產生它的 code)。
 
 **穩定不變量(不隨 run 漂移,以下為硬數字):**
 
@@ -69,13 +69,39 @@ Item 8 對 companyfacts 交叉驗證:每家多 1 次 `companyfacts` fetch(cache 
 | trace completeness | 1.0 |
 | verdict accuracy | 1.0 |
 
-**會隨 selector memory 狀態漂移的量測(不在此硬寫,以 artifact 為準):** 平均延遲(~600 ms/task)、repair success rate——因為 memory 在 tasks 間累積(第二個同類漂移 task 可能 0 repair),這些值 run-to-run 會變。**正確做法是讀 `runs/browser_eval/results.json`,不是把快照凍進文件**——這也是我們對「可重跑」的一致態度:會變的量測不硬寫。
+**會隨 selector memory 狀態漂移的量測(不在此硬寫,以 artifact 為準):** 平均延遲(2026-07-10 快照 ~990 ms/task)、repair success rate——因為 memory 在 tasks 間累積(第二個同類漂移 task 可能 0 repair),這些值 run-to-run 會變。**正確做法是讀 `runs/browser_eval/results.json`,不是把快照凍進文件**——這也是我們對「可重跑」的一致態度:會變的量測不硬寫。
 
 ### Browser 成本結構
 
-- **LLM 成本 $0——與 SEC 同樣的誠實說明:** Script Mode(memory 命中)與 a11y-tree repair 都是確定性,不呼叫 LLM;且 escalation 到 LLM 的路徑**尚未 wired**(mock 場景未觸發)。所以 $0 同樣是「不需要」+「未接上」兩者兼有,不宣稱為已量測的成本成果。
+- **離線 eval 的 LLM 成本 $0(實測,by construction):** Script Mode(memory 命中)與 a11y-tree repair 都是確定性,不呼叫 LLM;offline eval 的 Agent Mode subset 用 MockPlanner,也不呼叫 LLM——artifact 的 `llm_cost_usd_total: 0.0` 是精確值。舊版此處寫「escalation 到 LLM 尚未 wired」已過時:LLM 路徑**已接上**(`LLMPlanner` via codex gateway + 卡住時視覺升級),且 P0-6 起每個 run/row 帶 `llm_calls / llm_tokens / llm_cost_usd` 入帳(live run 記在 `runs/agent_live/run.json`)。offline set 的 $0 是「不需要」,不是「量不到」。
 - **Runtime 成本**:Playwright headless Chromium,含 launch 攤提;真實網站會受網路延遲主導。
 - **Repair 延遲**:UI 漂移時多 1–2 次 observe + a11y 搜尋,單步 <100 ms;selector memory 命中後第二次同類 task **0 repair**(見 eval:v2-gizmo),攤平漂移成本——這是 selector memory 的核心價值。
+
+### Replay cache(P0-10,跨 run 攤平 LLM 成本)
+
+Agent Mode 由 verifier 判 pass 的 run 會把成功動作序列(durable selector + P0-7 結構 hash)入庫 `replay_cache.json`(key = site × task_type × task);同一 task 下次先逐步 replay 再問 planner——**乾淨 replay = 0 LLM call**,第一個失效步驟即 invalidate 並把同一回合交還 planner。verifier 仍是唯一裁判(replay 走完不等於 task pass)。
+
+| 指標 | 值 | 性質 |
+|---|---|---|
+| banked trajectories(eval 通道,`runs/browser_eval/replay_cache.json`)| 2 條;gizmo `success_count=2` = 兩次 verifier-passed run(第二次走 cache replay),widget = 1 | 實測(artifact,2026-07-10)|
+| 乾淨 replay 的 planner 成本 | 0 LLM call(replay 先於 planner)| 實測(`tests/test_p0_10_replay_cache_shadow.py` deterministic 釘死)|
+| live 通道(`runs/agent_live/replay_cache.json`)| 2 條,各 `success_count=1` | 實測(artifact)|
+
+Script Mode 另有 **shadow-mode cache 驗證**:remembered-selector 命中每 N 次抽驗一次(`CACHE_SHADOW_EVERY` 覆寫),從頭重推導並以**結構 hash**比對元素(非 selector 字面);`dom_fingerprint` 漂移會強制跳過抽樣直接驗。計數器落在 `TaskRun.cache_stats`(`as_dict()['cache']` 含 fp_rate)。**誠實標註:** mock eval set 無真實漂移場景,fp_rate 尚無非平凡實測值(divergence=0 是預期而非成果);divergence/agreement 行為由 10 個 deterministic tests 釘死,真實網站的 cache fp_rate 待累積,目前不宣稱數字。
+
+### 平行 worker pool(P0-11,多 session 成本模型)
+
+`--workers N`:subprocess pool,每 worker 一條持久 browser session(冷啟攤提)+ 每 task 新 context;parent 端 wall-clock watchdog 終結 hung worker。實測(2026-07-10 重跑 `tools\browser_eval.py --workers 2`,5 tasks;artifact `runs/browser_eval/results.json` `scalability` block):
+
+| 指標 | 值 |
+|---|---|
+| wall clock | 4.13 s(serial 估計 5.49 s → speedup **1.33x**;2 workers × 5 tasks 天花板本來就低,價值在成本模型非加速本身)|
+| throughput | 72.6 tasks/min |
+| session 冷啟 | mean 424 ms/session;攤提後 169.6 ms/task |
+| per-session utilization | worker0 0.72 / worker1 0.51 |
+| watchdog kills | 0 |
+
+wall/throughput/冷啟/utilization 是實測;speedup 的分母 `serial_estimate`(= busy 時間總和)是估計對照,如實標註。P1-15 起 pool watchdog 隨 set 內最大 step budget 線性放大(8 步→90 s、15→168.75 s、25→281.25 s,`watchdog_timeout_s` 實算),hard task 不會被 easy task 的檔期殺掉。
 
 ### 成本控制決策
 

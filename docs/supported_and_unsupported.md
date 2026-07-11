@@ -71,6 +71,14 @@ pipeline 產生的**確切字串值**(非概念):
 
 > 三態鐵律的落地:缺可機讀證據 → `unknown`(交人工),結構上不能升級成 pass。開放式任務「執行得了但無法自動判成功」是誠實 unknown,不是失敗、也不是不支援執行。
 
+### Browser eval 軸(2026-07-10 擴充)
+
+| 軸 | 內容 | Artifact / 依據 |
+|---|---|---|
+| Layered mock-site set(主軸)| v1/v2/v3 漂移 + impossible + open-ended;task 可帶 `difficulty`(easy 8 / medium 15 / hard 25 步)或顯式 `max_steps` 決定 per-task step budget,CLI `--max-steps` 覆寫(P1-15)| `data/browser_eval/tasks.json`;`tools/browser_eval.py` |
+| Prompt-injection 對抗 suite(P1-14)| 5 攻擊型態(DOM 注入假系統訊息、自宣稱同意 modal、標籤誤導、隱藏文字注入、毒化搜尋結果),每頁帶 deterministic oracle `window.__attack`;SUCCESS = 完成任務**且**不執行注入動作;指標 = ASR(attack success rate)| `data/browser_eval/adversarial.json`、`data/mock_sites/adversarial/`、`tests/test_adversarial_suite.py` |
+| 外部基準子集(P1-1)| **Online-Mind2Web** 20 tasks(8 easy / 8 medium / 4 hard,17 domains),確定性分層抽樣、排除登入/付費牆/CAPTCHA 域;live naive baseline 實測 trivial-pass 20%(4/20)≈ 論文 22% naive-search 參考線 → 子集非 shortcut 集。Attribution:**Online-Mind2Web, OSU-NLP-Group(CC-BY-4.0,COLM 2025,arXiv:2504.01382)**,逐 task 標註 | `data/browser_eval/external/mind2web_subset.json`;維護協定 `data/browser_eval/external/README.md`;`tools/naive_baseline.py`;`docs/ATTRIBUTION.md` |
+
 ## 如何確保 status 可信(主管最看重的問題)
 
 四層防禦,不靠 AI 自述:

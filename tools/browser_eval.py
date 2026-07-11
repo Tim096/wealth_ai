@@ -70,6 +70,7 @@ from tools.eval_worker import (                  # noqa: E402
     load_done_summary, run_guarded, run_pool, scan_incomplete,
     session_cost_model, should_abort,
 )
+from tools.run_manifest import DirtyTreeError, write_manifest  # noqa: E402
 TASKS = ROOT / "data" / "browser_eval" / "tasks.json"
 OUT = ROOT / "runs" / "browser_eval"
 EVIDENCE = ROOT / "data" / "browser_eval" / "evidence"
@@ -424,8 +425,12 @@ def aggregate_passk(rows_by_task: dict, k: int) -> dict:
 
 def main(repeat: int = 1, agentic: bool = False, resume: bool = False,
          workers: int = 1, second_judge: bool = False,
-         max_steps: int | None = None) -> None:
+         max_steps: int | None = None, strict_repro: bool = False) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
+    # P1-2: pin what produced these numbers (git commit/dirty, model, task-set
+    # sha256, package versions). strict=True raises DirtyTreeError — a refusal,
+    # before any browser/session starts.
+    manifest_path = write_manifest(OUT, task_set=TASKS, strict=strict_repro)
     judge_ctx = None
     if second_judge:
         # LLM extractor iff a key is configured (never ask for one); otherwise
@@ -491,6 +496,7 @@ def main(repeat: int = 1, agentic: bool = False, resume: bool = False,
     harness = harness_report(rows0, n_planned=len(tasks), aborted=aborted)
     harness["incomplete_from_prior_run"] = incomplete_prior
     payload = {"metrics": metrics, "harness": harness, "tasks": rows0}
+    payload["manifest"] = str(manifest_path)     # P1-2: numbers -> manifest link
     if scalability:
         payload["scalability"] = scalability   # P0-11 multi-session cost model
     adjudication = None
@@ -592,6 +598,9 @@ if __name__ == "__main__":
                     help="P0-8: advisory second judge — per-condition micro-judgments "
                          "diffed against the primary verifier; writes "
                          "runs/browser_eval/second_judge.json (verdicts untouched)")
+    ap.add_argument("--strict-repro", action="store_true",
+                    help="P1-2: refuse to run when tracked files have uncommitted "
+                         "changes — no run artifacts from unpinnable code")
     ap.add_argument("--max-steps", type=int, default=None,
                     help="P1-15: override the per-task step budget for every task; "
                          "without it each task resolves its own budget — task "
@@ -610,6 +619,9 @@ if __name__ == "__main__":
         ap.error("--second-judge applies to the single-pass sequential Script-Mode run only")
     if args.max_steps is not None and args.max_steps < 1:
         ap.error("--max-steps must be >= 1")
-    main(repeat=args.repeat, agentic=args.agentic, resume=args.resume,
-         workers=args.workers, second_judge=args.second_judge,
-         max_steps=args.max_steps)
+    try:
+        main(repeat=args.repeat, agentic=args.agentic, resume=args.resume,
+             workers=args.workers, second_judge=args.second_judge,
+             max_steps=args.max_steps, strict_repro=args.strict_repro)
+    except DirtyTreeError as e:
+        raise SystemExit(str(e))    # refusal, not a crash — clean exit 1

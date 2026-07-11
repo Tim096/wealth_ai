@@ -468,9 +468,9 @@ def _agent_worker() -> None:
                     # has no crisp success string). Run the task anyway; with no
                     # verifiable condition the verifier returns an honest
                     # `unknown`, never a disguised pass.
-                    rec["url"], rec["success"] = url, conds or ["(無明確成功條件 → 結果以 unknown 誠實回報)"]
+                    rec["url"], rec["success"] = url, conds or ["(無可驗證條件 → 結果 UNKNOWN,請人工檢視 trace)"]
                     plan = f"起點 {url}" + (f" · 成功條件 {' / '.join(conds)}" if conds
-                                           else " · 無可驗證條件,結果將誠實標示 unknown")
+                                           else " · 無可驗證條件 → 任務照跑,結果誠實標示 UNKNOWN,請人工檢視 trace")
                     rec["steps"].append(f"🧭 規畫:{plan}")
                 try:
                     page.goto(url, wait_until="domcontentloaded", timeout=30000)

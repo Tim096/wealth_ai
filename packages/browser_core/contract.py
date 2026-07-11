@@ -36,5 +36,9 @@ class BrowserTaskContract(BaseModel):
     task_id: str
     natural_language_task: str
     expected_outcome: str
-    success_conditions: list[SuccessCondition] = Field(min_length=1)
+    # min_length=0: an open-ended task legitimately compiles to ZERO conditions
+    # (the honest preflight answer "nothing is machine-checkable" must be a legal
+    # contract, not a ValidationError that punishes honesty). The verifier turns
+    # an empty list into an honest `unknown`, never a vacuous pass.
+    success_conditions: list[SuccessCondition] = Field(min_length=0)
     forbidden_conditions: list[ForbiddenCondition] = Field(default_factory=list)

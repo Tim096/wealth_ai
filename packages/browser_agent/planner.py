@@ -158,7 +158,7 @@ Return EXACTLY ONE JSON object, nothing else:
      - A named site/brand: its real domain (finlab -> https://finlab.tw, Wikipedia article -> https://en.wikipedia.org/wiki/<Topic>).
      - Only if the target is genuinely unknown, start at https://duckduckgo.com/html/ .
      Never invent a deep path you cannot know exists (a guessed accession number, a made-up article slug) — construct only URLs whose shape the site guarantees (a ticker-keyed EDGAR query, a domain root, a Wikipedia /wiki/Title).
-  "success_conditions": 1-3 objects proving completion, each:
+  "success_conditions": 0-3 objects proving completion, each:
        {"type":"text_visible","value":"<short exact substring that appears on the page only when done>"}
        {"type":"url_contains","value":"<url fragment true only when done>"}
        {"type":"download_exists","value":"<distinctive text the SAVED FILE must contain, or \"\">"}
@@ -166,7 +166,7 @@ Return EXACTLY ONE JSON object, nothing else:
      Prefer a distinctive phrase in the language the target page will render (English site -> English phrase). Keep each value short and literal (a title, a heading, a ticker, a section name) — not a whole sentence, not vague words that appear everywhere.
      NEVER use an id/slug/token taken from a URL as a text_visible value — it does not appear as text on the page and would fail even when the task succeeded. For submitting a form, the completion landmark is the POST-SUBMIT page: use url_contains of the response URL (a Google Form lands on ".../formResponse") or the confirmation text the form shows after submit ("已送出" / "response has been recorded"), never a value copied from the form's link.
 
-Rules: pick conditions that are SUFFICIENT (met => task genuinely done) and NECESSARY (task done => met). If the task is a search/read, the condition is the answer text or a landmark of the destination page. If it downloads a document to inspect, prefer download_exists carrying the section/heading to confirm. Always return at least one condition — for an open-ended task ("find the most popular X"), use a landmark of the destination page (its title/section). Do not require login/CAPTCHA text. Never fabricate a value you don't expect to literally appear."""
+Rules: pick conditions that are SUFFICIENT (met => task genuinely done) and NECESSARY (task done => met). If the task is a search/read, the condition is the answer text or a landmark of the destination page. If it downloads a document to inspect, prefer download_exists carrying the section/heading to confirm. For an open-ended task ("find the most popular X", "找找有什麼有趣的商品", "播放某首歌"), still TRY a best-effort weak condition — text_visible of a query keyword, or a landmark of the destination page (its title/section). But if nothing observable would truthfully prove completion, return an empty array [] — the run then ends as an honest `unknown` for human review. NEVER invent a condition just to have one: a fabricated condition that fails on a genuinely-completed task is worse than none. Do not require login/CAPTCHA text. Never fabricate a value you don't expect to literally appear."""
 
 
 class LLMPlanner:

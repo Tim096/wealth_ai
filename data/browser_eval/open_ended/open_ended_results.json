@@ -1,0 +1,64 @@
+{
+  "generated_by": "tools/open_ended_tasks.py",
+  "source_tasks": "data/browser_eval/tasks.json -> open_ended_tasks",
+  "definition": {
+    "vacuous_pass": "status 'pass' on a contract with ZERO success conditions — nothing was proven, so pass is never correct here",
+    "crash": "the run raised instead of completing (the old min_length=1 ValidationError that punished the honest empty-condition path)",
+    "honest_unknown": "the agent executed, the trace was recorded, and the verifier said unknown for lack of machine-checkable evidence"
+  },
+  "metrics": {
+    "n_open_ended": 3,
+    "crashes": 0,
+    "vacuous_passes": 0,
+    "honest_unknown": 3,
+    "honest_unknown_rate": 1.0,
+    "traces_recorded": 3
+  },
+  "tasks": [
+    {
+      "task_id": "open-browse-interesting",
+      "site": "v1",
+      "expected": "unknown",
+      "status": "unknown",
+      "crashed": false,
+      "matches_expected": true,
+      "vacuous_pass": false,
+      "steps_executed": 2,
+      "verifier_status": "unknown",
+      "verifier_reason": "open-ended task: no machine-checkable success condition",
+      "missing_evidence": [
+        "open-ended task: no machine-checkable success condition; trace attached for human review"
+      ]
+    },
+    {
+      "task_id": "open-whats-popular",
+      "site": "v2",
+      "expected": "unknown",
+      "status": "unknown",
+      "crashed": false,
+      "matches_expected": true,
+      "vacuous_pass": false,
+      "steps_executed": 3,
+      "verifier_status": "unknown",
+      "verifier_reason": "open-ended task: no machine-checkable success condition",
+      "missing_evidence": [
+        "open-ended task: no machine-checkable success condition; trace attached for human review"
+      ]
+    },
+    {
+      "task_id": "open-look-around",
+      "site": "v3_heldout",
+      "expected": "unknown",
+      "status": "unknown",
+      "crashed": false,
+      "matches_expected": true,
+      "vacuous_pass": false,
+      "steps_executed": 2,
+      "verifier_status": "unknown",
+      "verifier_reason": "open-ended task: no machine-checkable success condition",
+      "missing_evidence": [
+        "open-ended task: no machine-checkable success condition; trace attached for human review"
+      ]
+    }
+  ]
+}

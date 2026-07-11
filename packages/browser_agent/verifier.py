@@ -82,4 +82,20 @@ def verify_contract(contract: BrowserTaskContract, obs: Observation,
     for c in contract.forbidden_conditions:
         checks.append(ConditionCheck(condition=f"forbidden:{c.type}:{c.value}", required=False,
                                      observed=_check_forbidden(c, obs)))
+    if not contract.success_conditions:
+        # Structural gate for open-ended tasks: with ZERO success conditions,
+        # combine_checks over the forbidden checks alone would report `pass`
+        # whenever nothing forbidden happened — a vacuous pass. A forbidden
+        # violation still fails; anything else is an honest `unknown`.
+        result = combine_checks(checks)
+        if result.status == "fail":
+            return result
+        return VerifierResult(
+            status="unknown",
+            reason="open-ended task: no machine-checkable success condition",
+            required_evidence=[c.condition for c in checks],
+            observed_evidence=result.observed_evidence,
+            missing_evidence=["open-ended task: no machine-checkable success condition; "
+                              "trace attached for human review"],
+        )
     return combine_checks(checks)

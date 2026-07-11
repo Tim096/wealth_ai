@@ -43,6 +43,43 @@ def test_verifier_unknown_when_unobservable():
     assert verify_contract(c, obs([])).status == "unknown"
 
 
+# --- FIX-1: open-ended tasks (zero success conditions) ---
+def test_open_ended_empty_conditions_is_unknown_with_human_review_note():
+    """FIX-1 前後對照。修復前:空 success_conditions 根本到不了 verifier ——
+    contract schema (min_length=1) 先炸 ValidationError,run 變 ERROR,懲罰了
+    誠實回報「無可驗證條件」的 preflight。修復後:空條件合法,verifier 的
+    結構性守門回 unknown,missing_evidence 明講需要人工檢視 trace。"""
+    c = BrowserTaskContract(task_id="t", natural_language_task="逛逛有什麼有趣的",
+                            expected_outcome="open-ended", success_conditions=[])
+    r = verify_contract(c, obs([]))
+    assert r.status == "unknown"
+    assert "open-ended" in r.reason
+    assert any("human review" in m for m in r.missing_evidence)
+
+
+def test_open_ended_forbidden_satisfied_is_still_unknown_not_vacuous_pass():
+    # With zero success conditions, combine_checks over forbidden-only checks
+    # would report `pass` when nothing forbidden happened — a vacuous pass.
+    # The verifier-level gate must keep the verdict at unknown.
+    c = BrowserTaskContract(task_id="t", natural_language_task="逛逛", expected_outcome="x",
+                            success_conditions=[],
+                            forbidden_conditions=[ForbiddenCondition(
+                                type="error_text_visible", value="internal server error")])
+    assert verify_contract(c, obs([], text="a perfectly fine page")).status == "unknown"
+
+
+def test_open_ended_forbidden_violation_still_fails():
+    # unknown-by-default must NOT swallow a forbidden violation: an open-ended
+    # task that lands on a login wall / error page still fails honestly.
+    c = BrowserTaskContract(task_id="t", natural_language_task="逛逛", expected_outcome="x",
+                            success_conditions=[],
+                            forbidden_conditions=[ForbiddenCondition(
+                                type="error_text_visible", value="no results")])
+    r = verify_contract(c, obs([], text="no results found"))
+    assert r.status == "fail"
+    assert "forbidden" in r.reason
+
+
 def _dl_contract(value):
     return BrowserTaskContract(task_id="t", natural_language_task="download it",
                                expected_outcome="file", success_conditions=[

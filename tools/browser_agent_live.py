@@ -55,11 +55,14 @@ def _preflight_gateway(base_url: str) -> tuple[bool, str]:
 from browser_agent.nl import derive_success  # noqa: E402  (shared, CJK-aware)
 
 
-def derive_or_die(task: str) -> list[str]:
+def derive_or_warn(task: str) -> list[str]:
+    """Open-ended tasks are legal: no derivable condition is NOT a reason to
+    refuse the run (that punished honesty). The task runs anyway and the
+    verifier reports an honest `unknown` for human review of the trace."""
     conds = derive_success(task)
     if not conds:
-        raise SystemExit("推斷不出可驗證的成功條件(中文長句無法自動切詞)——"
-                         "請用 --success 'type:value' 或在任務裡用引號標出關鍵詞。")
+        print("! 無可驗證的成功條件 → 任務照跑,結果將誠實標示 UNKNOWN(請人工檢視 trace)。"
+              "要機器驗證請用 --success 'type:value' 或在任務裡用引號標出關鍵詞。")
     return conds
 
 
@@ -132,11 +135,8 @@ def interactive_loop(page, args):
         if succ:
             conds = [f"text_visible:{succ}"]
         else:
-            conds = derive_success(task)
-            if not conds:
-                print("! 推斷不出成功條件(中文長句無法切詞)——請重新輸入,並填成功條件或在任務中用引號標關鍵詞。\n")
-                continue
-        print(f"[success] {conds}")
+            conds = derive_or_warn(task)   # open-ended → run anyway, honest unknown
+        print(f"[success] {conds or ['(無 → unknown)']}")
         run_task(page, args, task, url, conds)
         print()
 
@@ -174,7 +174,7 @@ def main() -> None:
         else:
             task = args.task or "Search MockShop for 'widget' and see the results"
             url = args.url or (ROOT / "data" / "mock_sites" / "v2" / "index.html").resolve().as_uri()
-            conds = args.success or derive_or_die(task)
+            conds = args.success or derive_or_warn(task)
             run_task(page, args, task, url, conds)
         browser.close()
     print(f"\nevidence: {OUT / 'evidence'}   shots: {OUT / 'shots'}")

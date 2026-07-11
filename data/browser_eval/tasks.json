@@ -198,5 +198,44 @@
       "expect_status": "refused",
       "note": "capability guard refuses purchase/checkout; counted separately from FAIL"
     }
+  ],
+  "open_ended_note": "FIX-1 honesty set. Open-ended tasks compile to ZERO machine-checkable success conditions (the honest preflight answer). The ONLY correct outcome is `unknown` — the agent still runs and records a trace, but no verifier evidence can prove completion. A reported `pass` is a vacuous/silent pass; a crash (schema rejecting the empty contract) punishes honesty. Run with tools/open_ended_tasks.py.",
+  "open_ended_tasks": [
+    {
+      "task_id": "open-browse-interesting",
+      "layer": "open_ended",
+      "kind": "open_ended",
+      "site": "v1",
+      "query": "widget",
+      "natural_language_task": "找找 MockShop 有什麼有趣的商品",
+      "success_conditions": [],
+      "forbidden_conditions": [],
+      "expect_status": "unknown",
+      "note": "'有趣' is subjective — nothing observable proves it; the run must end unknown, never a vacuous pass"
+    },
+    {
+      "task_id": "open-whats-popular",
+      "layer": "open_ended",
+      "kind": "open_ended",
+      "site": "v2",
+      "query": "gizmo",
+      "natural_language_task": "Browse MockShop and get a feel for what's popular",
+      "success_conditions": [],
+      "forbidden_conditions": [{"type": "error_text_visible", "value": "internal server error"}],
+      "expect_status": "unknown",
+      "note": "open-ended with a forbidden condition attached: forbidden is STILL checked (a violation would fail), but with no violation the verdict stays unknown — never pass"
+    },
+    {
+      "task_id": "open-look-around",
+      "layer": "open_ended",
+      "kind": "open_ended",
+      "site": "v3_heldout",
+      "query": "sprocket",
+      "natural_language_task": "逛逛這個網站,看看有沒有什麼新鮮貨",
+      "success_conditions": [],
+      "forbidden_conditions": [],
+      "expect_status": "unknown",
+      "note": "held-out structure + open-ended goal: the agent completes its steps, the trace is recorded, and the verdict is an honest unknown"
+    }
   ]
 }

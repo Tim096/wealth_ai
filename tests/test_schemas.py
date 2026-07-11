@@ -20,14 +20,20 @@ def test_browser_action_accepts_controlled_click():
     assert action.type == "click"
 
 
-def test_contract_requires_at_least_one_success_condition():
-    with pytest.raises(ValidationError):
-        BrowserTaskContract(
-            task_id="t1",
-            natural_language_task="do nothing",
-            expected_outcome="nothing",
-            success_conditions=[],
-        )
+def test_contract_allows_zero_success_conditions_for_open_ended_tasks():
+    """FIX-1 前後對照。修復前:success_conditions 有 min_length=1,LLM preflight
+    誠實回報「開放式任務、無可驗證條件」(空陣列)時,建 contract 直接
+    ValidationError,整個 run 變 ERROR(實例:「搜尋 33 號遠征隊的歌曲 並 播放」)
+    —— schema 把誠實路徑當非法輸入,等於懲罰誠實。修復後:空條件是合法的
+    開放式 contract;verifier 對它回 unknown,絕不 vacuous pass(見
+    test_browser_agent.py 的 open_ended 測試)。"""
+    c = BrowserTaskContract(
+        task_id="t1",
+        natural_language_task="搜尋 33 號遠征隊的歌曲 並 播放",
+        expected_outcome="open-ended: no machine-checkable outcome",
+        success_conditions=[],
+    )
+    assert c.success_conditions == []
 
 
 def test_failure_taxonomy_covers_spec_types():

@@ -446,3 +446,38 @@ def test_agent_mode_loop_with_mock_planner(tmp_path):
         b.close()
     assert run.status == "pass"
     assert any(s.mode == "agent" for s in run.steps)
+
+
+@pytest.mark.integration
+def test_open_ended_task_runs_to_unknown_not_error(tmp_path):
+    """FIX-1 end-to-end 前後對照。修復前:開放式任務(preflight 誠實回報零
+    success_conditions)在建 BrowserTaskContract 時撞 min_length=1 →
+    ValidationError → 整個 run 變 ERROR,agent 一步都沒跑。修復後:任務照跑
+    (planner 步驟正常執行、trace 照常記錄),結束時 verifier 誠實回 unknown
+    —— unknown 不是不做事,是做完誠實說無法機器驗證。"""
+    pytest.importorskip("playwright.sync_api")
+    from pathlib import Path
+
+    from playwright.sync_api import sync_playwright
+
+    from browser_agent.agent import BrowserAgent
+    from browser_agent.memory_store import MemoryStore
+
+    root = Path(__file__).resolve().parents[1]
+    site = root / "data" / "mock_sites" / "v1" / "index.html"
+    if not site.exists():
+        pytest.skip("mock site missing")
+    contract = BrowserTaskContract(
+        task_id="open-ended", natural_language_task="找找 MockShop 有什麼有趣的商品",
+        expected_outcome="open-ended: no machine-checkable outcome",
+        success_conditions=[])                      # the honest preflight answer
+    with sync_playwright() as p:
+        b = p.chromium.launch(headless=True)
+        page = b.new_page()
+        page.goto(site.resolve().as_uri())
+        agent = BrowserAgent(page, MemoryStore(tmp_path / "m.json"), "live", "agentic")
+        run = agent.run_agentic("open-ended", contract, MockPlanner("widget"), max_steps=6)
+        b.close()
+    assert run.status == "unknown"                  # honest, not ERROR, not pass
+    assert any(s.mode == "agent" for s in run.steps)  # the agent actually worked
+    assert "open-ended" in run.verifier.reason

@@ -1,0 +1,49 @@
+{
+  "schema": "repro-manifest/1",
+  "created_at": "2026-07-10T16:51:25+00:00",
+  "git": {
+    "commit": "9367d86c437105c90c474fb65f6d272fbd8ac216",
+    "dirty": true,
+    "dirty_files": [
+      "apps/web/eval-dashboard/data.json",
+      "data/browser_eval/evidence/browser-mockshop-search-v1-nonexistent.jsonl",
+      "data/browser_eval/evidence/browser-mockshop-search-v1-widget.jsonl",
+      "data/browser_eval/evidence/browser-mockshop-search-v2-gizmo-drift.jsonl",
+      "data/browser_eval/evidence/browser-mockshop-search-v2-widget-drift.jsonl",
+      "data/browser_eval/evidence/browser-mockshop-search-v3-heldout.jsonl",
+      "data/browser_eval/passk/passk_results.json"
+    ],
+    "untracked": []
+  },
+  "llm": {
+    "model": "gpt-5.3-codex",
+    "mode": "gateway",
+    "base_url": "http://127.0.0.1:8791/v1"
+  },
+  "seeds": {
+    "PYTHONHASHSEED": null
+  },
+  "task_set": {
+    "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\claude\\E--Side-Project-wealth\\6fd60c6f-4f09-4322-8120-604e8a5a60bf\\scratchpad\\m2w_unknowns6.json",
+    "sha256": "1acfc7a3a20a3bc20d5bb07cdaed243642272dcfeccb232028ff62d8d4226c9b"
+  },
+  "packages": {
+    "python": "3.12.4",
+    "playwright": "1.61.0",
+    "httpx": "0.28.1",
+    "pydantic": "2.13.4"
+  },
+  "os": {
+    "platform": "Windows-10-10.0.19045-SP0",
+    "machine": "AMD64"
+  },
+  "budget_caps": null,
+  "argv": [
+    "tools\\run_external_eval.py",
+    "--tasks",
+    "C:\\Users\\Administrator\\AppData\\Local\\Temp\\claude\\E--Side-Project-wealth\\6fd60c6f-4f09-4322-8120-604e8a5a60bf\\scratchpad\\m2w_unknowns6.json",
+    "--out",
+    "runs/browser_eval/m2w_abstain_fix2_20260710",
+    "--resume"
+  ]
+}

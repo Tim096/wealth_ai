@@ -1,0 +1,25 @@
+{
+  "task_id": "m2w-0170ca95038b",
+  "harness_status": "done",
+  "row": {
+    "task_id": "m2w-0170ca95038b",
+    "difficulty": "hard",
+    "website": "https://www.gov.uk/",
+    "status": "pass",
+    "verifier_reason": "all conditions observed and satisfied",
+    "steps_taken": 21,
+    "step_budget": 25,
+    "repairs": 0,
+    "llm_cost_usd": 0.008502,
+    "llm_tokens": 30549,
+    "latency_ms": 156846.6,
+    "wall_s": 157.2,
+    "second_judge": {
+      "verdict": "abstain",
+      "disagreements": 1,
+      "llm_cost_usd": 0.000418
+    }
+  },
+  "error": null,
+  "written_at": "2026-07-10T09:20:40+00:00"
+}

@@ -1,12 +1,15 @@
 {
   "filings": 11,
   "verdicts": {
-    "certified": 8,
-    "contradicted": 3,
+    "certified": 10,
+    "contradicted": 1,
     "inconclusive": 0,
     "unavailable": 0
   },
-  "disagreements": [],
+  "disagreements": [
+    "JPM",
+    "XOM"
+  ],
   "records": [
     {
       "ticker": "AAPL",
@@ -69,20 +72,20 @@
       "ticker": "JPM",
       "cik": 19617,
       "accession": "0001628280-26-008131",
-      "item8_status": "incorporated_by_reference",
-      "verdict": "contradicted",
-      "detail": "none of the XBRL headline figures appear in the span \u2014 the financial statements are not here (wrapper stub or boundary error)",
+      "item8_status": "partial",
+      "verdict": "certified",
+      "detail": "3/3 XBRL headline figures found in the span",
       "facts": {
         "revenue": 182447000000,
         "net_income": 58471000000,
         "total_assets": 4424900000000
       },
       "corroborated": {
-        "revenue": false,
-        "net_income": false,
-        "total_assets": false
+        "revenue": true,
+        "net_income": true,
+        "total_assets": true
       },
-      "agrees_with_pipeline": true
+      "agrees_with_pipeline": false
     },
     {
       "ticker": "GS",
@@ -143,20 +146,20 @@
       "ticker": "XOM",
       "cik": 34088,
       "accession": "0000034088-26-000045",
-      "item8_status": "incorporated_by_reference",
-      "verdict": "contradicted",
-      "detail": "none of the XBRL headline figures appear in the span \u2014 the financial statements are not here (wrapper stub or boundary error)",
+      "item8_status": "partial",
+      "verdict": "certified",
+      "detail": "3/3 XBRL headline figures found in the span",
       "facts": {
         "revenue": 349585000000,
         "net_income": 36010000000,
         "total_assets": 453475000000
       },
       "corroborated": {
-        "revenue": false,
-        "net_income": false,
-        "total_assets": false
+        "revenue": true,
+        "net_income": true,
+        "total_assets": true
       },
-      "agrees_with_pipeline": true
+      "agrees_with_pipeline": false
     },
     {
       "ticker": "NEM",

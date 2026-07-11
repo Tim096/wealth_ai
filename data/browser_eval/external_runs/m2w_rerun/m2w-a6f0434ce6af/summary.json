@@ -1,0 +1,25 @@
+{
+  "task_id": "m2w-a6f0434ce6af",
+  "harness_status": "done",
+  "row": {
+    "task_id": "m2w-a6f0434ce6af",
+    "difficulty": "easy",
+    "website": "https://finance.yahoo.com/",
+    "status": "unknown",
+    "verifier_reason": "open-ended task: no machine-checkable success condition",
+    "steps_taken": 13,
+    "step_budget": 8,
+    "repairs": 0,
+    "llm_cost_usd": 0.002653,
+    "llm_tokens": 8356,
+    "latency_ms": 74126.9,
+    "wall_s": 74.9,
+    "second_judge": {
+      "verdict": "abstain",
+      "disagreements": 1,
+      "llm_cost_usd": 0.000326
+    }
+  },
+  "error": null,
+  "written_at": "2026-07-10T09:05:39+00:00"
+}

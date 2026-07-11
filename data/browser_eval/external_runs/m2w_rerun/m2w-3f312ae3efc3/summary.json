@@ -1,0 +1,25 @@
+{
+  "task_id": "m2w-3f312ae3efc3",
+  "harness_status": "done",
+  "row": {
+    "task_id": "m2w-3f312ae3efc3",
+    "difficulty": "easy",
+    "website": "https://www.nfl.com/",
+    "status": "unknown",
+    "verifier_reason": "open-ended task: no machine-checkable success condition",
+    "steps_taken": 6,
+    "step_budget": 8,
+    "repairs": 0,
+    "llm_cost_usd": 0.002031,
+    "llm_tokens": 7118,
+    "latency_ms": 37383.8,
+    "wall_s": 38.5,
+    "second_judge": {
+      "verdict": "abstain",
+      "disagreements": 1,
+      "llm_cost_usd": 0.000407
+    }
+  },
+  "error": null,
+  "written_at": "2026-07-10T09:01:44+00:00"
+}

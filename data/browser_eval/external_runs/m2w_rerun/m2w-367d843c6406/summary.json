@@ -1,0 +1,25 @@
+{
+  "task_id": "m2w-367d843c6406",
+  "harness_status": "done",
+  "row": {
+    "task_id": "m2w-367d843c6406",
+    "difficulty": "hard",
+    "website": "https://www.apartments.com/",
+    "status": "fail",
+    "verifier_reason": "violated: text_visible:Houston",
+    "steps_taken": 3,
+    "step_budget": 25,
+    "repairs": 0,
+    "llm_cost_usd": 0.000323,
+    "llm_tokens": 585,
+    "latency_ms": 22517.5,
+    "wall_s": 22.6,
+    "second_judge": {
+      "verdict": "abstain",
+      "disagreements": 1,
+      "llm_cost_usd": 0.000128
+    }
+  },
+  "error": null,
+  "written_at": "2026-07-10T09:21:15+00:00"
+}

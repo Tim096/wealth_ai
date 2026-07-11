@@ -1,0 +1,25 @@
+{
+  "task_id": "m2w-239a29bde438",
+  "harness_status": "done",
+  "row": {
+    "task_id": "m2w-239a29bde438",
+    "difficulty": "medium",
+    "website": "https://www.healthline.com/",
+    "status": "pass",
+    "verifier_reason": "all conditions observed and satisfied",
+    "steps_taken": 4,
+    "step_budget": 15,
+    "repairs": 0,
+    "llm_cost_usd": 0.001576,
+    "llm_tokens": 5620,
+    "latency_ms": 23288.0,
+    "wall_s": 24.1,
+    "second_judge": {
+      "verdict": "abstain",
+      "disagreements": 1,
+      "llm_cost_usd": 0.000379
+    }
+  },
+  "error": null,
+  "written_at": "2026-07-10T09:07:04+00:00"
+}

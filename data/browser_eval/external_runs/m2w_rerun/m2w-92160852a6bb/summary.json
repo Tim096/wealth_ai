@@ -1,0 +1,7 @@
+{
+  "task_id": "m2w-92160852a6bb",
+  "harness_status": "error",
+  "row": null,
+  "error": "Error: Page.goto: net::ERR_HTTP2_PROTOCOL_ERROR at https://www.ups.com/\nCall log:\n  - navigating to \"https://www.ups.com/\", waiting until \"domcontentloaded\"\n",
+  "written_at": "2026-07-10T09:04:14+00:00"
+}

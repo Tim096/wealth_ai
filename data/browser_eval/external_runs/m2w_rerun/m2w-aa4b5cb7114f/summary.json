@@ -1,0 +1,25 @@
+{
+  "task_id": "m2w-aa4b5cb7114f",
+  "harness_status": "done",
+  "row": {
+    "task_id": "m2w-aa4b5cb7114f",
+    "difficulty": "medium",
+    "website": "https://www.ign.com/",
+    "status": "fail",
+    "verifier_reason": "violated: text_visible:boardgame",
+    "steps_taken": 26,
+    "step_budget": 15,
+    "repairs": 0,
+    "llm_cost_usd": 0.007521,
+    "llm_tokens": 26659,
+    "latency_ms": 196539.2,
+    "wall_s": 197.1,
+    "second_judge": {
+      "verdict": "abstain",
+      "disagreements": 1,
+      "llm_cost_usd": 0.000174
+    }
+  },
+  "error": null,
+  "written_at": "2026-07-10T09:17:24+00:00"
+}

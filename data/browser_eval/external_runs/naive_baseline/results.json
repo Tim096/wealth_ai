@@ -1,0 +1,309 @@
+{
+  "agent": "naive_baseline (goto + first-match fill/click; no repair, no vision, no planner)",
+  "judge": "verify_contract \u2014 same verifier as the real agent",
+  "tasks": 20,
+  "pass": 4,
+  "fail": 16,
+  "unknown": 0,
+  "trivial_pass_rate": 0.2,
+  "rows": [
+    {
+      "task_id": "m2w-005be9dd91c9",
+      "difficulty": "easy",
+      "website": "https://www.qatarairways.com/",
+      "status": "fail",
+      "verifier_reason": "violated: text_visible:Qatar Airways",
+      "actions": [
+        "goto:ok",
+        "fill('weight baggage allowance economy'):fail TimeoutError",
+        "click(submit-ish):fail TimeoutError",
+        "click('weight'):fail TimeoutError",
+        "click('baggage'):fail TimeoutError",
+        "click('allowance'):fail TimeoutError",
+        "click('economy'):fail TimeoutError"
+      ],
+      "latency_ms": 30188.0
+    },
+    {
+      "task_id": "m2w-26810ed9c123",
+      "difficulty": "easy",
+      "website": "https://www.accuweather.com/",
+      "status": "fail",
+      "verifier_reason": "naive run crashed: Error: Page.goto: net::ERR_HTTP2_PROTOCOL_ERROR at https://www.accuweather.com/\nCall log:\n  - navigating to \"https://www.accuweather.com/\", waiting until \"domcontentloaded\"\n",
+      "actions": [
+        "goto:fail Error"
+      ],
+      "latency_ms": 63.0
+    },
+    {
+      "task_id": "m2w-3f312ae3efc3",
+      "difficulty": "easy",
+      "website": "https://www.nfl.com/",
+      "status": "pass",
+      "verifier_reason": "all conditions observed and satisfied",
+      "actions": [
+        "goto:ok",
+        "fill('current NFL standings AFC'):fail TimeoutError",
+        "click(submit-ish):fail TimeoutError",
+        "click('current'):fail TimeoutError",
+        "click('NFL'):fail TimeoutError",
+        "click('standings'):fail TimeoutError",
+        "click('AFC'):fail TimeoutError"
+      ],
+      "latency_ms": 31250.0
+    },
+    {
+      "task_id": "m2w-52efbab52073",
+      "difficulty": "easy",
+      "website": "https://www.recreation.gov/",
+      "status": "fail",
+      "verifier_reason": "violated: text_visible:iOS.",
+      "actions": [
+        "goto:ok",
+        "fill('app iOS'):ok",
+        "click(submit-ish):ok"
+      ],
+      "latency_ms": 9062.0
+    },
+    {
+      "task_id": "m2w-75a1b5dcd2c2",
+      "difficulty": "easy",
+      "website": "https://www.allrecipes.com/",
+      "status": "fail",
+      "verifier_reason": "violated: text_visible:sirloin.",
+      "actions": [
+        "goto:ok",
+        "fill('reviews recipe beef sirloin'):fail TimeoutError",
+        "click(submit-ish):fail TimeoutError",
+        "click('reviews'):fail TimeoutError",
+        "click('recipe'):fail TimeoutError",
+        "click('beef'):fail TimeoutError",
+        "click('sirloin'):fail TimeoutError"
+      ],
+      "latency_ms": 35391.0
+    },
+    {
+      "task_id": "m2w-92160852a6bb",
+      "difficulty": "easy",
+      "website": "https://www.ups.com/",
+      "status": "fail",
+      "verifier_reason": "naive run crashed: Error: Page.goto: net::ERR_HTTP2_PROTOCOL_ERROR at https://www.ups.com/\nCall log:\n  - navigating to \"https://www.ups.com/\", waiting until \"domcontentloaded\"\n",
+      "actions": [
+        "goto:fail Error"
+      ],
+      "latency_ms": 63.0
+    },
+    {
+      "task_id": "m2w-a6f0434ce6af",
+      "difficulty": "easy",
+      "website": "https://finance.yahoo.com/",
+      "status": "pass",
+      "verifier_reason": "all conditions observed and satisfied",
+      "actions": [
+        "goto:ok",
+        "fill('closing stock price Tesla'):ok",
+        "click(submit-ish):ok"
+      ],
+      "latency_ms": 6609.0
+    },
+    {
+      "task_id": "m2w-c09721cc937d",
+      "difficulty": "easy",
+      "website": "https://www.recreation.gov/",
+      "status": "fail",
+      "verifier_reason": "violated: text_visible:Albion Basin",
+      "actions": [
+        "goto:ok",
+        "fill('next available date Albion'):ok",
+        "click(submit-ish):ok"
+      ],
+      "latency_ms": 8672.0
+    },
+    {
+      "task_id": "m2w-0059adc6b12a",
+      "difficulty": "medium",
+      "website": "https://careers.walmart.com/",
+      "status": "pass",
+      "verifier_reason": "all conditions observed and satisfied",
+      "actions": [
+        "goto:ok",
+        "fill('support services jobs Bentonville'):fail TimeoutError",
+        "click(submit-ish):fail TimeoutError",
+        "click('support'):fail TimeoutError",
+        "click('services'):fail TimeoutError",
+        "click('jobs'):fail TimeoutError",
+        "click('Bentonville'):fail TimeoutError"
+      ],
+      "latency_ms": 35968.0
+    },
+    {
+      "task_id": "m2w-239a29bde438",
+      "difficulty": "medium",
+      "website": "https://www.healthline.com/",
+      "status": "fail",
+      "verifier_reason": "violated: text_visible:gluten-free",
+      "actions": [
+        "goto:ok",
+        "fill('gluten-free diet lose weight'):fail TimeoutError",
+        "click(submit-ish):fail TimeoutError",
+        "click('gluten-free'):fail TimeoutError",
+        "click('diet'):fail TimeoutError",
+        "click('lose'):fail TimeoutError",
+        "click('weight'):fail TimeoutError"
+      ],
+      "latency_ms": 35391.0
+    },
+    {
+      "task_id": "m2w-3adeea7627f4",
+      "difficulty": "medium",
+      "website": "https://medicare.gov",
+      "status": "fail",
+      "verifier_reason": "violated: text_visible:Within",
+      "actions": [
+        "goto:ok",
+        "fill('Within Miles nursing home'):fail TimeoutError",
+        "click(submit-ish):fail TimeoutError",
+        "click('Within'):fail TimeoutError",
+        "click('Miles'):fail TimeoutError",
+        "click('nursing'):fail TimeoutError",
+        "click('home'):fail TimeoutError"
+      ],
+      "latency_ms": 37172.0
+    },
+    {
+      "task_id": "m2w-56f8890a837c",
+      "difficulty": "medium",
+      "website": "https://www.imdb.com/",
+      "status": "fail",
+      "verifier_reason": "violated: text_visible: Prometheus",
+      "actions": [
+        "goto:ok",
+        "fill(' Prometheus'):fail TimeoutError",
+        "click(submit-ish):fail TimeoutError",
+        "click(' Prometheus'):fail TimeoutError"
+      ],
+      "latency_ms": 15359.0
+    },
+    {
+      "task_id": "m2w-6ca20f1da01e",
+      "difficulty": "medium",
+      "website": "https://www.gov.uk/",
+      "status": "pass",
+      "verifier_reason": "all conditions observed and satisfied",
+      "actions": [
+        "goto:ok",
+        "fill('Eligibility get child benefit'):fail TimeoutError",
+        "click(submit-ish):ok"
+      ],
+      "latency_ms": 5344.0
+    },
+    {
+      "task_id": "m2w-864244b6969e",
+      "difficulty": "medium",
+      "website": "https://www.espn.com/",
+      "status": "fail",
+      "verifier_reason": "violated: text_visible:Formula",
+      "actions": [
+        "goto:ok",
+        "fill('race time who wins'):ok",
+        "click(submit-ish):fail TimeoutError",
+        "click('race'):fail TimeoutError",
+        "click('time'):fail TimeoutError",
+        "click('who'):ok"
+      ],
+      "latency_ms": 21766.0
+    },
+    {
+      "task_id": "m2w-aa4b5cb7114f",
+      "difficulty": "medium",
+      "website": "https://www.ign.com/",
+      "status": "fail",
+      "verifier_reason": "violated: text_visible:boardgame",
+      "actions": [
+        "goto:ok",
+        "fill('editor choice review score'):fail TimeoutError",
+        "click(submit-ish):fail TimeoutError",
+        "click('editor'):fail TimeoutError",
+        "click('choice'):fail TimeoutError",
+        "click('review'):fail TimeoutError",
+        "click('score'):fail TimeoutError"
+      ],
+      "latency_ms": 30687.0
+    },
+    {
+      "task_id": "m2w-c073ac1bcf40",
+      "difficulty": "medium",
+      "website": "https://www.apartments.com/",
+      "status": "fail",
+      "verifier_reason": "violated: text_visible:Detroit",
+      "actions": [
+        "goto:ok",
+        "fill('cheapest apartment Detroit student'):fail TimeoutError",
+        "click(submit-ish):fail TimeoutError",
+        "click('cheapest'):fail TimeoutError",
+        "click('apartment'):fail TimeoutError",
+        "click('Detroit'):fail TimeoutError",
+        "click('student'):fail TimeoutError"
+      ],
+      "latency_ms": 30250.0
+    },
+    {
+      "task_id": "m2w-0170ca95038b",
+      "difficulty": "hard",
+      "website": "https://www.gov.uk/",
+      "status": "fail",
+      "verifier_reason": "violated: text_visible:Healthcare",
+      "actions": [
+        "goto:ok",
+        "fill('Check visa required work'):fail TimeoutError",
+        "click(submit-ish):ok"
+      ],
+      "latency_ms": 5297.0
+    },
+    {
+      "task_id": "m2w-367d843c6406",
+      "difficulty": "hard",
+      "website": "https://www.apartments.com/",
+      "status": "fail",
+      "verifier_reason": "violated: text_visible:Houston",
+      "actions": [
+        "goto:ok",
+        "fill('condo rent Houston monthly'):fail TimeoutError",
+        "click(submit-ish):fail TimeoutError",
+        "click('condo'):fail TimeoutError",
+        "click('rent'):fail TimeoutError",
+        "click('Houston'):fail TimeoutError",
+        "click('monthly'):fail TimeoutError"
+      ],
+      "latency_ms": 30172.0
+    },
+    {
+      "task_id": "m2w-9d090a15c214",
+      "difficulty": "hard",
+      "website": "https://www.student.com/",
+      "status": "fail",
+      "verifier_reason": "violated: text_visible:Liverpool International College",
+      "actions": [
+        "goto:ok",
+        "fill('lowest-priced Student housing near'):ok",
+        "click(submit-ish):fail TimeoutError",
+        "click('lowest-priced'):fail TimeoutError",
+        "click('Student'):ok"
+      ],
+      "latency_ms": 11813.0
+    },
+    {
+      "task_id": "m2w-c801d1c951f5",
+      "difficulty": "hard",
+      "website": "https://store.steampowered.com/",
+      "status": "fail",
+      "verifier_reason": "violated: text_visible:Year Award",
+      "actions": [
+        "goto:ok",
+        "fill('Browse latest negative reviews'):ok",
+        "click(submit-ish):ok"
+      ],
+      "latency_ms": 4828.0
+    }
+  ]
+}

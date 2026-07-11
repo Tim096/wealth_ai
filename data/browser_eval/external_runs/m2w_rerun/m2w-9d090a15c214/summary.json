@@ -1,0 +1,25 @@
+{
+  "task_id": "m2w-9d090a15c214",
+  "harness_status": "done",
+  "row": {
+    "task_id": "m2w-9d090a15c214",
+    "difficulty": "hard",
+    "website": "https://www.student.com/",
+    "status": "fail",
+    "verifier_reason": "violated: text_visible:Liverpool International College",
+    "steps_taken": 32,
+    "step_budget": 25,
+    "repairs": 0,
+    "llm_cost_usd": 0.028952,
+    "llm_tokens": 44213,
+    "latency_ms": 243102.9,
+    "wall_s": 243.7,
+    "second_judge": {
+      "verdict": "abstain",
+      "disagreements": 1,
+      "llm_cost_usd": 0.002455
+    }
+  },
+  "error": null,
+  "written_at": "2026-07-10T09:25:23+00:00"
+}

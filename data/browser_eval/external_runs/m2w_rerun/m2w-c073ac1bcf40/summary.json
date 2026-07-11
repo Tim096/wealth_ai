@@ -1,0 +1,25 @@
+{
+  "task_id": "m2w-c073ac1bcf40",
+  "harness_status": "done",
+  "row": {
+    "task_id": "m2w-c073ac1bcf40",
+    "difficulty": "medium",
+    "website": "https://www.apartments.com/",
+    "status": "pass",
+    "verifier_reason": "all conditions observed and satisfied",
+    "steps_taken": 2,
+    "step_budget": 15,
+    "repairs": 0,
+    "llm_cost_usd": 0.000121,
+    "llm_tokens": 170,
+    "latency_ms": 7153.1,
+    "wall_s": 7.2,
+    "second_judge": {
+      "verdict": "abstain",
+      "disagreements": 1,
+      "llm_cost_usd": 0.000177
+    }
+  },
+  "error": null,
+  "written_at": "2026-07-10T09:17:48+00:00"
+}

@@ -1,0 +1,25 @@
+{
+  "task_id": "m2w-c801d1c951f5",
+  "harness_status": "done",
+  "row": {
+    "task_id": "m2w-c801d1c951f5",
+    "difficulty": "hard",
+    "website": "https://store.steampowered.com/",
+    "status": "fail",
+    "verifier_reason": "violated: text_visible:Year Award",
+    "steps_taken": 2,
+    "step_budget": 25,
+    "repairs": 0,
+    "llm_cost_usd": 0.021125,
+    "llm_tokens": 14362,
+    "latency_ms": 11064.2,
+    "wall_s": 12.7,
+    "second_judge": {
+      "verdict": "abstain",
+      "disagreements": 1,
+      "llm_cost_usd": 0.002939
+    }
+  },
+  "error": null,
+  "written_at": "2026-07-10T09:25:39+00:00"
+}

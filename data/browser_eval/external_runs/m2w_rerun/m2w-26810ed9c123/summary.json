@@ -1,0 +1,7 @@
+{
+  "task_id": "m2w-26810ed9c123",
+  "harness_status": "error",
+  "row": null,
+  "error": "Error: Page.goto: net::ERR_HTTP2_PROTOCOL_ERROR at https://www.accuweather.com/\nCall log:\n  - navigating to \"https://www.accuweather.com/\", waiting until \"domcontentloaded\"\n",
+  "written_at": "2026-07-10T09:00:59+00:00"
+}

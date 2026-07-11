@@ -1,0 +1,25 @@
+{
+  "task_id": "m2w-6ca20f1da01e",
+  "harness_status": "done",
+  "row": {
+    "task_id": "m2w-6ca20f1da01e",
+    "difficulty": "medium",
+    "website": "https://www.gov.uk/",
+    "status": "unknown",
+    "verifier_reason": "open-ended task: no machine-checkable success condition",
+    "steps_taken": 24,
+    "step_budget": 15,
+    "repairs": 0,
+    "llm_cost_usd": 0.008453,
+    "llm_tokens": 29473,
+    "latency_ms": 142592.2,
+    "wall_s": 142.9,
+    "second_judge": {
+      "verdict": "abstain",
+      "disagreements": 1,
+      "llm_cost_usd": 0.000407
+    }
+  },
+  "error": null,
+  "written_at": "2026-07-10T09:13:40+00:00"
+}

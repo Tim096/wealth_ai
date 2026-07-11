@@ -1,0 +1,195 @@
+{
+  "metrics": {
+    "overall": {
+      "tasks": 6,
+      "done": 6,
+      "error": 0,
+      "pass": 0,
+      "fail": 0,
+      "unknown": 6,
+      "env_blocked": 0,
+      "success_rate": 0.0
+    },
+    "per_difficulty": {
+      "easy": {
+        "tasks": 3,
+        "done": 3,
+        "error": 0,
+        "pass": 0,
+        "fail": 0,
+        "unknown": 3,
+        "env_blocked": 0,
+        "success_rate": 0.0
+      },
+      "medium": {
+        "tasks": 3,
+        "done": 3,
+        "error": 0,
+        "pass": 0,
+        "fail": 0,
+        "unknown": 3,
+        "env_blocked": 0,
+        "success_rate": 0.0
+      }
+    },
+    "env_errors": {}
+  },
+  "harness": {
+    "planned": 6,
+    "done": 6,
+    "error": 0,
+    "resumed": 0,
+    "not_run": 0,
+    "aborted": false,
+    "error_rate": 0.0,
+    "error_task_ids": [],
+    "incomplete_from_prior_run": []
+  },
+  "judge_source": "llm",
+  "tasks": [
+    {
+      "task_id": "m2w-005be9dd91c9",
+      "difficulty": "easy",
+      "website": "https://www.qatarairways.com/",
+      "status": "unknown",
+      "verifier_reason": "open-ended task: no machine-checkable success condition",
+      "answer": "",
+      "steps_taken": 7,
+      "step_budget": 8,
+      "repairs": 0,
+      "confidence": 0.4,
+      "llm_cost_usd": 0.024682,
+      "llm_tokens": 12846,
+      "latency_ms": 29762.8,
+      "wall_s": 30.0,
+      "second_judge": {
+        "verdict": "abstain",
+        "score": null,
+        "disagreements": 1,
+        "llm_cost_usd": 0.000803
+      },
+      "harness_status": "done",
+      "env_error": null
+    },
+    {
+      "task_id": "m2w-3f312ae3efc3",
+      "difficulty": "easy",
+      "website": "https://www.nfl.com/",
+      "status": "unknown",
+      "verifier_reason": "open-ended task: no machine-checkable success condition",
+      "answer": "",
+      "steps_taken": 7,
+      "step_budget": 8,
+      "repairs": 0,
+      "confidence": 0.4,
+      "llm_cost_usd": 0.002482,
+      "llm_tokens": 8794,
+      "latency_ms": 79915.3,
+      "wall_s": 81.3,
+      "second_judge": {
+        "verdict": "abstain",
+        "score": null,
+        "disagreements": 1,
+        "llm_cost_usd": 0.000403
+      },
+      "harness_status": "done",
+      "env_error": null
+    },
+    {
+      "task_id": "m2w-a6f0434ce6af",
+      "difficulty": "easy",
+      "website": "https://finance.yahoo.com/",
+      "status": "unknown",
+      "verifier_reason": "open-ended task: no machine-checkable success condition",
+      "answer": "",
+      "steps_taken": 9,
+      "step_budget": 8,
+      "repairs": 0,
+      "confidence": 0.4,
+      "llm_cost_usd": 0.002833,
+      "llm_tokens": 9353,
+      "latency_ms": 119860.2,
+      "wall_s": 121.4,
+      "second_judge": {
+        "verdict": "abstain",
+        "score": null,
+        "disagreements": 1,
+        "llm_cost_usd": 0.000327
+      },
+      "harness_status": "done",
+      "env_error": null
+    },
+    {
+      "task_id": "m2w-6ca20f1da01e",
+      "difficulty": "medium",
+      "website": "https://www.gov.uk/",
+      "status": "unknown",
+      "verifier_reason": "open-ended task: no machine-checkable success condition",
+      "answer": "",
+      "steps_taken": 20,
+      "step_budget": 15,
+      "repairs": 0,
+      "confidence": 0.4,
+      "llm_cost_usd": 0.008747,
+      "llm_tokens": 29640,
+      "latency_ms": 171784.5,
+      "wall_s": 172.3,
+      "second_judge": {
+        "verdict": "abstain",
+        "score": null,
+        "disagreements": 1,
+        "llm_cost_usd": 0.000454
+      },
+      "harness_status": "done",
+      "env_error": null
+    },
+    {
+      "task_id": "m2w-864244b6969e",
+      "difficulty": "medium",
+      "website": "https://www.espn.com/",
+      "status": "unknown",
+      "verifier_reason": "open-ended task: no machine-checkable success condition",
+      "answer": "",
+      "steps_taken": 25,
+      "step_budget": 15,
+      "repairs": 0,
+      "confidence": 0.4,
+      "llm_cost_usd": 0.007621,
+      "llm_tokens": 26754,
+      "latency_ms": 227883.8,
+      "wall_s": 228.8,
+      "second_judge": {
+        "verdict": "abstain",
+        "score": null,
+        "disagreements": 1,
+        "llm_cost_usd": 0.000474
+      },
+      "harness_status": "done",
+      "env_error": null
+    },
+    {
+      "task_id": "m2w-aa4b5cb7114f",
+      "difficulty": "medium",
+      "website": "https://www.ign.com/",
+      "status": "unknown",
+      "verifier_reason": "open-ended task: no machine-checkable success condition",
+      "answer": "8\nWarhammer: Age of Sigmar Spearhead City of Ash Review\n12d ago - This gaming pack has a cinematic knife-fight quality that’s highly engaging.\nBOARD GAMES\nMATT THROWER\n2",
+      "steps_taken": 28,
+      "step_budget": 15,
+      "repairs": 0,
+      "confidence": 0.4,
+      "llm_cost_usd": 0.007779,
+      "llm_tokens": 27503,
+      "latency_ms": 262154.8,
+      "wall_s": 263.0,
+      "second_judge": {
+        "verdict": "abstain",
+        "score": null,
+        "disagreements": 1,
+        "llm_cost_usd": 0.000482
+      },
+      "harness_status": "done",
+      "env_error": null
+    }
+  ]
+}

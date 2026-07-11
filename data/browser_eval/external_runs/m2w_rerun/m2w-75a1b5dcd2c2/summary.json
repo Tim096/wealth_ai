@@ -1,0 +1,25 @@
+{
+  "task_id": "m2w-75a1b5dcd2c2",
+  "harness_status": "done",
+  "row": {
+    "task_id": "m2w-75a1b5dcd2c2",
+    "difficulty": "easy",
+    "website": "https://www.allrecipes.com/",
+    "status": "fail",
+    "verifier_reason": "violated: text_visible:sirloin.",
+    "steps_taken": 5,
+    "step_budget": 8,
+    "repairs": 0,
+    "llm_cost_usd": 0.000573,
+    "llm_tokens": 807,
+    "latency_ms": 52290.7,
+    "wall_s": 52.7,
+    "second_judge": {
+      "verdict": "abstain",
+      "disagreements": 1,
+      "llm_cost_usd": 0.000136
+    }
+  },
+  "error": null,
+  "written_at": "2026-07-10T09:04:14+00:00"
+}

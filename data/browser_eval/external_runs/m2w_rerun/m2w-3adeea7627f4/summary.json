@@ -1,0 +1,25 @@
+{
+  "task_id": "m2w-3adeea7627f4",
+  "harness_status": "done",
+  "row": {
+    "task_id": "m2w-3adeea7627f4",
+    "difficulty": "medium",
+    "website": "https://medicare.gov",
+    "status": "fail",
+    "verifier_reason": "violated: text_visible:Within",
+    "steps_taken": 23,
+    "step_budget": 15,
+    "repairs": 0,
+    "llm_cost_usd": 0.005177,
+    "llm_tokens": 17189,
+    "latency_ms": 203592.5,
+    "wall_s": 204.7,
+    "second_judge": {
+      "verdict": "abstain",
+      "disagreements": 1,
+      "llm_cost_usd": 0.000224
+    }
+  },
+  "error": null,
+  "written_at": "2026-07-10T09:10:35+00:00"
+}

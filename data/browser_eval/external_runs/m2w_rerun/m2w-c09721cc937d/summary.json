@@ -1,0 +1,25 @@
+{
+  "task_id": "m2w-c09721cc937d",
+  "harness_status": "done",
+  "row": {
+    "task_id": "m2w-c09721cc937d",
+    "difficulty": "easy",
+    "website": "https://www.recreation.gov/",
+    "status": "pass",
+    "verifier_reason": "all conditions observed and satisfied",
+    "steps_taken": 2,
+    "step_budget": 8,
+    "repairs": 0,
+    "llm_cost_usd": 0.000451,
+    "llm_tokens": 1519,
+    "latency_ms": 12667.8,
+    "wall_s": 14.2,
+    "second_judge": {
+      "verdict": "abstain",
+      "disagreements": 1,
+      "llm_cost_usd": 0.000406
+    }
+  },
+  "error": null,
+  "written_at": "2026-07-10T09:05:58+00:00"
+}

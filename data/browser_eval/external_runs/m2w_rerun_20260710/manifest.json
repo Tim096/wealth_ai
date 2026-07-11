@@ -1,0 +1,52 @@
+{
+  "schema": "repro-manifest/1",
+  "created_at": "2026-07-10T13:02:47+00:00",
+  "git": {
+    "commit": "4009a530e49dfe2ff00f50972b1d1f49c88bf9c6",
+    "dirty": true,
+    "dirty_files": [
+      "apps/web/eval-dashboard/data.json",
+      "apps/web/eval-dashboard/index.html",
+      "data/browser_eval/evidence/browser-mockshop-search-v1-nonexistent.jsonl",
+      "data/browser_eval/evidence/browser-mockshop-search-v1-widget.jsonl",
+      "data/browser_eval/evidence/browser-mockshop-search-v2-gizmo-drift.jsonl",
+      "data/browser_eval/evidence/browser-mockshop-search-v2-widget-drift.jsonl",
+      "data/browser_eval/evidence/browser-mockshop-search-v3-heldout.jsonl",
+      "data/browser_eval/passk/passk_results.json"
+    ],
+    "untracked": [
+      "tools/_run_m2w_armed_tmp.py"
+    ]
+  },
+  "llm": {
+    "model": "gpt-5.3-codex",
+    "mode": "gateway",
+    "base_url": "http://127.0.0.1:8791/v1"
+  },
+  "seeds": {
+    "PYTHONHASHSEED": null
+  },
+  "task_set": {
+    "path": "data\\browser_eval\\external\\mind2web_subset.json",
+    "sha256": "2c1b51d18213eb7d88de628a8134a2cc2bf468ae9df5650fc6d15f87d3d44e86"
+  },
+  "packages": {
+    "python": "3.12.4",
+    "playwright": "1.61.0",
+    "httpx": "0.28.1",
+    "pydantic": "2.13.4"
+  },
+  "os": {
+    "platform": "Windows-10-10.0.19045-SP0",
+    "machine": "AMD64"
+  },
+  "budget_caps": null,
+  "argv": [
+    "tools/_run_m2w_armed_tmp.py",
+    "--out",
+    "runs/browser_eval/m2w_rerun_20260710",
+    "--limit",
+    "20",
+    "--resume"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "task_id": "m2w-52efbab52073",
+  "harness_status": "done",
+  "row": {
+    "task_id": "m2w-52efbab52073",
+    "difficulty": "easy",
+    "website": "https://www.recreation.gov/",
+    "status": "fail",
+    "verifier_reason": "violated: text_visible:iOS.",
+    "steps_taken": 10,
+    "step_budget": 8,
+    "repairs": 0,
+    "llm_cost_usd": 0.004028,
+    "llm_tokens": 14426,
+    "latency_ms": 75348.2,
+    "wall_s": 76.8,
+    "second_judge": {
+      "verdict": "abstain",
+      "disagreements": 1,
+      "llm_cost_usd": 0.000398
+    }
+  },
+  "error": null,
+  "written_at": "2026-07-10T09:03:10+00:00"
+}

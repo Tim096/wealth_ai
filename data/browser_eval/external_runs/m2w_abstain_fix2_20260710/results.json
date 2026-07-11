@@ -1,0 +1,200 @@
+{
+  "metrics": {
+    "overall": {
+      "tasks": 6,
+      "done": 6,
+      "error": 0,
+      "pass": 3,
+      "fail": 2,
+      "unknown": 1,
+      "env_blocked": 0,
+      "success_rate": 0.5
+    },
+    "per_difficulty": {
+      "easy": {
+        "tasks": 3,
+        "done": 3,
+        "error": 0,
+        "pass": 1,
+        "fail": 2,
+        "unknown": 0,
+        "env_blocked": 0,
+        "success_rate": 0.333
+      },
+      "medium": {
+        "tasks": 3,
+        "done": 3,
+        "error": 0,
+        "pass": 2,
+        "fail": 0,
+        "unknown": 1,
+        "env_blocked": 0,
+        "success_rate": 0.667
+      }
+    },
+    "env_errors": {}
+  },
+  "harness": {
+    "planned": 6,
+    "done": 6,
+    "error": 0,
+    "resumed": 5,
+    "not_run": 0,
+    "aborted": false,
+    "error_rate": 0.0,
+    "error_task_ids": [],
+    "incomplete_from_prior_run": []
+  },
+  "judge_source": "llm",
+  "tasks": [
+    {
+      "task_id": "m2w-005be9dd91c9",
+      "difficulty": "easy",
+      "website": "https://www.qatarairways.com/",
+      "status": "fail",
+      "verifier_reason": "open-ended scoring: open-ended task 'Find the weight of baggage allowance for economy class on Qatar Airways.': 1/3 key points grounded-satisfied",
+      "answer": "",
+      "steps_taken": 3,
+      "step_budget": 8,
+      "repairs": 0,
+      "confidence": 0.0,
+      "llm_cost_usd": 0.000209,
+      "llm_tokens": 348,
+      "latency_ms": 68102.5,
+      "wall_s": 68.3,
+      "second_judge": {
+        "verdict": "no",
+        "score": 0.0,
+        "disagreements": 1,
+        "llm_cost_usd": 0.000188
+      },
+      "harness_status": "done",
+      "resumed": true,
+      "env_error": null
+    },
+    {
+      "task_id": "m2w-3f312ae3efc3",
+      "difficulty": "easy",
+      "website": "https://www.nfl.com/",
+      "status": "fail",
+      "verifier_reason": "open-ended scoring: open-ended task 'Find the current NFL standings for the AFC East division on NFL.com and go to the page on which team is in first place.': 2/4 key points grounded-satisfied",
+      "answer": "",
+      "steps_taken": 7,
+      "step_budget": 8,
+      "repairs": 0,
+      "confidence": 0.0,
+      "llm_cost_usd": 0.002502,
+      "llm_tokens": 8804,
+      "latency_ms": 126990.3,
+      "wall_s": 127.6,
+      "second_judge": {
+        "verdict": "yes",
+        "score": 1.0,
+        "disagreements": 0,
+        "llm_cost_usd": 0.000433
+      },
+      "harness_status": "done",
+      "resumed": true,
+      "env_error": null
+    },
+    {
+      "task_id": "m2w-a6f0434ce6af",
+      "difficulty": "easy",
+      "website": "https://finance.yahoo.com/",
+      "status": "pass",
+      "verifier_reason": "open-ended scoring: open-ended task 'Find the closing stock price for Tesla on March 17, 2023.': 3/3 key points grounded-satisfied",
+      "answer": "",
+      "steps_taken": 13,
+      "step_budget": 8,
+      "repairs": 0,
+      "confidence": 1.0,
+      "llm_cost_usd": 0.002765,
+      "llm_tokens": 8639,
+      "latency_ms": 136963.8,
+      "wall_s": 139.4,
+      "second_judge": {
+        "verdict": "yes",
+        "score": 1.0,
+        "disagreements": 0,
+        "llm_cost_usd": 0.000359
+      },
+      "harness_status": "done",
+      "resumed": true,
+      "env_error": null
+    },
+    {
+      "task_id": "m2w-6ca20f1da01e",
+      "difficulty": "medium",
+      "website": "https://www.gov.uk/",
+      "status": "pass",
+      "verifier_reason": "open-ended scoring: open-ended task 'Find the Eligibility to get the child benefit and How it works and how to claim': 3/3 key points grounded-satisfied",
+      "answer": "Skip contents",
+      "steps_taken": 25,
+      "step_budget": 15,
+      "repairs": 0,
+      "confidence": 1.0,
+      "llm_cost_usd": 0.009149,
+      "llm_tokens": 29946,
+      "latency_ms": 175764.6,
+      "wall_s": 176.1,
+      "second_judge": {
+        "verdict": "no",
+        "score": 0.0,
+        "disagreements": 0,
+        "llm_cost_usd": 0.00044
+      },
+      "harness_status": "done",
+      "resumed": true,
+      "env_error": null
+    },
+    {
+      "task_id": "m2w-864244b6969e",
+      "difficulty": "medium",
+      "website": "https://www.espn.com/",
+      "status": "pass",
+      "verifier_reason": "all conditions observed and satisfied",
+      "answer": "",
+      "steps_taken": 7,
+      "step_budget": 15,
+      "repairs": 0,
+      "confidence": 1.0,
+      "llm_cost_usd": 0.002516,
+      "llm_tokens": 8708,
+      "latency_ms": 43357.0,
+      "wall_s": 44.4,
+      "second_judge": {
+        "verdict": "yes",
+        "score": 1.0,
+        "disagreements": 0,
+        "llm_cost_usd": 0.000348
+      },
+      "harness_status": "done",
+      "resumed": true,
+      "env_error": null
+    },
+    {
+      "task_id": "m2w-aa4b5cb7114f",
+      "difficulty": "medium",
+      "website": "https://www.ign.com/",
+      "status": "unknown",
+      "verifier_reason": "open-ended task: no machine-checkable success condition",
+      "answer": "10\nUndaunted: Stalingrad Board Game Review\nDec 7, 2022 - A deck-building marvel.\nTABLETOP\nMATT THROWER\n17\n10\nUndaunted: Stalingrad Board Game Review\nDec 7, 2022 - A deck-building marvel.\nTABLETOP\nMATT THROWER\n17\n10\nUndaunted: Stalingrad Board Game Review\nDec 7, 2022 - A deck-building marvel.\nTABLETOP\nMATT THROWER\n17",
+      "steps_taken": 28,
+      "step_budget": 15,
+      "repairs": 0,
+      "confidence": 0.4,
+      "llm_cost_usd": 0.008176,
+      "llm_tokens": 29351,
+      "latency_ms": 256085.5,
+      "wall_s": 256.8,
+      "second_judge": {
+        "verdict": "abstain",
+        "score": null,
+        "disagreements": 1,
+        "llm_cost_usd": 0.00025
+      },
+      "harness_status": "done",
+      "env_error": null
+    }
+  ]
+}

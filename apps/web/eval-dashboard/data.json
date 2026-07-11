@@ -86,7 +86,7 @@
     "missing": 1,
     "reserved": 1,
     "item8_status": "incorporated_by_reference",
-    "item8_xbrl": "contradicted"
+    "item8_xbrl": "certified"
    },
    {
     "ticker": "KO",
@@ -184,7 +184,7 @@
     "missing": 0,
     "reserved": 1,
     "item8_status": "incorporated_by_reference",
-    "item8_xbrl": "contradicted"
+    "item8_xbrl": "certified"
    }
   ],
   "wrappers": [
@@ -206,8 +206,8 @@
    }
   ],
   "xbrl_summary": {
-   "certified": 8,
-   "contradicted": 3
+   "certified": 10,
+   "contradicted": 1
   },
   "tri_state": {
    "present": 178,
@@ -642,35 +642,18 @@
    "engine": "edgartools 5.42.0",
    "filings": 11,
    "verdict_totals": {
-    "agree": 240,
-    "disagree": 11,
-    "engine_suspect": 1,
-    "engine_unavailable": 1
+    "agree": 249,
+    "disagree": 4,
+    "engine_suspect": 0,
+    "engine_unavailable": 0
    },
    "disagreements": {
-    "AAPL": [
-     "11",
-     "16"
-    ],
-    "NVDA": [
-     "16"
-    ],
     "JPM": [
-     "7",
-     "8"
-    ],
-    "WMT": [
-     "16"
-    ],
-    "CAT": [
-     "16"
+     "1C",
+     "7A"
     ],
     "XOM": [
-     "7",
-     "8",
-     "16"
-    ],
-    "MRNA": [
+     "7A",
      "16"
     ]
    }
@@ -691,16 +674,15 @@
   },
   "cyd": {
    "verdicts": {
-    "agree": 9,
-    "disagree": 2,
+    "agree": 10,
+    "disagree": 1,
     "unavailable": 0,
     "not_required": 0
    },
    "disagreements": [
-    "JPM",
     "GS"
    ],
-   "coverage_mean_over_available": 0.8182,
+   "coverage_mean_over_available": 0.9091,
    "records": [
     {
      "ticker": "AAPL",
@@ -725,10 +707,10 @@
     },
     {
      "ticker": "JPM",
-     "our_status": "incorporated_by_reference",
-     "coverage": 0.0,
-     "containment": 0.0,
-     "verdict": "disagree"
+     "our_status": "partial",
+     "coverage": 1.0,
+     "containment": 0.3334,
+     "verdict": "agree"
     },
     {
      "ticker": "GS",

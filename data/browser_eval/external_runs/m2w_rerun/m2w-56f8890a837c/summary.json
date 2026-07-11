@@ -1,0 +1,25 @@
+{
+  "task_id": "m2w-56f8890a837c",
+  "harness_status": "done",
+  "row": {
+    "task_id": "m2w-56f8890a837c",
+    "difficulty": "medium",
+    "website": "https://www.imdb.com/",
+    "status": "fail",
+    "verifier_reason": "violated: text_visible: Prometheus",
+    "steps_taken": 3,
+    "step_budget": 15,
+    "repairs": 0,
+    "llm_cost_usd": 0.000293,
+    "llm_tokens": 400,
+    "latency_ms": 21066.6,
+    "wall_s": 21.3,
+    "second_judge": {
+      "verdict": "abstain",
+      "disagreements": 1,
+      "llm_cost_usd": 0.000147
+    }
+  },
+  "error": null,
+  "written_at": "2026-07-10T09:11:11+00:00"
+}

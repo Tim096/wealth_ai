@@ -1,0 +1,25 @@
+{
+  "task_id": "m2w-005be9dd91c9",
+  "harness_status": "done",
+  "row": {
+    "task_id": "m2w-005be9dd91c9",
+    "difficulty": "easy",
+    "website": "https://www.qatarairways.com/",
+    "status": "fail",
+    "verifier_reason": "violated: text_visible:Qatar Airways",
+    "steps_taken": 12,
+    "step_budget": 8,
+    "repairs": 0,
+    "llm_cost_usd": 0.002067,
+    "llm_tokens": 6162,
+    "latency_ms": 69939.0,
+    "wall_s": 70.1,
+    "second_judge": {
+      "verdict": "abstain",
+      "disagreements": 1,
+      "llm_cost_usd": 0.000228
+    }
+  },
+  "error": null,
+  "written_at": "2026-07-10T09:00:59+00:00"
+}

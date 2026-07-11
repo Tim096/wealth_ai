@@ -142,7 +142,7 @@ baseline 11 家全是 iXBRL(10 Workiva + 1 DFIN)——覆蓋缺口用分層抽�
 10 條官方/社群 landmine(Item 6 廢除後三態、Item 9C/16 optional、"Items 7 and 7A" 合併、wrapper/Glossy ARS、EDGAR formTypes exact-match、TOC 先排除、edgartools #454 Part I/II 編號碰撞、>50MB offset 一致性…)逐條先探針驗證 pipeline 實際行為、再寫成 **15 個 pytest case,全過**、零 source 修改——價值是 regression baseline:任何改動重新引入 landmine 立即被抓。測試 bar 是「絕不 fake pass」:正確結果是誠實 status(reserved/missing/IBR/partial+needs_review)。
 
 - 重跑:`.venv/Scripts/python -m pytest tests/test_landmines.py -q`
-- Artifact:`data/sec_eval/landmines/landmines.json`(註:該檔 header 的 total_tests=16 為 off-by-one,實收集 15 個 test;body 的 test 名單正確,10 條 landmine 全數覆蓋)
+- Artifact:`data/sec_eval/landmines/landmines.json`(header 曾有 total_tests=16 off-by-one,已修正為 15,commit `2fc9f06`;10 條 landmine 全數覆蓋)
 
 ## Browser Agent(題目一)
 
@@ -218,7 +218,7 @@ mutation-site 矩陣(StressWeb 路線):clean + 3 軸(perception / action / execu
 
 labeled full trajectory <60(論文 2606.09863 的 train 門檻)→ 誠實走 heuristic 前哨,不硬 train:24 個 claimed-pass 上 **precision 1.0 / recall 0.5 / flag_rate 0.0417**(tp 1 / fp 0 / fn 1 / tn 22)。TP = teleporter query-echo;FN = filename-bypass(download-content 超出 visible-text 特徵範疇,誠實漏抓,test 鎖住)。表面 proxy(closing 語氣、序列長度)刻意單獨不足以 flag——直接對應論文警告「judge 過度倚賴表面訊號」。TF-IDF+XGBoost 版寫進 artifact 的 roadmap(前置條件:≥60 labeled trajectory + trajectory log 補存 agent 自述)。detector 是 opt-in triage hint,**絕不改判定**(verdict_unchanged invariant 有 test 鎖)。
 
-- 重跑:`.venv/Scripts/python -m tools.false_success_detector`(僅 -m 形式;script 形式缺 sys.path bootstrap)
+- 重跑:`.venv/Scripts/python -m tools.false_success_detector`(script 形式亦可,sys.path bootstrap 已補,commit `2fc9f06`)
 - Artifact:`data/browser_eval/false_success/detector_results.json`
 
 ### Browser held-out / 真實網站(誠實邊界)

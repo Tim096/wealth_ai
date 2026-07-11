@@ -167,10 +167,10 @@ T1-1 → T2-1 → T2-2 → T1-2 → T2-3 → T1-3,其餘穿插。(實際執行:u
 
 ### 驗證員 minor issues(如實記錄,非 blocker)
 
-- T1-6:`tools/false_success_detector.py` 只能 `-m tools.false_success_detector` 執行(缺 sys.path bootstrap)。
+- T1-6:`tools/false_success_detector.py` 只能 `-m tools.false_success_detector` 執行(缺 sys.path bootstrap)。→ 已修 `2fc9f06`,兩種形式皆可。
 - T1-2:`degradation_curve.json` 內嵌 per-probe latency_ms,重跑非 byte-stable(metric 欄位確定)。
 - T1-5:`tools/browser_eval.py` 會 append committed `data/browser_eval/evidence/*.jsonl`(既有副作用)。
-- T2-5:`landmines.json` header total_tests=16 為 off-by-one(實 15;body test 名單正確)。
-- T2-2:`tools/score_offsets.py` 輸出路徑寫死,對非正式目錄評分會覆寫 committed `offset_f1.json`。
+- T2-5:`landmines.json` header total_tests=16 為 off-by-one(實 15;body test 名單正確)。→ 已修 `2fc9f06`。
+- T2-2:`tools/score_offsets.py` 輸出路徑寫死,對非正式目錄評分會覆寫 committed `offset_f1.json`。→ `--out` 於 `6e5f506` 已存在(驗證員看到 in-progress 版);`2fc9f06` 另補 records_dir 相對路徑正規化。
 
-測試總數 89 → 285(`.venv/Scripts/python -m pytest tests -q` → 285 passed,零紅燈)。
+測試總數 89 → 285(本波完成當下);dashboard render 測試 +6 後現為 291(`.venv/Scripts/python -m pytest tests -q` → 291 passed,零紅燈,2026-07-10 最終驗收複核)。

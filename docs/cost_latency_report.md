@@ -88,11 +88,11 @@ Item 8 對 companyfacts 交叉驗證:每家多 1 次 `companyfacts` fetch(cache 
 | Trajectory metrics | `.venv/Scripts/python tools/trajectory_metrics.py` |
 | pass@k / flakiness | `.venv/Scripts/python tools/browser_eval.py --repeat 3 --agentic` |
 | Degradation curve | `.venv/Scripts/python tools/degradation_curve.py` |
-| False-success detector | `.venv/Scripts/python -m tools.false_success_detector`(僅 -m 形式)|
+| False-success detector | `.venv/Scripts/python -m tools.false_success_detector`(script 形式亦可,`2fc9f06`)|
 | 三引擎 triangulation | `SEC_EDGAR_USER_AGENT=<contact> .venv/Scripts/python tools/triangulate.py` |
 | char-offset F1 | `.venv/Scripts/python tools/score_offsets.py data/sec_eval/records/sweep3` |
 | CYD Item 1C oracle | `SEC_EDGAR_USER_AGENT=<contact> .venv/Scripts/python tools/certify_cyd.py` |
 | 分層抽樣 | `SEC_EDGAR_USER_AGENT=<contact> .venv/Scripts/python tools/stratified_sample.py` |
 | Landmines | `.venv/Scripts/python -m pytest tests/test_landmines.py -q` |
 
-已知重跑副作用(對抗式驗證員發現,如實揭露):`degradation_curve.json` 內嵌 per-probe latency_ms → 重跑非 byte-stable(metric 欄位完全確定);`tools/browser_eval.py` 會 append `data/browser_eval/evidence/*.jsonl`(既有設計);`tools/score_offsets.py` 對任意目錄評分都覆寫 committed `offset_f1.json`(輸出路徑寫死)。重跑後如非刻意更新 artifact,`git restore` 之。其餘 artifact(calibration/impossible/trajectory/passk/false_success/triangulation/cyd)重跑皆 byte-identical。
+已知重跑副作用(對抗式驗證員發現,如實揭露):`degradation_curve.json` 內嵌 per-probe latency_ms → 重跑非 byte-stable(metric 欄位完全確定);`tools/browser_eval.py` 會 append `data/browser_eval/evidence/*.jsonl`(既有設計);`tools/score_offsets.py` 預設覆寫 committed `offset_f1.json`(對非正式目錄評分請加 `--out`);`stratification.json` 內嵌 `generated_at` → 重跑非 byte-stable(其餘欄位確定)。重跑後如非刻意更新 artifact,`git restore` 之。其餘 artifact(calibration/impossible/trajectory/passk/false_success/triangulation/cyd)重跑皆 byte-identical(2026-07-10 最終驗收全數實跑複核)。

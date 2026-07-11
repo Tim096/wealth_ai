@@ -35,7 +35,9 @@ OpenClaw / Hermes 這類「LLM 自主驅動瀏覽器」的核心迴圈就是:看
 
 **為何用頁碼而非標題**:我原本拒絕 title-based 抽取(Intel 標題無 emphasis、重複當頁首,會出錯)。頁碼是**印出來的資料**,不是猜的——這是「站得住腳的 robust 版」與「脆弱猜測」的差別。
 
-**剩餘方向**:Item 7(MD&A)的索引項是 inline 子標題非乾淨 page ref,尚未解析;頁界對齊可再精修(目前 needs_review)。
+**延伸(P0-10,commit 64de3ef)**:同一原理推廣到 JPM/XOM class 的 wrapper 10-K——item 是 IBR stub、正文附綁在最後一個 item heading 之後。`cross_ref.reassemble_wrapper_bodies` 兩條錨定路徑:(a) page-range stub(JPM「appears on pages 46-160」)用區域限定 page map;(b) quoted-section-title stub(XOM『section entitled "Market Risks"』)錨定附綁年報自身節標題並跳過其內部 TOC。實測:JPM 1C/7/7A/8 與 XOM 7/7A/8 全數還原(JPM Item 8 = 528,433 chars、XOM Item 8 = 165,993 chars),兩家 Item 8 均 XBRL 認證 3/3,JPM 1C 的 CYD coverage 0%→100%。
+
+**剩餘方向**:GS class——stub 指向自身已抽出 item 的內部子節(無附綁區塊),維持誠實 pointer;頁界/節界對齊可再精修(目前 needs_review)。
 
 ## 3. 驗證的正確基材:不是 LLM-as-judge,是結構化 ground truth
 

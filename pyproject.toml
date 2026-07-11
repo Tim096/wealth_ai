@@ -16,6 +16,7 @@ dev = [
     "pytest>=8.0",
     "ruff>=0.5",
     "py7zr>=1.0",  # NTU itemseg dataset unpack (tools/fetch_ntu_itemseg.py, lazy import)
+    "matplotlib>=3.8",  # calibration curve rendering (tools/calibrate_sec_confidence.py, lazy import)
 ]
 browser = [
     "playwright>=1.45",

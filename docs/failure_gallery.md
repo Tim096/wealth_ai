@@ -167,12 +167,12 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Input | JPM / XOM FY2025 wrapper 10-K,Items 7/8 |
 | Expected | 兩引擎對 item 內容位置一致 |
 | Actual | 我方標 incorporated_by_reference(指標 stub 40–96 詞),edgartools 直接抽出附綁年報全文(19,548–90,470 詞),overlap ≤0.21 → disagree,我方 confidence 降至 0.51–0.64 |
-| Status | 語意上兩邊各自誠實但邊界定義不同;needs_review=true |
-| Failure Type | wrapper 10-K 邊界定義歧異(正是此 class 需要人審的證據)|
-| Evidence | `data/sec_eval/triangulation/triangulation.json` records[JPM/XOM].items['7'/'8'] |
-| Root Cause | wrapper filing 的 item body resolution 是 documented next step(見 FG-SEC-004/005、insights §2)|
-| Repair Attempt | 無(cross-reference body resolution 屬第二遍)|
-| Related Commit | 4209c87 |
+| Status | **fixed**(commit 64de3ef,`cross_ref.reassemble_wrapper_bodies`):指向本檔附綁區塊的 stub 解析回 source-exact span——JPM 走 page-range anchor(Item 7 → 390,734 chars、7A → 35,632、8 → 528,433,provenance `resolved_from_page_anchor`),XOM 走 quoted-section-title anchor(Item 7 → 89,501、7A → 30,817、8 → 165,993,provenance `resolved_from_section_anchor`);兩家 Item 8 重組 span 均被 XBRL 獨立認證 3/3。解析後標 `partial` + needs_review(頁界/節界對齊是啟發式,如實揭露)|
+| Failure Type | wrapper 10-K 邊界定義歧異(修復前正是此 class 需要人審的證據)|
+| Evidence | `data/sec_eval/triangulation/triangulation.json` records[JPM/XOM].items['7'/'8'];`tests/test_wrapper_reassembly.py`(10 tests);manifest FG-SEC-007 checks |
+| Root Cause | wrapper filing 的 item body resolution 原為 documented next step(見 FG-SEC-004/005、insights §2)——已由 P0-10 落地 |
+| Repair Attempt | `reassemble_wrapper_bodies()`:僅處理指向本 filing 的 stub(proxy/note pointer 不動),page-range stub 用區域限定 page map 取第一個提及區間;section-title stub 錨定附綁年報自身節標題並跳過其內部 TOC |
+| Related Commit | 4209c87(偵測)→ 64de3ef(body 重組)|
 
 ---
 
@@ -185,11 +185,11 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Input | JPM / GS FY2025 wrapper 10-K,Item 1C |
 | Expected | Item 1C segment 含 SEC 強制 CYD block-tag 的 cybersecurity disclosure |
 | Actual | 我方 1C 是 170/247 char 的 incorporated_by_reference 指標 stub;官方 tagged span(6,871/7,402 chars)在同一份 HTML 的年報區(JPM 落在所有 item segment 之外;GS 落在我方 Item 7 內),coverage 0% |
-| Status | 我方 status 誠實(IBR、非 pass);oracle verdict=disagree 記錄在 cyd_check,不翻 needs_review |
+| Status | **JPM fixed / GS open**(commit 64de3ef):JPM Item 1C 170-char stub → 20,610-char span(pages 146-149 Operational Risk,`resolved_from_page_anchor`),**CYD coverage 0% → 100%**、verdict disagree→agree(corpus CYD agreement 9/11 → 10/11)。GS 維持誠實 pointer:其 stub 指向**自身已抽出的 Item 7 內部子節**(無附綁 wrapper 區塊),是另一個 class,見 manifest FG-SEC-008 |
 | Failure Type | wrapper-10-K body 未解析(既知 class);CYD oracle 首次給出可機讀的目標位置 |
 | Evidence | `data/sec_eval/cyd_groundtruth/cyd_agreement.json` records[JPM/GS](official_intervals 有精確 normalized offsets)|
-| Root Cause | cross-reference/wrapper filing 的 item body resolution 是 documented next step;CYD tag 證明 body 就在同檔可定位 |
-| Repair Attempt | 無(超出本項範圍;official_intervals 是未來 body-resolution 的直接輸入)|
+| Root Cause | cross-reference/wrapper filing 的 item body resolution 原為 documented next step;CYD tag 證明 body 就在同檔可定位——JPM class 已由 P0-10 落地 |
+| Repair Attempt | `cross_ref.reassemble_wrapper_bodies()`(JPM class);GS 的 intra-item subsection pointer 超出本 pass 範圍,official_intervals 仍是其直接輸入 |
 | Related Commit | 99c9274 |
 
 ---

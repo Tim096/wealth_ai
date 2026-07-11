@@ -1,6 +1,6 @@
 {
  "generated_by": "tools/calibrate_sec_confidence.py",
- "generated_at": "2026-07-10T07:33:43Z",
+ "generated_at": "2026-07-10T08:31:43Z",
  "spec": "docs/research/giants_task2.md \u00a72 (P0-3)",
  "definitions": {
   "correct_ntu": "line-level item F1 >= 0.5 on NTU itemseg gold (arXiv 2502.08875; lower-bound metric, see head_to_head.py)",
@@ -1379,10 +1379,10 @@
    ],
    "verifier_false_pass": {
     "gate": "needs_review == False and confidence >= 0.6",
-    "clean_pass_items": 241,
-    "false_pass_items": 36,
-    "false_pass_rate": 0.1494,
-    "coverage": 0.8764
+    "clean_pass_items": 210,
+    "false_pass_items": 33,
+    "false_pass_rate": 0.1571,
+    "coverage": 0.7636
    },
    "role": "auxiliary \u2014 label = corpus teacher verdict only; edgartools excluded from the vote to break teacher/signal circularity (P0-3)"
   }

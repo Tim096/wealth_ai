@@ -9,9 +9,7 @@ never committed) and the guardrail's measured clean-corpus false-alarm rate.
 """
 
 import json
-from pathlib import Path
 
-from sec_core.normalize import normalize_html
 from sec_core.pipeline import extract_from_html
 from sec_core.size_bands import (
     BANDS_PATH,

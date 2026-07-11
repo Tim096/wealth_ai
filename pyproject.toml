@@ -54,6 +54,9 @@ where = ["packages"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# tests import repo-root modules (tools.*, packages.*) that the editable
+# install does not expose; `python -m pytest` masked this by adding cwd.
+pythonpath = ["."]
 markers = [
     "integration: tests that drive a real browser (Playwright)",
 ]

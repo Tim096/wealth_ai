@@ -12,12 +12,13 @@ from pathlib import Path
 from sec_core.fetcher import EdgarFetcher
 from sec_core.resolver import FilingRef
 from sec_core.pipeline import extract_from_html
+from sec_core.scoring import tristate
 from sec_core.xbrl import fetch_company_facts, key_facts_for_accession, validate_span
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "apps" / "web" / "eval-dashboard" / "data.json"
 
-SWEEP = ROOT / "data" / "sec_eval" / "records" / "sweep2"
+SWEEP = ROOT / "data" / "sec_eval" / "records" / "sweep3"
 LAYER = {"AAPL": "big tech", "MSFT": "big tech", "NVDA": "big tech", "JPM": "financial",
          "GS": "financial", "WMT": "retail/mfg", "CAT": "retail/mfg", "XOM": "energy/mining",
          "NEM": "energy/mining", "MRNA": "biotech", "KO": "consumer"}
@@ -33,12 +34,15 @@ def sec_section() -> dict:
     fetcher = EdgarFetcher(cache_dir=ROOT / "data" / "raw_filings")
     records = {p.stem: json.loads(p.read_text(encoding="utf-8-sig")) for p in sorted(SWEEP.glob("*.json"))}
     status_counts: Counter[str] = Counter()
+    tri_counts: Counter[str] = Counter()
     conf_pass, conf_stub = [], []
     tickers = []
     for t, rec in records.items():
         items = rec["items"]
         c = Counter(v["status"] for v in items.values())
         status_counts.update(c)
+        tri_counts.update(tristate(v["status"], bool(v.get("toc_listed", False)))
+                          for v in items.values())
         conf_pass += [v["confidence"] for v in items.values() if v["status"] == "pass"]
         conf_stub += [v["confidence"] for v in items.values() if v["status"] == "incorporated_by_reference"]
         # XBRL certify item 8
@@ -92,7 +96,103 @@ def sec_section() -> dict:
         "tickers": tickers,
         "wrappers": wrappers,
         "xbrl_summary": dict(Counter(t["item8_xbrl"] for t in tickers)),
+        "tri_state": dict(tri_counts.most_common()),
+        "sweep": SWEEP.name,
     }
+
+
+def _load(rel: str) -> dict:
+    return json.loads((ROOT / rel).read_text(encoding="utf-8"))
+
+
+def _guarded(builder) -> dict:
+    """Read a committed artifact; on failure surface the error, never invent numbers."""
+    try:
+        return builder()
+    except Exception as e:  # noqa: BLE001
+        return {"error": f"{type(e).__name__}: {e}"}
+
+
+def browser_evals_section() -> dict:
+    def calibration() -> dict:
+        a = _load("data/browser_eval/calibration/calibration_results.json")
+        return {
+            "n_success": a["dataset"]["n_success"],
+            "n_corrupted": a["dataset"]["n_corrupted"],
+            "three_state_table": a["three_state_table"],
+            "per_corruption_class": a["per_corruption_class"],
+            "confusion": a["confusion"],
+            "rates": a["rates"],
+            "apparent_success_rate": a["apparent"]["apparent_success_rate"],
+            "corrected": a["rogan_gladen_corrected_success_rate"],
+        }
+
+    def impossible() -> dict:
+        return _load("data/browser_eval/impossible/impossible_results.json")["metrics"]
+
+    def passk() -> dict:
+        a = _load("data/browser_eval/passk/passk_results.json")
+        return {"script_mode": a["script_mode"]["summary"],
+                "agent_mode_mock": a["agent_mode_mock"]["summary"]}
+
+    def degradation() -> dict:
+        a = _load("data/browser_eval/artifacts/degradation_curve.json")
+        return {axis: c["points"] for axis, c in a["curves"].items()}
+
+    def trajectory() -> dict:
+        return _load("data/browser_eval/trajectory/trajectory_results.json")["metrics"]
+
+    def false_success() -> dict:
+        a = _load("data/browser_eval/false_success/detector_results.json")
+        m = a["metrics"]
+        return {"route": a["route"], "n_applicable": m["n_applicable_claimed_success"],
+                "confusion": m["confusion"], "precision": m["precision"],
+                "recall": m["recall"], "flag_rate": m["flag_rate"]}
+
+    return {"calibration": _guarded(calibration), "impossible": _guarded(impossible),
+            "passk": _guarded(passk), "degradation": _guarded(degradation),
+            "trajectory": _guarded(trajectory), "false_success": _guarded(false_success)}
+
+
+def sec_evals_section() -> dict:
+    def triangulation() -> dict:
+        a = _load("data/sec_eval/triangulation/triangulation.json")
+        return {"engine": a["engine"], "filings": a["filings"],
+                "verdict_totals": a["verdict_totals"], "disagreements": a["disagreements"]}
+
+    def offset_f1() -> dict:
+        a = _load("data/sec_eval/scoring/offset_f1.json")
+        return {"records_dir": a["records_dir"], **a["totals"]}
+
+    def cyd() -> dict:
+        a = _load("data/sec_eval/cyd_groundtruth/cyd_agreement.json")
+        return {"verdicts": a["verdicts"], "disagreements": a["disagreements"],
+                "coverage_mean_over_available": a["coverage_mean_over_available"],
+                "records": [{"ticker": r["ticker"], "our_status": r["our_status"],
+                             "coverage": r["coverage"], "containment": r["containment"],
+                             "verdict": r["verdict"]} for r in a["records"]]}
+
+    def stratification() -> dict:
+        a = _load("data/sec_eval/stratification/stratification.json")
+        runs = a["era_strata_runs"] + [a["agent_gap_run"]]
+        return {"coverage_matrix": a["coverage_matrix"],
+                "unsupported_strata": [u["stratum"] for u in a["unsupported"]],
+                "runs": [{"ticker": r["ticker"], "era": r["era"],
+                          "agent": r["detected_agent"], "supported": r["supported"],
+                          "coverage_ratio": r["invariants"]["coverage_ratio"],
+                          "pass_items": r["invariants"]["pass_items"]} for r in runs],
+                "agent_survey": a["agent_survey"]["distribution"]}
+
+    def landmines() -> dict:
+        a = _load("data/sec_eval/landmines/landmines.json")
+        mines = a["landmines"]
+        return {"n_landmines": len(mines),
+                "n_handled": sum(1 for m in mines if m["handled"]),
+                "ids": [m["id"] for m in mines], "rerun": a["rerun"]}
+
+    return {"triangulation": _guarded(triangulation), "offset_f1": _guarded(offset_f1),
+            "cyd": _guarded(cyd), "stratification": _guarded(stratification),
+            "landmines": _guarded(landmines)}
 
 
 def audit_section() -> dict:
@@ -119,6 +219,8 @@ def main() -> None:
         "sec": sec_section(),
         "audit": audit_section(),
         "browser": browser_section(),
+        "browser_evals": browser_evals_section(),
+        "sec_evals": sec_evals_section(),
     }
     OUT.write_text(json.dumps(data, indent=1), encoding="utf-8")
     print(f"wrote {OUT} ({OUT.stat().st_size:,} bytes)")

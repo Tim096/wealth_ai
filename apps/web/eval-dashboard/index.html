@@ -79,6 +79,23 @@
   .runhead{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;margin-bottom:.3rem}
   .callout{border:1px solid var(--line);border-radius:10px;padding:.9rem 1rem;background:var(--accent-soft)}
   .callout .lab{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .dg{display:grid;gap:.8rem;grid-template-columns:1fr}
+  @media(min-width:720px){.dg{grid-template-columns:repeat(3,1fr)}}
+  .dg .axis{border:1px solid var(--line);border-radius:10px;padding:.7rem .8rem}
+  .dg .axname{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);font-weight:600}
+  .dg .bars{display:flex;align-items:flex-end;gap:.55rem;height:84px;margin-top:.55rem}
+  .dg .slot{flex:1;display:flex;align-items:flex-end;gap:3px;height:100%}
+  .dg .slot i{display:block;flex:1;border-radius:3px 3px 0 0;min-height:3px}
+  .dg .slot i.s{background:var(--accent)} .dg .slot i.s.zero{background:var(--fail)}
+  .dg .slot i.c{background:var(--grey)}
+  .dg .labs{display:flex;gap:.55rem;margin-top:.25rem}
+  .dg .labs span{flex:1;text-align:center;font-family:var(--mono);font-size:.6rem;color:var(--muted)}
+  .kv{display:flex;justify-content:space-between;gap:.6rem;font-size:.82rem;padding:.3rem 0;
+    border-bottom:1px dashed var(--line)}
+  .kv:last-child{border-bottom:none}
+  .kv .v{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .arterr{font-family:var(--mono);font-size:.74rem;color:var(--fail);word-break:break-all}
   .foot{color:var(--muted);font-size:.78rem;margin-top:2.6rem;border-top:1px solid var(--line);padding-top:1rem}
   a{color:var(--accent)}
   .toggle{position:fixed;top:1rem;right:1rem;font-family:var(--mono);font-size:.72rem;background:var(--panel);
@@ -139,6 +156,60 @@
   </section>
 
   <section>
+    <div class="runhead"><div><h2>Task 1 · Eval hardening — calibrate the judge, perturb the world</h2>
+      <p class="sub">The verifier itself is measured against labelled corruptions, impossible tasks
+        probe silent failure, and mutation sites bend the site along three axes.</p></div></div>
+    <div class="tiles" id="t1tiles" style="margin-top:1rem"></div>
+    <div class="grid two" style="margin-top:1rem">
+      <div class="panel">
+        <h2 style="font-size:1rem">Verifier calibration · labelled triples</h2>
+        <p class="sub" id="calibSub">Ground truth by construction: known-good runs vs four corruption
+          classes. Positive = verdict <code>pass</code>; unknown never counts as success.</p>
+        <div class="scroll" style="margin-top:.5rem"><table id="calibTable"></table></div>
+        <div class="conf" id="calibRates"></div>
+        <div class="arterr" id="calibErr"></div>
+      </div>
+      <div class="panel">
+        <h2 style="font-size:1rem">Silent failure &amp; stability</h2>
+        <p class="sub">Impossible-task probes, pass@k repeats, trajectory hygiene and the
+          opt-in false-success triage — all measured, none self-reported.</p>
+        <div id="silentList" style="margin-top:.5rem"></div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:1rem">
+      <h2 style="font-size:1rem">Degradation curve · 3 axes × 3 intensities</h2>
+      <p class="sub">Teal = final success, grey = mid-task checkpoint (query reached the real field).
+        A red stub marks success 0. Checkpoint ≠ success localises <em>where</em> the failure happened.</p>
+      <div class="dg" id="dgChart" style="margin-top:.7rem"></div>
+      <div class="arterr" id="dgErr"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="runhead"><div><h2>Task 2 · Eval hardening — three engines, official oracles</h2>
+      <p class="sub">A third extraction engine triangulates every item, SEC&rsquo;s own CYD iXBRL
+        block-tags anchor Item 1C, char-offset F1 locks span boundaries, and landmine cases are
+        executable regressions.</p></div></div>
+    <div class="tiles" id="t2tiles" style="margin-top:1rem"></div>
+    <div class="grid two" style="margin-top:1rem">
+      <div class="panel">
+        <h2 style="font-size:1rem">CYD iXBRL oracle · Item 1C span vs SEC&rsquo;s own tags</h2>
+        <p class="sub">Coverage = share of the officially tagged span our segment covers.
+          The two disagreements are wrapper 10-Ks whose 1C is an honest reference stub.</p>
+        <div class="scroll" style="margin-top:.5rem"><table id="cydTable"></table></div>
+        <div class="arterr" id="cydErr"></div>
+      </div>
+      <div class="panel">
+        <h2 style="font-size:1rem">Format-source coverage · era × filing agent</h2>
+        <p class="sub" id="eraSub">Where the pipeline is proven vs honestly unsupported —
+          pre-2001 plain-text SGML fails cleanly (0 fabricated items).</p>
+        <div class="scroll" style="margin-top:.5rem"><table id="eraTable"></table></div>
+        <div class="arterr" id="eraErr"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
     <div class="callout">
       <div class="lab">Adversarial audit · how the silent failures were found</div>
       <p style="margin:.4rem 0 0" id="auditNote"></p>
@@ -149,356 +220,18 @@
 </div>
 
 <script>
-const DATA = {
- "generated_note": "assembled from real run artifacts by tools/build_dashboard_data.py",
- "sec": {
-  "filings": 11,
-  "total_items": 253,
-  "status_distribution": [
-   {
-    "status": "pass",
-    "count": 177,
-    "share": 0.6996
-   },
-   {
-    "status": "incorporated_by_reference",
-    "count": 63,
-    "share": 0.249
-   },
-   {
-    "status": "reserved",
-    "count": 11,
-    "share": 0.0435
-   },
-   {
-    "status": "missing",
-    "count": 2,
-    "share": 0.0079
-   }
-  ],
-  "confidence": {
-   "substantive_pass_mean": 0.962,
-   "substantive_pass_min": 0.799,
-   "stub_mean": 0.666,
-   "stub_max": 0.7
-  },
-  "tickers": [
-   {
-    "ticker": "AAPL",
-    "layer": "big tech",
-    "held_out": false,
-    "report_date": "2025-09-27",
-    "raw_chars": 1520208,
-    "latency_ms": 333.4,
-    "pass": 17,
-    "incorporated_by_reference": 5,
-    "missing": 0,
-    "reserved": 1,
-    "item8_status": "pass",
-    "item8_xbrl": "certified"
-   },
-   {
-    "ticker": "CAT",
-    "layer": "retail/mfg",
-    "held_out": true,
-    "report_date": "2025-12-31",
-    "raw_chars": 6100469,
-    "latency_ms": 1151.8,
-    "pass": 16,
-    "incorporated_by_reference": 6,
-    "missing": 0,
-    "reserved": 1,
-    "item8_status": "pass",
-    "item8_xbrl": "certified"
-   },
-   {
-    "ticker": "GS",
-    "layer": "financial",
-    "held_out": true,
-    "report_date": "2025-12-31",
-    "raw_chars": 9611165,
-    "latency_ms": 2044.6,
-    "pass": 16,
-    "incorporated_by_reference": 5,
-    "missing": 1,
-    "reserved": 1,
-    "item8_status": "pass",
-    "item8_xbrl": "certified"
-   },
-   {
-    "ticker": "JPM",
-    "layer": "financial",
-    "held_out": false,
-    "report_date": "2025-12-31",
-    "raw_chars": 12927325,
-    "latency_ms": 2544.5,
-    "pass": 13,
-    "incorporated_by_reference": 8,
-    "missing": 1,
-    "reserved": 1,
-    "item8_status": "incorporated_by_reference",
-    "item8_xbrl": "contradicted"
-   },
-   {
-    "ticker": "KO",
-    "layer": "consumer",
-    "held_out": true,
-    "report_date": "2025-12-31",
-    "raw_chars": 3758140,
-    "latency_ms": 891.5,
-    "pass": 17,
-    "incorporated_by_reference": 5,
-    "missing": 0,
-    "reserved": 1,
-    "item8_status": "pass",
-    "item8_xbrl": "certified"
-   },
-   {
-    "ticker": "MRNA",
-    "layer": "biotech",
-    "held_out": true,
-    "report_date": "2025-12-31",
-    "raw_chars": 2677412,
-    "latency_ms": 770.0,
-    "pass": 17,
-    "incorporated_by_reference": 5,
-    "missing": 0,
-    "reserved": 1,
-    "item8_status": "pass",
-    "item8_xbrl": "certified"
-   },
-   {
-    "ticker": "MSFT",
-    "layer": "big tech",
-    "held_out": true,
-    "report_date": "2025-06-30",
-    "raw_chars": 8158067,
-    "latency_ms": 1048.1,
-    "pass": 17,
-    "incorporated_by_reference": 5,
-    "missing": 0,
-    "reserved": 1,
-    "item8_status": "pass",
-    "item8_xbrl": "certified"
-   },
-   {
-    "ticker": "NEM",
-    "layer": "energy/mining",
-    "held_out": true,
-    "report_date": "2025-12-31",
-    "raw_chars": 9143706,
-    "latency_ms": 1766.9,
-    "pass": 18,
-    "incorporated_by_reference": 4,
-    "missing": 0,
-    "reserved": 1,
-    "item8_status": "pass",
-    "item8_xbrl": "certified"
-   },
-   {
-    "ticker": "NVDA",
-    "layer": "big tech",
-    "held_out": true,
-    "report_date": "2026-01-25",
-    "raw_chars": 1967816,
-    "latency_ms": 485.4,
-    "pass": 14,
-    "incorporated_by_reference": 8,
-    "missing": 0,
-    "reserved": 1,
-    "item8_status": "incorporated_by_reference",
-    "item8_xbrl": "contradicted"
-   },
-   {
-    "ticker": "WMT",
-    "layer": "retail/mfg",
-    "held_out": true,
-    "report_date": "2026-01-31",
-    "raw_chars": 2323981,
-    "latency_ms": 536.0,
-    "pass": 18,
-    "incorporated_by_reference": 4,
-    "missing": 0,
-    "reserved": 1,
-    "item8_status": "pass",
-    "item8_xbrl": "certified"
-   },
-   {
-    "ticker": "XOM",
-    "layer": "energy/mining",
-    "held_out": false,
-    "report_date": "2025-12-31",
-    "raw_chars": 5591068,
-    "latency_ms": 1030.2,
-    "pass": 14,
-    "incorporated_by_reference": 8,
-    "missing": 0,
-    "reserved": 1,
-    "item8_status": "incorporated_by_reference",
-    "item8_xbrl": "contradicted"
-   }
-  ],
-  "wrappers": [
-   {
-    "ticker": "INTC",
-    "filing_class": "cross_reference_index",
-    "item14_status": "incorporated_by_reference",
-    "item14_provenance": "cross_reference_pointer",
-    "needs_review_count": 22,
-    "reason": "cross-reference-index 10-K detected: 23 item headings clustered within 1664 chars; 7 point to annual-report page ranges \u2014 cross-reference index; item bodies are not in addressable Item sections of the"
-   },
-   {
-    "ticker": "CITI",
-    "filing_class": "cross_reference_index",
-    "item14_status": "missing",
-    "item14_provenance": "unresolved",
-    "needs_review_count": 22,
-    "reason": "cross-reference-index 10-K detected: 12 bare item entries ('<code>. <title>') clustered, 7 with page references \u2014 cross-reference index without the word 'Item'; item bodies are in the bound annual rep"
-   }
-  ],
-  "xbrl_summary": {
-   "certified": 8,
-   "contradicted": 3
-  }
- },
- "audit": {
-  "agents": 56,
-  "anomalies_confirmed": 31,
-  "anomalies_refuted": 12,
-  "silent_failures_before": 31,
-  "silent_failures_after": 0,
-  "pass_before": 0.759,
-  "pass_after": 0.7
- },
- "browser": {
-  "runs": [
-   {
-    "label": "v1 (baseline, script mode)",
-    "task_id": "search-v1",
-    "site": "mockshop",
-    "status": "pass",
-    "confidence": 1.0,
-    "repairs": 0,
-    "total_latency_ms": 623.4,
-    "verifier": {
-     "status": "pass",
-     "reason": "all conditions observed and satisfied",
-     "observed": [
-      "text_visible:results for",
-      "text_visible:Widget",
-      "forbidden:error_text_visible:no results",
-      "forbidden:captcha_visible:captcha"
-     ],
-     "missing": []
-    },
-    "steps": [
-     {
-      "step": "search_box",
-      "action": "fill",
-      "ok": true,
-      "mode": "script",
-      "detail": "",
-      "diagnosis": "",
-      "repair_considered": [],
-      "repair_chosen": "",
-      "selector_used": "#search-box",
-      "latency_ms": 13.5,
-      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v1\\search_box-ok.png"
-     },
-     {
-      "step": "submit_button",
-      "action": "click",
-      "ok": true,
-      "mode": "script",
-      "detail": "",
-      "diagnosis": "",
-      "repair_considered": [],
-      "repair_chosen": "",
-      "selector_used": "#search-btn",
-      "latency_ms": 38.0,
-      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v1\\submit_button-ok.png"
-     }
-    ]
-   },
-   {
-    "label": "v2 (UI drift, repair mode)",
-    "task_id": "search-v2",
-    "site": "mockshop",
-    "status": "pass",
-    "confidence": 0.8,
-    "repairs": 2,
-    "total_latency_ms": 694.1,
-    "verifier": {
-     "status": "pass",
-     "reason": "all conditions observed and satisfied",
-     "observed": [
-      "text_visible:results for",
-      "text_visible:Widget",
-      "forbidden:error_text_visible:no results",
-      "forbidden:captcha_visible:captcha"
-     ],
-     "missing": []
-    },
-    "steps": [
-     {
-      "step": "dismiss_modal",
-      "action": "click",
-      "ok": true,
-      "mode": "repair",
-      "detail": "dismissed blocking modal",
-      "diagnosis": "modal_blocking",
-      "repair_considered": [],
-      "repair_chosen": "",
-      "selector_used": "#accept-cookies",
-      "latency_ms": 39.5,
-      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\modal-dismissed.png"
-     },
-     {
-      "step": "search_box",
-      "action": "fill",
-      "ok": true,
-      "mode": "repair",
-      "detail": "selector matched no element",
-      "diagnosis": "selector_not_found",
-      "repair_considered": [
-       "input#-[Search products] score=4.5 (tag=input, purpose word match)",
-       "button#go[Search] score=2.0 (purpose word match)",
-       "button#fake-search[Search] score=-1.0 (looks like a decoy element)"
-      ],
-      "repair_chosen": "input[name=query] score=4.5: tag=input, purpose word match",
-      "selector_used": "input[name=query]",
-      "latency_ms": 7.9,
-      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\search_box-repaired.png"
-     },
-     {
-      "step": "submit_button",
-      "action": "click",
-      "ok": true,
-      "mode": "repair",
-      "detail": "selector matched no element",
-      "diagnosis": "selector_not_found",
-      "repair_considered": [
-       "button#go[Search] score=5.5 (tag=button, purpose word match, type=submit)",
-       "input#-[Search products] score=2.0 (purpose word match)",
-       "button#fake-search[Search] score=-1.0 (looks like a decoy element)"
-      ],
-      "repair_chosen": "#go score=5.5: tag=button, purpose word match, type=submit",
-      "selector_used": "#go",
-      "latency_ms": 32.7,
-      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\submit_button-repaired.png"
-     }
-    ]
-   }
-  ]
- }
-};
+const DATA = {"generated_note":"assembled from real run artifacts by tools/build_dashboard_data.py","sec":{"filings":11,"total_items":253,"status_distribution":[{"status":"pass","count":178,"share":0.7036},{"status":"incorporated_by_reference","count":62,"share":0.2451},{"status":"reserved","count":11,"share":0.0435},{"status":"missing","count":2,"share":0.0079}],"confidence":{"substantive_pass_mean":0.975,"substantive_pass_min":0.799,"stub_mean":0.667,"stub_max":0.7},"tickers":[{"ticker":"AAPL","layer":"big tech","held_out":false,"report_date":"2025-09-27","raw_chars":1520208,"latency_ms":368.6,"pass":17,"incorporated_by_reference":5,"missing":0,"reserved":1,"item8_status":"pass","item8_xbrl":"certified"},{"ticker":"CAT","layer":"retail/mfg","held_out":true,"report_date":"2025-12-31","raw_chars":6100469,"latency_ms":1194.0,"pass":17,"incorporated_by_reference":5,"missing":0,"reserved":1,"item8_status":"pass","item8_xbrl":"certified"},{"ticker":"GS","layer":"financial","held_out":true,"report_date":"2025-12-31","raw_chars":9611165,"latency_ms":2246.0,"pass":16,"incorporated_by_reference":5,"missing":1,"reserved":1,"item8_status":"pass","item8_xbrl":"certified"},{"ticker":"JPM","layer":"financial","held_out":false,"report_date":"2025-12-31","raw_chars":12927325,"latency_ms":2805.4,"pass":13,"incorporated_by_reference":8,"missing":1,"reserved":1,"item8_status":"incorporated_by_reference","item8_xbrl":"contradicted"},{"ticker":"KO","layer":"consumer","held_out":true,"report_date":"2025-12-31","raw_chars":3758140,"latency_ms":963.0,"pass":17,"incorporated_by_reference":5,"missing":0,"reserved":1,"item8_status":"pass","item8_xbrl":"certified"},{"ticker":"MRNA","layer":"biotech","held_out":true,"report_date":"2025-12-31","raw_chars":2677412,"latency_ms":837.9,"pass":17,"incorporated_by_reference":5,"missing":0,"reserved":1,"item8_status":"pass","item8_xbrl":"certified"},{"ticker":"MSFT","layer":"big tech","held_out":true,"report_date":"2025-06-30","raw_chars":8158067,"latency_ms":1102.3,"pass":17,"incorporated_by_reference":5,"missing":0,"reserved":1,"item8_status":"pass","item8_xbrl":"certified"},{"ticker":"NEM","layer":"energy/mining","held_out":true,"report_date":"2025-12-31","raw_chars":9143706,"latency_ms":1892.4,"pass":18,"incorporated_by_reference":4,"missing":0,"reserved":1,"item8_status":"pass","item8_xbrl":"certified"},{"ticker":"NVDA","layer":"big tech","held_out":true,"report_date":"2026-01-25","raw_chars":1967816,"latency_ms":549.2,"pass":14,"incorporated_by_reference":8,"missing":0,"reserved":1,"item8_status":"incorporated_by_reference","item8_xbrl":"contradicted"},{"ticker":"WMT","layer":"retail/mfg","held_out":true,"report_date":"2026-01-31","raw_chars":2323981,"latency_ms":620.4,"pass":18,"incorporated_by_reference":4,"missing":0,"reserved":1,"item8_status":"pass","item8_xbrl":"certified"},{"ticker":"XOM","layer":"energy/mining","held_out":false,"report_date":"2025-12-31","raw_chars":5591068,"latency_ms":1073.0,"pass":14,"incorporated_by_reference":8,"missing":0,"reserved":1,"item8_status":"incorporated_by_reference","item8_xbrl":"contradicted"}],"wrappers":[{"ticker":"INTC","filing_class":"cross_reference_index","item14_status":"incorporated_by_reference","item14_provenance":"cross_reference_pointer","needs_review_count":22,"reason":"cross-reference-index 10-K detected: 23 item headings clustered within 1685 chars; 13 point to annual-report page ranges — cross-reference index; item bodies are not in addressable Item sections of th"},{"ticker":"CITI","filing_class":"cross_reference_index","item14_status":"missing","item14_provenance":"unresolved","needs_review_count":22,"reason":"cross-reference-index 10-K detected: 12 bare item entries ('<code>. <title>') clustered, 7 with page references — cross-reference index without the word 'Item'; item bodies are in the bound annual rep"}],"xbrl_summary":{"certified":8,"contradicted":3},"tri_state":{"present":178,"null":75},"sweep":"sweep3"},"audit":{"agents":56,"anomalies_confirmed":31,"anomalies_refuted":12,"silent_failures_before":31,"silent_failures_after":0,"pass_before":0.759,"pass_after":0.7},"browser":{"runs":[{"label":"v1 (baseline, script mode)","task_id":"search-v1","site":"mockshop","status":"pass","confidence":1.0,"repairs":0,"total_latency_ms":623.4,"verifier":{"status":"pass","reason":"all conditions observed and satisfied","observed":["text_visible:results for","text_visible:Widget","forbidden:error_text_visible:no results","forbidden:captcha_visible:captcha"],"missing":[]},"steps":[{"step":"search_box","action":"fill","ok":true,"mode":"script","detail":"","diagnosis":"","repair_considered":[],"repair_chosen":"","selector_used":"#search-box","latency_ms":13.5,"screenshot":"E:\\Side_Project\\wealth\\runs\\browser_demo\\v1\\search_box-ok.png"},{"step":"submit_button","action":"click","ok":true,"mode":"script","detail":"","diagnosis":"","repair_considered":[],"repair_chosen":"","selector_used":"#search-btn","latency_ms":38.0,"screenshot":"E:\\Side_Project\\wealth\\runs\\browser_demo\\v1\\submit_button-ok.png"}]},{"label":"v2 (UI drift, repair mode)","task_id":"search-v2","site":"mockshop","status":"pass","confidence":0.8,"repairs":2,"total_latency_ms":694.1,"verifier":{"status":"pass","reason":"all conditions observed and satisfied","observed":["text_visible:results for","text_visible:Widget","forbidden:error_text_visible:no results","forbidden:captcha_visible:captcha"],"missing":[]},"steps":[{"step":"dismiss_modal","action":"click","ok":true,"mode":"repair","detail":"dismissed blocking modal","diagnosis":"modal_blocking","repair_considered":[],"repair_chosen":"","selector_used":"#accept-cookies","latency_ms":39.5,"screenshot":"E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\modal-dismissed.png"},{"step":"search_box","action":"fill","ok":true,"mode":"repair","detail":"selector matched no element","diagnosis":"selector_not_found","repair_considered":["input#-[Search products] score=4.5 (tag=input, purpose word match)","button#go[Search] score=2.0 (purpose word match)","button#fake-search[Search] score=-1.0 (looks like a decoy element)"],"repair_chosen":"input[name=query] score=4.5: tag=input, purpose word match","selector_used":"input[name=query]","latency_ms":7.9,"screenshot":"E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\search_box-repaired.png"},{"step":"submit_button","action":"click","ok":true,"mode":"repair","detail":"selector matched no element","diagnosis":"selector_not_found","repair_considered":["button#go[Search] score=5.5 (tag=button, purpose word match, type=submit)","input#-[Search products] score=2.0 (purpose word match)","button#fake-search[Search] score=-1.0 (looks like a decoy element)"],"repair_chosen":"#go score=5.5: tag=button, purpose word match, type=submit","selector_used":"#go","latency_ms":32.7,"screenshot":"E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\submit_button-repaired.png"}]}]},"browser_evals":{"calibration":{"n_success":22,"n_corrupted":24,"three_state_table":{"success":{"pass":22,"fail":0,"unknown":0},"corrupted":{"pass":1,"fail":20,"unknown":3}},"per_corruption_class":{"needle_removed":{"pass":0,"fail":6,"unknown":0},"wrong_url":{"pass":0,"fail":6,"unknown":0},"download_wrong_content":{"pass":1,"fail":4,"unknown":1},"confident_false_claim":{"pass":0,"fail":4,"unknown":2}},"confusion":{"tp":22,"fn_not_pass":0,"fp":1,"tn_not_pass":23},"rates":{"sensitivity":1.0,"specificity":0.958333,"false_positive_rate":0.041667,"false_negative_rate":0.0,"unknown_rate_success":0.0,"unknown_rate_corrupted":0.125},"apparent_success_rate":0.8,"corrected":{"observed":0.8,"sensitivity":1.0,"specificity":0.958333,"denominator":0.958333,"formula":"(observed + specificity - 1) / (sensitivity + specificity - 1)","status":"ok","corrected":0.791304,"raw":0.791304}},"impossible":{"n_impossible":10,"n_refused":2,"silent_failures":1,"silent_failure_rate":0.1,"honest_fail":7,"honest_unknown":2,"honest_outcome_rate":0.9,"refused_correct":2,"refused_leaked_to_action":0,"expect_status_accuracy":0.916667,"by_kind":{"product_absent":{"n":2,"silent_failure":1,"honest":1,"refused":0},"feature_absent":{"n":3,"silent_failure":0,"honest":3,"refused":0},"false_premise":{"n":3,"silent_failure":0,"honest":3,"refused":0},"unobservable":{"n":2,"silent_failure":0,"honest":2,"refused":0},"refused":{"n":2,"silent_failure":0,"honest":0,"refused":2}}},"passk":{"script_mode":{"k":3,"n_tasks":5,"n_solvable":4,"pass_at_1":1.0,"pass_at_k":1.0,"verdict_consistency":1.0,"flaky_rate":0.0,"flaky_tasks":[],"deterministic":true},"agent_mode_mock":{"k":3,"n_tasks":3,"n_solvable":3,"pass_at_1":1.0,"pass_at_k":1.0,"verdict_consistency":1.0,"flaky_rate":0.0,"flaky_tasks":[],"deterministic":true}},"degradation":{"perception":[{"intensity":0,"cell":"clean","success_rate":1.0,"checkpoint_rate":1.0,"recovery_rate":null,"avg_repairs":0.0},{"intensity":1,"cell":"perception-light","success_rate":1.0,"checkpoint_rate":1.0,"recovery_rate":1.0,"avg_repairs":2.0},{"intensity":2,"cell":"perception-medium","success_rate":1.0,"checkpoint_rate":1.0,"recovery_rate":1.0,"avg_repairs":2.0},{"intensity":3,"cell":"perception-heavy","success_rate":0.0,"checkpoint_rate":0.0,"recovery_rate":0.0,"avg_repairs":2.0}],"action":[{"intensity":0,"cell":"clean","success_rate":1.0,"checkpoint_rate":1.0,"recovery_rate":null,"avg_repairs":0.0},{"intensity":1,"cell":"action-light","success_rate":1.0,"checkpoint_rate":1.0,"recovery_rate":1.0,"avg_repairs":2.0},{"intensity":2,"cell":"action-medium","success_rate":1.0,"checkpoint_rate":1.0,"recovery_rate":1.0,"avg_repairs":2.0},{"intensity":3,"cell":"action-heavy","success_rate":0.0,"checkpoint_rate":1.0,"recovery_rate":0.0,"avg_repairs":2.0}],"execution":[{"intensity":0,"cell":"clean","success_rate":1.0,"checkpoint_rate":1.0,"recovery_rate":null,"avg_repairs":0.0},{"intensity":1,"cell":"execution-light","success_rate":1.0,"checkpoint_rate":1.0,"recovery_rate":null,"avg_repairs":0.0},{"intensity":2,"cell":"execution-medium","success_rate":1.0,"checkpoint_rate":1.0,"recovery_rate":1.0,"avg_repairs":1.0},{"intensity":3,"cell":"execution-heavy","success_rate":0.0,"checkpoint_rate":1.0,"recovery_rate":0.0,"avg_repairs":1.0}]},"trajectory":{"n_tasks":5,"mean_repetition_score":0.0,"max_repetition_score":0.0,"n_loops_detected":0,"loop_task_ids":[],"n_with_side_effects":5,"side_effect_task_ids":["search-v1-widget","search-v2-widget-drift","search-v2-gizmo-drift","search-v1-nonexistent","search-v3-heldout"]},"false_success":{"route":"heuristic","n_applicable":24,"confusion":{"tp":1,"fp":0,"fn":1,"tn":22},"precision":1.0,"recall":0.5,"flag_rate":0.0417}},"sec_evals":{"triangulation":{"engine":"edgartools 5.42.0","filings":11,"verdict_totals":{"agree":240,"disagree":12,"engine_unavailable":1},"disagreements":{"AAPL":["11","16"],"NVDA":["16"],"JPM":["7","8"],"WMT":["16"],"CAT":["16"],"XOM":["7","8","16"],"NEM":["16"],"MRNA":["16"]}},"offset_f1":{"records_dir":"data/sec_eval/records/sweep3","filings_scored":5,"filings_skipped":0,"offset_items":80,"macro_precision_items":1.0,"macro_recall_items":1.0,"macro_f1_items":1.0,"macro_f1_filings":1.0,"outcome_counts":{"matched":82,"correct_null":33}},"cyd":{"verdicts":{"agree":9,"disagree":2,"unavailable":0,"not_required":0},"disagreements":["JPM","GS"],"coverage_mean_over_available":0.8182,"records":[{"ticker":"AAPL","our_status":"pass","coverage":1.0,"containment":0.9915,"verdict":"agree"},{"ticker":"MSFT","our_status":"pass","coverage":1.0,"containment":0.9955,"verdict":"agree"},{"ticker":"NVDA","our_status":"pass","coverage":1.0,"containment":0.984,"verdict":"agree"},{"ticker":"JPM","our_status":"incorporated_by_reference","coverage":0.0,"containment":0.0,"verdict":"disagree"},{"ticker":"GS","our_status":"incorporated_by_reference","coverage":0.0,"containment":0.0,"verdict":"disagree"},{"ticker":"WMT","our_status":"pass","coverage":1.0,"containment":0.946,"verdict":"agree"},{"ticker":"CAT","our_status":"pass","coverage":1.0,"containment":0.7313,"verdict":"agree"},{"ticker":"XOM","our_status":"pass","coverage":1.0,"containment":0.9817,"verdict":"agree"},{"ticker":"NEM","our_status":"pass","coverage":1.0,"containment":0.9869,"verdict":"agree"},{"ticker":"MRNA","our_status":"pass","coverage":1.0,"containment":0.975,"verdict":"agree"},{"ticker":"KO","our_status":"pass","coverage":1.0,"containment":0.9858,"verdict":"agree"}]},"stratification":{"coverage_matrix":{"text_pre2001":{"unknown/in-house":2},"html_2001_2008":{"unknown/in-house":1},"xbrl_2009_2018":{"unknown/in-house":1},"ixbrl_2019plus":{"Workiva":10,"DFIN (Donnelley)":1,"Toppan Merrill":1}},"unsupported_strata":["text_pre2001","text_pre2001"],"runs":[{"ticker":"AAPL","era":"text_pre2001","agent":"unknown/in-house","supported":false,"coverage_ratio":0.0,"pass_items":0},{"ticker":"KO","era":"text_pre2001","agent":"unknown/in-house","supported":false,"coverage_ratio":0.0,"pass_items":0},{"ticker":"AAPL","era":"html_2001_2008","agent":"unknown/in-house","supported":true,"coverage_ratio":0.9824,"pass_items":17},{"ticker":"AAPL","era":"xbrl_2009_2018","agent":"unknown/in-house","supported":true,"coverage_ratio":0.9592,"pass_items":15},{"ticker":"","era":"ixbrl_2019plus","agent":"Toppan Merrill","supported":true,"coverage_ratio":0.9107,"pass_items":15}],"agent_survey":{"Workiva":31,"unknown/in-house":8,"Toppan Merrill":1}},"landmines":{"n_landmines":10,"n_handled":10,"ids":["L1-item6-era","L2-item9c-item16-conditional","L3-items-7-and-7a-combined","L4-formtypes-exact-match","L5-toc-pre-exclusion","L6-part-iii-incorporated-by-reference","L7-edgartools-454-item-collision","L8-glossy-ars-wrap","L9-cross-reference-index","L10-large-filing-offset-consistency"],"rerun":".venv/Scripts/python -m pytest tests/test_landmines.py -q"}}};
 const $=(s)=>document.querySelector(s);
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
 const COLOR={pass:'--pass',incorporated_by_reference:'--warn',ambiguous:'--warn',partial:'--warn',
-  missing:'--grey',reserved:'--grey',fail:'--fail'};
+  missing:'--grey',reserved:'--grey',fail:'--fail',
+  present:'--pass','null':'--grey',MISSING:'--fail'};
 const PILL={pass:'p-pass',certified:'p-pass',incorporated_by_reference:'p-warn',ambiguous:'p-warn',
   partial:'p-warn',contradicted:'p-fail',fail:'p-fail',missing:'p-grey',reserved:'p-grey',
-  cross_reference_pointer:'p-warn',inconclusive:'p-warn',unavailable:'p-grey'};
+  cross_reference_pointer:'p-warn',inconclusive:'p-warn',unavailable:'p-grey',
+  agree:'p-pass',disagree:'p-fail',engine_unavailable:'p-grey',not_required:'p-grey',
+  present:'p-pass','null':'p-grey',MISSING:'p-fail',unknown:'p-grey',refused:'p-warn',
+  supported:'p-pass',unsupported:'p-grey'};
 function cvar(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
 
 // tiles
@@ -581,6 +314,143 @@ DATA.browser.runs.forEach(r=>{
   });
   br.append(p);
 });
+
+// ---- eval hardening (browser_evals / sec_evals) ----
+const BE=DATA.browser_evals||{}, SE=DATA.sec_evals||{};
+const pct=(x,d=1)=>x==null?'—':(x*100).toFixed(d)+'%';
+const bad=(o)=>!o||o.error;
+const showErr=(sel,o)=>{if(o&&o.error)$(sel).textContent='artifact error: '+o.error;};
+const addTiles=(sel,list)=>list.forEach(t=>{const d=el('div','tile');
+  d.append(el('span','n',t.n),el('div','k',t.k),el('div','note',t.note||''));$(sel).append(d);});
+const kv=(k,v)=>`<div class="kv"><span>${k}</span><span class="v">${v}</span></div>`;
+
+// Task 1 tiles
+const cal=BE.calibration, imp=BE.impossible, pk=BE.passk, tj=BE.trajectory, fs=BE.false_success;
+addTiles('#t1tiles',[
+  bad(cal)?{n:'—',k:'corrected success rate',note:'artifact error'}
+    :{n:cal.corrected.corrected,k:'corrected success rate',
+      note:`Rogan-Gladen · apparent ${cal.apparent_success_rate}`},
+  bad(cal)?{n:'—',k:'verifier sens / spec',note:'artifact error'}
+    :{n:`${cal.rates.sensitivity}/${cal.rates.specificity.toFixed(2)}`,k:'verifier sens / spec',
+      note:`${cal.n_success+cal.n_corrupted} labelled triples · FP rate ${cal.rates.false_positive_rate}`},
+  bad(imp)?{n:'—',k:'silent-failure rate',note:'artifact error'}
+    :{n:pct(imp.silent_failure_rate,0),k:'silent-failure rate',
+      note:`${imp.silent_failures}/${imp.n_impossible} impossible tasks · honest ${pct(imp.honest_outcome_rate,0)}`},
+  bad(pk)?{n:'—',k:'pass@k flaky rate',note:'artifact error'}
+    :{n:pct(pk.script_mode.flaky_rate,0),k:'pass@k flaky rate',
+      note:`k=${pk.script_mode.k} · pass@1 ${pk.script_mode.pass_at_1} · deterministic ${pk.script_mode.deterministic}`},
+]);
+
+// verifier calibration confusion table
+if(!bad(cal)){
+  const ct=$('#calibTable');
+  ct.append((()=>{const tr=el('tr');['Truth','pass','fail','unknown'].forEach(h=>tr.append(el('th',null,h)));return tr;})());
+  const row=(name,cells,cls)=>{const tr=el('tr');
+    tr.append(el('td',cls,name),el('td','t-mono',cells.pass),el('td','t-mono',cells.fail),el('td','t-mono',cells.unknown));
+    return tr;};
+  ct.append(row(`known-good run (${cal.n_success})`,cal.three_state_table.success));
+  ct.append(row(`corrupted run (${cal.n_corrupted})`,cal.three_state_table.corrupted));
+  Object.entries(cal.per_corruption_class).forEach(([k,v])=>{
+    const tr=row('· '+k.replaceAll('_',' '),v);tr.style.color='var(--muted)';tr.style.fontSize='.76rem';ct.append(tr);});
+  const box=(lab,big,sub)=>{const b=el('div','box');
+    b.append(el('div','sub',lab),el('div','big',big),el('div','sub',sub));return b;};
+  $('#calibRates').append(
+    box('sensitivity / specificity',`${cal.rates.sensitivity} / ${cal.rates.specificity}`,
+      `1 known FP kept on purpose · unknown rate ${cal.rates.unknown_rate_corrupted}`),
+    box('corrected success rate',cal.corrected.corrected,
+      `apparent ${cal.apparent_success_rate} · status ${cal.corrected.status}`));
+}
+showErr('#calibErr',cal);
+
+// silent failure & stability list
+if($('#silentList')){
+  let h='';
+  h+=bad(imp)?kv('impossible tasks','artifact error: '+(imp&&imp.error||'missing'))
+    :kv(`impossible tasks (${imp.n_impossible})`,
+      `${imp.silent_failures} silent · ${imp.honest_fail} fail · ${imp.honest_unknown} unknown`)
+     +kv('capability refusals',`${imp.refused_correct}/${imp.n_refused} correct, ${imp.refused_leaked_to_action} leaked`);
+  h+=bad(pk)?kv('pass@k','artifact error: '+(pk&&pk.error||'missing'))
+    :kv(`pass@k · script mode (k=${pk.script_mode.k})`,
+      `pass@1 ${pk.script_mode.pass_at_1} · pass@k ${pk.script_mode.pass_at_k} · consistency ${pk.script_mode.verdict_consistency}`)
+     +kv('pass@k · agent mode (mock planner)',
+      `pass@1 ${pk.agent_mode_mock.pass_at_1} · deterministic ${pk.agent_mode_mock.deterministic}`);
+  h+=bad(tj)?kv('trajectory','artifact error: '+(tj&&tj.error||'missing'))
+    :kv(`trajectory (${tj.n_tasks} tasks)`,
+      `repetition ${tj.mean_repetition_score} · loops ${tj.n_loops_detected} · side effects ${tj.n_with_side_effects}/${tj.n_tasks}`);
+  h+=bad(fs)?kv('false-success triage','artifact error: '+(fs&&fs.error||'missing'))
+    :kv(`false-success triage (${fs.route}, ${fs.n_applicable} claimed passes)`,
+      `precision ${fs.precision} · recall ${fs.recall} · flag rate ${fs.flag_rate}`);
+  $('#silentList').innerHTML=h;
+}
+
+// degradation curves
+const dg=BE.degradation;
+if(!bad(dg)){
+  Object.entries(dg).forEach(([axis,points])=>{
+    const a=el('div','axis');a.append(el('div','axname',axis));
+    const bars=el('div','bars'), labs=el('div','labs');
+    points.forEach(p=>{
+      const slot=el('div','slot');
+      const s=el('i','s'+(p.success_rate===0?' zero':''));s.style.height=Math.max(p.success_rate*100,3)+'%';
+      s.title=`${p.cell}: success ${p.success_rate}, checkpoint ${p.checkpoint_rate}, recovery ${p.recovery_rate??'n/a'}, repairs ${p.avg_repairs}`;
+      const c=el('i','c');c.style.height=Math.max(p.checkpoint_rate*100,3)+'%';c.title=`checkpoint ${p.checkpoint_rate}`;
+      slot.append(s,c);bars.append(slot);
+      labs.append(el('span',null,`${p.cell.split('-')[1]||'clean'}<br>r${p.avg_repairs}`));
+    });
+    a.append(bars,labs);$('#dgChart').append(a);
+  });
+}
+showErr('#dgErr',dg);
+
+// Task 2 tiles
+const tri=SE.triangulation, f1=SE.offset_f1, cyd=SE.cyd, strat=SE.stratification, lm=SE.landmines;
+const triN=bad(tri)?0:Object.values(tri.verdict_totals).reduce((a,b)=>a+b,0);
+addTiles('#t2tiles',[
+  bad(tri)?{n:'—',k:'triangulation agree',note:'artifact error'}
+    :{n:`${tri.verdict_totals.agree}/${triN}`,k:'triangulation agree',
+      note:`${tri.engine} · ${tri.verdict_totals.disagree} disagree → needs_review`},
+  bad(f1)?{n:'—',k:'char-offset macro-F1',note:'artifact error'}
+    :{n:f1.macro_f1_items,k:'char-offset macro-F1',
+      note:`${f1.offset_items} gold items, ${f1.filings_scored} filings · constructive baseline`},
+  (DATA.sec.tri_state?{n:DATA.sec.tri_state.MISSING||0,k:'tri-state MISSING items',
+      note:`present ${DATA.sec.tri_state.present||0} · null ${DATA.sec.tri_state['null']||0}`}
+    :{n:'—',k:'tri-state MISSING items',note:'no tri-state in sweep'}),
+  bad(cyd)?{n:'—',k:'CYD oracle agree',note:'artifact error'}
+    :{n:`${cyd.verdicts.agree}/${Object.values(cyd.verdicts).reduce((a,b)=>a+b,0)}`,k:'CYD oracle agree',
+      note:`disagree: ${cyd.disagreements.join(', ')||'none'} (wrapper stubs)`},
+  bad(lm)?{n:'—',k:'landmines handled',note:'artifact error'}
+    :{n:`${lm.n_handled}/${lm.n_landmines}`,k:'landmines handled',note:lm.rerun},
+]);
+
+// CYD table
+if(!bad(cyd)){
+  const t=$('#cydTable');
+  t.append((()=>{const tr=el('tr');['Ticker','Our status','Coverage','Containment','Verdict'].forEach(h=>tr.append(el('th',null,h)));return tr;})());
+  cyd.records.forEach(r=>{const tr=el('tr');
+    tr.append(el('td','t-mono',r.ticker));
+    tr.append(el('td',null,`<span class="pill ${PILL[r.our_status]||'p-grey'}">${r.our_status}</span>`));
+    tr.append(el('td','t-mono',pct(r.coverage)));
+    tr.append(el('td','t-mono',pct(r.containment)));
+    tr.append(el('td',null,`<span class="pill ${PILL[r.verdict]||'p-grey'}">${r.verdict}</span>`));
+    t.append(tr);});
+}
+showErr('#cydErr',cyd);
+
+// era x agent coverage matrix
+if(!bad(strat)){
+  const agents=[...new Set(Object.values(strat.coverage_matrix).flatMap(o=>Object.keys(o)))];
+  const t=$('#eraTable');
+  t.append((()=>{const tr=el('tr');['Era',...agents,'Status'].forEach(h=>tr.append(el('th',null,h)));return tr;})());
+  Object.entries(strat.coverage_matrix).forEach(([era,row])=>{
+    const tr=el('tr');tr.append(el('td','t-mono',era));
+    agents.forEach(a=>tr.append(el('td','t-mono',row[a]!=null?row[a]:'·')));
+    const sup=strat.unsupported_strata.includes(era)?'unsupported':'supported';
+    tr.append(el('td',null,`<span class="pill ${PILL[sup]}">${sup}</span>`));
+    t.append(tr);});
+  const surv=Object.entries(strat.agent_survey).map(([k,v])=>`${k} ${v}`).join(' · ');
+  $('#eraSub').innerHTML+=` Agent survey (EDGAR 2025-02, n=40): <span class="t-mono">${surv}</span>.`;
+}
+showErr('#eraErr',strat);
 
 $('#auditNote').innerHTML=`A ${a.agents}-agent workflow audited every extracted item, then had independent verifiers try to <em>refute</em> each finding. <b>${a.anomalies_confirmed} silent failures confirmed, ${a.anomalies_refuted} refuted</b> (the refuters caught false alarms). Pass-rate moved ${(a.pass_before*100).toFixed(1)}% → ${(a.pass_after*100).toFixed(1)}% as ${a.silent_failures_before} fakes were reclassified — and now <b>${a.silent_failures_after}</b> remain.`;
 

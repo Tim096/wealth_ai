@@ -79,6 +79,23 @@
   .runhead{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;margin-bottom:.3rem}
   .callout{border:1px solid var(--line);border-radius:10px;padding:.9rem 1rem;background:var(--accent-soft)}
   .callout .lab{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .dg{display:grid;gap:.8rem;grid-template-columns:1fr}
+  @media(min-width:720px){.dg{grid-template-columns:repeat(3,1fr)}}
+  .dg .axis{border:1px solid var(--line);border-radius:10px;padding:.7rem .8rem}
+  .dg .axname{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);font-weight:600}
+  .dg .bars{display:flex;align-items:flex-end;gap:.55rem;height:84px;margin-top:.55rem}
+  .dg .slot{flex:1;display:flex;align-items:flex-end;gap:3px;height:100%}
+  .dg .slot i{display:block;flex:1;border-radius:3px 3px 0 0;min-height:3px}
+  .dg .slot i.s{background:var(--accent)} .dg .slot i.s.zero{background:var(--fail)}
+  .dg .slot i.c{background:var(--grey)}
+  .dg .labs{display:flex;gap:.55rem;margin-top:.25rem}
+  .dg .labs span{flex:1;text-align:center;font-family:var(--mono);font-size:.6rem;color:var(--muted)}
+  .kv{display:flex;justify-content:space-between;gap:.6rem;font-size:.82rem;padding:.3rem 0;
+    border-bottom:1px dashed var(--line)}
+  .kv:last-child{border-bottom:none}
+  .kv .v{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .arterr{font-family:var(--mono);font-size:.74rem;color:var(--fail);word-break:break-all}
   .foot{color:var(--muted);font-size:.78rem;margin-top:2.6rem;border-top:1px solid var(--line);padding-top:1rem}
   a{color:var(--accent)}
   .toggle{position:fixed;top:1rem;right:1rem;font-family:var(--mono);font-size:.72rem;background:var(--panel);
@@ -139,6 +156,60 @@
   </section>
 
   <section>
+    <div class="runhead"><div><h2>Task 1 · Eval hardening — calibrate the judge, perturb the world</h2>
+      <p class="sub">The verifier itself is measured against labelled corruptions, impossible tasks
+        probe silent failure, and mutation sites bend the site along three axes.</p></div></div>
+    <div class="tiles" id="t1tiles" style="margin-top:1rem"></div>
+    <div class="grid two" style="margin-top:1rem">
+      <div class="panel">
+        <h2 style="font-size:1rem">Verifier calibration · labelled triples</h2>
+        <p class="sub" id="calibSub">Ground truth by construction: known-good runs vs four corruption
+          classes. Positive = verdict <code>pass</code>; unknown never counts as success.</p>
+        <div class="scroll" style="margin-top:.5rem"><table id="calibTable"></table></div>
+        <div class="conf" id="calibRates"></div>
+        <div class="arterr" id="calibErr"></div>
+      </div>
+      <div class="panel">
+        <h2 style="font-size:1rem">Silent failure &amp; stability</h2>
+        <p class="sub">Impossible-task probes, pass@k repeats, trajectory hygiene and the
+          opt-in false-success triage — all measured, none self-reported.</p>
+        <div id="silentList" style="margin-top:.5rem"></div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:1rem">
+      <h2 style="font-size:1rem">Degradation curve · 3 axes × 3 intensities</h2>
+      <p class="sub">Teal = final success, grey = mid-task checkpoint (query reached the real field).
+        A red stub marks success 0. Checkpoint ≠ success localises <em>where</em> the failure happened.</p>
+      <div class="dg" id="dgChart" style="margin-top:.7rem"></div>
+      <div class="arterr" id="dgErr"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="runhead"><div><h2>Task 2 · Eval hardening — three engines, official oracles</h2>
+      <p class="sub">A third extraction engine triangulates every item, SEC&rsquo;s own CYD iXBRL
+        block-tags anchor Item 1C, char-offset F1 locks span boundaries, and landmine cases are
+        executable regressions.</p></div></div>
+    <div class="tiles" id="t2tiles" style="margin-top:1rem"></div>
+    <div class="grid two" style="margin-top:1rem">
+      <div class="panel">
+        <h2 style="font-size:1rem">CYD iXBRL oracle · Item 1C span vs SEC&rsquo;s own tags</h2>
+        <p class="sub">Coverage = share of the officially tagged span our segment covers.
+          The two disagreements are wrapper 10-Ks whose 1C is an honest reference stub.</p>
+        <div class="scroll" style="margin-top:.5rem"><table id="cydTable"></table></div>
+        <div class="arterr" id="cydErr"></div>
+      </div>
+      <div class="panel">
+        <h2 style="font-size:1rem">Format-source coverage · era × filing agent</h2>
+        <p class="sub" id="eraSub">Where the pipeline is proven vs honestly unsupported —
+          pre-2001 plain-text SGML fails cleanly (0 fabricated items).</p>
+        <div class="scroll" style="margin-top:.5rem"><table id="eraTable"></table></div>
+        <div class="arterr" id="eraErr"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
     <div class="callout">
       <div class="lab">Adversarial audit · how the silent failures were found</div>
       <p style="margin:.4rem 0 0" id="auditNote"></p>
@@ -153,10 +224,14 @@ const DATA = __DATA__;
 const $=(s)=>document.querySelector(s);
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
 const COLOR={pass:'--pass',incorporated_by_reference:'--warn',ambiguous:'--warn',partial:'--warn',
-  missing:'--grey',reserved:'--grey',fail:'--fail'};
+  missing:'--grey',reserved:'--grey',fail:'--fail',
+  present:'--pass','null':'--grey',MISSING:'--fail'};
 const PILL={pass:'p-pass',certified:'p-pass',incorporated_by_reference:'p-warn',ambiguous:'p-warn',
   partial:'p-warn',contradicted:'p-fail',fail:'p-fail',missing:'p-grey',reserved:'p-grey',
-  cross_reference_pointer:'p-warn',inconclusive:'p-warn',unavailable:'p-grey'};
+  cross_reference_pointer:'p-warn',inconclusive:'p-warn',unavailable:'p-grey',
+  agree:'p-pass',disagree:'p-fail',engine_unavailable:'p-grey',not_required:'p-grey',
+  present:'p-pass','null':'p-grey',MISSING:'p-fail',unknown:'p-grey',refused:'p-warn',
+  supported:'p-pass',unsupported:'p-grey'};
 function cvar(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
 
 // tiles
@@ -239,6 +314,143 @@ DATA.browser.runs.forEach(r=>{
   });
   br.append(p);
 });
+
+// ---- eval hardening (browser_evals / sec_evals) ----
+const BE=DATA.browser_evals||{}, SE=DATA.sec_evals||{};
+const pct=(x,d=1)=>x==null?'—':(x*100).toFixed(d)+'%';
+const bad=(o)=>!o||o.error;
+const showErr=(sel,o)=>{if(o&&o.error)$(sel).textContent='artifact error: '+o.error;};
+const addTiles=(sel,list)=>list.forEach(t=>{const d=el('div','tile');
+  d.append(el('span','n',t.n),el('div','k',t.k),el('div','note',t.note||''));$(sel).append(d);});
+const kv=(k,v)=>`<div class="kv"><span>${k}</span><span class="v">${v}</span></div>`;
+
+// Task 1 tiles
+const cal=BE.calibration, imp=BE.impossible, pk=BE.passk, tj=BE.trajectory, fs=BE.false_success;
+addTiles('#t1tiles',[
+  bad(cal)?{n:'—',k:'corrected success rate',note:'artifact error'}
+    :{n:cal.corrected.corrected,k:'corrected success rate',
+      note:`Rogan-Gladen · apparent ${cal.apparent_success_rate}`},
+  bad(cal)?{n:'—',k:'verifier sens / spec',note:'artifact error'}
+    :{n:`${cal.rates.sensitivity}/${cal.rates.specificity.toFixed(2)}`,k:'verifier sens / spec',
+      note:`${cal.n_success+cal.n_corrupted} labelled triples · FP rate ${cal.rates.false_positive_rate}`},
+  bad(imp)?{n:'—',k:'silent-failure rate',note:'artifact error'}
+    :{n:pct(imp.silent_failure_rate,0),k:'silent-failure rate',
+      note:`${imp.silent_failures}/${imp.n_impossible} impossible tasks · honest ${pct(imp.honest_outcome_rate,0)}`},
+  bad(pk)?{n:'—',k:'pass@k flaky rate',note:'artifact error'}
+    :{n:pct(pk.script_mode.flaky_rate,0),k:'pass@k flaky rate',
+      note:`k=${pk.script_mode.k} · pass@1 ${pk.script_mode.pass_at_1} · deterministic ${pk.script_mode.deterministic}`},
+]);
+
+// verifier calibration confusion table
+if(!bad(cal)){
+  const ct=$('#calibTable');
+  ct.append((()=>{const tr=el('tr');['Truth','pass','fail','unknown'].forEach(h=>tr.append(el('th',null,h)));return tr;})());
+  const row=(name,cells,cls)=>{const tr=el('tr');
+    tr.append(el('td',cls,name),el('td','t-mono',cells.pass),el('td','t-mono',cells.fail),el('td','t-mono',cells.unknown));
+    return tr;};
+  ct.append(row(`known-good run (${cal.n_success})`,cal.three_state_table.success));
+  ct.append(row(`corrupted run (${cal.n_corrupted})`,cal.three_state_table.corrupted));
+  Object.entries(cal.per_corruption_class).forEach(([k,v])=>{
+    const tr=row('· '+k.replaceAll('_',' '),v);tr.style.color='var(--muted)';tr.style.fontSize='.76rem';ct.append(tr);});
+  const box=(lab,big,sub)=>{const b=el('div','box');
+    b.append(el('div','sub',lab),el('div','big',big),el('div','sub',sub));return b;};
+  $('#calibRates').append(
+    box('sensitivity / specificity',`${cal.rates.sensitivity} / ${cal.rates.specificity}`,
+      `1 known FP kept on purpose · unknown rate ${cal.rates.unknown_rate_corrupted}`),
+    box('corrected success rate',cal.corrected.corrected,
+      `apparent ${cal.apparent_success_rate} · status ${cal.corrected.status}`));
+}
+showErr('#calibErr',cal);
+
+// silent failure & stability list
+if($('#silentList')){
+  let h='';
+  h+=bad(imp)?kv('impossible tasks','artifact error: '+(imp&&imp.error||'missing'))
+    :kv(`impossible tasks (${imp.n_impossible})`,
+      `${imp.silent_failures} silent · ${imp.honest_fail} fail · ${imp.honest_unknown} unknown`)
+     +kv('capability refusals',`${imp.refused_correct}/${imp.n_refused} correct, ${imp.refused_leaked_to_action} leaked`);
+  h+=bad(pk)?kv('pass@k','artifact error: '+(pk&&pk.error||'missing'))
+    :kv(`pass@k · script mode (k=${pk.script_mode.k})`,
+      `pass@1 ${pk.script_mode.pass_at_1} · pass@k ${pk.script_mode.pass_at_k} · consistency ${pk.script_mode.verdict_consistency}`)
+     +kv('pass@k · agent mode (mock planner)',
+      `pass@1 ${pk.agent_mode_mock.pass_at_1} · deterministic ${pk.agent_mode_mock.deterministic}`);
+  h+=bad(tj)?kv('trajectory','artifact error: '+(tj&&tj.error||'missing'))
+    :kv(`trajectory (${tj.n_tasks} tasks)`,
+      `repetition ${tj.mean_repetition_score} · loops ${tj.n_loops_detected} · side effects ${tj.n_with_side_effects}/${tj.n_tasks}`);
+  h+=bad(fs)?kv('false-success triage','artifact error: '+(fs&&fs.error||'missing'))
+    :kv(`false-success triage (${fs.route}, ${fs.n_applicable} claimed passes)`,
+      `precision ${fs.precision} · recall ${fs.recall} · flag rate ${fs.flag_rate}`);
+  $('#silentList').innerHTML=h;
+}
+
+// degradation curves
+const dg=BE.degradation;
+if(!bad(dg)){
+  Object.entries(dg).forEach(([axis,points])=>{
+    const a=el('div','axis');a.append(el('div','axname',axis));
+    const bars=el('div','bars'), labs=el('div','labs');
+    points.forEach(p=>{
+      const slot=el('div','slot');
+      const s=el('i','s'+(p.success_rate===0?' zero':''));s.style.height=Math.max(p.success_rate*100,3)+'%';
+      s.title=`${p.cell}: success ${p.success_rate}, checkpoint ${p.checkpoint_rate}, recovery ${p.recovery_rate??'n/a'}, repairs ${p.avg_repairs}`;
+      const c=el('i','c');c.style.height=Math.max(p.checkpoint_rate*100,3)+'%';c.title=`checkpoint ${p.checkpoint_rate}`;
+      slot.append(s,c);bars.append(slot);
+      labs.append(el('span',null,`${p.cell.split('-')[1]||'clean'}<br>r${p.avg_repairs}`));
+    });
+    a.append(bars,labs);$('#dgChart').append(a);
+  });
+}
+showErr('#dgErr',dg);
+
+// Task 2 tiles
+const tri=SE.triangulation, f1=SE.offset_f1, cyd=SE.cyd, strat=SE.stratification, lm=SE.landmines;
+const triN=bad(tri)?0:Object.values(tri.verdict_totals).reduce((a,b)=>a+b,0);
+addTiles('#t2tiles',[
+  bad(tri)?{n:'—',k:'triangulation agree',note:'artifact error'}
+    :{n:`${tri.verdict_totals.agree}/${triN}`,k:'triangulation agree',
+      note:`${tri.engine} · ${tri.verdict_totals.disagree} disagree → needs_review`},
+  bad(f1)?{n:'—',k:'char-offset macro-F1',note:'artifact error'}
+    :{n:f1.macro_f1_items,k:'char-offset macro-F1',
+      note:`${f1.offset_items} gold items, ${f1.filings_scored} filings · constructive baseline`},
+  (DATA.sec.tri_state?{n:DATA.sec.tri_state.MISSING||0,k:'tri-state MISSING items',
+      note:`present ${DATA.sec.tri_state.present||0} · null ${DATA.sec.tri_state['null']||0}`}
+    :{n:'—',k:'tri-state MISSING items',note:'no tri-state in sweep'}),
+  bad(cyd)?{n:'—',k:'CYD oracle agree',note:'artifact error'}
+    :{n:`${cyd.verdicts.agree}/${Object.values(cyd.verdicts).reduce((a,b)=>a+b,0)}`,k:'CYD oracle agree',
+      note:`disagree: ${cyd.disagreements.join(', ')||'none'} (wrapper stubs)`},
+  bad(lm)?{n:'—',k:'landmines handled',note:'artifact error'}
+    :{n:`${lm.n_handled}/${lm.n_landmines}`,k:'landmines handled',note:lm.rerun},
+]);
+
+// CYD table
+if(!bad(cyd)){
+  const t=$('#cydTable');
+  t.append((()=>{const tr=el('tr');['Ticker','Our status','Coverage','Containment','Verdict'].forEach(h=>tr.append(el('th',null,h)));return tr;})());
+  cyd.records.forEach(r=>{const tr=el('tr');
+    tr.append(el('td','t-mono',r.ticker));
+    tr.append(el('td',null,`<span class="pill ${PILL[r.our_status]||'p-grey'}">${r.our_status}</span>`));
+    tr.append(el('td','t-mono',pct(r.coverage)));
+    tr.append(el('td','t-mono',pct(r.containment)));
+    tr.append(el('td',null,`<span class="pill ${PILL[r.verdict]||'p-grey'}">${r.verdict}</span>`));
+    t.append(tr);});
+}
+showErr('#cydErr',cyd);
+
+// era x agent coverage matrix
+if(!bad(strat)){
+  const agents=[...new Set(Object.values(strat.coverage_matrix).flatMap(o=>Object.keys(o)))];
+  const t=$('#eraTable');
+  t.append((()=>{const tr=el('tr');['Era',...agents,'Status'].forEach(h=>tr.append(el('th',null,h)));return tr;})());
+  Object.entries(strat.coverage_matrix).forEach(([era,row])=>{
+    const tr=el('tr');tr.append(el('td','t-mono',era));
+    agents.forEach(a=>tr.append(el('td','t-mono',row[a]!=null?row[a]:'·')));
+    const sup=strat.unsupported_strata.includes(era)?'unsupported':'supported';
+    tr.append(el('td',null,`<span class="pill ${PILL[sup]}">${sup}</span>`));
+    t.append(tr);});
+  const surv=Object.entries(strat.agent_survey).map(([k,v])=>`${k} ${v}`).join(' · ');
+  $('#eraSub').innerHTML+=` Agent survey (EDGAR 2025-02, n=40): <span class="t-mono">${surv}</span>.`;
+}
+showErr('#eraErr',strat);
 
 $('#auditNote').innerHTML=`A ${a.agents}-agent workflow audited every extracted item, then had independent verifiers try to <em>refute</em> each finding. <b>${a.anomalies_confirmed} silent failures confirmed, ${a.anomalies_refuted} refuted</b> (the refuters caught false alarms). Pass-rate moved ${(a.pass_before*100).toFixed(1)}% → ${(a.pass_after*100).toFixed(1)}% as ${a.silent_failures_before} fakes were reclassified — and now <b>${a.silent_failures_after}</b> remain.`;
 

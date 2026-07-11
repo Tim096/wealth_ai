@@ -1,0 +1,521 @@
+{
+  "note": "HELD-OUT external live-task set (anti-overfitting evidence): 20 Online-Mind2Web tasks DISJOINT from mind2web_subset.json. Selection rule frozen before the single run; results may NOT trigger agent/verifier changes followed by a rerun on this set. Task text + metadata only (CC-BY-4.0, attributed).",
+  "source": {
+    "dataset": "osunlp/Online-Mind2Web",
+    "license": "CC-BY-4.0",
+    "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+    "homepage": "https://huggingface.co/datasets/osunlp/Online-Mind2Web",
+    "fetched_from": "hud-evals/Online-Mind2Web (datasets-server rows API) — reused cached raw.json fetched 2026-07-10",
+    "fetched_at": "2026-07-11",
+    "total_upstream_tasks": 300,
+    "level_rule": "reference_length <=5 easy / 6-10 medium / >=11 hard (arXiv:2504.01382 §2.2)",
+    "sampling": {
+      "counts": {
+        "easy": 5,
+        "medium": 10,
+        "hard": 5
+      },
+      "per_domain_cap": 2,
+      "method": "held-out: same exclusion filters as import_mind2web.py, minus the 20 source_task_ids already in mind2web_subset.json, then per level FIRST-N by ascending source_task_id (counts = official 27/47/26 distribution via largest remainder). Deterministic; frozen before the run; no cherry-picking.",
+      "excluded_domains": {
+        "amazon.com": "CAPTCHA wall on datacenter/headless traffic",
+        "google.com": "reCAPTCHA on automated search traffic",
+        "bestbuy.com": "aggressive anti-bot interstitial (blocks headless)",
+        "target.com": "Shape/anti-bot challenge on automation",
+        "ticketmaster.com": "notorious anti-bot (queue + CAPTCHA)",
+        "stubhub.com": "PerimeterX CAPTCHA",
+        "craigslist.org": "aggressive IP/automation blocking",
+        "chase.com": "banking login required",
+        "americanexpress.com": "banking login required",
+        "airbnb.com": "login prompts + bot detection on core flows",
+        "instructure.com": "LMS login required",
+        "statista.com": "paywall on most statistics",
+        "4shared.com": "login-gated downloads"
+      },
+      "excluded_count": 42,
+      "held_out_from": "data/browser_eval/external/mind2web_subset.json (20 ids)"
+    }
+  },
+  "tasks": [
+    {
+      "task_id": "m2w-0632e496d37b",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "0632e496d37badee0350dad358f047c5",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "easy",
+      "reference_length": 4,
+      "website": "https://cookpad.com/",
+      "natural_language_task": "Browse recipes for gluten-free chocolate chip cookies that can be made without nuts.",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "Browse"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-16200f51d63f",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "16200f51d63f0a47a58fa17acd49e368",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "easy",
+      "reference_length": 3,
+      "website": "https://cookpad.com/",
+      "natural_language_task": "Find a recipe that includes eggplant and mushrooms.",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "mushrooms"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-180ed2ec377e",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "180ed2ec377ef3a4af9035a21522091a",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "easy",
+      "reference_length": 5,
+      "website": "https://umich.edu/",
+      "natural_language_task": "Find the way to give a gift to UM-Dearborn.",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "Dearborn"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-2207bb4f2178",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "2207bb4f21786690cfed20b37253fb8b",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "easy",
+      "reference_length": 2,
+      "website": "https://www.theweathernetwork.com/",
+      "natural_language_task": "Check the current wind speed in Calgary, Alberta.",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "Calgary"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-23204728192d",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "23204728192da9f73197a613d9681c18",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "easy",
+      "reference_length": 3,
+      "website": "https://www.mayoclinic.org/",
+      "natural_language_task": "What are the Symptoms and causes of fever?",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "Symptoms"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-01abae9608f2",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "01abae9608f2d8752a83e08f136f720c",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "medium",
+      "reference_length": 6,
+      "website": "https://www.cboe.com/",
+      "natural_language_task": "Show me the code for the company that is the top mover in the Cboe Europe Technology Sector Index (BEPTEC) as of the latest market close.",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "Cboe Europe Technology Sector"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-046138801a05",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "046138801a05ddf56ad94e8672942496",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "medium",
+      "reference_length": 6,
+      "website": "https://www.flightaware.com/",
+      "natural_language_task": "Find discussions of the community and open one with the most replies on Flightaware.",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "Flightaware"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-05483c50cc9b",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "05483c50cc9b04c8ac44c574758fb2bd",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "medium",
+      "reference_length": 8,
+      "website": "https://www.bbb.org/",
+      "natural_language_task": "Look for the best rated BBB accredited charity near 12023.",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "Look"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-070c907d34a4",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "070c907d34a4ce71dfdbea38f9c5d4d8",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "medium",
+      "reference_length": 7,
+      "website": "https://www.healthgrades.com/",
+      "natural_language_task": "Find a dentist who specializes in pediatric dentistry and is located near zip code 90210 (within 5-mile distance).",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "specializes"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-07bdc5953067",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "07bdc595306729a028ba06cc7451a80a",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "medium",
+      "reference_length": 7,
+      "website": "https://us.trip.com/",
+      "natural_language_task": "Select a high speed train ticket with a departure time before 23:00  from Shanghai to Beijing.",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "Shanghai"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-07ec4a12cba8",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "07ec4a12cba8090e2dc524d558ac7675",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "medium",
+      "reference_length": 6,
+      "website": "https://www.drugs.com/",
+      "natural_language_task": "Check drug interaction for melatonin and Folate Forte.",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "Folate Forte"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-0a0fa834ce41",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "0a0fa834ce41b5297c6474293383759d_110325",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "medium",
+      "reference_length": 8,
+      "website": "https://www.carnival.com/",
+      "natural_language_task": "What are the onboard activities of the cheapest cruise, departing from Los Angeles that lasts at least 8 days?",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "Los Angeles"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-0a54069a0ef5",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "0a54069a0ef542e571d1fee7f39c93d5",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "medium",
+      "reference_length": 6,
+      "website": "https://www.adoptapet.com/",
+      "natural_language_task": "Browse senior spayed/neutered dogs near zip code 90028.",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "Browse"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-123e8c2fc453",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "123e8c2fc453f55fadd1d0b9aaf94df4",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "medium",
+      "reference_length": 8,
+      "website": "https://www.kbb.com/",
+      "natural_language_task": "Browse used Audi cars made before 2015 and sort by lowest price on KBB.",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "Browse"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-157f4a79d55e",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "157f4a79d55e8fa3fd55ba772ba40fbc",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "medium",
+      "reference_length": 9,
+      "website": "https://www.disney.com/",
+      "natural_language_task": "Find the most popular blue Lilo & Stitch toys.",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "Stitch"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-0b2623e9fa5c",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "0b2623e9fa5cea997f76490bcbc5220f",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "hard",
+      "reference_length": 13,
+      "website": "https://www.petfinder.com/",
+      "natural_language_task": "Find a list of shorthaired dogs available for adoption within 100 miles of zip code 94587 that are good with kids and cats, and have been on Petfinder for over 30 days.",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "Petfinder"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-0b51b4fa0295",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "0b51b4fa0295ae80ccd176ebdad6fff6",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "hard",
+      "reference_length": 13,
+      "website": "https://www.carmax.com/",
+      "natural_language_task": "Search for a red Toyota Corolla from model years 2018 to 2023 on CarMax.",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "Toyota Corolla"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-0b838cd54f82",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "0b838cd54f826c59c71f600c56b89a11",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "hard",
+      "reference_length": 11,
+      "website": "https://www.bbb.org/",
+      "natural_language_task": "Find all the locations for the second-best-rated used car dealer less than 5 miles from New York.",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "New York"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-0e5536aaad9d",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "0e5536aaad9d3462b06cf725e6ed535a",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "hard",
+      "reference_length": 11,
+      "website": "https://www.cbp.gov/",
+      "natural_language_task": "Show me the page with average wait times for U.S. citizens arriving at Raleigh-Durham International Airport on 2025-03-12.",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "Durham International Airport"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    },
+    {
+      "task_id": "m2w-11857213ca01",
+      "layer": "external_live_tasks",
+      "site": "live",
+      "source": "Online-Mind2Web",
+      "source_task_id": "11857213ca01510f12813740afd59918_110325",
+      "attribution": "Online-Mind2Web, OSU-NLP-Group (CC-BY-4.0, COLM 2025, arXiv:2504.01382)",
+      "difficulty": "hard",
+      "reference_length": 12,
+      "website": "https://www.birkenstocks.com/",
+      "natural_language_task": "Add the most top-selling Birkenstock's men clogs in brown, size 10-10.5 to my cart.",
+      "expected_outcome": "The task's derived success conditions hold on the live site",
+      "success_conditions": [
+        {
+          "type": "text_visible",
+          "value": "Birkenstock"
+        }
+      ],
+      "expect_status": "pass",
+      "added": "2026-07-11",
+      "status": "active",
+      "replaced_by": null,
+      "update_history": []
+    }
+  ]
+}

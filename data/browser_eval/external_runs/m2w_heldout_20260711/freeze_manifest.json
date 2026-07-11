@@ -1,0 +1,13 @@
+{
+  "frozen_at": "2026-07-11T09:51:19.604768",
+  "task_file": "data\\browser_eval\\external\\m2w_heldout_20260711.json",
+  "task_file_sha256": "f143d634ab95cd3e3b203592229dc7c46c73a404e63a790c2dfd50c9e522bea0",
+  "n_tasks": 20,
+  "counts": {
+    "easy": 5,
+    "medium": 10,
+    "hard": 5
+  },
+  "selection_rule": "Deterministic, frozen before the single run: (1) reuse cached upstream fetch runs/mind2web_import/raw.json (300 tasks, hud-evals mirror, fetched 2026-07-10); (2) apply the same committed exclusion filters as tools/import_mind2web.py (EXCLUDED_DOMAINS + login-text regex); (3) remove the 20 source_task_ids in data/browser_eval/external/mind2web_subset.json; (4) counts = official upstream level distribution 81/141/78 -> largest remainder for n=20 = easy 5 / medium 10 / hard 5; (5) per level take FIRST-N by ascending source_task_id with per_domain_cap=2 within this file. No task-text inspection, no manual picks.",
+  "anti_overfitting_protocol": "HELD-OUT SINGLE RUN. Results reported as-is. Looking at results and then modifying agent/verifier followed by a rerun on this set is FORBIDDEN. --resume only on harness interruption, never to redo done tasks."
+}

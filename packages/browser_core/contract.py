@@ -25,6 +25,13 @@ class SuccessCondition(BaseModel):
         "screenshot_region_changed",
     ]
     value: str
+    # P0-5 latch semantics (WebCanvas key-node, arXiv:2406.12373): a condition
+    # observed satisfied mid-run is banked permanently ("satisfied at step N")
+    # even if a later navigation hides it — kills the false negative. WC's
+    # blind spot: a pure latch cannot express "satisfied then destroyed"
+    # (add to cart, then remove). Such a condition sets revocable=True: it
+    # never latches and must hold at the FINAL observation.
+    revocable: bool = False
 
 
 class ForbiddenCondition(BaseModel):

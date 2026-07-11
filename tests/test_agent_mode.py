@@ -808,6 +808,110 @@ def test_agent_mode_loop_with_mock_planner(tmp_path):
     assert any(s.mode == "agent" for s in run.steps)
 
 
+def test_check_conditions_reports_per_condition_status():
+    # P0-5: the per-step scan reports EVERY success condition's status keyed
+    # 'type:value' — the raw feed of the latch ledger. It never judges the task.
+    from browser_agent.verifier import check_conditions
+
+    contract = BrowserTaskContract(
+        task_id="t", natural_language_task="n", expected_outcome="e",
+        success_conditions=[SuccessCondition(type="text_visible", value="hello"),
+                            SuccessCondition(type="url_contains", value="/done")])
+    obs = Observation(url="https://x/start", title="t", visible_text="hello world",
+                      candidates=[])
+    assert check_conditions(contract, obs) == {
+        "text_visible:hello": "pass", "url_contains:/done": "fail"}
+
+
+def test_verify_contract_merges_latched_conditions():
+    # P0-5 latch semantics (WC key-node, arXiv:2406.12373): a condition
+    # satisfied mid-run but absent from the FINAL page passes via the ledger —
+    # the navigation-away false negative is killed, with the step on record.
+    from browser_agent.verifier import verify_contract
+
+    contract = BrowserTaskContract(
+        task_id="t", natural_language_task="n", expected_outcome="e",
+        success_conditions=[SuccessCondition(type="text_visible", value="TOKEN_A"),
+                            SuccessCondition(type="text_visible", value="TOKEN_B")])
+    final = Observation(url="u", title="t", visible_text="only TOKEN_B here",
+                        candidates=[])
+    assert verify_contract(contract, final).status == "fail"      # no ledger: false negative
+    v = verify_contract(contract, final, latched={"text_visible:TOKEN_A": 2})
+    assert v.status == "pass"
+
+
+def test_revocable_condition_never_latches():
+    # The WC latch blind spot, fixed: a revocable condition ("satisfied then
+    # destroyed" — add to cart, then remove) must hold at the FINAL
+    # observation; the ledger cannot carry it to a pass.
+    from browser_agent.verifier import verify_contract
+
+    contract = BrowserTaskContract(
+        task_id="t", natural_language_task="n", expected_outcome="e",
+        success_conditions=[SuccessCondition(type="text_visible", value="in cart",
+                                             revocable=True)])
+    final = Observation(url="u", title="t", visible_text="cart is empty",
+                        candidates=[])
+    v = verify_contract(contract, final, latched={"text_visible:in cart": 1})
+    assert v.status == "fail"
+
+
+class _TwoPagePlanner:
+    """goto page 1 (TOKEN_A), goto page 2 (TOKEN_B), then claim done."""
+    def __init__(self, url1, url2):
+        self.urls = [url1, url2]
+
+    def available(self):
+        return True
+
+    def next_action(self, task, success_conditions, obs, history,
+                    plan_steps=None, image_path=None):
+        from browser_core.actions import GotoAction
+        from browser_agent.planner import PlannerDecision
+        if len(history) < 2:
+            return PlannerDecision(kind="action", action=GotoAction(url=self.urls[len(history)]),
+                                   reason=f"goto page {len(history) + 1}")
+        return PlannerDecision(kind="done", reason="visited both pages")
+
+
+@pytest.mark.integration
+def test_latched_condition_survives_navigation_away(tmp_path):
+    # P0-5 end-to-end: TOKEN_A is only ever visible on page 1; by the final
+    # observation (page 2) it is gone. Before the latch this run was a false
+    # negative (fail); with the ledger it passes, the ledger is persisted in
+    # the trace, and every planner step carries its per-step obs evidence.
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from browser_agent.agent import BrowserAgent
+    from browser_agent.memory_store import MemoryStore
+
+    contract = BrowserTaskContract(
+        task_id="latch", natural_language_task="visit both pages",
+        expected_outcome="both tokens seen",
+        success_conditions=[SuccessCondition(type="text_visible", value="TOKEN_A_XYZ"),
+                            SuccessCondition(type="text_visible", value="TOKEN_B_XYZ")])
+    planner = _TwoPagePlanner("data:text/html,<p>TOKEN_A_XYZ</p>",
+                              "data:text/html,<p>TOKEN_B_XYZ</p>")
+    with sync_playwright() as p:
+        b = p.chromium.launch(headless=True)
+        page = b.new_page()
+        page.set_content("<p>start page</p>")
+        agent = BrowserAgent(page, MemoryStore(tmp_path / "m.json"), "live", "agentic")
+        run = agent.run_agentic("latch", contract, planner, max_steps=6)
+        b.close()
+    assert run.status == "pass"                       # false negative killed
+    ledger = next(s for s in run.steps if s.step == "latch")
+    assert "text_visible:TOKEN_A_XYZ @step" in ledger.detail
+    # per-step obs persistence: each planner decision carries the observation
+    # it was made against (hash + excerpt + candidate summary in as_dict too)
+    gotos = [s for s in run.steps if s.step == "planner" and s.action == "goto"]
+    assert gotos and all(s.obs_hash for s in gotos)
+    assert "TOKEN_A_XYZ" in gotos[1].obs_excerpt      # page 1 was what turn 2 saw
+    d = run.as_dict()["steps"]
+    assert all(k in d[0] for k in ("obs_hash", "obs_excerpt", "obs_candidates"))
+
+
 @pytest.mark.integration
 def test_open_ended_task_runs_to_unknown_not_error(tmp_path):
     """FIX-1 end-to-end 前後對照。修復前:開放式任務(preflight 誠實回報零

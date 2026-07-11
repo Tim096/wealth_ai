@@ -109,6 +109,17 @@ def _check_forbidden(cond, obs: Observation) -> str:
     return "unknown"
 
 
+def check_conditions(contract: BrowserTaskContract, obs: Observation,
+                     extracted: dict[str, str] | None = None) -> dict[str, str]:
+    """P0-5 per-step condition scan: the status of EVERY success condition
+    against one observation, keyed 'type:value'. The agent loop calls this each
+    turn to feed its latch ledger (WebCanvas key-node rescan, score=max(old,new)
+    — arXiv:2406.12373 `evaluate/step_score.py`); it never judges the task."""
+    extracted = extracted or {}
+    return {f"{c.type}:{c.value}": _check_success(c, obs, extracted)
+            for c in contract.success_conditions}
+
+
 def subtract_baseline(contract: BrowserTaskContract, obs: Observation,
                       ) -> tuple[BrowserTaskContract, list[str]]:
     """Baseline-subtraction (premature-landmark guard). A success condition that
@@ -134,12 +145,26 @@ def subtract_baseline(contract: BrowserTaskContract, obs: Observation,
 
 
 def verify_contract(contract: BrowserTaskContract, obs: Observation,
-                    extracted: dict[str, str] | None = None) -> VerifierResult:
+                    extracted: dict[str, str] | None = None,
+                    latched: dict[str, int] | None = None) -> VerifierResult:
+    """`latched` is the P0-5 mid-run ledger {'type:value': step-satisfied-at}.
+    A success condition that is NOT satisfied by the final observation but WAS
+    observed satisfied mid-run counts as pass (latch semantics — a navigation
+    away must not turn real evidence into a false negative), UNLESS the
+    condition is revocable: those must hold at the final observation. The
+    evidence trail records which step the latch banked."""
     extracted = extracted or {}
+    latched = latched or {}
     checks: list[ConditionCheck] = []
     for c in contract.success_conditions:
-        checks.append(ConditionCheck(condition=f"{c.type}:{c.value}", required=True,
-                                     observed=_check_success(c, obs, extracted)))
+        key = f"{c.type}:{c.value}"
+        observed = _check_success(c, obs, extracted)
+        evidence_ref = ""
+        if observed != "pass" and not c.revocable and key in latched:
+            observed = "pass"
+            evidence_ref = f"latched: satisfied at step {latched[key]}"
+        checks.append(ConditionCheck(condition=key, required=True,
+                                     observed=observed, evidence_ref=evidence_ref))
     for c in contract.forbidden_conditions:
         checks.append(ConditionCheck(condition=f"forbidden:{c.type}:{c.value}", required=False,
                                      observed=_check_forbidden(c, obs)))

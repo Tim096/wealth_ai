@@ -26,7 +26,7 @@ from browser_agent.memory_store import MemoryStore
 from browser_agent.observer import PageObserver, diff_observations
 from browser_agent.repair import diagnose_failure, repair_target
 from browser_agent.trajectory import repetition_report
-from browser_agent.verifier import subtract_baseline, verify_contract
+from browser_agent.verifier import check_conditions, subtract_baseline, verify_contract
 from observability_core import EvidenceRecord, EvidenceStore, VerifierResult, sha256_text
 
 
@@ -213,6 +213,13 @@ class StepTrace:
     selector_used: str = ""
     latency_ms: float = 0.0
     screenshot: str = ""
+    # P0-5 per-step obs persistence (SK action-history evidence / SG post-step
+    # probe): the observation each planner decision was made against, kept in
+    # the trace instead of being consumed and dropped — the per-step evidence
+    # the false_success detector and a second judge need to audit a run.
+    obs_hash: str = ""          # sha256(url|visible_text) at decision time
+    obs_excerpt: str = ""       # first lines of visible text
+    obs_candidates: str = ""    # compact summary of the candidate elements
 
 
 @dataclass
@@ -254,7 +261,8 @@ class TaskRun:
                  "detail": s.detail, "diagnosis": s.diagnosis,
                  "repair_considered": s.repair_considered, "repair_chosen": s.repair_chosen,
                  "selector_used": s.selector_used, "latency_ms": round(s.latency_ms, 1),
-                 "screenshot": s.screenshot}
+                 "screenshot": s.screenshot, "obs_hash": s.obs_hash,
+                 "obs_excerpt": s.obs_excerpt, "obs_candidates": s.obs_candidates}
                 for s in self.steps
             ],
         }
@@ -565,6 +573,23 @@ class BrowserAgent:
         vision_capable = bool(_sv and callable(_sv) and _sv()) and self.artifact_dir is not None
         page_hashes: list[str] = []
         prev_obs = None      # P0-4: the previous observation, for the env diff
+        # P0-5 latch ledger (WC key-node semantics, arXiv:2406.12373):
+        # 'type:value' -> step at which the condition was FIRST observed
+        # satisfied. Every verdict below merges it, so evidence that genuinely
+        # held mid-run survives a navigation away (kills the false negative);
+        # revocable conditions never latch (verify_contract skips them).
+        latched: dict[str, int] = {}
+
+        def _stamp_obs(st: StepTrace) -> StepTrace:
+            """P0-5 per-step obs persistence: attach the observation THIS
+            planner decision was made against, so the trace carries auditable
+            per-step evidence instead of consuming and dropping it."""
+            st.obs_hash = page_hashes[-1] if page_hashes else ""
+            st.obs_excerpt = obs.visible_text[:200]
+            st.obs_candidates = "; ".join(
+                f"{c.tag}[{c.id or c.name or c.aria_label or c.text[:24]}]"
+                for c in obs.candidates[:8])
+            return st
         _emit(f"🧠 想任務:{contract.natural_language_task}")
         for step_i in range(max_steps):
             # A popup/interstitial can appear AFTER any navigation on ANY site
@@ -593,10 +618,16 @@ class BrowserAgent:
                             break
                 history[-1] += f" | env: {env}"
             page_hashes.append(sha256_text(obs.url + "|" + obs.visible_text))
+            # P0-5 latch: rescan every not-yet-banked success condition against
+            # THIS observation (WC per-step rescan, score=max(old,new)); one
+            # observed pass is banked permanently with its step number.
+            for key, st in check_conditions(contract, obs, _extracted()).items():
+                if st == "pass" and key not in latched:
+                    latched[key] = step_i
             # the loop verdict sees the SAME evidence surface as the final one
-            # (answer + download), so a satisfied deliverable ends the run here
-            # instead of waiting for the model to claim done
-            verdict = verify_contract(contract, obs, _extracted())
+            # (answer + download + latch ledger), so a satisfied deliverable
+            # ends the run here instead of waiting for the model to claim done
+            verdict = verify_contract(contract, obs, _extracted(), latched=latched)
             if verdict.status == "pass":
                 break
             # P3 auto-vision escalation: when the text channel is going nowhere
@@ -645,8 +676,8 @@ class BrowserAgent:
             # turn instead of ending the whole run (the old give_up was too brittle)
             if decision.kind == "noop":
                 history.append(f"noop({decision.reason})")
-                trace.append(StepTrace(step="planner", action="noop", ok=False, mode="agent",
-                                       detail=decision.reason))
+                trace.append(_stamp_obs(StepTrace(step="planner", action="noop", ok=False,
+                                                  mode="agent", detail=decision.reason)))
                 _emit(f"↻ 重試:{decision.reason}")
                 continue
             # Don't accept the FIRST give_up: the reported failure was quitting
@@ -656,8 +687,8 @@ class BrowserAgent:
             if decision.kind == "give_up" and give_ups < 1:
                 give_ups += 1
                 history.append(f"give_up_rejected({decision.reason})")
-                trace.append(StepTrace(step="planner", action="give_up_rejected", ok=False,
-                                       mode="agent", detail=decision.reason))
+                trace.append(_stamp_obs(StepTrace(step="planner", action="give_up_rejected",
+                                                  ok=False, mode="agent", detail=decision.reason)))
                 _emit("↻ 先別放棄——換一個具體做法再試(直接 goto 目標檔案的 href / 用 download / 關掉彈窗)")
                 self.page.wait_for_timeout(200)
                 continue
@@ -674,23 +705,25 @@ class BrowserAgent:
                 dones += 1
                 missing = "; ".join(verdict.missing_evidence) or verdict.reason
                 history.append(f"done_rejected(not verified yet: {missing})")
-                trace.append(StepTrace(step="planner", action="done_rejected", ok=False,
-                                       mode="agent",
-                                       detail=f"{decision.reason} → 驗證未通過:{missing}"))
+                trace.append(_stamp_obs(StepTrace(step="planner", action="done_rejected", ok=False,
+                                                  mode="agent",
+                                                  detail=f"{decision.reason} → 驗證未通過:{missing}")))
                 _emit(f"↻ done 被駁回——成功條件尚未全部成立({missing}),先讓條件成立再結束")
                 self.page.wait_for_timeout(200)
                 continue
             if decision.kind in ("done", "give_up"):
                 history.append(f"{decision.kind}({decision.reason})")
-                trace.append(StepTrace(step="planner", action=decision.kind, ok=decision.kind == "done",
-                                       mode="agent", detail=decision.reason))
+                trace.append(_stamp_obs(StepTrace(step="planner", action=decision.kind,
+                                                  ok=decision.kind == "done",
+                                                  mode="agent", detail=decision.reason)))
                 _emit(f"✅ {decision.kind}:{decision.reason}")
                 break
             action = decision.action
             ascreen = screen_action(action)
             if not ascreen.allowed:
-                trace.append(StepTrace(step="planner", action=action.type, ok=False, mode="agent",
-                                       diagnosis="capability_refused", detail=ascreen.reason))
+                trace.append(_stamp_obs(StepTrace(step="planner", action=action.type, ok=False,
+                                                  mode="agent", diagnosis="capability_refused",
+                                                  detail=ascreen.reason)))
                 _emit(f"🛑 拒絕(責任邊界):{ascreen.reason}")
                 break
             out = self.executor.execute(action)
@@ -711,11 +744,12 @@ class BrowserAgent:
                 # them together are the delivered answer
                 answers.append(out.extracted_text.strip())
                 detail = f"📋 擷取內容({len(out.extracted_text)} 字):{out.extracted_text[:120]}"
-            trace.append(StepTrace(step="planner", action=action.type, ok=out.ok, mode="agent",
-                                   detail=detail, selector_used=getattr(
-                                       getattr(action, "target", None), "selector", ""),
-                                   latency_ms=out.latency_ms,
-                                   screenshot=self._screenshot(f"agent-{len(trace)}")))
+            trace.append(_stamp_obs(StepTrace(step="planner", action=action.type, ok=out.ok,
+                                              mode="agent",
+                                              detail=detail, selector_used=getattr(
+                                                  getattr(action, "target", None), "selector", ""),
+                                              latency_ms=out.latency_ms,
+                                              screenshot=self._screenshot(f"agent-{len(trace)}"))))
             _emit(f"{'⬇️' if action.type == 'download' and out.ok else ('👉' if out.ok else '⚠️')} "
                   f"{action.type}:{detail}")
             # settle before re-observing: an action that navigates or fires an
@@ -730,7 +764,16 @@ class BrowserAgent:
             self.page.wait_for_timeout(300)
         extracted = _extracted()
         obs = self.observer.observe()
-        verdict = verify_contract(contract, obs, extracted)
+        # P0-5: the final verdict merges the latch ledger — a condition that
+        # genuinely held mid-run counts even if the last page no longer shows
+        # it (revocable conditions excluded inside verify_contract). The
+        # ledger itself is persisted as a trace entry for audit.
+        if latched:
+            trace.append(StepTrace(
+                step="latch", action="ledger", ok=True, mode="agent",
+                detail="satisfied-at-step ledger: "
+                       + "; ".join(f"{k} @step{v}" for k, v in latched.items())))
+        verdict = verify_contract(contract, obs, extracted, latched=latched)
         base = {"pass": 1.0, "unknown": 0.4, "fail": 0.0}[verdict.status]
         run = TaskRun(task_id=task_id, site=self.site, status=verdict.status, verifier=verdict,
                       steps=trace, repairs=0, confidence=base,

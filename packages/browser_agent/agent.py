@@ -463,6 +463,7 @@ class BrowserAgent:
         history: list[str] = []
         llm_cost = 0.0
         give_ups = 0
+        dones = 0    # P0-3: premature-done rejections spent (front gate fires once)
         # Answer channel (P2): every successful extract_text APPENDS here — the
         # observed INTC failure was extract results dropped on the floor while
         # extracted only ever carried __download__, so an answer-type task had
@@ -499,7 +500,7 @@ class BrowserAgent:
         vision_capable = bool(_sv and callable(_sv) and _sv()) and self.artifact_dir is not None
         page_hashes: list[str] = []
         _emit(f"🧠 想任務:{contract.natural_language_task}")
-        for _ in range(max_steps):
+        for step_i in range(max_steps):
             # A popup/interstitial can appear AFTER any navigation on ANY site
             # (this is the "跳出一個頁面 agent 點不掉" failure). Detect it by
             # geometry — not a class allow-list — and clear it every step, so the
@@ -561,6 +562,25 @@ class BrowserAgent:
                 trace.append(StepTrace(step="planner", action="give_up_rejected", ok=False,
                                        mode="agent", detail=decision.reason))
                 _emit("↻ 先別放棄——換一個具體做法再試(直接 goto 目標檔案的 href / 用 download / 關掉彈窗)")
+                self.page.wait_for_timeout(200)
+                continue
+            # P0-3 done-rejection front gate (BU pre_done_verification, SV 終止
+            # 雙閘門): the loop verdict above already judged THIS state — a
+            # "done" while it is not pass is finishing on expectation and
+            # throws away the remaining steps. Reject one done with the
+            # verifier's concrete gap so those steps go to making the
+            # conditions true; a second done (or one on the last step) is
+            # honoured — the final verdict still comes from verify_contract,
+            # never from the claim.
+            if (decision.kind == "done" and dones < 1 and verdict.status != "pass"
+                    and step_i < max_steps - 1):
+                dones += 1
+                missing = "; ".join(verdict.missing_evidence) or verdict.reason
+                history.append(f"done_rejected(not verified yet: {missing})")
+                trace.append(StepTrace(step="planner", action="done_rejected", ok=False,
+                                       mode="agent",
+                                       detail=f"{decision.reason} → 驗證未通過:{missing}"))
+                _emit(f"↻ done 被駁回——成功條件尚未全部成立({missing}),先讓條件成立再結束")
                 self.page.wait_for_timeout(200)
                 continue
             if decision.kind in ("done", "give_up"):

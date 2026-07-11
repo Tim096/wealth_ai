@@ -465,6 +465,81 @@ def test_llm_planner_raises_without_key(monkeypatch):
         p.next_action("task", [], obs, [])
 
 
+def test_system_prompt_has_pre_done_checklist():
+    # P0-3 front gate, prompt half: the planner must be TOLD to self-check
+    # (count items, all filters applied, verify each condition literally)
+    # before emitting "done".
+    from browser_agent.planner import _SYSTEM
+    assert 'BEFORE "done"' in _SYSTEM
+    assert "COUNT" in _SYSTEM and "EVERY" in _SYSTEM
+    assert "rejected" in _SYSTEM      # tells the model a premature done bounces
+
+
+class _AlwaysDonePlanner:
+    """Scripted planner that claims done every turn — the premature-done case."""
+    def available(self):
+        return True
+
+    def next_action(self, task, success_conditions, obs, history,
+                    plan_steps=None, image_path=None):
+        from browser_agent.planner import PlannerDecision
+        return PlannerDecision(kind="done", reason="finished (claimed)")
+
+
+@pytest.mark.integration
+def test_premature_done_is_rejected_once(tmp_path):
+    # P0-3 loop half: a done while the loop verdict != pass and steps remain is
+    # rejected EXACTLY once with the verifier's concrete gap; the second done is
+    # honoured and the final verdict still comes from verify_contract.
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from browser_agent.agent import BrowserAgent
+    from browser_agent.memory_store import MemoryStore
+
+    contract = BrowserTaskContract(
+        task_id="early-done", natural_language_task="find the secret page",
+        expected_outcome="secret visible",
+        success_conditions=[SuccessCondition(type="text_visible", value="NEVER_THERE_XYZ")])
+    with sync_playwright() as p:
+        b = p.chromium.launch(headless=True)
+        page = b.new_page()
+        page.set_content("<p>plain page</p>")
+        agent = BrowserAgent(page, MemoryStore(tmp_path / "m.json"), "live", "agentic")
+        run = agent.run_agentic("early-done", contract, _AlwaysDonePlanner(), max_steps=4)
+        b.close()
+    actions = [s.action for s in run.steps if s.step == "planner"]
+    assert actions.count("done_rejected") == 1          # rejected once, not forever
+    assert actions[-1] == "done"                        # second claim honoured
+    rej = next(s for s in run.steps if s.action == "done_rejected")
+    assert "NEVER_THERE_XYZ" in rej.detail              # concrete gap, not a generic nag
+    assert run.status != "pass"                         # the claim never became the verdict
+
+
+@pytest.mark.integration
+def test_done_on_last_step_is_not_rejected(tmp_path):
+    # no steps left to spend -> rejecting a done buys nothing; honour it.
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from browser_agent.agent import BrowserAgent
+    from browser_agent.memory_store import MemoryStore
+
+    contract = BrowserTaskContract(
+        task_id="last-step-done", natural_language_task="find the secret page",
+        expected_outcome="secret visible",
+        success_conditions=[SuccessCondition(type="text_visible", value="NEVER_THERE_XYZ")])
+    with sync_playwright() as p:
+        b = p.chromium.launch(headless=True)
+        page = b.new_page()
+        page.set_content("<p>plain page</p>")
+        agent = BrowserAgent(page, MemoryStore(tmp_path / "m.json"), "live", "agentic")
+        run = agent.run_agentic("last-step-done", contract, _AlwaysDonePlanner(), max_steps=1)
+        b.close()
+    actions = [s.action for s in run.steps if s.step == "planner"]
+    assert actions == ["done"]
+
+
 @pytest.mark.integration
 def test_agent_mode_loop_with_mock_planner(tmp_path):
     pytest.importorskip("playwright.sync_api")

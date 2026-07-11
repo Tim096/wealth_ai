@@ -42,7 +42,11 @@ def derive_success(task: str) -> list[str]:
     # text — mining it as a text_visible needle guarantees a false FAIL even when
     # the task succeeded. Strip URLs before picking a phrase.
     clean = re.sub(r"https?://\S+", " ", task)
-    phrase = _target_phrase(clean)
+    # Strip leading/trailing punctuation so a mined token like 'sirloin.' (the
+    # latin regex keeps a trailing '.') becomes the clean needle 'sirloin' — the
+    # exact trailing-period artifact that made a substantively-done task FAIL
+    # (BUCKET 2). Internal punctuation (hyphens, dots in tickers) is preserved.
+    phrase = _target_phrase(clean).strip(" \t\r\n.,;:!?\"'`()[]{}")
     if re.search(r"download|下載|下载|存檔|save file", task, re.I):
         # A download task that also names a section ("…and find Risk Factors")
         # must VERIFY the saved file contains it — a bare download_exists would

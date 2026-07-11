@@ -218,7 +218,7 @@ Return EXACTLY ONE JSON object, nothing else:
        {"type":"answer_matches","value":"<regex the EXTRACTED answer text must match>"}
      answer_matches is for ANSWER-TYPE tasks — the user wants a piece of information back (find a number, look up a price/date, answer a question). The agent must deliver the answer with an extract_text action; the verifier matches your regex against that extracted text, and a run that never extracts anything FAILS. Write the regex for the SHAPE of the deliverable, not its unknown value: a revenue/price figure -> "[\\$€¥]?[0-9][0-9,\\.]+\\s*(billion|million|億|兆)?", a duration -> "[0-9]+\\s*(hr|hours?|小時|分鐘|min)", a date -> "20[0-9]{2}". Prefer answer_matches over text_visible for these tasks: a text_visible landmark can be true before the answer was ever delivered.
      download_exists is verified against the file's BYTES on disk, not its name: if the task says to download a document AND locate a section in it (e.g. "download the 10-K and find Risk Factors"), set value to that section's exact heading ("Risk Factors") so a wrong or blocked page saved to disk cannot count as success. Use "" only when any file is acceptable.
-     Prefer a distinctive phrase in the language the target page will render (English site -> English phrase). Keep each value short and literal (a title, a heading, a ticker, a section name) — not a whole sentence, not vague words that appear everywhere.
+     Prefer a distinctive phrase in the language the target page will render (English site -> English phrase). Keep each value short and literal (a title, a heading, a ticker, a section name) — not a whole sentence, not vague words that appear everywhere. Pick a DISTINCTIVE KEY PHRASE the page renders (its verbatim form is matched case/whitespace/punctuation-insensitively and its key tokens may appear non-contiguously) — no trailing punctuation, no sentence fragment; a couple of strong content tokens beat one brittle exact string.
      NEVER use an id/slug/token taken from a URL as a text_visible value — it does not appear as text on the page and would fail even when the task succeeded.
      NEVER echo the task sentence: a condition must describe the state of the DELIVERABLE (the answer text, the destination page's landmark, the downloaded content), not repeat an entity name/ticker/word the task itself contains. A token like "intc" from the task is visible on any search/results page long before anything is done, so it proves nothing — such short task-echo text_visible values are rejected by a code guard. For submitting a form, the completion landmark is the POST-SUBMIT page: use url_contains of the response URL (a Google Form lands on ".../formResponse") or the confirmation text the form shows after submit ("已送出" / "response has been recorded"), never a value copied from the form's link.
 
@@ -278,6 +278,13 @@ class LLMPlanner:
             v = str(c.get("value", "")).strip()
             if t not in ("text_visible", "url_contains", "download_exists", "answer_matches"):
                 continue
+            if t == "text_visible":
+                # Robust-condition authoring (BUCKET 2): drop leading/trailing
+                # punctuation the model sometimes copies from prose ('sirloin.',
+                # '"Year Award"') so the needle is a clean phrase. At runtime
+                # text_match.robust_contains tolerates the remaining case/space/
+                # punctuation and non-contiguous key-token forms.
+                v = v.strip(" \t\r\n.,;:!?\"'`()[]{}")
             if t != "download_exists" and not (0 < len(v) <= 120):
                 continue
             if t == "text_visible" and _task_echo(v, task):

@@ -24,6 +24,12 @@
   .chip{font-family:var(--mono);font-size:.72rem;border:1px solid var(--line);border-radius:999px;
     padding:.15rem .6rem;color:var(--muted)}
   .chip b{color:var(--accent);font-weight:600}
+  .switch{display:flex;align-items:center;align-self:center;margin-left:auto;overflow:hidden;
+    border:1px solid var(--line);border-radius:999px;font-family:var(--mono);font-size:.74rem}
+  .switch .sw{padding:.28rem .8rem;color:var(--muted);text-decoration:none;white-space:nowrap}
+  .switch .sw+.sw{border-left:1px solid var(--line)}
+  .switch .sw.cur{background:var(--accent);color:var(--accent-ink);font-weight:700}
+  .switch a.sw:hover{color:var(--ink)}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:1.2rem}
   label{display:block;font-size:.78rem;color:var(--muted);margin:.6rem 0 .25rem}
   input[type=text],input[type=password],textarea{width:100%;background:var(--panel2);border:1px solid var(--line);
@@ -76,7 +82,21 @@
       <div class="sub">結果由 verifier(程式)判定 pass / fail / unknown,不是 AI 自述;每一步含截圖與修復軌跡,失敗可完整檢視。</div>
     </div>
     <span class="chip">planner:<b id="plannerName">連線中…</b></span>
+    <nav class="switch" aria-label="任務切換">
+      <span class="sw cur">任務一:瀏覽器代理</span>
+      <a class="sw" id="navSec" href="https://wealth-sec-ncku.zeabur.app/">任務二:SEC 10-K 抽取</a>
+      <a class="sw" id="navDash" href="https://wealth-sec-ncku.zeabur.app/dashboard" target="_blank">📊 評測</a>
+    </nav>
   </header>
+  <script>
+    /* 跨服務連結 — 本機開發時改這裡(或在載入前定義 window.WEALTH_LINKS 覆寫) */
+    window.WEALTH_LINKS = window.WEALTH_LINKS || {
+      sec: "https://wealth-sec-ncku.zeabur.app/",
+      dashboard: "https://wealth-sec-ncku.zeabur.app/dashboard",
+    };
+    document.getElementById("navSec").href = WEALTH_LINKS.sec;
+    document.getElementById("navDash").href = WEALTH_LINKS.dashboard;
+  </script>
 
   <section class="panel">
     <div class="grid2">

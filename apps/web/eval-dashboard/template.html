@@ -101,11 +101,31 @@
   .toggle{position:fixed;top:1rem;right:1rem;font-family:var(--mono);font-size:.72rem;background:var(--panel);
     border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:.4rem .7rem;cursor:pointer}
   .toggle:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .switch{display:inline-flex;align-items:center;overflow:hidden;margin-bottom:1.1rem;background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;font-family:var(--mono);font-size:.74rem}
+  .switch .sw{padding:.28rem .8rem;color:var(--muted);text-decoration:none;white-space:nowrap}
+  .switch .sw+.sw{border-left:1px solid var(--line)}
+  .switch .sw.cur{background:var(--accent-soft);color:var(--accent);font-weight:700}
+  .switch a.sw:hover{color:var(--ink)}
 </style>
 
 <button class="toggle" id="themeToggle" aria-label="Toggle light and dark theme">◐ theme</button>
 <div class="wrap">
   <header>
+    <nav class="switch" aria-label="任務切換">
+      <a class="sw" id="navAgent" href="https://wealth-agent-ncku.zeabur.app/">任務一:瀏覽器代理</a>
+      <a class="sw" id="navSec" href="https://wealth-sec-ncku.zeabur.app/">任務二:SEC 10-K 抽取</a>
+      <span class="sw cur">📊 評測 dashboard</span>
+    </nav>
+    <script>
+      /* 跨服務連結 — 本機開發時改這裡(或在載入前定義 window.WEALTH_LINKS 覆寫) */
+      window.WEALTH_LINKS = window.WEALTH_LINKS || {
+        agent: "https://wealth-agent-ncku.zeabur.app/",
+        sec: "https://wealth-sec-ncku.zeabur.app/",
+      };
+      document.getElementById("navAgent").href = WEALTH_LINKS.agent;
+      document.getElementById("navSec").href = WEALTH_LINKS.sec;
+    </script>
     <div class="eyebrow">AI Coding Test 2026 · Reliability Platform</div>
     <h1>Does the system know when it&rsquo;s right, wrong, or unsure?</h1>
     <p class="lede">One evidence-first platform, proven on two hard tasks. Every result is

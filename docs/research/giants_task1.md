@@ -292,6 +292,25 @@ degradation curve / impossible / open-ended / pass@k 的分項數字見 `docs/ev
 - **n 小、live variance 大**:n=18,單跑;`Houston` 翻轉與 `Formula` 回歸都可能是站點內容跑間差異而非機制,+11.1pt 需視為含雜訊的方向指標,非穩定增益。
 - **這 20 題契約本身弱**:success condition 全是單一 landmark/搜尋關鍵字(非任務答案),落地即成立者被 baseline-subtraction 剔空 → 判決退化為 open-ended unknown。verifier 判決對這批是弱 proxy;真正的答案軸得靠 second judge,而它 live 全 abstain——兩層都對 live 未泛化,是本波最該補的洞。
 - **second-judge live-abstain gap 未關閉**:武裝 extractor 是必要非充分;下一步是 WebJudge 對 live 的 key-point 抽取放寬 grounding、以及把 `open_ended_extractor` 接進 `run_agentic` 的判決路徑(仍守 verifier 唯一裁判、abstain 退回 honest unknown)。
+
+### 追補:abstain-gap 修復後的 6-unknown 定向重跑(2026-07-11)
+
+上節指出的兩個洞已修(commit `3258b73` wiring+grounding、`b561e37` runner 隔離):(1) `run_agentic` 最終 `verify_contract` 在零條件契約且 planner 有 LLM client 時武裝 `open_ended_extractor`;(2) 根因是證據被截在 ~4–5K 字使引文無可 quote——現改餵最終頁 `inner_text` 12K + P0-5 逐步摘錄,引文須真出現於此證據方能 grounded-satisfied,否則降級 abstain。只**定向重跑上一波 6 個 unknown**(artifact `runs/browser_eval/m2w_abstain_fix2_20260710/`),非全集。
+
+| 原 unknown 題 | 站點 | 難度 | 修復後 | 依據 |
+|---|---|---|---|---|
+| m2w-a6f0434ce6af | yahoo finance | easy | **pass** | 「Tesla 2023-03-17 收盤價」→ 導覽至 TSLA 歷史頁,證據含 `Mar 17, 2023 … Close 180.13`(與實際一致),3/3 key point grounded。**已人工抽查:非幻覺** |
+| m2w-6ca20f1da01e | gov.uk | medium | **pass** | key point grounded-satisfied |
+| m2w-864244b6969e | nfl | medium | **pass** | all conditions observed and satisfied(7 步) |
+| m2w-005be9dd91c9 | — | easy | fail | open-ended 評分:證據不足,誠實 fail |
+| m2w-3f312ae3efc3 | — | easy | fail | 同上 |
+| m2w-aa4b5cb7114f | — | medium | unknown | 評分棄權(證據不足,不硬判)——防幻覺機制正確運作 |
+
+**結果**:6 題 unknown → **3 pass + 2 fail + 1 abstain-unknown**。live-abstain gap **實質關閉**:武裝 extractor + groundable evidence 後,有真實證據的開放式任務(TSLA 收盤價)確實拿到 grounded pass 且經人工抽查非幻覺;證據不足者仍誠實 abstain,無假 pass。
+
+**合成後整體(定向重跑併回基底,標明為部分重跑組成非全集單跑)**:baseline 8 pass + 定向 3 pass = **11/18 = 61.1%**(排除 2 環境失效),vs naive baseline 20%。
+
+**誠實 caveat**:(a) 這是「44% 全集跑 + 6-unknown 定向重跑」的**組成數字**,非一次乾淨全集跑,live variance 仍在;(b) 開放式 pass 依賴 second judge 的 grounded 評分,verifier 仍唯一裁判、abstain 退 honest unknown,無假 pass 引入(TSLA pass 已抽查證據);(c) n 小,61% 應視為方向指標。這關閉了上節「兩層對 live 皆未泛化」中的 second-judge 層;verifier landmark 層對這批弱契約仍是弱 proxy,屬題目契約設計而非機制缺陷。
 - **量測基建**:productized `tools/run_external_eval.py` 用單一共享 page 跑全部任務,一次硬導覽失敗(accuweather ERR_HTTP2)會污染 page、把後續全部 cascade 成「interrupted by another navigation」——本波改用 scratchpad isolated-context driver(每題獨立 context+page,同 agent/verifier/second judge/難度預算)才拿到 18 題;另為讓 flaky 站不中途觸發 30% abort ceiling,量測時把該上限暫調高(source 預設 0.30 未改)。per-task page 隔離應回饋進 runner。
 
 ### 3.1 Self-correction

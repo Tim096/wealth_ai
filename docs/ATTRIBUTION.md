@@ -23,6 +23,12 @@
 - **未** 複製 edgar-crawler(GPLv3)、Skyvern(AGPL)、py-sec-edgar(AGPL 商用)的任何程式碼。這些只用於「確認我們的方向 / 借觀念」。
 - **未** 引入這些 repo 為執行期相依。
 
+## 外部 eval 資料集(P1-1)
+
+| 來源 | 授權 | 使用方式 | 落地位置 |
+|---|---|---|---|
+| [osunlp/Online-Mind2Web](https://huggingface.co/datasets/osunlp/Online-Mind2Web)(OSU-NLP-Group,COLM 2025,arXiv:2504.01382) | **CC-BY-4.0**(2026-07-10 驗證:HF dataset card `license:cc-by-4.0` + GitHub README "Licensing Information";HF gate = auto click-through,無 CC-BY 以外附加條款)→ tier 1 署名即可 | `tools/import_mind2web.py` 分層抽 ~20 題(easy/medium/hard,排除 login/paywall/CAPTCHA 站),**只 commit 任務文字+metadata 子集**,每筆帶 attribution 與 `source_task_id`;完整資料集、軌跡、截圖一律不 commit。無 HF_TOKEN 時 fallback 到 ungated CC-BY mirror(hud-evals/Online-Mind2Web,來源記入 `source.fetched_from`)。live 任務失效維護協議見 `data/browser_eval/external/README.md` | `data/browser_eval/external/mind2web_subset.json`;shortcut 對照 `tools/naive_baseline.py` |
+
 ## 可安全深化的 permissive 依賴(roadmap)
 
 - [dgunning/edgartools](https://github.com/dgunning/edgartools)(MIT):可作 EDGAR fetch / XBRL 標準化的參考或選配依賴。

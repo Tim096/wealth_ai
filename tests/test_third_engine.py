@@ -271,6 +271,72 @@ def test_unparseable_filing_marks_engine_unavailable_without_penalty(alpha):
         assert (seg.confidence, seg.needs_review) == before[seg.item_code]
 
 
+# --- 2-of-N voting (P0-7): extra engines ------------------------------------
+
+JUNK = "Completely unrelated text about mine safety disclosures. " * 40
+
+
+def test_outvoted_dissent_is_warning_not_penalty(alpha):
+    # edgartools corroborates our 1A span (2 votes for it); datamule dissents
+    # -> outvoted: no deduction, no needs_review, aggregate stays agree
+    raw, _ = alpha
+    result = extract_from_html(raw, "alpha_10k")
+    seg = result.segment("1A")
+    before = seg.confidence
+    engine_items = {s.item_code: result.text_of(s.item_code)
+                    for s in result.segments if s.end_offset > s.start_offset}
+    apply_triangulation(result, engine_items, {"datamule": {"1A": JUNK}})
+    assert seg.engine_check.startswith("agree")
+    assert "datamule=disagree" in seg.engine_check
+    assert seg.confidence == before and not seg.needs_review
+    assert any("outvoted 2-of-N" in w for w in seg.warnings)
+    breakdown = result.confidence.get("1A")
+    assert not any(c.name == COMPONENT_NAME for c in breakdown.components)
+
+
+def test_uncorroborated_multi_engine_disagree_penalises_once(alpha):
+    raw, _ = alpha
+    result = extract_from_html(raw, "alpha_10k")
+    seg = result.segment("1A")
+    before = seg.confidence
+    apply_triangulation(result, {"1A": JUNK}, {"datamule": {"1A": JUNK}})
+    assert seg.engine_check.startswith("disagree")
+    assert seg.needs_review and seg.confidence < before
+    comps = [c for c in result.confidence["1A"].components if c.name == COMPONENT_NAME]
+    assert len(comps) == 1
+    assert "edgartools" in comps[0].reason and "datamule" in comps[0].reason
+
+
+def test_extra_engine_unavailable_is_neutral(alpha):
+    raw, _ = alpha
+    result = extract_from_html(raw, "alpha_10k")
+    engine_items = {s.item_code: result.text_of(s.item_code)
+                    for s in result.segments if s.end_offset > s.start_offset}
+    before = {s.item_code: (s.confidence, s.needs_review) for s in result.segments}
+    comparisons = apply_triangulation(result, engine_items, {"edgar_crawler": None})
+    assert any(c.source == "edgar_crawler" and c.verdict == "engine_unavailable"
+               for c in comparisons)
+    for seg in result.segments:
+        assert (seg.confidence, seg.needs_review) == before[seg.item_code]
+
+
+def test_extra_engine_agree_rescues_edgartools_unavailable_filing(alpha):
+    # edgartools cannot parse the filing but datamule corroborates 1A ->
+    # the item aggregates to agree, not engine_unavailable
+    raw, _ = alpha
+    result = extract_from_html(raw, "alpha_10k")
+    apply_triangulation(result, None, {"datamule": {"1A": result.text_of("1A")}})
+    assert result.segment("1A").engine_check.startswith("agree")
+    assert not result.segment("1A").needs_review
+
+
+def test_comparisons_carry_their_source(alpha):
+    raw, _ = alpha
+    result = extract_from_html(raw, "alpha_10k")
+    comparisons = apply_triangulation(result, None, {"datamule": None})
+    assert {c.source for c in comparisons} == {"edgartools", "datamule"}
+
+
 # --- real edgartools, offline smoke -----------------------------------------
 
 def test_edgartools_offline_extraction_smoke(alpha):

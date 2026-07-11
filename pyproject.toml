@@ -26,6 +26,23 @@ sec = [
     "lxml>=5.0",
     "beautifulsoup4>=4.12",
     "edgartools==5.42.0",  # third-engine triangulation (sec_core.third_engine)
+    "datamule==5.0.1",  # fifth arbitration vote (sec_core.engines.datamule_vote); MIT,
+                        # survey pinned upstream commit 122fc54 — see docs/ATTRIBUTION.md
+]
+# Runtime deps of the UNMODIFIED edgar-crawler CLI (fourth arbitration vote),
+# which sec_core.engines.edgar_crawler_vote runs arms-length in a subprocess on
+# a gitignored local checkout. edgar-crawler itself (GPLv3) is NEVER a
+# dependency, vendored, or imported — these are only the permissive libraries
+# its process needs when run under our interpreter.
+crawler-vote = [
+    "click>=8.0",
+    "cssutils>=2.0",
+    "numpy>=1.26",
+    "pandas>=2.0",
+    "pathos>=0.3",
+    "tqdm>=4.66",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
 ]
 
 [tool.setuptools.packages.find]

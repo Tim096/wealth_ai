@@ -27,6 +27,11 @@ so our span legitimately contains far more words (tables). Corpus votes are
 content-level only — containment of the table-stripped corpus text in our
 span — never a length-ratio boundary vote (that would systematically flag
 Item 8 as disagree).
+
+P0-7 extends apply_triangulation to 2-of-N voting over additional independent
+engines (sec_core.engines: edgar-crawler arms-length subprocess, datamule):
+one corroborating engine confirms our span (2 independent implementations);
+a dissenting engine with no corroborator anywhere is the only penalty path.
 """
 
 from __future__ import annotations
@@ -111,6 +116,7 @@ class EngineComparison:
     our_words: int = 0
     engine_words: int = 0
     overlap: float = 0.0
+    source: str = "edgartools"  # which engine cast this vote (P0-7 2-of-N)
 
 
 def extract_items_edgartools(raw_html: str) -> dict[str, str] | None:
@@ -251,7 +257,7 @@ def compare_item(code: str, our_text: str, engine_text: str,
     if combined and _containment(theirs, ours) >= _OVERLAP_MIN:
         return EngineComparison(
             code, "agree",
-            f"combined span contains edgartools' item body ({overlap:.0%} containment)",
+            f"combined span contains {source}'s item body ({overlap:.0%} containment)",
             our_words=len(ours), engine_words=len(theirs), overlap=overlap)
 
     if ratio < _RATIO_MIN:
@@ -267,7 +273,7 @@ def compare_item(code: str, our_text: str, engine_text: str,
                 our_words=len(ours), engine_words=len(theirs), overlap=overlap)
         return EngineComparison(
             code, "disagree",
-            f"boundary mismatch: same content but ours {len(ours)}w vs edgartools "
+            f"boundary mismatch: same content but ours {len(ours)}w vs {source} "
             f"{len(theirs)}w (ratio {ratio:.2f}) — one engine's span runs long or cuts short",
             our_words=len(ours), engine_words=len(theirs), overlap=overlap)
 
@@ -277,45 +283,95 @@ def compare_item(code: str, our_text: str, engine_text: str,
         our_words=len(ours), engine_words=len(theirs), overlap=overlap)
 
 
-def apply_triangulation(result, engine_items: dict[str, str] | None) -> list[EngineComparison]:
-    """Compare every segment against the third engine and WRITE verdicts back
-    (segment.engine_check, mirroring xbrl_check/topic_check). A disagree
-    deducts confidence through the explainable component framework — a zero-
-    scored `third_engine_agreement` component appended to the breakdown — and
-    flags needs_review. engine_unavailable never penalises our extraction, and
-    neither does engine_suspect (edgartools' pinned-version blind class for
-    items 10-16, FG-SEC-006): it is recorded as a warning for audit, without
-    confidence deduction or needs_review.
+def aggregate_verdict(per_source: list[EngineComparison]) -> str:
+    """2-of-N vote over one item's per-engine comparisons (P0-7). Any engine
+    agreeing means TWO independent implementations produced this span (ours +
+    theirs) — a lone dissenting engine is outvoted, not a review trigger.
+    Only a disagreement with NO corroborating engine counts against our span.
     """
+    verdicts = {c.verdict for c in per_source}
+    if "agree" in verdicts:
+        return "agree"
+    if "disagree" in verdicts:
+        return "disagree"
+    if "engine_suspect" in verdicts:
+        return "engine_suspect"
+    return "engine_unavailable"
+
+
+def apply_triangulation(result, engine_items: dict[str, str] | None,
+                        extra_engines: dict[str, dict[str, str] | None] | None = None,
+                        ) -> list[EngineComparison]:
+    """Compare every segment against N independent engines and WRITE the
+    2-of-N aggregate back (segment.engine_check, mirroring xbrl_check /
+    topic_check). `engine_items` is the edgartools vote (single-engine mode —
+    extra_engines=None — is byte-identical to the historical behaviour);
+    `extra_engines` maps further sources ('edgar_crawler', 'datamule',
+    sec_core.engines) to their item dicts, None = that engine unavailable.
+
+    Per item (aggregate_verdict):
+      any engine agrees      -> agree; dissenting engines are OUTVOTED —
+                                recorded as warnings, no penalty, no review
+      no agree, >=1 disagree -> disagree: zero-scored `third_engine_agreement`
+                                component (reason names every disagreeing
+                                engine) + needs_review
+      engine_suspect / engine_unavailable never penalise our extraction
+                                (suspect = edgartools' pinned-version blind
+                                class for items 10-16, FG-SEC-006).
+    """
+    votes: dict[str, dict[str, str] | None] = {"edgartools": engine_items}
+    if extra_engines:
+        votes.update(extra_engines)
     comparisons: list[EngineComparison] = []
     for seg in result.segments:
-        if engine_items is None:
-            seg.engine_check = "engine_unavailable: edgartools could not parse this filing"
-            comparisons.append(EngineComparison(
-                seg.item_code, "engine_unavailable", "edgartools could not parse this filing"))
-            continue
         our_text = (result.doc.slice(seg.start_offset, seg.end_offset)
                     if seg.end_offset > seg.start_offset else "")
         combined = any(w.startswith("combined heading") for w in seg.warnings)
-        cmp = compare_item(seg.item_code, our_text, engine_items.get(seg.item_code, ""),
-                           seg.status, combined=combined)
-        seg.engine_check = f"{cmp.verdict}: {cmp.detail}"
-        if cmp.verdict == "engine_suspect":
+        per_source: list[EngineComparison] = []
+        for name, items in votes.items():
+            if items is None:
+                cmp = EngineComparison(seg.item_code, "engine_unavailable",
+                                       f"{name} could not parse this filing", source=name)
+            else:
+                cmp = compare_item(seg.item_code, our_text, items.get(seg.item_code, ""),
+                                   seg.status, combined=combined, source=name)
+                cmp.source = name
+            per_source.append(cmp)
+        comparisons.extend(per_source)
+
+        overall = aggregate_verdict(per_source)
+        lead = next(c for c in per_source if c.verdict == overall)
+        if len(per_source) == 1:
+            seg.engine_check = f"{lead.verdict}: {lead.detail}"
+        else:
+            ballot = "; ".join(f"{c.source}={c.verdict}" for c in per_source)
+            seg.engine_check = f"{overall}: 2-of-N [{ballot}] — {lead.detail}"
+
+        suspects = [c for c in per_source if c.verdict == "engine_suspect"]
+        dissent = [c for c in per_source if c.verdict == "disagree"]
+        for cmp in suspects:
             note = f"third-engine triangulation: engine-blind class — {cmp.detail}"
             if note not in seg.warnings:
                 seg.warnings.append(note)
-        elif cmp.verdict == "disagree":
+        if overall == "agree" and dissent:
+            corroborators = [c.source for c in per_source if c.verdict == "agree"]
+            note = (f"third-engine triangulation: outvoted 2-of-N — "
+                    f"{', '.join(c.source for c in dissent)} disagree but "
+                    f"{', '.join(corroborators)} corroborate our span; no penalty")
+            if note not in seg.warnings:
+                seg.warnings.append(note)
+        elif overall == "disagree":
             seg.needs_review = True
-            seg.warnings.append(
-                f"third-engine triangulation: edgartools disagrees — {cmp.detail}; needs_review")
+            who = " | ".join(f"{c.source} disagrees — {c.detail}" for c in dissent)
+            seg.warnings.append(f"third-engine triangulation: {who}; needs_review")
             breakdown = result.confidence.get(seg.item_code)
             if breakdown is not None:
                 if not any(c.name == COMPONENT_NAME for c in breakdown.components):
                     breakdown.components.append(ConfidenceComponent(
                         name=COMPONENT_NAME, score=0.0, max_score=1.0,
-                        reason=f"independent engine (edgartools) disagrees: {cmp.detail}"))
+                        reason=f"independent engine(s) disagree with no corroborating "
+                               f"vote: {who}"))
                 seg.confidence = breakdown.total
             else:
                 seg.confidence = max(0.0, seg.confidence - 0.15)
-        comparisons.append(cmp)
     return comparisons

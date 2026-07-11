@@ -388,6 +388,76 @@ def test_run_agentic_open_ended_offline_client_unchanged_unknown(tmp_path):
 
 
 # ============================================================================
+# Codex-gateway wrapper body resolution: the gateway force-fits EVERY
+# completion into the planner action schema, so the judge payload arrives as
+# {"action": "done", "value": "<the actual JSON>", ...}. The unwrap recovers
+# the body; the grounding demotion still rules on the recovered span.
+# ============================================================================
+def _wrap(payload: dict) -> dict:
+    import json as _json
+    return {"action": "done", "aid": None, "value": _json.dumps(payload),
+            "x": None, "y": None, "keys": "", "reason": "gateway schema wrapper"}
+
+
+def test_gateway_wrapped_key_points_are_recovered():
+    client = _ScriptedClient(key_points=[], judgments=[])
+    client._kp = _wrap({"key_points": ["a laptop product is listed"]})
+    kps, _ = sj.extract_key_points("逛筆電", "laptops visible", client)
+    assert kps == ["a laptop product is listed"]
+
+
+def test_gateway_wrapped_grounded_judgment_scores_yes():
+    client = _ScriptedClient(
+        key_points=["a laptop product is listed"],
+        judgments=[_wrap({"extracted": "UltraBook Pro 14 in stock",
+                          "judgment": "satisfied", "reason": "laptop listed"})])
+    r = sj.score_open_ended("逛筆電", "user saw laptops", EVIDENCE, _llm(client))
+    assert r["verdict"] == "yes" and r["score"] == 1.0
+
+
+def test_gateway_wrapped_hallucinated_span_still_demoted_no_false_success():
+    # NO FALSE SUCCESS through the unwrap: a wrapped 'satisfied' quoting a span
+    # absent from the evidence demotes to abstain exactly like an unwrapped one
+    client = _ScriptedClient(
+        key_points=["a refund was issued"],
+        judgments=[_wrap({"extracted": "Refund of $999 issued",
+                          "judgment": "satisfied", "reason": "hallucinated"})])
+    r = sj.score_open_ended("退款", "a refund was issued", EVIDENCE, _llm(client))
+    assert r["verdict"] == "abstain" and r["score"] is None
+    assert "not supported" in r["judgments"][0].reason
+
+
+def test_gateway_wrapped_not_satisfied_scores_no():
+    client = _ScriptedClient(
+        key_points=["checkout was completed"],
+        judgments=[_wrap({"extracted": None, "judgment": "not_satisfied",
+                          "reason": "no order confirmation on the page"})])
+    r = sj.score_open_ended("買筆電", "an order was placed", EVIDENCE, _llm(client))
+    assert r["verdict"] == "no" and r["score"] == 0.0
+
+
+def test_wrapper_with_non_json_value_stays_malformed_abstain():
+    # a genuine planner action ('value' is not JSON) must NOT be misread as a
+    # judge payload — it stays the malformed→cannot_tell→abstain path
+    client = _ScriptedClient(
+        key_points=["a laptop is listed"],
+        judgments=[{"action": "fill", "aid": "q", "value": "laptop",
+                    "x": None, "y": None, "keys": "", "reason": "planner action"}])
+    r = sj.score_open_ended("逛筆電", "laptops visible", EVIDENCE, _llm(client))
+    assert r["verdict"] == "abstain"
+    assert "malformed judge output" in r["judgments"][0].reason
+
+
+def test_unwrap_leaves_direct_payloads_untouched():
+    direct = {"extracted": "x", "judgment": "satisfied", "reason": "r"}
+    assert sj._unwrap_gateway_action(direct) is direct
+    kp = {"key_points": ["a"], "action": "irrelevant"}      # expected key wins
+    assert sj._unwrap_gateway_action(kp) is kp
+    err = {"_parse_error": True, "_raw": "junk"}
+    assert sj._unwrap_gateway_action(err) is err
+
+
+# ============================================================================
 # non-open-ended tasks are untouched by the new parameter
 # ============================================================================
 def test_extractor_ignored_when_conditions_present():

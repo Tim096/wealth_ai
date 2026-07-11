@@ -169,6 +169,26 @@ class OfflineExtractor:
                           "from a cached page snapshot"}
 
 
+def _unwrap_gateway_action(parsed: dict) -> dict:
+    """Codex-gateway wrapper body resolution: the gateway force-fits EVERY
+    completion into the planner's action schema (`--output-schema`), so a
+    judge/extractor payload comes back as {"action": "done", "value": "<the
+    actual JSON as a string>", ...} and the real body is one level down. This
+    unwraps exactly that shape — an action-schema dict whose `value` string
+    parses as a JSON object — and returns anything else unchanged (direct
+    OpenAI responses, malformed bodies, genuine judge payloads). Purely a
+    re-encoding: the grounding demotion downstream still rules on the span."""
+    if (isinstance(parsed, dict) and "action" in parsed
+            and not ({"judgment", "key_points"} & parsed.keys())):
+        try:
+            inner = json.loads(parsed.get("value") or "")
+        except (TypeError, ValueError):
+            return parsed
+        if isinstance(inner, dict):
+            return inner
+    return parsed
+
+
 class LLMExtractor:
     """LLM extractor over llm_core.openai_client (temperature 0 there). A
     malformed / non-contract response is normalized to cannot_tell — the
@@ -192,6 +212,7 @@ class LLMExtractor:
                      "evidence — the page may have navigated away since):\n"
                      + "\n---\n".join(excerpts))
         parsed, resp = self.client.complete_json(_SYSTEM, user)
+        parsed = _unwrap_gateway_action(parsed)
         out = {"extracted": None, "judgment": "cannot_tell",
                "reason": "malformed judge output", "cost_usd": resp.cost_usd}
         if isinstance(parsed, dict) and not parsed.get("_parse_error") \
@@ -349,6 +370,7 @@ def extract_key_points(natural_language_task: str, expected_outcome: str,
     user = (f"Task: {natural_language_task}\n"
             f"Expected outcome: {expected_outcome}")
     parsed, resp = client.complete_json(_KEYPOINTS_SYSTEM, user)
+    parsed = _unwrap_gateway_action(parsed)
     cost = float(getattr(resp, "cost_usd", 0.0))
     if isinstance(parsed, dict) and not parsed.get("_parse_error"):
         kps = parsed.get("key_points")

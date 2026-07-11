@@ -138,7 +138,7 @@ SEC 對 FY ≥ 2024-12-15 強制 Item 1C 的 CYD taxonomy iXBRL block-tag——*
 
    其餘 9 家(AAPL/MSFT/NVDA/WMT/CAT/XOM/NEM/MRNA/KO)coverage/containment/chars/verdict 數字逐位不變;artifact diff 中 MSFT/MRNA 的 `needs_review_after` false→true 為 length-prior(commit bf7e5fa)所致——上次 regen 基線在 64de3ef,較舊;kill-switch 驗證與 section-anchor 無關。kill-switch 實檔驗證 `SEC_WRAPPER_SECTION_ANCHOR=0` 完整還原 before 數字(GS 0%/247、JPM 33.3%/20,610)。通用結構規則,無 ticker 特例。
 
-**連帶效應誠實記錄**:GS 7A 曾被首版解析到「Risk Management」章節總覽(13k chars,wrong-body 風險),已由 item-topic guard 擋回 honest pointer;JPM 7/7A/8 page-anchor span 逐位不變。**F1 side-effect = 零**:head-to-head 30-slice 前景重跑,四引擎 macro-F1 逐位不變(ours 0.6245 / edgar_crawler 0.6332 / datamule 0.6244 / edgartools 0.4386;`verifier_false_pass_items` 68 不變;json diff 僅 fetch_ms 計時雜訊)——NTU slice 為 2001–2019 年檔,無 CYD 時代 wrapper 1C stub,無交集符合預期。Calibration 重生:AUROC/ECE/false-pass 全部逐位不變(ntu_human_labeled 0.6621/0.1133/0.2048),diff 僅 generated_at。守門:pytest `-m "not integration"` **772 passed**(before 763;+9 = `tests/test_section_anchor.py`)、mutation harness 六類 recall 全 1.0、clean false-alarm 0.0000/0.0056 不變。
+**連帶效應誠實記錄**:GS 7A 曾被首版解析到「Risk Management」章節總覽(13k chars,wrong-body 風險),已由 item-topic guard 擋回 honest pointer;JPM 7/7A/8 page-anchor span 逐位不變。**F1 side-effect = 零**:head-to-head 30-slice 前景重跑,四引擎 macro-F1 逐位不變(ours 0.6245 / edgar_crawler 0.6332 / datamule 0.6244 / edgartools 0.4386;`verifier_false_pass_items` 68 不變;json diff 僅 fetch_ms 計時雜訊)——NTU slice 為 2001–2019 年檔,無 CYD 時代 wrapper 1C stub,無交集符合預期。Calibration 重生:AUROC/ECE/false-pass 全部逐位不變(ntu_human_labeled 0.6621/0.1133/0.2048;**該波時點值**——其後 topic prior(margin+IBR)波現行為 0.6667/0.1235/0.1358,見下方 NTU 校準 bullet),diff 僅 generated_at。守門:pytest `-m "not integration"` **772 passed**(before 763;+9 = `tests/test_section_anchor.py`;topic prior 波後現行 **788 passed**,+16 = `tests/test_topic_prior.py`)、mutation harness 六類 recall 全 1.0、clean false-alarm 0.0000/0.0056 不變。
 
 - 重跑:`SEC_EDGAR_USER_AGENT=<contact> .venv/Scripts/python tools/certify_cyd.py`(cache-first,無新網路)
 - Artifacts:`data/sec_eval/cyd_groundtruth/cyd_agreement.json`(現行 11/0)、`data/sec_eval/scoring/head_to_head.json`、`data/sec_eval/calibration/calibration.json`
@@ -168,23 +168,23 @@ baseline 11 家全是 iXBRL(10 Workiva + 1 DFIN)——覆蓋缺口用分層抽�
 | datamule | 0.6244 | 28 / 2 |
 | edgartools 5.42.0 | 0.4386 | 26 / 4 |
 
-**單軸 F1 我們沒有贏**:輸 edgar_crawler 0.0087、追平 datamule(0.6245 ≈ 0.6244,非「贏」)——如實記錄,F1 tuning 已 CLOSED。差異化在驗證軸:全場唯一有多 oracle 驗證(XBRL/CYD/topic/2-of-N)、誠實 needs_review/棄權(false-pass 是自己量出來自己公布的:TOC-strip 落地前 **100/397**(歷史 artifact,`git show v1.0-submission:data/sec_eval/calibration/calibration.json` 的 `strata.ntu_human_labeled.verifier_false_pass`);TOC-strip 落地後 **79**;length prior 上線後 **68/332**(coverage 0.6484,現行 `data/sec_eval/scoring/head_to_head.json` 的 `summary.ours.verifier_false_pass_items` 與 `calibration.json`)——交付層移除的 TOC-bleed fp 不再計)、capture-first 覆蓋保證與 mutation harness 的系統——edgar_crawler 的 0.6332 是無法自我審計的數字。
+**單軸 F1 我們沒有贏**:輸 edgar_crawler 0.0087、追平 datamule(0.6245 ≈ 0.6244,非「贏」)——如實記錄,F1 tuning 已 CLOSED。差異化在驗證軸:全場唯一有多 oracle 驗證(XBRL/CYD/topic/2-of-N)、誠實 needs_review/棄權(false-pass 是自己量出來自己公布的:TOC-strip 落地前 **100/397**(歷史 artifact,`git show v1.0-submission:data/sec_eval/calibration/calibration.json` 的 `strata.ntu_human_labeled.verifier_false_pass`);TOC-strip 落地後 **79**;length prior 上線後 **68/332**(coverage 0.6484);topic prior(margin+IBR)上線後 **33/243 = 0.1358**(coverage 0.4746,現行 `calibration.json`——54+ pointer stub 改走 review,review 負載上升是真實代價,如實列帳)——交付層移除的 TOC-bleed fp 不再計)、capture-first 覆蓋保證與 mutation harness 的系統——edgar_crawler 的 0.6332 是無法自我審計的數字。
 
 **軸差異聲明(NTU ItemSeg 論文 vs 本表)**:NTU 論文(arXiv 2502.08875)報的 BERT4ItemSeg macro-F1 **0.9825** 是 **per-line BIO 邊界分段分類 F1**、在 3,737 份標註 filing 上**監督式訓練**;本表的 0.62x 是 **item 全文抽取 F1**(30-filing slice、**zero-training**,未在該 gold 上調參)。兩者量的不是同一件事,不可直接比較——0.9825 不是本表的同軸天花板。NTU gold 在本 repo 的角色是**外部弱老師(一票),不是 gold 真值**(引用原則見 `docs/research/giants_task2.md` §4、`docs/research/external_benchmark_spike.md`)。
 
-- confidence 校準(2026-07-11 length prior 上線後,NTU human-labeled,n=512):AUROC = **0.6621**(gate ≥0.75 仍 **MISS**,如實記帳,不得引用為「可接受」);ECE **0.1133**;needs_review 錯誤攔截 **39/118 = 33.1%**(gate ≥50% 仍 MISS)。歷史值:舊 pairing 報 0.6307/ECE 0.1762(stale pairing,已在 `docs/research/giants_task2.md`「Gate rerun 2026-07-11」更正);同 pairing 無 prior 的可比 before 為 AUROC 0.6711——length prior 換到攔截率與 hi-conf 解飽和,AUROC 微降 0.009,取捨與歸因見該節。
+- confidence 校準(2026-07-11 topic prior(margin+IBR)上線後,NTU human-labeled,n=512):AUROC = **0.6667**(gate ≥0.75 仍 **MISS**,如實記帳,不得引用為「可接受」;cap-to-~0.74 機制下模擬上限 ≈0.747,單靠 needs_review-cap 類訊號此 gate 近不可達);ECE **0.1235**(較 length-prior 波 0.1133 **轉差 +0.0102**——IBR cap 壓低 60 個 correct stub conf 所致,照實揭露);needs_review 錯誤攔截 **77/118 = 65.3%**(gate ≥50% **PASS,本波首達**);conf≥0.9 桶錯 42 ≤ 前波 gate 44 PASS。歸因逐格前景實測:margin-only AUROC 0.6661 / ibr-only 0.6602 / margin+IBR(shipped)0.6667;floor-only 判死不出貨已移除(`data/sec_eval/calibration/topic_prior_attribution.json`)。歷史鏈:舊 pairing 0.6307/ECE 0.1762(stale,已更正)→ length prior 波 0.6621/0.1133/攔截 33.1%(可比 before)→ 本波;完整取捨與歸因見 `docs/research/giants_task2.md`「內容軸 Gate rerun 2026-07-11」。護欄:macro-F1 四引擎逐位不變、sweep3 clean corpus margin 誤報 0/176、mutation harness recall 全 1.0;aux stratum pseudo_gold AUROC 0.3459→0.3389、ECE 0.2168→0.2521(IBR cap 連帶,照錄)。
 - risk-coverage 操作點(從 `data/sec_eval/calibration/calibration.json` `strata.ntu_human_labeled.risk_coverage` 實算;risk = P(錯誤 | confidence ≥ 閾值),不含 needs_review gate):
 
 | confidence 閾值 | coverage | risk(該 gate 下 false-pass rate)|
 |---|---|---|
-| ≥ 1.0 | 0.2305 | 0.1356 |
-| ≥ 0.9 | 0.5605 | 0.1638 |
-| ≥ 0.8 | 0.5918 | 0.1683 |
-| ≥ 0.7 | 0.8105 | 0.1831 |
-| ≥ 0.6 | 0.9395 | 0.2162 |
+| ≥ 1.0 | 0.2148 | 0.1273 |
+| ≥ 0.9 | 0.5332 | 0.1538 |
+| ≥ 0.8 | 0.5645 | 0.1592 |
+| ≥ 0.7 | 0.7461 | 0.1675 |
+| ≥ 0.6 | 0.7754 | 0.1814 |
 | 全收(≥ 0.0)| 1.0000 | 0.2305 |
 
-  營運 gate(needs_review==False ∧ conf≥0.6,同 artifact `verifier_false_pass` 欄)另計:coverage **0.6484**、false-pass **0.2048**(gate 含 needs_review,故不落在純閾值曲線上)。誠實解讀:length prior 後曲線不再平坦——閾值從 0 拉到 1.0 把 risk 從 0.231 壓到 0.136,confidence 開始換得到精度,但 AUROC/攔截兩個主 gate 仍未達成,殘餘錯誤主體(pass 42 筆內容錯位 + IBR 35)非尺寸異常,長度軸天花板已實測見底(`docs/research/giants_task2.md`「Gate rerun 2026-07-11」)。計算指令:`.venv\Scripts\python -c "import json; rc=json.load(open('data/sec_eval/calibration/calibration.json'))['strata']['ntu_human_labeled']['risk_coverage']; [print(r) for r in rc if r['threshold'] in (1.0,0.9,0.8,0.7,0.6,0.0)]"`
+  營運 gate(needs_review==False ∧ conf≥0.6,同 artifact `verifier_false_pass` 欄)另計:coverage **0.4746**、false-pass **0.1358**(gate 含 needs_review,故不落在純閾值曲線上;coverage 較 length-prior 波的 0.6484 下降——54+ pointer stub 改走 review,審查負載上升是真實代價,照實列帳)。誠實解讀:攔截 gate 首次 PASS(65.3%),但 AUROC 主 gate 仍 MISS;殘餘未攔 41 錯中 pass 28 筆(conf 0.86–1.0)是 margin 逮不到的邊界/混合錯位,需能看「span 內部逐段歸屬」的下一代訊號(`docs/research/giants_task2.md`「內容軸 Gate rerun 2026-07-11」)。計算指令:`.venv\Scripts\python -c "import json; rc=json.load(open('data/sec_eval/calibration/calibration.json'))['strata']['ntu_human_labeled']['risk_coverage']; [print(r) for r in rc if r['threshold'] in (1.0,0.9,0.8,0.7,0.6,0.0)]"`
 - mutation harness:detection recall **全六類 1.0**(truncate/misalign/toc_anchor/wrapper_swallow/jitter/cross_swap),clean false-alarm 0.0056(門檻 recall ≥0.95 / false-alarm ≤0.05)。
 - Artifacts:`data/sec_eval/scoring/head_to_head.json`(4-engine、30 filings)、`data/sec_eval/calibration/calibration.json`;mutation harness:`tests/test_verifier_mutations.py`。裁決鏈(含 TOC-strip 對抗裁決與錯誤更正)見 `docs/research/giants_task2.md`。
 
@@ -384,6 +384,24 @@ mock sites 仍是主軸(可控 UI 漂移,offline 可重現、零 flakiness)。�
 **可比性(強制聲明)**:原 20 題的 61.1% 是 ITERATED composite(agent/verifier 對其跨波改進),本 held-out 是不相交任務上的 SINGLE frozen run(禁止迭代)——兩個數字**並排是反 overfitting 證據,不是同分母比較**。held-out 單跑 66.7% ≥ 迭代後 61.1%,指向 pipeline 泛化而非對原 20 題過擬合;n=18 仍小、live variance 未控,同前節 caveat。
 
 - Artifacts:`data/browser_eval/external/m2w_heldout_20260711.json`、`runs/browser_eval/m2w_heldout_20260711/`(freeze_manifest / results / manifest / console.log;runs/ 為 gitignored,**追蹤快照在 `data/browser_eval/external_runs/m2w_heldout_20260711/`**)
+
+### Browser 300 題官方全量(2026-07-11,無排除、雙口徑;**run 未完成,誠實 partial**)
+
+外部量測敘事鏈至此三級,**三組口徑不可混比、各自作用明標**:
+
+1. **20 題(迭代)**:合成 61.1%——agent/verifier 曾對其跨波改進,量「機制修復方向」。
+2. **20 題 held-out(凍結單跑)**:66.7%——反 overfitting 證據。
+3. **300 題官方全量(本節)**:無排除、雙口徑(runtime verifier + 官方 WebJudge 協定 advisory)——官方全量對標,**目前 INCOMPLETE**。
+
+**Run 快照(judging 時點 2026-07-11T14:05 local)**:300 官方任務 → attempted 50、done 46、harness_error 4、not_run 250(主 runner abort-loop,見下)。
+
+- **verifier 口徑(唯一裁判)**:done-46 = pass 21 / fail 19 / unknown 6 / env_blocked 0 → success_rate(done) = **45.65%(21/46)**;對官方 300 全分母只入帳 **21/300 = 7.0%**——誠實 partial,**非 300 題最終數字**。
+- **WebJudge advisory 口徑**(官方三段協定:key-point 抽取 → 逐截圖 1–5 評分(門檻 3)→ trajectory 判定;判全部 46 done 題):success 9 / failure 34 / abstain 3 → **9/46 = 19.57%**;abstain 3/46 = 6.52%(全為 0-action baseline-latch pass、零截圖零 planner 步的證據不足題,絕不計 success)。confusion(verifier × WebJudge):pass→{success 6, failure 12, abstain 3}、fail→{success 1, failure 18, abstain 0}、unknown→{success 2, failure 4, abstain 0};decided-pair agreement **24/37 = 64.9%**——WebJudge 明顯比我方 verifier 嚴(12/21 verifier pass 被判 failure;僅 1/19 verifier fail 被判 success)。advisory-only,**verdict 從不覆寫 runtime verifier**。
+- **不可比性(強制聲明)**:judge model = codex gateway ChatGPT-account default(gpt-5.5-class),**非論文 o4-mini/WebJudge-7B** → **不可與官方 leaderboard 比較**(Browser Use ~97% 是官方 WebJudge+o4-mini 跑滿 300 題);其餘偏差(單圖證據限制、JSON envelope unwrap、顯式 abstain、action history 由 harness step log 重建並排除 verdict record 防 verifier 洩漏)逐條列於 results JSON `deviations_from_official` 與 `tools/webjudge.py`。gateway 名目成本 $0.1300(實際 $0,ChatGPT OAuth)。工具可續跑(更多題完成後重跑即擴充,不重判已判題)。
+- **License**:Online-Mind2Web repo 程式碼 = MIT(2026-07-11 讀 GitHub LICENSE 驗證)、dataset = CC-BY-4.0(已署名);prompts 逐字重用、僅 response-format 段改 JSON;登記於 `docs/ATTRIBUTION.md`。
+- **為何未完成(abort-loop 死鎖,確定性重現)**:任務檔序 idx 5/18/26 三題(carmax ×2、united)為持久性 `site_unreachable`(本機 curl 皆 timeout,非暫時性);`--resume` 復用 done 題但不計 n_attempted → 每次 launch 前 3 個 attempted 必為這 3 題 → `should_abort(3,3)` 觸發(`tools/eval_worker.py:45-46`,ERROR_ABORT_MIN=3、RATE=0.30)。runner 無參數可調門檻或跳過 error 題,解鎖需 orchestrator 決策。注意:rollup `results.json` 為 aborted 局部(done=24/error=3/not_run=273);**per-task `summary.json`(50 份)才是權威**。
+
+- Artifacts:`runs/browser_eval/m2w_full300_20260711/<task>/summary.json`(per-task,權威)、`runs/browser_eval/m2w_full300_20260711/webjudge/webjudge_results.json`、`runs/browser_eval/m2w_full300_20260711/webjudge/per_task/*.json`(46 份)、`tools/webjudge.py`;runs/ 為 gitignored,關鍵 artifact 快照至 `data/browser_eval/external_runs/`。逐段敘事見 `docs/research/giants_task1.md`「外部量測 300 題官方全量」節。
 
 ### Browser Agent 元件 Ablation(2026-07-11,P1-10,mock/script 確定性環境,$0、無 LLM)
 

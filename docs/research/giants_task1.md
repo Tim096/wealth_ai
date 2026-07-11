@@ -340,6 +340,32 @@ degradation curve / impossible / open-ended / pass@k 的分項數字見 `docs/ev
 
 - Artifacts:`data/browser_eval/external/m2w_heldout_20260711.json`、`runs/browser_eval/m2w_heldout_20260711/{freeze_manifest.json, results.json, manifest.json, console.log}`
 
+### 外部量測 300 題官方全量 2026-07-11(無排除、雙口徑;**run 未完成,誠實 partial**)
+
+敘事鏈至此完整三級:**20 題(迭代,合成 61.1%)→ 20 題 held-out(凍結單跑 66.7%)→ 300 題官方全量(無排除、雙口徑)**——三組口徑各自作用明標(迭代開發 / 反 overfitting / 官方全量對標),**不可混比**。
+
+**Run 快照(judging 時點 2026-07-11T14:05 local;主 runner 由 parent workflow 持有,abort-loop 中,故 300-run 為 INCOMPLETE)**:300 官方任務 → attempted 50、done 46、harness_error 4、not_run 250。
+
+**口徑 1:runtime verifier(唯一裁判)**——done-46 分佈:pass 21 / fail 19 / unknown 6 / env_blocked 0 → success_rate(done) = **45.65%(21/46)**。對官方 300 全分母只入帳 **21/300 = 7.0%**——誠實 partial,**不是 300 題最終數字**。
+
+**口徑 2:WebJudge advisory(官方 Online-Mind2Web 三段協定:key-point 抽取 → 逐截圖 1–5 評分(門檻 3)→ trajectory 判定)**——判全部 46 done 題:success 9 / failure 34 / abstain 3 → 官方分母 SR = **9/46 = 19.57%**;abstain_rate 3/46 = 6.52%(3 個 abstain 全是 0-action baseline-latch pass,零截圖零 planner 步——證據不足,絕不計 success)。
+
+| verifier \ WebJudge | success | failure | abstain |
+|---|---|---|---|
+| pass(21) | 6 | 12 | 3 |
+| fail(19) | 1 | 18 | 0 |
+| unknown(6) | 2 | 4 | 0 |
+
+decided-pair agreement **24/37 = 64.9%**——WebJudge 明顯比我方 verifier 嚴(21 個 verifier pass 有 12 個被判 failure;19 個 verifier fail 只有 1 個被判 success)。**verdict 從不覆寫 runtime verifier**(advisory-only)。
+
+**不可比性(強制聲明)**:judge model = codex gateway ChatGPT-account default(gpt-5.5-class),**非論文的 o4-mini/WebJudge-7B** → 數字**不可與 leaderboard 比較**(Browser Use ~97% 用官方 WebJudge+o4-mini 跑滿 300 題);其餘偏差(gateway 單圖證據限制、JSON/action-schema envelope unwrap、顯式 abstain、action history 由 harness step log 重建且排除 verdict record 防 verifier 洩漏)逐條列於 results JSON `deviations_from_official` 與 `tools/webjudge.py` docstring。gateway 名目成本 $0.1300(實際 $0,ChatGPT OAuth)。工具可續跑:更多任務完成後重跑 `.venv/Scripts/python tools/webjudge.py` 即擴充覆蓋,不重判已判題。
+
+**License**:Online-Mind2Web repo 程式碼(含 `src/methods/webjudge_online_mind2web.py`)= MIT(2026-07-11 讀 GitHub LICENSE 驗證:Copyright (c) 2025 OSU Natural Language Processing);dataset = CC-BY-4.0(已署名)。permissive → prompts 逐字重用、僅 response-format 段改為 JSON(gateway action-schema 限制);已登記於 `docs/ATTRIBUTION.md`「WebJudge 官方自動評審(advisory 第二口徑)」節(含偏差清單與不可比聲明)。
+
+**為何 run 未完成(abort-loop 死鎖,確定性重現,如實記錄)**:任務檔序 idx 5(m2w-92a3d4236f16 carmax medium)、idx 18(m2w-bfa2de159be6 united hard)、idx 26(m2w-0b51b4fa0295 carmax hard)為持久性 `site_unreachable`(本機 curl 對 carmax.com / united.com 皆 timeout http_code=000,非暫時性);`--resume` 復用 done 題但不計入 n_attempted,故每次 launch 前 3 個 attempted 必為這 3 題 → `should_abort(3,3)` 觸發(`tools/eval_worker.py:45-46`,ERROR_ABORT_MIN=3、RATE=0.30),n_attempted 永遠到不了第 4 題。runner 無 CLI 參數可調 abort 門檻或跳過 error 題;解鎖需 orchestrator 決策(參數化 abort 門檻 / resume 跳過持久 error 題 / 任務檔標 status——但檔已凍結 sha256)。rollup `runs/browser_eval/m2w_full300_20260711/results.json` 為 aborted 局部結果(done=24 / error=3 / not_run=273,僅涵蓋 abort 前掃到的前 27 題)——**per-task `summary.json`(50 份)才是權威**。
+
+- Artifacts:`runs/browser_eval/m2w_full300_20260711/<task>/summary.json`(per-task,權威)、`runs/browser_eval/m2w_full300_20260711/webjudge/webjudge_results.json`(run_snapshot + verifier_axis + webjudge_axis + confusion)、`runs/browser_eval/m2w_full300_20260711/webjudge/per_task/*.json`(46 份,含 key_points、逐圖分數+理由、final thoughts)、`tools/webjudge.py`;runs/ 為 gitignored,關鍵 artifact 快照至 `data/browser_eval/external_runs/`。
+
 ### 3.1 Self-correction
 - **SOTA 做法**:BU 五級 locator cascade + loop detector;SK hash rebind + 修復預算;SG re-grounding 標準流程。
 - **我們已更強之處**:修復是 diagnosis-driven 而非 retry-driven(先分類再修,docstring 明言);repair 路徑零 LLM 成本(確定性 a11y 評分),SOTA 各家都要花 LLM;feasibility gate 防「修進成功」(empty_result 明確拒修);SG 的標準流程本來就是我們的核心迴圈。

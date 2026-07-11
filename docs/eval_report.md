@@ -385,23 +385,25 @@ mock sites 仍是主軸(可控 UI 漂移,offline 可重現、零 flakiness)。�
 
 - Artifacts:`data/browser_eval/external/m2w_heldout_20260711.json`、`runs/browser_eval/m2w_heldout_20260711/`(freeze_manifest / results / manifest / console.log;runs/ 為 gitignored,**追蹤快照在 `data/browser_eval/external_runs/m2w_heldout_20260711/`**)
 
-### Browser 300 題官方全量(2026-07-11,無排除、雙口徑;**run 未完成,誠實 partial**)
+### Browser 300 題官方全量(2026-07-11,無排除、雙口徑;**最終 rollup:done 283/300**)
 
 外部量測敘事鏈至此三級,**三組口徑不可混比、各自作用明標**:
 
 1. **20 題(迭代)**:合成 61.1%——agent/verifier 曾對其跨波改進,量「機制修復方向」。
 2. **20 題 held-out(凍結單跑)**:66.7%——反 overfitting 證據。
-3. **300 題官方全量(本節)**:無排除、雙口徑(runtime verifier + 官方 WebJudge 協定 advisory)——官方全量對標,**目前 INCOMPLETE**。
+3. **300 題官方全量(本節)**:無排除、雙口徑(runtime verifier + 官方 WebJudge 協定 advisory)——官方全量對標,**最終 rollup**。
 
-**Run 快照(judging 時點 2026-07-11T14:05 local)**:300 官方任務 → attempted 50、done 46、harness_error 4、not_run 250(主 runner abort-loop,見下)。
+**Run 最終狀態**:300 官方任務 → **done 283 / harness error 17 / not_run 0**(error 全為環境:site_unreachable 17,含 anti_bot 4;非 agent 失敗)。wall 134 分鐘(含 ~25 分鐘中途停滯與重啟:第一次啟動在 282/300 時被 harness 背景任務機制 kill,console 無 traceback、非 eval 腳本 abort;以 Start-Process 完全脫離方式 resume(PID 36872)跑完剩餘 18 題並正常收尾,exit 0)。gateway 8791 全程正常。
 
-- **verifier 口徑(唯一裁判)**:done-46 = pass 21 / fail 19 / unknown 6 / env_blocked 0 → success_rate(done) = **45.65%(21/46)**;對官方 300 全分母只入帳 **21/300 = 7.0%**——誠實 partial,**非 300 題最終數字**。
-- **WebJudge advisory 口徑**(官方三段協定:key-point 抽取 → 逐截圖 1–5 評分(門檻 3)→ trajectory 判定;判全部 46 done 題):success 9 / failure 34 / abstain 3 → **9/46 = 19.57%**;abstain 3/46 = 6.52%(全為 0-action baseline-latch pass、零截圖零 planner 步的證據不足題,絕不計 success)。confusion(verifier × WebJudge):pass→{success 6, failure 12, abstain 3}、fail→{success 1, failure 18, abstain 0}、unknown→{success 2, failure 4, abstain 0};decided-pair agreement **24/37 = 64.9%**——WebJudge 明顯比我方 verifier 嚴(12/21 verifier pass 被判 failure;僅 1/19 verifier fail 被判 success)。advisory-only,**verdict 從不覆寫 runtime verifier**。
-- **不可比性(強制聲明)**:judge model = codex gateway ChatGPT-account default(gpt-5.5-class),**非論文 o4-mini/WebJudge-7B** → **不可與官方 leaderboard 比較**(Browser Use ~97% 是官方 WebJudge+o4-mini 跑滿 300 題);其餘偏差(單圖證據限制、JSON envelope unwrap、顯式 abstain、action history 由 harness step log 重建並排除 verdict record 防 verifier 洩漏)逐條列於 results JSON `deviations_from_official` 與 `tools/webjudge.py`。gateway 名目成本 $0.1300(實際 $0,ChatGPT OAuth)。工具可續跑(更多題完成後重跑即擴充,不重判已判題)。
+- **verifier 口徑(唯一裁判)**:done-283 = pass 95 / fail 158 / unknown 26 / refused 4 / env_blocked 0 → SR(pass/done 且非 env_blocked)= **95/283 = 33.57%**;全分母 **95/300 = 31.67%**。分層:easy 28/75 = 37.33%、medium 34/135 = 25.19%、hard 33/73 = 45.21%。artifact:`runs/browser_eval/m2w_full300_20260711/webjudge/webjudge_results.json → final_summary.verifier_axis_final`(逐 summary.json 重數;'refused' 獨立列出、留在分母)。
+- **WebJudge advisory 口徑**(官方三段協定:key-point 抽取 → 逐截圖 1–5 評分(門檻 3)→ trajectory 判定):judged 283/283 done 全評完 → success 21 / failure 192 / abstain 70 → SR = **21/283 = 7.42%**(abstain 留分母、不計成功;全分母 21/300 = 7.0%);abstain_rate 70/283 = 24.73%。分層 SR/abstain:easy 0.12/0.20、medium 0.0741/0.2222、hard 0.0274/0.3425。**誠實揭露**:63/70 abstain 是 judge 照抄 envelope 範例的字面字串 'success|failure'(prompt 模板 artifact,非真實不確定)→ abstain_rate 為受此膨脹的上界;7/70 為零證據軌跡。已寫入 `final_summary.webjudge_axis_final.abstain_reasons`。
+- **confusion(verifier × WebJudge,done 283)**:pass(95)→{success 11, failure 56, abstain 28}、fail(158)→{success 8, failure 119, abstain 31}、unknown(26)→{success 2, failure 17, abstain 7}、refused(4)→{abstain 4}。decided-pair agreement **130/194 = 67.0%**——最大分歧格是 verifier pass 但 WebJudge failure = **56 題**(WebJudge 遠嚴於 verifier)。advisory-only,**verdict 從不覆寫 runtime verifier**。artifact:`final_summary.confusion_matrix_verifier_x_webjudge_final`。
+- **兩軸分層分歧(值得注意)**:hard 的 verifier SR(45.21%)反高於 easy(37.33%),而 WebJudge hard SR 最低(2.74%)且 abstain 最高(34.25%)——兩軸在難題上分歧最大。artifact:`final_summary.per_difficulty_two_axes`。
+- **不可比性(強制聲明)**:judge model = codex gateway ChatGPT-account default(gpt-5.5-class),**非論文 o4-mini/WebJudge-7B** → **不可與官方 leaderboard 比較**(Browser Use ~97% 是官方 WebJudge+o4-mini 跑滿 300 題);其餘偏差(單圖證據限制、JSON envelope unwrap、顯式 abstain、action history 由 harness step log 重建並排除 verdict record 防 verifier 洩漏)逐條列於 results JSON `deviations_from_official` 與 `tools/webjudge.py`。judge 名目成本 $0.4714(283 題,client 計價;實際 $0,ChatGPT OAuth)。
 - **License**:Online-Mind2Web repo 程式碼 = MIT(2026-07-11 讀 GitHub LICENSE 驗證)、dataset = CC-BY-4.0(已署名);prompts 逐字重用、僅 response-format 段改 JSON;登記於 `docs/ATTRIBUTION.md`。
-- **為何未完成(abort-loop 死鎖,確定性重現)**:任務檔序 idx 5/18/26 三題(carmax ×2、united)為持久性 `site_unreachable`(本機 curl 皆 timeout,非暫時性);`--resume` 復用 done 題但不計 n_attempted → 每次 launch 前 3 個 attempted 必為這 3 題 → `should_abort(3,3)` 觸發(`tools/eval_worker.py:45-46`,ERROR_ABORT_MIN=3、RATE=0.30)。runner 無參數可調門檻或跳過 error 題,解鎖需 orchestrator 決策。注意:rollup `results.json` 為 aborted 局部(done=24/error=3/not_run=273);**per-task `summary.json`(50 份)才是權威**。
+- **過程事件(measure-fix-remeasure,如實記錄)**:run 初期在 46/300 時卡進 abort-loop 死鎖——任務檔序 idx 5/18/26 三題(carmax ×2、united)為持久性 `site_unreachable`(本機 curl 皆 timeout,非暫時性);`--resume` 復用 done 題但不計 n_attempted → 每次 launch 前 3 個 attempted 必為這 3 題 → `should_abort(3,3)` 觸發(ERROR_ABORT_MIN=3、RATE=0.30)。**根因修復 commit `0613aac`**(resume 把先前 done 計入 attempts,解除 abort-guard 死鎖)後補完至 300/300。當時的 partial 快照(done 46)曾如實記錄為誠實 partial;本節為最終 rollup。
 
-- Artifacts:`runs/browser_eval/m2w_full300_20260711/<task>/summary.json`(per-task,權威)、`runs/browser_eval/m2w_full300_20260711/webjudge/webjudge_results.json`、`runs/browser_eval/m2w_full300_20260711/webjudge/per_task/*.json`(46 份)、`tools/webjudge.py`;runs/ 為 gitignored,關鍵 artifact 快照至 `data/browser_eval/external_runs/`。逐段敘事見 `docs/research/giants_task1.md`「外部量測 300 題官方全量」節。
+- Artifacts:`runs/browser_eval/m2w_full300_20260711/results.json`(最終 rollup)與 `<task>/summary.json`(per-task,權威)、`runs/browser_eval/m2w_full300_20260711/webjudge/webjudge_results.json`(run_snapshot + final_summary 雙軸/混淆/分層)、`runs/browser_eval/m2w_full300_20260711/webjudge/per_task/*.json`(283 份)、`runs/browser_eval/m2w_full300_20260711/webjudge/judge_full_run.log`、`tools/webjudge.py`(未改動);runs/ 為 gitignored,關鍵 artifact 快照至 `data/browser_eval/external_runs/m2w_full300_20260711/`。逐段敘事見 `docs/research/giants_task1.md`「外部量測 300 題官方全量」節。
 
 ### Browser Agent 元件 Ablation(2026-07-11,P1-10,mock/script 確定性環境,$0、無 LLM)
 

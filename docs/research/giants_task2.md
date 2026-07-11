@@ -453,3 +453,72 @@ NTU ItemSeg 論文(arXiv 2502.08875)報的 **BERT4ItemSeg macro-F1 0.9825**(3,73
 0.9825 **不是**我們 0.62x 的同軸天花板,把兩個數字並排比大小是誤讀。NTU gold 在本 repo 的角色是
 **外部弱老師(head-to-head 的一票),不是 gold 真值**(§4 引用限制;MEMORY 引用原則:外部老師當
 弱老師/一票,不當 gold)。
+
+### Gate rerun 2026-07-11(gold-free per-item length prior 落地,§gate 表後續)
+
+**結論先講:三個主 gate 仍然 MISS。** 訊號有真實貢獻(攔截 +9.4pt、conf≥0.9 桶錯 −15、ECE −0.022),
+但 AUROC 微降且距 0.75 甚遠——照實記錄,不引用為達標。
+
+**落地內容(全 gold-free,NTU 標註零參與調參)**:`packages/sec_core/length_prior.py` —— span 占
+整份 filing normalized 長度的**占比**(scale-invariant,對 NTU 小 filing 不像絕對 size-band 那樣失準),
+per-(form, schema, item) 的 [p05, p95] band 由 corpus-only 樣本導出(sweep3×triangulation-agree 177 筆
++ pseudo-gold 3-way 140 筆 = 317 筆;artifact `data/sec_eval/calibration/length_prior.json`,
+in_band_fraction 0.8457)。雙向執法(pipeline 內 `apply_size_bands` 之後,kill-switch
+`SEC_LENGTH_PRIOR=0`):占比 > p95 → `length_prior_overshoot`(bleed 方向)、< p05 →
+`length_prior_undershoot`(fragment 方向),兩者皆 needs_review + 零分 3.5 權重 component 封頂
+confidence(≤~0.74);**span 永不改動**。測試 `tests/test_length_prior.py`(20 tests)。
+
+**Pairing 更正(process-fix 首次執行)**:§gate 表引用的 before(AUROC 0.6307、29/141、83)是
+**stale pairing**——calibration.json(07-10 09:23Z)算的是 furniture-strip(18:42)**之前**的
+head_to_head;18:42 版重算的「可比 before」是 AUROC 0.6711 / 118 錯。本波 rerun 已驗 mtime 配對
+(head_to_head 07-11 09:21:46 → calibration 09:22:24)。兩組 before 都列,gate 對照以可比 before 為準。
+
+#### before/after(strata `ntu_human_labeled`,n=512;artifact `data/sec_eval/calibration/calibration.json`)
+
+| 指標 | doc-stated before(stale pairing) | 可比 before(18:42 h2h、無 prior) | **after(prior 上線)** | Gate | 判定 |
+|---|---|---|---|---|---|
+| AUROC | 0.6307 | 0.6711 | **0.6621** | ≥0.75 | **MISS**(且較可比 before −0.009) |
+| needs_review 錯誤攔截 | 29/141=20.6% | 28/118=23.7% | **39/118=33.1%** | ≥50% | **MISS**(+9.4pt) |
+| conf≥0.9 桶內錯誤 | 83 | 62 | **47** | ≤44 | **MISS**(−15,差 3) |
+| ECE | 0.1762 | 0.1352 | **0.1133** | —(副指標) | 改善 |
+| verifier false-pass | 0.2519(100/397) | 0.1990(79/397) | 0.2048(68/332) | — | coverage 0.7754→**0.6484** |
+| macro-F1(ours) | 0.6245 | 0.6245 | **0.6245**(4 engine 全逐位一致) | 不變 | **PASS**(confidence 不動 span) |
+
+#### 歸因(每一格都是前景實測;artifact `data/sec_eval/calibration/length_prior_attribution.json`)
+
+| 變體 | AUROC | ECE | 攔截 | conf≥0.9 錯 | 火在 correct/error |
+|---|---|---|---|---|---|
+| baseline(無 prior) | 0.6711 | 0.1352 | 28/118 | 62 | — |
+| 只 overshoot(>p95) | 0.6616 | 0.1169 | 39/118 | 50 | 58/16 |
+| 只 undershoot(<p05) | 0.6720 | 0.1289 | 28/118 | 59 | 13/3 |
+| **雙向 flat(shipped)** | **0.6621** | **0.1133** | **39/118** | **47** | 71/19 |
+
+攔截與 hi-conf 解飽和幾乎全由 overshoot 側貢獻;undershoot 側貢獻 hi-conf −3 與 ECE,攔截 +0。
+AUROC 微降的機制:被封頂的 71 筆「correct」多為 f1∈[0.5, 0.8) 的邊緣 bleed(0.5 閾值把連續的
+boundary-quality 切成二元),它們被壓到 ~0.72 後與 0.6–0.74 區的錯誤形成 tie/逆序——長度軸對
+「f1 0.45 vs 0.55」本質無鑑別力(pass items 上占比超額的 error-vs-correct 排序力僅 AUROC 0.54,實測)。
+
+**anchor-distance 訊號:量測後不出貨(零收益)**。TOC 超連結錨點→per-item 錨點位置,slack 由
+sweep3 agree-and-pass 分布導出(start-dist p95=18 chars,n=125)。NTU 實測:start-mismatch 觸發 **0**、
+end-overshoot 觸發 1(打在 correct 上)、end-undershoot 觸發 1(correct);錨點覆蓋 197/390,而未攔
+pass 錯誤中僅 15/42 有錨點——**filing 有錨點時 pipeline 本來就落在錨點上**,錯誤集中在無錨點的
+filing/item。診斷(§殘餘)提的兩把鑰匙,一把(length prior)開了三分之一,另一把(anchor)實測是
+死鑰匙,不進 codebase。
+
+#### 護欄(誠實列帳)
+
+- sweep3 clean corpus 前景重跑:length-prior 誤報 **12/178 = 6.7%**(7 over / 5 under)——分位數
+  構造的預期代價(~10% build 樣本天然在自身 [p05,p95] 外),**高於** size-band 的 0.05 specificity
+  benchmark,照實揭露;NTU 側 coverage 0.7754→0.6484 是同一筆帳。
+- mutation harness:recall 六類全 1.0、clean false-alarm 0.0056(1/178)不變;pytest
+  `-m "not integration"` **763 passed**(before 743 + 新 20)。
+- aux stratum `pseudo_gold_corpus_only` AUROC 0.4139→**0.3459**(prior 也封了部分 corpus-agree 項的
+  confidence)——維持煙霧偵測定位,不做為調參依據,照錄。
+
+#### 殘餘(下一個訊號的誠實邊界)
+
+未攔 79 錯的組成:pass 42(其中 prior 可執法且占比在 band 內者居多——是**內容錯位**不是尺寸異常)、
+IBR 35(Part III stub,conf ~0.6–0.7,非本訊號射程;是否「stub ⇒ needs_review」是產品決策不是訊號)、
+missing 8(conf 已 0.0,AUROC 側已正確排序)、partial 5。長度/位置類 gold-free 訊號在此錯誤主體上的
+天花板已實測見底:AUROC 0.75 與攔截 ≥50% 兩個 gate **維持未達成**,需要能看「span 內容是否屬於該
+item」的訊號(topic_check 的更強版本),不是更多尺寸先驗。

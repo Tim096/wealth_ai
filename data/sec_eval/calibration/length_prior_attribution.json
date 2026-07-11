@@ -1,0 +1,30 @@
+{
+ "generated_at": "2026-07-11T01:35:00Z",
+ "purpose": "per-signal attribution for the gold-free length prior wave (giants_task2.md gate rerun 2026-07-11)",
+ "method": "foreground simulation over the 30 cached NTU filings: live pipeline extraction per variant, confidence cap simulated by appending the zero-scored 3.5-weight component to the real ConfidenceBreakdown; correctness labels = line-F1 >= 0.5 from data/sec_eval/scoring/head_to_head.json (labels are held-out measurement only, never parameters). 'two_sided_flat' is the shipped configuration; its simulated numbers match the official after artifact exactly (AUROC 0.6621 / ECE 0.1133).",
+ "baseline_pairing_note": "comparable-before = current code with SEC_LENGTH_PRIOR disabled against the SAME head_to_head.json (2026-07-10 18:42 furniture-strip run). The doc-stated before (AUROC 0.6307, 29/141, 83) was a STALE pairing: calibration.json 2026-07-10T09:23Z was generated from the pre-furniture-strip head_to_head; the mtime check the process-fix required is applied from this wave on.",
+ "variants": {
+  "baseline_no_prior": {"auroc": 0.6711, "ece": 0.1352, "caught_errors": "28/118", "hi_conf_errors": 62, "false_pass": "79/397=0.1990", "coverage": 0.7754},
+  "high_only_overshoot": {"auroc": 0.6616, "ece": 0.1169, "caught_errors": "39/118", "hi_conf_errors": 50, "fired_on_correct": 58, "fired_on_error": 16},
+  "low_only_undershoot": {"auroc": 0.6720, "ece": 0.1289, "caught_errors": "28/118", "hi_conf_errors": 59, "fired_on_correct": 13, "fired_on_error": 3},
+  "two_sided_flat_SHIPPED": {"auroc": 0.6621, "ece": 0.1133, "caught_errors": "39/118", "hi_conf_errors": 47, "false_pass": "68/332=0.2048", "coverage": 0.6484, "fired_on_correct": 71, "fired_on_error": 19},
+  "two_sided_graded_log4": {"auroc": 0.6657, "ece": 0.1130, "caught_errors": "39/118", "hi_conf_errors": 55, "note": "graded partial-credit cap; not shipped (flat is simpler, hi-conf desaturation stronger)"}
+ },
+ "anchor_distance_prototype_not_shipped": {
+  "design": "map the filing's own TOC hyperlinks (<a href=\"#target\">Item N</a> -> anchor_targets[target]) to per-item anchor offsets; fire on |seg.start - anchor| or seg.end vs next-item anchor beyond a corpus-derived slack",
+  "corpus_slack_gold_free": "sweep3 agree-and-pass: start-dist p50=0 p95=18 max=46 (n=125); end-over p50=0 p95=0 max=46 (n=120) -> slack floor 200 chars",
+  "ntu_measured": {
+   "anchor_coverage_enforceable_pass_items": "start 197/390, end 188/390",
+   "start_mismatch_fired": 0,
+   "end_overshoot_fired": "1 (on a correct f1=0.54 item)",
+   "end_undershoot_fired": "1 (on a correct f1=0.93 item, slack 500..5000 invariant)",
+   "uncaught_pass_errors_with_anchor": "15/42"
+  },
+  "verdict": "measured out: when a filing exposes item anchors the pipeline already lands on them (start-dist collapses to ~0); the residual errors live in filings/items without anchors. Not shipped -- zero yield, would be dead code."
+ },
+ "clean_corpus_guardrail": {
+  "sweep3_live_rerun": "filings=11 pass_items=178 length_prior_flags=12 rate=0.0674 (7 overshoot / 5 undershoot)",
+  "note": "expected by quantile construction (~10% of prior-covered items sit outside their own [p05,p95]); reported against the size-band 0.05 specificity benchmark: this signal alone is 0.0674 -- above that benchmark, disclosed not hidden",
+  "mutation_harness": "recall 1.0 all six classes, clean false-alarm 0.0056 (1/178) -- unchanged"
+ }
+}

@@ -8,7 +8,7 @@
    "filings_scored": 28,
    "engine_failures": 2,
    "macro_f1_filings": 0.6245,
-   "verifier_false_pass_items": 79
+   "verifier_false_pass_items": 68
   },
   "edgartools": {
    "filings_scored": 26,
@@ -33,7 +33,7 @@
    "company": "HNET NET",
    "date_filed": "2001/04/30",
    "link": "https://www.sec.gov/Archives/edgar/data/831232/000092838501500540/d10k.txt",
-   "fetch_ms": 1.1,
+   "fetch_ms": 1.2,
    "engines": {
     "ours": {
      "error": "no items extracted"
@@ -178,7 +178,7 @@
    "company": "DOBSON COMMUNICATIONS CORP",
    "date_filed": "2002/04/01",
    "link": "https://www.sec.gov/Archives/edgar/data/1035985/000095013402003064/d94706e10-k.htm",
-   "fetch_ms": 3.3,
+   "fetch_ms": 3.7,
    "engines": {
     "ours": {
      "items": {
@@ -341,7 +341,7 @@
       },
       "3": {
        "status": "pass",
-       "confidence": 1.0,
+       "confidence": 0.7407407407407407,
        "needs_review": true
       },
       "4": {
@@ -371,8 +371,8 @@
       },
       "8": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "9": {
        "status": "ambiguous",
@@ -839,7 +839,7 @@
    "company": "HALF ROBERT INTERNATIONAL INC /DE/",
    "date_filed": "2003/03/26",
    "link": "https://www.sec.gov/Archives/edgar/data/315213/000104746903010372/a2095565z10-k.htm",
-   "fetch_ms": 1.5,
+   "fetch_ms": 1.6,
    "engines": {
     "ours": {
      "items": {
@@ -988,8 +988,8 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 0.9734463276836157,
-       "needs_review": false
+       "confidence": 0.7210713538397153,
+       "needs_review": true
       },
       "6": {
        "status": "pass",
@@ -1013,7 +1013,7 @@
       },
       "9": {
        "status": "pass",
-       "confidence": 0.7407407407407407,
+       "confidence": 0.5882352941176471,
        "needs_review": true
       },
       "9A": {
@@ -1415,7 +1415,7 @@
    "company": "EON COMMUNICATIONS CORP",
    "date_filed": "2003/10/29",
    "link": "https://www.sec.gov/Archives/edgar/data/1084752/000119312503069303/d10k.htm",
-   "fetch_ms": 2.6,
+   "fetch_ms": 2.8,
    "engines": {
     "ours": {
      "items": {
@@ -1601,13 +1601,13 @@
       },
       "6": {
        "status": "pass",
-       "confidence": 0.9235294117647058,
+       "confidence": 0.6840958605664488,
        "needs_review": true
       },
       "7": {
        "status": "pass",
-       "confidence": 0.9994152046783625,
-       "needs_review": false
+       "confidence": 0.7403075590210093,
+       "needs_review": true
       },
       "7A": {
        "status": "pass",
@@ -1621,7 +1621,7 @@
       },
       "9": {
        "status": "pass",
-       "confidence": 0.7403024326101248,
+       "confidence": 0.5878872258962756,
        "needs_review": true
       },
       "9A": {
@@ -2111,7 +2111,7 @@
    "company": "ISIS PHARMACEUTICALS INC",
    "date_filed": "2004/03/15",
    "link": "https://www.sec.gov/Archives/edgar/data/874015/000104746904007808/a2130713z10-k.htm",
-   "fetch_ms": 2.1,
+   "fetch_ms": 2.3,
    "engines": {
     "ours": {
      "items": {
@@ -2257,8 +2257,8 @@
      "verifier": {
       "1": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "1A": {
        "status": "missing",
@@ -2282,7 +2282,7 @@
       },
       "3": {
        "status": "pass",
-       "confidence": 0.9971428571428571,
+       "confidence": 0.7386243386243386,
        "needs_review": true
       },
       "4": {
@@ -2292,8 +2292,8 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 0.9730337078651685,
-       "needs_review": false
+       "confidence": 0.7207657095297544,
+       "needs_review": true
       },
       "6": {
        "status": "pass",
@@ -2362,7 +2362,7 @@
       },
       "15": {
        "status": "pass",
-       "confidence": 0.975,
+       "confidence": 0.7222222222222222,
        "needs_review": true
       },
       "16": {
@@ -2809,7 +2809,7 @@
    "company": "CATERPILLAR INC",
    "date_filed": "2005/02/24",
    "link": "https://www.sec.gov/Archives/edgar/data/18230/000001823005000218/form10k_2004.htm",
-   "fetch_ms": 1.7,
+   "fetch_ms": 2.0,
    "engines": {
     "ours": {
      "items": {
@@ -2955,8 +2955,8 @@
      "verifier": {
       "1": {
        "status": "pass",
-       "confidence": 0.9941176470588236,
-       "needs_review": false
+       "confidence": 0.7363834422657952,
+       "needs_review": true
       },
       "1A": {
        "status": "pass",
@@ -2980,8 +2980,8 @@
       },
       "3": {
        "status": "pass",
-       "confidence": 0.9971428571428571,
-       "needs_review": false
+       "confidence": 0.7386243386243386,
+       "needs_review": true
       },
       "4": {
        "status": "missing",
@@ -2990,8 +2990,8 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 0.9786516853932584,
-       "needs_review": false
+       "confidence": 0.7249271743653766,
+       "needs_review": true
       },
       "6": {
        "status": "incorporated_by_reference",
@@ -3020,8 +3020,8 @@
       },
       "9A": {
        "status": "pass",
-       "confidence": 0.997872340425532,
-       "needs_review": false
+       "confidence": 0.7391646966115052,
+       "needs_review": true
       },
       "9B": {
        "status": "missing",
@@ -3069,9 +3069,7 @@
        "needs_review": false
       }
      },
-     "verifier_false_pass": [
-      "9A"
-     ]
+     "verifier_false_pass": []
     },
     "edgartools": {
      "items": {
@@ -3507,7 +3505,7 @@
    "company": "ESSENTIAL GROUP INC",
    "date_filed": "2005/03/30",
    "link": "https://www.sec.gov/Archives/edgar/data/1088000/000119312505064965/d10k.htm",
-   "fetch_ms": 2.3,
+   "fetch_ms": 2.4,
    "engines": {
     "ours": {
      "items": {
@@ -3696,12 +3694,12 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 0.8644042232277526,
-       "needs_review": false
+       "confidence": 0.64029942461315,
+       "needs_review": true
       },
       "6": {
        "status": "pass",
-       "confidence": 0.9242424242424242,
+       "confidence": 0.6846240179573513,
        "needs_review": true
       },
       "7": {
@@ -3776,7 +3774,6 @@
       }
      },
      "verifier_false_pass": [
-      "5",
       "10",
       "11",
       "12",
@@ -4243,7 +4240,7 @@
    "company": "GENERAL CABLE CORP /DE/",
    "date_filed": "2006/03/15",
    "link": "https://www.sec.gov/Archives/edgar/data/886035/000095015206002081/l18783ae10vk.htm",
-   "fetch_ms": 3.7,
+   "fetch_ms": 3.8,
    "engines": {
     "ours": {
      "items": {
@@ -4438,8 +4435,8 @@
       },
       "3": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "4": {
        "status": "pass",
@@ -4448,8 +4445,8 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "6": {
        "status": "pass",
@@ -4463,12 +4460,12 @@
       },
       "7A": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "8": {
        "status": "pass",
-       "confidence": 1.0,
+       "confidence": 0.7407407407407407,
        "needs_review": true
       },
       "9": {
@@ -4478,8 +4475,8 @@
       },
       "9A": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "9B": {
        "status": "pass",
@@ -4530,9 +4527,7 @@
      "verifier_false_pass": [
       "11",
       "12",
-      "13",
-      "7A",
-      "9A"
+      "13"
      ]
     },
     "edgartools": {
@@ -5041,7 +5036,7 @@
    "company": "CITIZENS & NORTHERN CORP",
    "date_filed": "2007/03/02",
    "link": "https://www.sec.gov/Archives/edgar/data/810958/000095015207001718/l24216ae10vk.htm",
-   "fetch_ms": 3.3,
+   "fetch_ms": 3.0,
    "engines": {
     "ours": {
      "items": {
@@ -5216,7 +5211,7 @@
       },
       "1A": {
        "status": "pass",
-       "confidence": 1.0,
+       "confidence": 0.7407407407407407,
        "needs_review": true
       },
       "1B": {
@@ -5246,8 +5241,8 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "6": {
        "status": "pass",
@@ -5256,18 +5251,18 @@
       },
       "7": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "7A": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "8": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "9": {
        "status": "pass",
@@ -5276,8 +5271,8 @@
       },
       "9A": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "9B": {
        "status": "pass",
@@ -5836,7 +5831,7 @@
    "company": "PARKVALE FINANCIAL CORP",
    "date_filed": "2007/09/10",
    "link": "https://www.sec.gov/Archives/edgar/data/820907/000095015207007451/l27900ae10vk.htm",
-   "fetch_ms": 1.3,
+   "fetch_ms": 1.5,
    "engines": {
     "ours": {
      "items": {
@@ -6006,12 +6001,12 @@
      "verifier": {
       "1": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "1A": {
        "status": "pass",
-       "confidence": 1.0,
+       "confidence": 0.7407407407407407,
        "needs_review": true
       },
       "1B": {
@@ -6041,8 +6036,8 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 0.9995391705069124,
-       "needs_review": false
+       "confidence": 0.7403993855606759,
+       "needs_review": true
       },
       "6": {
        "status": "incorporated_by_reference",
@@ -6628,7 +6623,7 @@
    "company": "KODIAK ENERGY, INC.",
    "date_filed": "2008/03/17",
    "link": "https://www.sec.gov/Archives/edgar/data/1109553/000109690608000449/kodiak10k123107.htm",
-   "fetch_ms": 4.8,
+   "fetch_ms": 5.4,
    "engines": {
     "ours": {
      "items": {
@@ -6808,7 +6803,7 @@
       },
       "1B": {
        "status": "pass",
-       "confidence": 0.7407407407407407,
+       "confidence": 0.5882352941176471,
        "needs_review": true
       },
       "1C": {
@@ -6833,8 +6828,8 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 0.9634146341463415,
-       "needs_review": false
+       "confidence": 0.7136404697380307,
+       "needs_review": true
       },
       "6": {
        "status": "pass",
@@ -6853,8 +6848,8 @@
       },
       "8": {
        "status": "pass",
-       "confidence": 0.9634920634920634,
-       "needs_review": false
+       "confidence": 0.7136978248089358,
+       "needs_review": true
       },
       "9": {
        "status": "partial",
@@ -6878,8 +6873,8 @@
       },
       "10": {
        "status": "pass",
-       "confidence": 0.9,
-       "needs_review": false
+       "confidence": 0.6666666666666666,
+       "needs_review": true
       },
       "11": {
        "status": "pass",
@@ -6898,8 +6893,8 @@
       },
       "14": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "15": {
        "status": "pass",
@@ -7412,7 +7407,7 @@
    "company": "AUDIOVOX CORP",
    "date_filed": "2008/05/14",
    "link": "https://www.sec.gov/Archives/edgar/data/807707/000080770708000022/form10k.htm",
-   "fetch_ms": 8.6,
+   "fetch_ms": 9.1,
    "engines": {
     "ours": {
      "items": {
@@ -7552,8 +7547,8 @@
       },
       "1B": {
        "status": "pass",
-       "confidence": 0.9666666666666666,
-       "needs_review": false
+       "confidence": 0.7160493827160493,
+       "needs_review": true
       },
       "1C": {
        "status": "missing",
@@ -7607,8 +7602,8 @@
       },
       "9A": {
        "status": "pass",
-       "confidence": 0.9666666666666666,
-       "needs_review": false
+       "confidence": 0.7160493827160493,
+       "needs_review": true
       },
       "9B": {
        "status": "incorporated_by_reference",
@@ -7659,7 +7654,6 @@
      "verifier_false_pass": [
       "3",
       "7A",
-      "9A",
       "9B"
      ]
     },
@@ -8049,7 +8043,7 @@
    "company": "OMEGA PROTEIN CORP",
    "date_filed": "2009/03/10",
    "link": "https://www.sec.gov/Archives/edgar/data/1053650/000119312509049801/d10k.htm",
-   "fetch_ms": 3.1,
+   "fetch_ms": 3.3,
    "engines": {
     "ours": {
      "items": {
@@ -8847,7 +8841,7 @@
    "company": "Cereplast Inc",
    "date_filed": "2009/03/31",
    "link": "https://www.sec.gov/Archives/edgar/data/1324759/000136231009004558/c83189e10vk.htm",
-   "fetch_ms": 1.9,
+   "fetch_ms": 2.6,
    "engines": {
     "ours": {
      "items": {
@@ -9027,8 +9021,8 @@
       },
       "1B": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "1C": {
        "status": "missing",
@@ -9052,8 +9046,8 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "6": {
        "status": "pass",
@@ -9082,8 +9076,8 @@
       },
       "9A": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "9B": {
        "status": "pass",
@@ -9097,8 +9091,8 @@
       },
       "10": {
        "status": "pass",
-       "confidence": 0.9990825688073395,
-       "needs_review": false
+       "confidence": 0.7400611620795107,
+       "needs_review": true
       },
       "11": {
        "status": "pass",
@@ -9820,8 +9814,8 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "6": {
        "status": "pass",
@@ -9850,8 +9844,8 @@
       },
       "9A": {
        "status": "pass",
-       "confidence": 0.9901960784313726,
-       "needs_review": false
+       "confidence": 0.7334785766158315,
+       "needs_review": true
       },
       "9B": {
        "status": "pass",
@@ -9865,8 +9859,8 @@
       },
       "10": {
        "status": "pass",
-       "confidence": 0.9990825688073395,
-       "needs_review": false
+       "confidence": 0.7400611620795107,
+       "needs_review": true
       },
       "11": {
        "status": "pass",
@@ -9875,8 +9869,8 @@
       },
       "12": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "13": {
        "status": "incorporated_by_reference",
@@ -9890,7 +9884,7 @@
       },
       "15": {
        "status": "pass",
-       "confidence": 0.9987341772151899,
+       "confidence": 0.739803094233474,
        "needs_review": true
       },
       "16": {
@@ -10335,7 +10329,7 @@
    "company": "TERADATA CORP /DE/",
    "date_filed": "2010/02/26",
    "link": "https://www.sec.gov/Archives/edgar/data/816761/000119312510043063/d10k.htm",
-   "fetch_ms": 3.2,
+   "fetch_ms": 3.8,
    "engines": {
     "ours": {
      "items": {
@@ -10540,8 +10534,8 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 0.9981818181818183,
-       "needs_review": false
+       "confidence": 0.7393939393939394,
+       "needs_review": true
       },
       "6": {
        "status": "pass",
@@ -11130,7 +11124,7 @@
    "company": "Optelecom-NKF, Inc.",
    "date_filed": "2010/03/30",
    "link": "https://www.sec.gov/Archives/edgar/data/275858/000104746910002965/a2197673z10-k.htm",
-   "fetch_ms": 2.2,
+   "fetch_ms": 2.7,
    "engines": {
     "ours": {
      "items": {
@@ -11310,8 +11304,8 @@
       },
       "1B": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "1C": {
        "status": "missing",
@@ -11330,7 +11324,7 @@
       },
       "4": {
        "status": "pass",
-       "confidence": 0.6856028961292119,
+       "confidence": 0.5444493586908448,
        "needs_review": true
       },
       "5": {
@@ -11340,13 +11334,13 @@
       },
       "6": {
        "status": "pass",
-       "confidence": 0.6744639376218323,
+       "confidence": 0.5356037151702786,
        "needs_review": true
       },
       "7": {
        "status": "pass",
-       "confidence": 0.9375,
-       "needs_review": false
+       "confidence": 0.6944444444444444,
+       "needs_review": true
       },
       "7A": {
        "status": "missing",
@@ -11416,7 +11410,6 @@
      },
      "verifier_false_pass": [
       "5",
-      "7",
       "9",
       "10",
       "13",
@@ -11921,7 +11914,7 @@
    "company": "SK Shasta Acquisition Corp. 4",
    "date_filed": "2010/08/13",
    "link": "https://www.sec.gov/Archives/edgar/data/1439240/000114420410043781/v193300_10k.htm",
-   "fetch_ms": 1.6,
+   "fetch_ms": 2.0,
    "engines": {
     "ours": {
      "items": {
@@ -12096,12 +12089,12 @@
       },
       "1A": {
        "status": "pass",
-       "confidence": 0.9666666666666666,
+       "confidence": 0.7160493827160493,
        "needs_review": true
       },
       "1B": {
        "status": "pass",
-       "confidence": 0.9666666666666666,
+       "confidence": 0.7160493827160493,
        "needs_review": true
       },
       "1C": {
@@ -12126,8 +12119,8 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 0.9534246575342464,
-       "needs_review": false
+       "confidence": 0.7062404870624048,
+       "needs_review": true
       },
       "6": {
        "status": "pass",
@@ -12151,13 +12144,13 @@
       },
       "9": {
        "status": "pass",
-       "confidence": 0.9660749506903352,
-       "needs_review": false
+       "confidence": 0.7156110745854335,
+       "needs_review": true
       },
       "9A": {
        "status": "pass",
-       "confidence": 0.9551282051282051,
-       "needs_review": false
+       "confidence": 0.7075023741690408,
+       "needs_review": true
       },
       "9B": {
        "status": "pass",
@@ -12171,8 +12164,8 @@
       },
       "10": {
        "status": "pass",
-       "confidence": 0.7875502008032129,
-       "needs_review": false
+       "confidence": 0.583370519113491,
+       "needs_review": true
       },
       "11": {
        "status": "pass",
@@ -12181,8 +12174,8 @@
       },
       "12": {
        "status": "pass",
-       "confidence": 0.9661375661375662,
-       "needs_review": false
+       "confidence": 0.7156574563981971,
+       "needs_review": true
       },
       "13": {
        "status": "pass",
@@ -12713,7 +12706,7 @@
    "company": "Support.com, Inc.",
    "date_filed": "2011/03/11",
    "link": "https://www.sec.gov/Archives/edgar/data/1104855/000114036111016096/form10k.htm",
-   "fetch_ms": 5.5,
+   "fetch_ms": 6.1,
    "engines": {
     "ours": {
      "items": {
@@ -12933,8 +12926,8 @@
       },
       "7A": {
        "status": "pass",
-       "confidence": 0.9,
-       "needs_review": false
+       "confidence": 0.6666666666666666,
+       "needs_review": true
       },
       "8": {
        "status": "pass",
@@ -12948,12 +12941,12 @@
       },
       "9A": {
        "status": "pass",
-       "confidence": 0.9,
-       "needs_review": false
+       "confidence": 0.6666666666666666,
+       "needs_review": true
       },
       "9B": {
        "status": "pass",
-       "confidence": 0.8,
+       "confidence": 0.5925925925925926,
        "needs_review": true
       },
       "9C": {
@@ -13003,8 +12996,7 @@
       "10",
       "11",
       "13",
-      "14",
-      "7A"
+      "14"
      ]
     },
     "edgartools": {
@@ -13513,7 +13505,7 @@
    "company": "SALLY HOLDINGS LLC",
    "date_filed": "2011/11/16",
    "link": "https://www.sec.gov/Archives/edgar/data/1385720/000110465911064552/a11-28372_110k.htm",
-   "fetch_ms": 7.1,
+   "fetch_ms": 7.7,
    "engines": {
     "ours": {
      "items": {
@@ -13728,13 +13720,13 @@
       },
       "7": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "7A": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "8": {
        "status": "incorporated_by_reference",
@@ -13802,8 +13794,7 @@
       "5",
       "10",
       "14",
-      "15",
-      "7A"
+      "15"
      ]
     },
     "edgartools": {
@@ -14312,7 +14303,7 @@
    "company": "Abtech Holdings, Inc.",
    "date_filed": "2012/03/30",
    "link": "https://www.sec.gov/Archives/edgar/data/1405858/000114420412018496/v307123_10k.htm",
-   "fetch_ms": 2.4,
+   "fetch_ms": 2.8,
    "engines": {
     "ours": {
      "items": {
@@ -14482,8 +14473,8 @@
      "verifier": {
       "1": {
        "status": "pass",
-       "confidence": 0.9941176470588236,
-       "needs_review": false
+       "confidence": 0.7363834422657952,
+       "needs_review": true
       },
       "1A": {
        "status": "pass",
@@ -14547,8 +14538,8 @@
       },
       "9A": {
        "status": "pass",
-       "confidence": 0.997872340425532,
-       "needs_review": false
+       "confidence": 0.7391646966115052,
+       "needs_review": true
       },
       "9B": {
        "status": "pass",
@@ -15116,7 +15107,7 @@
       },
       "1A": {
        "status": "pass",
-       "confidence": 0.9960000000000001,
+       "confidence": 0.7377777777777779,
        "needs_review": true
       },
       "1B": {
@@ -15146,8 +15137,8 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 0.9630303030303031,
-       "needs_review": false
+       "confidence": 0.7133557800224467,
+       "needs_review": true
       },
       "6": {
        "status": "pass",
@@ -15176,8 +15167,8 @@
       },
       "9A": {
        "status": "pass",
-       "confidence": 0.997872340425532,
-       "needs_review": false
+       "confidence": 0.7391646966115052,
+       "needs_review": true
       },
       "9B": {
        "status": "pass",
@@ -15201,8 +15192,8 @@
       },
       "12": {
        "status": "pass",
-       "confidence": 0.9994708994708995,
-       "needs_review": false
+       "confidence": 0.7403488144228886,
+       "needs_review": true
       },
       "13": {
        "status": "pass",
@@ -15735,7 +15726,7 @@
    "company": "Integrated Electric Systems Corp.",
    "date_filed": "2013/07/16",
    "link": "https://www.sec.gov/Archives/edgar/data/1402486/000116552713000641/g6936a.txt",
-   "fetch_ms": 0.8,
+   "fetch_ms": 1.2,
    "engines": {
     "ours": {
      "error": "no items extracted"
@@ -16099,7 +16090,7 @@
       },
       "3": {
        "status": "pass",
-       "confidence": 0.9,
+       "confidence": 0.6666666666666666,
        "needs_review": true
       },
       "4": {
@@ -16109,8 +16100,8 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 0.9981818181818183,
-       "needs_review": false
+       "confidence": 0.7393939393939394,
+       "needs_review": true
       },
       "6": {
        "status": "pass",
@@ -16698,7 +16689,7 @@
    "company": "FIRST BANCORP /PR/",
    "date_filed": "2014/03/17",
    "link": "https://www.sec.gov/Archives/edgar/data/1057706/000105770614000004/fbp12312013x10k.htm",
-   "fetch_ms": 28.4,
+   "fetch_ms": 36.2,
    "engines": {
     "ours": {
      "items": {
@@ -16903,8 +16894,8 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 0.997716894977169,
-       "needs_review": false
+       "confidence": 0.7390495518349399,
+       "needs_review": true
       },
       "6": {
        "status": "pass",
@@ -16913,8 +16904,8 @@
       },
       "7": {
        "status": "pass",
-       "confidence": 0.996045197740113,
-       "needs_review": false
+       "confidence": 0.7378112575852689,
+       "needs_review": true
       },
       "7A": {
        "status": "incorporated_by_reference",
@@ -16938,7 +16929,7 @@
       },
       "9B": {
        "status": "pass",
-       "confidence": 0.9971428571428571,
+       "confidence": 0.7386243386243386,
        "needs_review": true
       },
       "9C": {
@@ -16986,7 +16977,6 @@
       "1",
       "2",
       "3",
-      "5",
       "10",
       "11",
       "12",
@@ -17341,7 +17331,7 @@
    "company": "Diversified Resources Inc.",
    "date_filed": "2015/02/13",
    "link": "https://www.sec.gov/Archives/edgar/data/1509692/000112785515000064/diversified10103114.htm",
-   "fetch_ms": 3.6,
+   "fetch_ms": 3.9,
    "engines": {
     "ours": {
      "items": {
@@ -17546,8 +17536,8 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "6": {
        "status": "pass",
@@ -17561,23 +17551,23 @@
       },
       "7A": {
        "status": "pass",
-       "confidence": 0.9982758620689655,
-       "needs_review": false
+       "confidence": 0.7394636015325671,
+       "needs_review": true
       },
       "8": {
        "status": "pass",
-       "confidence": 1.0,
+       "confidence": 0.7407407407407407,
        "needs_review": true
       },
       "9": {
        "status": "pass",
-       "confidence": 1.0,
+       "confidence": 0.7407407407407407,
        "needs_review": true
       },
       "9A": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "9B": {
        "status": "pass",
@@ -17625,9 +17615,7 @@
        "needs_review": false
       }
      },
-     "verifier_false_pass": [
-      "5"
-     ]
+     "verifier_false_pass": []
     },
     "edgartools": {
      "items": {
@@ -18135,7 +18123,7 @@
    "company": "4Cable TV International, Inc.",
    "date_filed": "2015/04/15",
    "link": "https://www.sec.gov/Archives/edgar/data/1421901/000159406215000098/form10k.htm",
-   "fetch_ms": 3.4,
+   "fetch_ms": 3.7,
    "engines": {
     "ours": {
      "items": {
@@ -18340,8 +18328,8 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "6": {
        "status": "pass",
@@ -18370,12 +18358,12 @@
       },
       "9A": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "9B": {
        "status": "pass",
-       "confidence": 1.0,
+       "confidence": 0.7407407407407407,
        "needs_review": true
       },
       "9C": {
@@ -18385,8 +18373,8 @@
       },
       "10": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "11": {
        "status": "pass",
@@ -18927,7 +18915,7 @@
    "company": "Diplomat Pharmacy, Inc.",
    "date_filed": "2016/02/29",
    "link": "https://www.sec.gov/Archives/edgar/data/1610092/000110465916101031/a16-5240_110k.htm",
-   "fetch_ms": 5.9,
+   "fetch_ms": 6.4,
    "engines": {
     "ours": {
      "items": {
@@ -19097,8 +19085,8 @@
      "verifier": {
       "1": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "1A": {
        "status": "missing",
@@ -19202,7 +19190,7 @@
       },
       "15": {
        "status": "pass",
-       "confidence": 0.9938271604938272,
+       "confidence": 0.7361682670324646,
        "needs_review": true
       },
       "16": {
@@ -19861,7 +19849,7 @@
       },
       "10": {
        "status": "pass",
-       "confidence": 0.7407407407407407,
+       "confidence": 0.5882352941176471,
        "needs_review": true
       },
       "11": {
@@ -19871,8 +19859,8 @@
       },
       "12": {
        "status": "pass",
-       "confidence": 1.0,
-       "needs_review": false
+       "confidence": 0.7407407407407407,
+       "needs_review": true
       },
       "13": {
        "status": "pass",
@@ -20067,7 +20055,7 @@
    "company": "WATTS WATER TECHNOLOGIES INC",
    "date_filed": "2017/02/24",
    "link": "https://www.sec.gov/Archives/edgar/data/795403/000155837017000970/wts-20161231x10k.htm",
-   "fetch_ms": 12.0,
+   "fetch_ms": 12.8,
    "engines": {
     "ours": {
      "items": {
@@ -20280,8 +20268,8 @@
       },
       "5": {
        "status": "pass",
-       "confidence": 0.9995391705069124,
-       "needs_review": false
+       "confidence": 0.7403993855606759,
+       "needs_review": true
       },
       "6": {
        "status": "pass",
@@ -20310,8 +20298,8 @@
       },
       "9A": {
        "status": "pass",
-       "confidence": 0.997872340425532,
-       "needs_review": false
+       "confidence": 0.7391646966115052,
+       "needs_review": true
       },
       "9B": {
        "status": "pass",
@@ -20350,7 +20338,7 @@
       },
       "15": {
        "status": "pass",
-       "confidence": 0.9926829268292684,
+       "confidence": 0.7353206865401988,
        "needs_review": true
       },
       "16": {
@@ -20368,8 +20356,7 @@
       "13",
       "14",
       "1A",
-      "7A",
-      "9A"
+      "7A"
      ]
     },
     "edgartools": {

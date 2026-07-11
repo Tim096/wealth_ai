@@ -21,6 +21,14 @@ guard — per-task try/finally summary.json, Playwright-level timeout, a
 done/error/incomplete harness axis SEPARATE from the verdict layer (metrics
 count done only), `--resume` relaunch masking, and a >30% error-rate abort
 that still persists the partial rows.
+
+P0-11 scalability: `--workers N` runs the single-pass Script-Mode set on a
+subprocess worker pool (tools/eval_worker.run_pool) — each worker holds ONE
+persistent browser session (cold start amortized; fresh context per task), a
+wall-clock watchdog in the parent terminates hung workers (the process-level
+carrier P0-9 deferred), and results.json gains a `scalability` block: the
+multi-session cost model (concurrency x per-session cold-start/busy/
+utilization, throughput, speedup vs the serial estimate).
 """
 
 from __future__ import annotations
@@ -41,7 +49,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))                    # `tools.` imports when run as a script
 from tools.eval_worker import (                  # noqa: E402
     HarnessAbort, arm_watchdog, harness_report, load_done_summary,
-    run_guarded, scan_incomplete, should_abort,
+    run_guarded, run_pool, scan_incomplete, session_cost_model, should_abort,
 )
 TASKS = ROOT / "data" / "browser_eval" / "tasks.json"
 OUT = ROOT / "runs" / "browser_eval"
@@ -175,6 +183,48 @@ def run_agentic_pass(page, tasks: list[dict], mem_path: Path) -> list[dict]:
     return rows
 
 
+def run_parallel_pass(tasks: list[dict], workers: int, resume: bool = False):
+    """P0-11: one Script-Mode pass over the task set on the subprocess worker
+    pool (tools/eval_worker.run_pool). Each worker keeps one browser session
+    across its tasks (session pool — cold start amortized) with a fresh context
+    per task; selector memory is per-worker so repair counts stay independent
+    of scheduling order, and the shared evidence log is skipped (single-writer
+    artifact). resume=True masks tasks a prior launch finished, exactly like
+    the sequential path. Returns (rows in task order, scalability block)."""
+    by_id = {t["task_id"]: t for t in tasks}
+
+    def to_row(summary):
+        if summary["harness_status"] == "done":
+            row = summary["row"]
+            row["harness_status"] = "done"
+            return row
+        return _error_row(by_id[summary["task_id"]], summary)
+
+    resumed: dict[str, dict] = {}
+    to_run: list[dict] = []
+    for task in tasks:
+        if resume:
+            prior = load_done_summary(task["task_id"], out_root=OUT)
+            if prior:
+                row = prior["row"]
+                row["harness_status"] = "done"
+                row["resumed"] = True
+                resumed[task["task_id"]] = row
+                continue
+        to_run.append(task)
+
+    try:
+        summaries, pool_stats = run_pool(to_run, workers=workers, out_root=OUT, mem_dir=OUT)
+    except HarnessAbort as ab:
+        # re-raise with row-shaped partials so main() persists them as usual
+        raise HarnessAbort([to_row(s) for s in ab.rows], ab.n_error, ab.n_attempted) from None
+
+    by_run = {s["task_id"]: to_row(s) for s in summaries}
+    rows = [resumed.get(t["task_id"]) or by_run[t["task_id"]] for t in tasks]
+    n_done = sum(s["harness_status"] == "done" for s in summaries)
+    return rows, session_cost_model(pool_stats, n_done)
+
+
 def compute_metrics(rows: list[dict]) -> dict:
     """Single-pass VERDICT metrics — computed over harness-done rows ONLY;
     error/incomplete rows are reported in the separate harness block (P0-9).
@@ -250,7 +300,8 @@ def aggregate_passk(rows_by_task: dict, k: int) -> dict:
     return {"summary": summary, "per_task": per_task}
 
 
-def main(repeat: int = 1, agentic: bool = False, resume: bool = False) -> None:
+def main(repeat: int = 1, agentic: bool = False, resume: bool = False,
+         workers: int = 1) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     spec = json.loads(TASKS.read_text(encoding="utf-8"))
     tasks = spec["tasks"]
@@ -265,27 +316,39 @@ def main(repeat: int = 1, agentic: bool = False, resume: bool = False) -> None:
     script_passes: list[list[dict]] = []
     agentic_passes: list[list[dict]] = []
     aborted = False
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page(viewport={"width": 1000, "height": 800})
-        for rep in range(repeat):
-            # evidence only on the first pass — appending N copies would just
-            # bloat the shared evidence log without adding signal.
-            ev = evidence if rep == 0 else None
-            try:
-                script_passes.append(run_script_pass(
-                    page, tasks, OUT / "selector_memory.json", ev, resume=resume))
-                if agentic:
-                    agentic_passes.append(run_agentic_pass(
-                        page, agentic_subset, OUT / "selector_memory_agentic.json"))
-            except HarnessAbort as ab:
-                # persist the partial rows instead of losing the whole set
-                target = script_passes if len(script_passes) == rep else agentic_passes
-                target.append(ab.rows)
-                aborted = True
-                print(f"\n{ab}")
-                break
-        browser.close()
+    scalability = None
+    if workers > 1:
+        # P0-11 parallel path: single Script-Mode pass on the subprocess pool
+        # (no browser in this process — every session lives in a worker)
+        try:
+            rows, scalability = run_parallel_pass(tasks, workers, resume=resume)
+            script_passes.append(rows)
+        except HarnessAbort as ab:
+            script_passes.append(ab.rows)
+            aborted = True
+            print(f"\n{ab}")
+    else:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": 1000, "height": 800})
+            for rep in range(repeat):
+                # evidence only on the first pass — appending N copies would just
+                # bloat the shared evidence log without adding signal.
+                ev = evidence if rep == 0 else None
+                try:
+                    script_passes.append(run_script_pass(
+                        page, tasks, OUT / "selector_memory.json", ev, resume=resume))
+                    if agentic:
+                        agentic_passes.append(run_agentic_pass(
+                            page, agentic_subset, OUT / "selector_memory_agentic.json"))
+                except HarnessAbort as ab:
+                    # persist the partial rows instead of losing the whole set
+                    target = script_passes if len(script_passes) == rep else agentic_passes
+                    target.append(ab.rows)
+                    aborted = True
+                    print(f"\n{ab}")
+                    break
+            browser.close()
 
     # backward-compatible single-pass results.json (pass 0) — plus the P0-9
     # harness block (done/error/incomplete axis, separate from verdicts)
@@ -293,9 +356,11 @@ def main(repeat: int = 1, agentic: bool = False, resume: bool = False) -> None:
     metrics = compute_metrics(rows0)
     harness = harness_report(rows0, n_planned=len(tasks), aborted=aborted)
     harness["incomplete_from_prior_run"] = incomplete_prior
+    payload = {"metrics": metrics, "harness": harness, "tasks": rows0}
+    if scalability:
+        payload["scalability"] = scalability   # P0-11 multi-session cost model
     (OUT / "results.json").write_text(
-        json.dumps({"metrics": metrics, "harness": harness, "tasks": rows0}, indent=2),
-        encoding="utf-8")
+        json.dumps(payload, indent=2), encoding="utf-8")
 
     print("browser eval metrics (pass 1):")
     for k, v in metrics.items():
@@ -303,6 +368,12 @@ def main(repeat: int = 1, agentic: bool = False, resume: bool = False) -> None:
     print(f"  harness: done={harness['done']} error={harness['error']} "
           f"not_run={harness['not_run']} resumed={harness['resumed']} "
           f"aborted={harness['aborted']}")
+    if scalability:
+        print(f"  scalability: workers={scalability['concurrency']} "
+              f"sessions={scalability['sessions_launched']} "
+              f"wall={scalability['wall_clock_s']}s "
+              f"speedup~{scalability['speedup_vs_serial_estimate']}x "
+              f"(vs serial estimate {scalability['serial_estimate_s']}s)")
     print()
     for r in rows0:
         if r.get("harness_status", "done") != "done":
@@ -358,9 +429,16 @@ if __name__ == "__main__":
     ap.add_argument("--resume", action="store_true",
                     help="relaunch masking: skip tasks whose runs/browser_eval/<task_id>/"
                          "summary.json says a prior launch already finished them")
+    ap.add_argument("--workers", type=int, default=1,
+                    help="P0-11: run the task set on N parallel subprocess workers, "
+                         "each with its own persistent browser session")
     args = ap.parse_args()
     if args.repeat < 1:
         ap.error("--repeat must be >= 1")
     if args.resume and args.repeat != 1:
         ap.error("--resume only makes sense for a single-pass relaunch (--repeat 1)")
-    main(repeat=args.repeat, agentic=args.agentic, resume=args.resume)
+    if args.workers < 1:
+        ap.error("--workers must be >= 1")
+    if args.workers > 1 and (args.repeat != 1 or args.agentic):
+        ap.error("--workers applies to the single-pass Script-Mode run only")
+    main(repeat=args.repeat, agentic=args.agentic, resume=args.resume, workers=args.workers)

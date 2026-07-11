@@ -643,7 +643,8 @@
    "filings": 11,
    "verdict_totals": {
     "agree": 240,
-    "disagree": 12,
+    "disagree": 11,
+    "engine_suspect": 1,
     "engine_unavailable": 1
    },
    "disagreements": {
@@ -667,9 +668,6 @@
     "XOM": [
      "7",
      "8",
-     "16"
-    ],
-    "NEM": [
      "16"
     ],
     "MRNA": [

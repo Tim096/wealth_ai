@@ -54,6 +54,27 @@ def test_cost_metrics_zero_denominator_is_none_not_zero():
                                 "cost_per_repair_usd": None}
 
 
+def test_compute_metrics_merges_cost_block():
+    """Integration-gate wiring: tools/browser_eval.compute_metrics carries the
+    cost_metrics block, so cost-per-success lives next to the verdict."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    import browser_eval as be
+    rows = [
+        {"task_id": "a", "correct": True, "status": "pass", "expected": "pass",
+         "false_positive": False, "repairs": 1, "trace_complete": True,
+         "latency_ms": 100.0, "llm_cost_usd": 0.02},
+        {"task_id": "b", "correct": True, "status": "fail", "expected": "fail",
+         "false_positive": False, "repairs": 0, "trace_complete": True,
+         "latency_ms": 100.0, "llm_cost_usd": 0.01},
+    ]
+    m = be.compute_metrics(rows)
+    assert m["llm_cost_usd_total"] == pytest.approx(0.03)
+    assert m["cost_per_success_usd"] == pytest.approx(0.03)   # 1 pass
+    assert m["cost_per_repair_usd"] == pytest.approx(0.03)    # 1 repair
+
+
 class _NoopLoopPlanner:
     """Noops every turn — the run only ends when the budget stops it."""
     def available(self):

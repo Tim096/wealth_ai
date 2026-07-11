@@ -51,6 +51,7 @@ from playwright.sync_api import sync_playwright
 
 from browser_core import BrowserTaskContract, ForbiddenCondition, SuccessCondition
 from browser_agent.agent import BrowserAgent, Step
+from browser_agent.cost_metrics import cost_metrics
 from browser_agent.memory_store import MemoryStore
 from browser_agent.observer import PageObserver
 from browser_agent.second_judge import (
@@ -103,6 +104,7 @@ def _row(run, task) -> dict:
         # verifier false positive = claimed pass when ground truth says fail
         "repairs": run.repairs, "false_positive": run.status == "pass" and expected == "fail",
         "trace_complete": bool(run.steps), "latency_ms": round(run.total_latency_ms, 1),
+        "llm_cost_usd": round(run.llm_cost_usd, 6),  # P0-6: cost lives with the verdict
         "verifier_reason": run.verifier.reason,
     }
 
@@ -337,6 +339,9 @@ def compute_metrics(rows: list[dict]) -> dict:
                                      / max(1, sum(r["repairs"] > 0 for r in rows)), 3),
         "trace_completeness": round(sum(r["trace_complete"] for r in rows) / n, 3),
         "avg_latency_ms": round(sum(r["latency_ms"] for r in rows) / n, 1),
+        # P0-6: cost-per-outcome block (browser_agent/cost_metrics) — cost and
+        # verdict in the same artifact; Script Mode rows cost 0.0 honestly.
+        **cost_metrics(rows),
     }
 
 

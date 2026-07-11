@@ -32,3 +32,7 @@ AI 初始判斷:SPEC 內所有 schema 以 TypeScript 撰寫,故先建 npm worksp
 - 刪除 package.json / tsconfig.base.json(未曾 commit)
 - 建立 pyproject.toml + .venv + pydantic schemas
 - SPEC 的 TS 欄位名在 pydantic model 中原樣保留,未來前端可直接吃同樣 JSON
+
+## 事後看(2026-07-10)
+
+拒絕正確。之後三天全部關鍵能力都直接受益於 Python 生態:SEC streaming normalizer(html.parser/lxml)、Playwright agent、外部引擎仲裁票(edgartools/datamule 皆 pip 直裝,見 `prompts/eval_design/2026-07-10-five-engine-2of-n-voting.md`)、NTU benchmark scorer。測試自初期 89 → 700+(pytest 全綠)。前端最終以純靜態 HTML+JS 掛在 FastAPI 上(Zeabur 部署),TS monorepo 的假想需求從未出現——「保留給未來前端」的那個未來,用不到 TS 工具鏈就滿足了。

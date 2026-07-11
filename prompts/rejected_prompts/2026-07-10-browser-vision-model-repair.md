@@ -34,3 +34,7 @@
 
 - 採用 a11y-tree + purpose 評分修復(`packages/browser_agent/repair.py`),非 vision。
 - vision fallback 記為 roadmap。
+
+## 事後看(2026-07-10)
+
+拒絕的**邊界**事後被驗證是對的:vision 後來確實回來了,但回在**感知升級**層(AGENT_VISION 三態 + heuristic 觸發,截圖只在 a11y 訊號不足時附進 planner call,`agent.py:216-224`),**不是**修復路徑——repair 至今維持確定性 a11y 評分、零 LLM 成本,giants 對照(`docs/research/giants_task1.md` §1.5)確認此設計在 cost 軸領先 SOTA(BU 的 use_vision='auto' 是同構等價)。「see+mouse+keyboard 混合、非取代;verifier 仍唯一裁判」正是當年拒絕理由(vision 當升級手段不當預設)的延伸,而非推翻。

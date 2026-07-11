@@ -103,7 +103,9 @@ def test_pool_runs_all_tasks_in_input_order(tmp_path):
     for t in tasks:  # per-task summary.json persisted by the guard in the child
         disk = json.loads((tmp_path / t["task_id"] / "summary.json").read_text(encoding="utf-8"))
         assert disk["harness_status"] == "done"
-    assert len(stats["sessions"]) == 2          # one session per worker, reused
+    # sessions are reused (5 tasks never spawn 5 sessions); at most one per
+    # worker, but a fast worker may drain the queue before the second spawns
+    assert 1 <= len(stats["sessions"]) <= 2
     assert sum(s["tasks"] for s in stats["sessions"]) == 5
     assert stats["watchdog_kills"] == []
 

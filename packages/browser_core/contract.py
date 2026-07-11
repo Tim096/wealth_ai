@@ -15,6 +15,11 @@ class SuccessCondition(BaseModel):
         "url_contains",
         "text_visible",
         "download_exists",
+        # answer channel (P2): value is a regex the DELIVERED answer must match.
+        # The answer comes from extract_text actions against the real page
+        # (extracted['answer']), never from the LLM's self-report; no answer
+        # extracted => the deliverable was never produced => fail.
+        "answer_matches",
         "table_extracted",
         "field_value_equals",
         "screenshot_region_changed",

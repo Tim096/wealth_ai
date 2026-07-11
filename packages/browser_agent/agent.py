@@ -139,6 +139,11 @@ class TaskRun:
     repairs: int = 0
     total_latency_ms: float = 0.0
     confidence: float = 0.0         # numeric, derived from verifier + repair cost
+    # Answer channel (P2): text the agent DELIVERED via extract_text actions,
+    # concatenated in extraction order. This is page evidence, not the LLM's
+    # self-report — the verifier's answer_matches condition judges it, and the
+    # UI shows it so an answer-type task actually hands the answer to the user.
+    answer: str = ""
     # T1-4 observation-layer metric: pre/post persistent-state diff. Empty until a
     # runner captures snapshots around the run; on a real site it stays 'unknown'.
     side_effects: dict[str, Any] = field(default_factory=dict)
@@ -147,6 +152,7 @@ class TaskRun:
         return {
             "task_id": self.task_id, "site": self.site, "status": self.status,
             "confidence": round(self.confidence, 3),
+            "answer": self.answer,
             "repairs": self.repairs, "total_latency_ms": round(self.total_latency_ms, 1),
             # T1-4 repetitiveness: derived purely from the recorded steps, so it is
             # computed here (observation only, never influences agent behaviour).
@@ -432,6 +438,19 @@ class BrowserAgent:
         history: list[str] = []
         llm_cost = 0.0
         give_ups = 0
+        # Answer channel (P2): every successful extract_text APPENDS here — the
+        # observed INTC failure was extract results dropped on the floor while
+        # extracted only ever carried __download__, so an answer-type task had
+        # no delivery channel and its verdict rested on premature landmarks.
+        answers: list[str] = []
+
+        def _extracted() -> dict[str, str]:
+            ex: dict[str, str] = {}
+            if answers:
+                ex["answer"] = "\n".join(answers)
+            if self.executor.last_download_path:
+                ex["__download__"] = self.executor.last_download_path
+            return ex
         self._dismiss_overlay(trace)
         # Baseline-subtraction (premature-landmark kill): a condition already
         # true on the OPENING page proves nothing about completion — e.g. the
@@ -456,7 +475,10 @@ class BrowserAgent:
                 _emit("🧹 偵測到彈出視窗,已清除")
                 self.page.wait_for_timeout(200)
             obs = self.observer.observe()
-            verdict = verify_contract(contract, obs, {})
+            # the loop verdict sees the SAME evidence surface as the final one
+            # (answer + download), so a satisfied deliverable ends the run here
+            # instead of waiting for the model to claim done
+            verdict = verify_contract(contract, obs, _extracted())
             if verdict.status == "pass":
                 break
             _emit("💭 看畫面、決定下一步…")
@@ -512,6 +534,11 @@ class BrowserAgent:
             detail = decision.reason
             if action.type == "download" and out.ok:
                 detail = f"下載完成 → {self.executor.last_download_path}"
+            if action.type == "extract_text" and out.ok and out.extracted_text:
+                # append semantics: a task may need several extractions; all of
+                # them together are the delivered answer
+                answers.append(out.extracted_text.strip())
+                detail = f"📋 擷取內容({len(out.extracted_text)} 字):{out.extracted_text[:120]}"
             trace.append(StepTrace(step="planner", action=action.type, ok=out.ok, mode="agent",
                                    detail=detail, selector_used=getattr(
                                        getattr(action, "target", None), "selector", ""),
@@ -529,12 +556,13 @@ class BrowserAgent:
                 except Exception:  # noqa: BLE001 — best-effort; some pages never idle
                     pass
             self.page.wait_for_timeout(300)
-        extracted = {"__download__": self.executor.last_download_path} if self.executor.last_download_path else {}
+        extracted = _extracted()
         obs = self.observer.observe()
         verdict = verify_contract(contract, obs, extracted)
         base = {"pass": 1.0, "unknown": 0.4, "fail": 0.0}[verdict.status]
         run = TaskRun(task_id=task_id, site=self.site, status=verdict.status, verifier=verdict,
                       steps=trace, repairs=0, confidence=base,
+                      answer=extracted.get("answer", ""),
                       total_latency_ms=(time.perf_counter() - t0) * 1000)
         self._emit_evidence(f"agent-{self.site}-{task_id}", task_id, run)
         return run

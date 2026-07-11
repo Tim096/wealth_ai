@@ -378,7 +378,7 @@ def agent_submit(task: str, url: str, success: str) -> dict:
     _RUNS[run_id] = {"status": "queued", "steps": [], "task": task,
                      "url": url or "(開場由 LLM 規畫)",
                      "success": conds or ["(開場由 LLM 規畫)"],
-                     "verifier": "", "confidence": None, "download": ""}
+                     "verifier": "", "confidence": None, "download": "", "answer": ""}
     _JOBS.put((run_id, task, url, conds))
     return {"ok": True, "run_id": run_id, "success": conds or ["auto-plan"]}
 
@@ -492,7 +492,12 @@ def _agent_worker() -> None:
                                         plan_steps=plan_steps)
                 rec.update(status=run.status, confidence=run.confidence,
                            verifier=run.verifier.reason,
-                           download=agent.executor.last_download_path)
+                           download=agent.executor.last_download_path,
+                           # answer channel (P2): what extract_text actually took
+                           # from the page — the deliverable, shown next to the
+                           # verdict so the user receives the answer, not just a
+                           # pass/fail about it
+                           answer=run.answer)
             except Exception as e:  # noqa: BLE001
                 rec.update(status="error", verifier=f"{type(e).__name__}: {e}")
 

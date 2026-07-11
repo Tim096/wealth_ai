@@ -50,6 +50,7 @@ PLAYBOOK
 - Navigation: "goto" with a URL you can see on the page, one given in the task, or an obvious well-known domain for a named site. Never invent a deep/guessed path — go to the site root and navigate from there.
 - USE LINK HREFS: on a list/results/index page, candidates that are links show their href=. To reach a specific row (a filing, a document, an article), "goto" that row's href directly, or "click" that exact aid — do NOT go back to a search box. On EDGAR you land on the company's filing list: goto the newest 10-K's ...-index.htm href, then on that index page goto/click the primary document (the .htm), then "download" it.
 - Reading: "extract_text" on the element that holds the answer when the task asks for information.
+- ANSWER TASKS (find a number / look up a price / answer a question): the extracted text IS the deliverable — the verifier judges what you extracted, never what you say in "reason". Once the answer is on screen you MUST "extract_text" the element containing it (do this BEFORE "done"); a run that never extracts the answer cannot pass, no matter how visible the answer was.
 - SCREEN-LEVEL FALLBACK (mouse / keyboard): prefer aid-based click/fill/press — they are precise and verifiable. Use "mouse" (with x,y copied from a candidate's at=(x,y)) ONLY when no aid can address the thing you must click: a custom widget, a canvas/image hit-area, an option the DOM doesn't expose as its own element. Use "keyboard" to type at the current focus (value) or press a key/chord (keys: "Enter"/"Tab"/"Escape") when a widget took focus from a click but offers no fillable target — e.g. Tab between fields, Enter to confirm. Do NOT invent coordinates; only use an at=(x,y) shown in the candidate list.
 
 WHEN BLOCKED
@@ -162,6 +163,8 @@ Return EXACTLY ONE JSON object, nothing else:
        {"type":"text_visible","value":"<short exact substring that appears on the page only when done>"}
        {"type":"url_contains","value":"<url fragment true only when done>"}
        {"type":"download_exists","value":"<distinctive text the SAVED FILE must contain, or \"\">"}
+       {"type":"answer_matches","value":"<regex the EXTRACTED answer text must match>"}
+     answer_matches is for ANSWER-TYPE tasks — the user wants a piece of information back (find a number, look up a price/date, answer a question). The agent must deliver the answer with an extract_text action; the verifier matches your regex against that extracted text, and a run that never extracts anything FAILS. Write the regex for the SHAPE of the deliverable, not its unknown value: a revenue/price figure -> "[\\$€¥]?[0-9][0-9,\\.]+\\s*(billion|million|億|兆)?", a duration -> "[0-9]+\\s*(hr|hours?|小時|分鐘|min)", a date -> "20[0-9]{2}". Prefer answer_matches over text_visible for these tasks: a text_visible landmark can be true before the answer was ever delivered.
      download_exists is verified against the file's BYTES on disk, not its name: if the task says to download a document AND locate a section in it (e.g. "download the 10-K and find Risk Factors"), set value to that section's exact heading ("Risk Factors") so a wrong or blocked page saved to disk cannot count as success. Use "" only when any file is acceptable.
      Prefer a distinctive phrase in the language the target page will render (English site -> English phrase). Keep each value short and literal (a title, a heading, a ticker, a section name) — not a whole sentence, not vague words that appear everywhere.
      NEVER use an id/slug/token taken from a URL as a text_visible value — it does not appear as text on the page and would fail even when the task succeeded.
@@ -211,12 +214,18 @@ class LLMPlanner:
                 continue
             t = str(c.get("type", "")).strip()
             v = str(c.get("value", "")).strip()
-            if t not in ("text_visible", "url_contains", "download_exists"):
+            if t not in ("text_visible", "url_contains", "download_exists", "answer_matches"):
                 continue
             if t != "download_exists" and not (0 < len(v) <= 120):
                 continue
             if t == "text_visible" and _task_echo(v, task):
                 continue   # premature landmark: a task-sentence token proves nothing
+            if t == "answer_matches":
+                import re as _re
+                try:
+                    _re.compile(v)
+                except _re.error:
+                    continue   # an uncompilable pattern can never be evidence
             conds.append(f"{t}:{v}")
 
         def _clean_list(key: str, cap: int) -> list[str]:

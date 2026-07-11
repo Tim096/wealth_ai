@@ -1356,6 +1356,107 @@
       "extracted_missing_path": true
     },
     {
+      "case_id": "cal-ok-answer-0",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-answer-0",
+        "natural_language_task": "\u627e\u51fa\u9801\u9762\u4e0a\u7684\u71df\u6536\u6578\u5b57",
+        "expected_outcome": "the extracted answer carries the revenue figure",
+        "success_conditions": [
+          {
+            "type": "answer_matches",
+            "value": "[\\$][0-9][0-9,\\.]+\\s*(billion|million)?"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockcorp.local/investors",
+        "title": "Investors",
+        "visible_text": "MockCorp investor relations",
+        "modal_present": false
+      },
+      "download_file": null,
+      "answer": "Total revenue: $53.1 billion, up 8% year over year."
+    },
+    {
+      "case_id": "cal-ok-answer-1",
+      "label": "success",
+      "corruption_class": null,
+      "contract": {
+        "task_id": "cal-ok-answer-1",
+        "natural_language_task": "\u627e\u51fa\u9801\u9762\u4e0a\u7684\u71df\u6536\u6578\u5b57",
+        "expected_outcome": "the extracted answer carries the revenue figure",
+        "success_conditions": [
+          {
+            "type": "answer_matches",
+            "value": "[\\$][0-9][0-9,\\.]+\\s*(billion|million)?"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockcorp.local/investors",
+        "title": "Investors",
+        "visible_text": "MockCorp investor relations",
+        "modal_present": false
+      },
+      "download_file": null,
+      "answer": "Revenue was $790.9 million in Q4."
+    },
+    {
+      "case_id": "cal-bad-answer-wrong-text",
+      "label": "corrupted",
+      "corruption_class": "answer_wrong",
+      "contract": {
+        "task_id": "cal-bad-answer-wrong-text",
+        "natural_language_task": "\u627e\u51fa\u9801\u9762\u4e0a\u7684\u71df\u6536\u6578\u5b57",
+        "expected_outcome": "the extracted answer carries the revenue figure",
+        "success_conditions": [
+          {
+            "type": "answer_matches",
+            "value": "[\\$][0-9][0-9,\\.]+\\s*(billion|million)?"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockcorp.local/investors",
+        "title": "Investors",
+        "visible_text": "MockCorp investor relations",
+        "modal_present": false
+      },
+      "download_file": null,
+      "answer": "MockCorp designs widgets. Founded in 1998, operating in 14 countries."
+    },
+    {
+      "case_id": "cal-bad-answer-missing",
+      "label": "corrupted",
+      "corruption_class": "answer_wrong",
+      "contract": {
+        "task_id": "cal-bad-answer-missing",
+        "natural_language_task": "\u627e\u51fa\u9801\u9762\u4e0a\u7684\u71df\u6536\u6578\u5b57",
+        "expected_outcome": "the extracted answer carries the revenue figure",
+        "success_conditions": [
+          {
+            "type": "answer_matches",
+            "value": "[\\$][0-9][0-9,\\.]+\\s*(billion|million)?"
+          }
+        ],
+        "forbidden_conditions": []
+      },
+      "observation": {
+        "url": "http://mockcorp.local/investors",
+        "title": "Investors",
+        "visible_text": "MockCorp investor relations. Total revenue: $53.1 billion.",
+        "modal_present": false
+      },
+      "download_file": null,
+      "answer": null,
+      "agent_claim": "I found it \u2014 total revenue is $53.1 billion."
+    },
+    {
       "case_id": "cal-bad-claim-widget",
       "label": "corrupted",
       "corruption_class": "confident_false_claim",

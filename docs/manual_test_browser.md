@@ -61,6 +61,39 @@ $env:OPENAI_MODEL   = "gpt-5-codex-mini"
 - **REFUSED**:任務涉及 login/purchase/checkout/submit → capability guard 擋下(誠實邊界,code-enforced)。試 `--task "Log into my account"` 會直接 refused。
 - artifact:`runs/agent_live/run.json`(trace)、`runs/agent_live/evidence/*.jsonl`(EvidenceRecord)、`runs/agent_live/shots/*.png`(截圖)。
 
+## 手動驗收劇本:INTC 營收(answer channel,live LLM)
+
+> 真實案例回歸驗收。這條需要 codex gateway(live LLM),**不進 CI**;離線等價
+> 驗證由 `tools/answer_channel_eval.py` + `tests/test_answer_channel.py` 覆蓋。
+
+歷史 failure(修復前):任務「找到 intc 10-k 的財報 找到裡面的最新的營收數字給我」
+→ preflight 給 `text_visible:intc`(任務句自帶 token)→ agent 只開了 EDGAR 搜尋頁
+→ 條件命中 → **PASS conf 1.00,但答案從沒交付**。三重根因:premature landmark(P1
+已修)、答案無交付通道、extract 結果被丟棄(P2 已修)。
+
+步驟:
+
+```powershell
+# 終端機 A(一次性 codex login 後)
+.venv\Scripts\python tools\codex_gateway.py --model default
+# 終端機 B
+.venv\Scripts\python tools\test_center.py
+```
+
+在測試中心「題目一」輸入:`找到 intc 10-k 的財報 找到裡面的最新的營收數字給我`,派工。
+
+驗收判準(全部要成立):
+
+1. 🧭 規畫列的成功條件是 `answer_matches:<regex>`(deliverable 的形狀,例如
+   `[\$][0-9][0-9,\.]+\s*(billion|million)?`),**不是** `text_visible:intc`
+   (task-echo guard 會擋;若 LLM 仍給出開場即真的條件,trace 會出現
+   「🚫 條件在開場就成立(vacuous),已剔除」)。
+2. agent 走到含營收數字的頁面後,倒數步驟出現 `extract_text`(feed 顯示
+   「📋 擷取內容(N 字):…」)。
+3. verdict 旁出現「📋 擷取內容」區塊,內容含營收數字 —— 答案真的交到手上。
+4. PASS 的依據是 answer_matches 對擷取文字的比對;若 agent 沒做 extract 就
+   done,verdict 是 **FAIL**(沒交付=沒完成),不是 PASS。
+
 ## 可靠性設計(為何這不是「LLM 亂點」)
 
 1. LLM 只能回傳受控 action JSON,target 只能用 aid 選現有元素——不能寫 code、不能造 selector。

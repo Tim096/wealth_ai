@@ -17,6 +17,9 @@ def _by_class(per_case, cls):
 
 
 def test_dataset_meets_spec_minimums():
+    """前後對照:原本固定 4 個 corruption class(各 >=6)。P2 answer channel 讓
+    answer_matches 有了 evidence 面,校準集加入第 5 類 answer_wrong(答案錯 /
+    沒答案,2 例)——類別集合從嚴格等於 4 類改為包含 5 類,原 4 類門檻不變。"""
     cases = build_cases()
     n_success = sum(c["label"] == "success" for c in cases)
     n_corrupted = sum(c["label"] == "corrupted" for c in cases)
@@ -27,8 +30,12 @@ def test_dataset_meets_spec_minimums():
         if c["corruption_class"]:
             classes[c["corruption_class"]] = classes.get(c["corruption_class"], 0) + 1
     assert set(classes) == {"needle_removed", "wrong_url",
-                            "download_wrong_content", "confident_false_claim"}
-    assert all(v >= 5 for v in classes.values())
+                            "download_wrong_content", "confident_false_claim",
+                            "answer_wrong"}
+    for k in ("needle_removed", "wrong_url", "download_wrong_content",
+              "confident_false_claim"):
+        assert classes[k] >= 5
+    assert classes["answer_wrong"] >= 2
     # every case id unique — per_case rows must be attributable
     ids = [c["case_id"] for c in cases]
     assert len(ids) == len(set(ids))

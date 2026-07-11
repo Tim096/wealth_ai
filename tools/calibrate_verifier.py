@@ -15,7 +15,10 @@ Two label layers, kept explicit:
     against page state, it does not launder the hand labels.
 
 Scope (honest): only condition types with an evidence surface are calibrated
-(url_contains, text_visible, download_exists, and the forbidden checks).
+(url_contains, text_visible, download_exists, answer_matches, and the
+forbidden checks). answer_matches gained an evidence surface with the P2
+answer channel (extract_text -> extracted['answer']), so it is IN scope:
+answer present + regex match = pass, present + no match = fail, absent = fail.
 table_extracted / screenshot_region_changed / field_value_equals return
 unknown-or-need-extracted by design and would skew the matrix with structural
 unknowns — excluded and declared in the output.
@@ -76,6 +79,19 @@ def _download_contract(cid: str, needle: str) -> dict:
     }
 
 
+_ANSWER_RE = r"[\$][0-9][0-9,\.]+\s*(billion|million)?"
+
+
+def _answer_contract(cid: str) -> dict:
+    return {
+        "task_id": cid,
+        "natural_language_task": "找出頁面上的營收數字",
+        "expected_outcome": "the extracted answer carries the revenue figure",
+        "success_conditions": [{"type": "answer_matches", "value": _ANSWER_RE}],
+        "forbidden_conditions": [],
+    }
+
+
 def _nav_contract(cid: str, page: str) -> dict:
     return {
         "task_id": cid,
@@ -90,8 +106,9 @@ def _nav_contract(cid: str, page: str) -> dict:
 
 
 def build_cases() -> list[dict]:
-    """Deterministic calibration set: 22 known-success + 24 corrupted
-    (4 corruption classes x 6). No randomness — same cases every run."""
+    """Deterministic calibration set: 24 known-success + 26 corrupted
+    (4 corruption classes x 6, + answer_wrong x 2). No randomness — same
+    cases every run."""
     cases: list[dict] = []
 
     # --- known success: search (6) ---
@@ -224,6 +241,41 @@ def build_cases() -> list[dict]:
         "download_file": None, "extracted_missing_path": True,
     })
 
+    # --- known success: answer channel (2) — extracted answer matches the pattern ---
+    for i, ans in enumerate(["Total revenue: $53.1 billion, up 8% year over year.",
+                             "Revenue was $790.9 million in Q4."]):
+        cases.append({
+            "case_id": f"cal-ok-answer-{i}", "label": "success", "corruption_class": None,
+            "contract": _answer_contract(f"cal-ok-answer-{i}"),
+            "observation": {"url": "http://mockcorp.local/investors", "title": "Investors",
+                            "visible_text": "MockCorp investor relations", "modal_present": False},
+            "download_file": None, "answer": ans,
+        })
+
+    # --- corruption class 5: answer_wrong (2) — the P2 answer-channel failures.
+    # (a) an answer WAS delivered but it is the wrong text (regex unmatched);
+    # (b) no answer at all — the agent never made a delivery move (the INTC
+    #     shape: claiming the number without extracting it). Both must be fail.
+    cases.append({
+        "case_id": "cal-bad-answer-wrong-text", "label": "corrupted",
+        "corruption_class": "answer_wrong",
+        "contract": _answer_contract("cal-bad-answer-wrong-text"),
+        "observation": {"url": "http://mockcorp.local/investors", "title": "Investors",
+                        "visible_text": "MockCorp investor relations", "modal_present": False},
+        "download_file": None,
+        "answer": "MockCorp designs widgets. Founded in 1998, operating in 14 countries.",
+    })
+    cases.append({
+        "case_id": "cal-bad-answer-missing", "label": "corrupted",
+        "corruption_class": "answer_wrong",
+        "contract": _answer_contract("cal-bad-answer-missing"),
+        "observation": {"url": "http://mockcorp.local/investors", "title": "Investors",
+                        "visible_text": "MockCorp investor relations. Total revenue: $53.1 billion.",
+                        "modal_present": False},
+        "download_file": None, "answer": None,
+        "agent_claim": "I found it — total revenue is $53.1 billion.",
+    })
+
     # --- corruption class 4: confident_false_claim (6) — agent SAYS done, state says no.
     # agent_claim even contains the needle text; verify_contract has no channel
     # for it, so a pass here would mean the verifier eats self-reports. ---
@@ -277,6 +329,8 @@ def run_case(case: dict, dl_dir: Path) -> str:
         extracted["__download__"] = str(path)
     if case.get("extracted_missing_path"):
         extracted["__download__"] = str(dl_dir / "does-not-exist.htm")
+    if case.get("answer") is not None:
+        extracted["answer"] = case["answer"]
     return verify_contract(contract, obs, extracted).status
 
 
@@ -378,6 +432,7 @@ def main() -> None:
         "generated_by": "tools/calibrate_verifier.py",
         "scope": {
             "calibrated_condition_types": ["url_contains", "text_visible", "download_exists",
+                                           "answer_matches",
                                            "error_text_visible", "captcha_visible",
                                            "login_required", "wrong_domain"],
             "excluded_condition_types": {

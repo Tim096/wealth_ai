@@ -1,0 +1,62 @@
+{
+  "generated_by": "tools/answer_channel_eval.py",
+  "source_tasks": "data/browser_eval/tasks.json -> answer_tasks",
+  "definition": {
+    "answer_channel": "extract_text output -> extracted['answer'] (append) -> TaskRun.answer; answer_matches judges the extracted text, never the model's self-report",
+    "silent_failure": "status 'pass' with NO delivered answer — the INTC premature-landmark failure shape; must be zero",
+    "no_delivery_fail": "claiming done without any extract action is fail: the task asked for an answer and none was produced"
+  },
+  "metrics": {
+    "n_answer_tasks": 3,
+    "matches_expected": 3,
+    "answers_delivered": 2,
+    "answer_channel_intact": true,
+    "silent_failures": 0,
+    "pass_with_answer": 1,
+    "fail_without_delivery": 1
+  },
+  "tasks": [
+    {
+      "task_id": "ans-revenue-extract",
+      "kind": "answer_delivered",
+      "site": "answer",
+      "expected": "pass",
+      "status": "pass",
+      "matches_expected": true,
+      "answer": "Total revenue: $53.1 billion, up 8% year over year.",
+      "answer_delivered": true,
+      "answer_as_expected": true,
+      "silent_failure": false,
+      "verifier_status": "pass",
+      "verifier_reason": "all conditions observed and satisfied"
+    },
+    {
+      "task_id": "ans-revenue-wrong-element",
+      "kind": "answer_wrong",
+      "site": "answer",
+      "expected": "fail",
+      "status": "fail",
+      "matches_expected": true,
+      "answer": "MockCorp designs and manufactures widgets, gizmos and sprockets for industrial customers worldwide. Founded in 1998, the company operates in 14 countries. This paragraph deliberately contains no financial figures.",
+      "answer_delivered": true,
+      "answer_as_expected": true,
+      "silent_failure": false,
+      "verifier_status": "fail",
+      "verifier_reason": "violated: answer_matches:[\\$][0-9][0-9,\\.]+\\s*(billion|million)?"
+    },
+    {
+      "task_id": "ans-revenue-no-extract",
+      "kind": "no_delivery",
+      "site": "answer",
+      "expected": "fail",
+      "status": "fail",
+      "matches_expected": true,
+      "answer": "",
+      "answer_delivered": false,
+      "answer_as_expected": true,
+      "silent_failure": false,
+      "verifier_status": "fail",
+      "verifier_reason": "violated: answer_matches:[\\$][0-9][0-9,\\.]+\\s*(billion|million)?"
+    }
+  ]
+}

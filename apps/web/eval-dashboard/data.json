@@ -233,7 +233,18 @@
     "status": "pass",
     "confidence": 1.0,
     "repairs": 0,
-    "total_latency_ms": 623.4,
+    "total_latency_ms": 657.0,
+    "repetition": {
+     "n_steps": 2,
+     "n_unique": 2,
+     "unique_ratio": 1.0,
+     "repetition_score": 0.0,
+     "max_consecutive_repeat": 1,
+     "loop_period": 0,
+     "loop_repeats": 0,
+     "loop_detected": false
+    },
+    "side_effects": {},
     "verifier": {
      "status": "pass",
      "reason": "all conditions observed and satisfied",
@@ -256,7 +267,7 @@
       "repair_considered": [],
       "repair_chosen": "",
       "selector_used": "#search-box",
-      "latency_ms": 13.5,
+      "latency_ms": 11.2,
       "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v1\\search_box-ok.png"
      },
      {
@@ -269,7 +280,7 @@
       "repair_considered": [],
       "repair_chosen": "",
       "selector_used": "#search-btn",
-      "latency_ms": 38.0,
+      "latency_ms": 52.8,
       "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v1\\submit_button-ok.png"
      }
     ]
@@ -281,7 +292,18 @@
     "status": "pass",
     "confidence": 0.8,
     "repairs": 2,
-    "total_latency_ms": 694.1,
+    "total_latency_ms": 659.6,
+    "repetition": {
+     "n_steps": 3,
+     "n_unique": 3,
+     "unique_ratio": 1.0,
+     "repetition_score": 0.0,
+     "max_consecutive_repeat": 1,
+     "loop_period": 0,
+     "loop_repeats": 0,
+     "loop_detected": false
+    },
+    "side_effects": {},
     "verifier": {
      "status": "pass",
      "reason": "all conditions observed and satisfied",
@@ -299,12 +321,12 @@
       "action": "click",
       "ok": true,
       "mode": "repair",
-      "detail": "dismissed blocking modal",
+      "detail": "dismissed blocking modal via 'accept-cookies  acce'",
       "diagnosis": "modal_blocking",
       "repair_considered": [],
       "repair_chosen": "",
       "selector_used": "#accept-cookies",
-      "latency_ms": 39.5,
+      "latency_ms": 41.7,
       "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\modal-dismissed.png"
      },
      {
@@ -315,13 +337,13 @@
       "detail": "selector matched no element",
       "diagnosis": "selector_not_found",
       "repair_considered": [
-       "input#-[Search products] score=4.5 (tag=input, purpose word match)",
-       "button#go[Search] score=2.0 (purpose word match)",
-       "button#fake-search[Search] score=-1.0 (looks like a decoy element)"
+       "input#-[Search products] score=5.5 (tag=input, purpose word match, same form as a submit control)",
+       "button#fake-search[Search] score=-1.0 (looks like a decoy element)",
+       "button#go[Search] score=-1.0 (infeasible for search_box (no actionable tag/role))"
       ],
-      "repair_chosen": "input[name=query] score=4.5: tag=input, purpose word match",
+      "repair_chosen": "input[name=query] score=5.5: tag=input, purpose word match, same form as a submit control",
       "selector_used": "input[name=query]",
-      "latency_ms": 7.9,
+      "latency_ms": 8.8,
       "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\search_box-repaired.png"
      },
      {
@@ -333,12 +355,12 @@
       "diagnosis": "selector_not_found",
       "repair_considered": [
        "button#go[Search] score=5.5 (tag=button, purpose word match, type=submit)",
-       "input#-[Search products] score=2.0 (purpose word match)",
-       "button#fake-search[Search] score=-1.0 (looks like a decoy element)"
+       "button#fake-search[Search] score=-1.0 (looks like a decoy element)",
+       "input#-[Search products] score=-1.0 (infeasible for submit_button (no actionable tag/role))"
       ],
       "repair_chosen": "#go score=5.5: tag=button, purpose word match, type=submit",
       "selector_used": "#go",
-      "latency_ms": 32.7,
+      "latency_ms": 13.9,
       "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\submit_button-repaired.png"
      }
     ]
@@ -347,17 +369,17 @@
  },
  "browser_evals": {
   "calibration": {
-   "n_success": 22,
-   "n_corrupted": 24,
+   "n_success": 24,
+   "n_corrupted": 26,
    "three_state_table": {
     "success": {
-     "pass": 22,
+     "pass": 24,
      "fail": 0,
      "unknown": 0
     },
     "corrupted": {
      "pass": 0,
-     "fail": 21,
+     "fail": 23,
      "unknown": 3
     }
    },
@@ -377,6 +399,11 @@
      "fail": 5,
      "unknown": 1
     },
+    "answer_wrong": {
+     "pass": 0,
+     "fail": 2,
+     "unknown": 0
+    },
     "confident_false_claim": {
      "pass": 0,
      "fail": 4,
@@ -384,10 +411,10 @@
     }
    },
    "confusion": {
-    "tp": 22,
+    "tp": 24,
     "fn_not_pass": 0,
     "fp": 0,
-    "tn_not_pass": 24
+    "tn_not_pass": 26
    },
    "rates": {
     "sensitivity": 1.0,
@@ -395,7 +422,7 @@
     "false_positive_rate": 0.0,
     "false_negative_rate": 0.0,
     "unknown_rate_success": 0.0,
-    "unknown_rate_corrupted": 0.125
+    "unknown_rate_corrupted": 0.115385
    },
    "apparent_success_rate": 0.8,
    "corrected": {

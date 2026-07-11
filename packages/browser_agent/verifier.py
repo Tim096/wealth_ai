@@ -71,6 +71,19 @@ def _check_success(cond, obs: Observation, extracted: dict[str, str]) -> str:
         return "pass" if v in obs.url else "fail"
     if t == "text_visible":
         return "pass" if _text_visible_hit(v, obs.visible_text) else "fail"
+    if t == "answer_matches":
+        # Answer channel (P2): the deliverable of an answer-type task is the
+        # text the agent EXTRACTED from the real page (extracted['answer']),
+        # never its self-report. No answer on record means the agent never made
+        # the delivery move — that is a fail, not an unknown: the task asked for
+        # an answer and none was produced.
+        answer = extracted.get("answer", "")
+        if not answer:
+            return "fail"
+        try:
+            return "pass" if re.search(v, answer, re.IGNORECASE | re.DOTALL) else "fail"
+        except re.error:
+            return "unknown"  # malformed pattern cannot be evaluated — honest unknown
     if t == "table_extracted":
         return "pass" if any(v.lower() in x.lower() for x in extracted.values()) else "unknown"
     if t == "field_value_equals":
@@ -107,7 +120,8 @@ def subtract_baseline(contract: BrowserTaskContract, obs: Observation,
     trace shows it. If everything is dropped, the emptied contract flows into
     the open-ended gate in verify_contract: honest unknown, never a vacuous
     pass. download_exists is untouched (nothing is downloaded at t0 → unknown,
-    not pass). Returns (effective contract, dropped ["type:value", ...])."""
+    not pass); answer_matches likewise (no answer at t0 → fail, never pass).
+    Returns (effective contract, dropped ["type:value", ...])."""
     kept, dropped = [], []
     for c in contract.success_conditions:
         if _check_success(c, obs, {}) == "pass":

@@ -5,6 +5,7 @@
       "url_contains",
       "text_visible",
       "download_exists",
+      "answer_matches",
       "error_text_visible",
       "captcha_visible",
       "login_required",
@@ -21,9 +22,10 @@
     "eval_labels": "hand-authored expect_status in data/browser_eval/tasks.json \u2014 weaker; not used for sensitivity/specificity"
   },
   "dataset": {
-    "n_success": 22,
-    "n_corrupted": 24,
+    "n_success": 24,
+    "n_corrupted": 26,
     "corruption_classes": [
+      "answer_wrong",
       "confident_false_claim",
       "download_wrong_content",
       "needle_removed",
@@ -32,13 +34,13 @@
   },
   "three_state_table": {
     "success": {
-      "pass": 22,
+      "pass": 24,
       "fail": 0,
       "unknown": 0
     },
     "corrupted": {
       "pass": 0,
-      "fail": 21,
+      "fail": 23,
       "unknown": 3
     }
   },
@@ -58,6 +60,11 @@
       "fail": 5,
       "unknown": 1
     },
+    "answer_wrong": {
+      "pass": 0,
+      "fail": 2,
+      "unknown": 0
+    },
     "confident_false_claim": {
       "pass": 0,
       "fail": 4,
@@ -66,10 +73,10 @@
   },
   "binary_mapping": "positive = verdict 'pass'; negative = 'fail' OR 'unknown' (unknown is never success); unknown also reported separately above",
   "confusion": {
-    "tp": 22,
+    "tp": 24,
     "fn_not_pass": 0,
     "fp": 0,
-    "tn_not_pass": 24
+    "tn_not_pass": 26
   },
   "rates": {
     "sensitivity": 1.0,
@@ -77,7 +84,7 @@
     "false_positive_rate": 0.0,
     "false_negative_rate": 0.0,
     "unknown_rate_success": 0.0,
-    "unknown_rate_corrupted": 0.125
+    "unknown_rate_corrupted": 0.115385
   },
   "apparent": {
     "source": "data/browser_eval/artifacts/eval_results.json",
@@ -335,6 +342,30 @@
       "label": "corrupted",
       "corruption_class": "download_wrong_content",
       "verdict": "unknown"
+    },
+    {
+      "case_id": "cal-ok-answer-0",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-ok-answer-1",
+      "label": "success",
+      "corruption_class": null,
+      "verdict": "pass"
+    },
+    {
+      "case_id": "cal-bad-answer-wrong-text",
+      "label": "corrupted",
+      "corruption_class": "answer_wrong",
+      "verdict": "fail"
+    },
+    {
+      "case_id": "cal-bad-answer-missing",
+      "label": "corrupted",
+      "corruption_class": "answer_wrong",
+      "verdict": "fail"
     },
     {
       "case_id": "cal-bad-claim-widget",

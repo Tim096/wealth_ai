@@ -199,6 +199,45 @@
       "note": "capability guard refuses purchase/checkout; counted separately from FAIL"
     }
   ],
+  "answer_note": "P2 answer-channel set. Answer-type tasks deliver INFORMATION, not navigation: the deliverable is text the agent extract_text's from the real page (extracted['answer']), judged by an answer_matches regex — never the LLM's self-report. Ground truth by construction: the fixture page data/mock_sites/answer/index.html carries the revenue figure in #revenue and a no-figures paragraph in #about. The three cases prove the channel end-to-end: extract the right element -> pass WITH the answer on record; extract the wrong element -> fail (answer exists, regex unmatched); never extract and just claim done (the reason even contains the number — bait) -> fail (no delivery move = not done). Run with tools/answer_channel_eval.py; offline, deterministic, no LLM.",
+  "answer_tasks": [
+    {
+      "task_id": "ans-revenue-extract",
+      "layer": "answer_channel",
+      "kind": "answer_delivered",
+      "site": "answer",
+      "natural_language_task": "找出頁面上的營收數字",
+      "success_conditions": [{"type": "answer_matches", "value": "[\\$][0-9][0-9,\\.]+\\s*(billion|million)?"}],
+      "script": [{"extract": "#revenue"}],
+      "expect_status": "pass",
+      "expect_answer": true,
+      "note": "the agent extracts the element holding the figure -> extracted['answer'] carries '$53.1 billion' -> answer_matches passes and the run RETURNS the answer"
+    },
+    {
+      "task_id": "ans-revenue-wrong-element",
+      "layer": "answer_channel",
+      "kind": "answer_wrong",
+      "site": "answer",
+      "natural_language_task": "找出頁面上的營收數字",
+      "success_conditions": [{"type": "answer_matches", "value": "[\\$][0-9][0-9,\\.]+\\s*(billion|million)?"}],
+      "script": [{"extract": "#about"}],
+      "expect_status": "fail",
+      "expect_answer": true,
+      "note": "an answer WAS delivered but it is the wrong text (the no-figures paragraph) -> regex unmatched -> honest fail, not pass"
+    },
+    {
+      "task_id": "ans-revenue-no-extract",
+      "layer": "answer_channel",
+      "kind": "no_delivery",
+      "site": "answer",
+      "natural_language_task": "找出頁面上的營收數字",
+      "success_conditions": [{"type": "answer_matches", "value": "[\\$][0-9][0-9,\\.]+\\s*(billion|million)?"}],
+      "script": [{"done": "the revenue is $53.1 billion — it is right there on the page"}],
+      "expect_status": "fail",
+      "expect_answer": false,
+      "note": "the model CLAIMS done and its reason even contains the number (bait), but no extract action ran -> no answer on record -> fail; the verifier never eats self-reports"
+    }
+  ],
   "open_ended_note": "FIX-1 honesty set. Open-ended tasks compile to ZERO machine-checkable success conditions (the honest preflight answer). The ONLY correct outcome is `unknown` — the agent still runs and records a trace, but no verifier evidence can prove completion. A reported `pass` is a vacuous/silent pass; a crash (schema rejecting the empty contract) punishes honesty. Run with tools/open_ended_tasks.py.",
   "open_ended_tasks": [
     {

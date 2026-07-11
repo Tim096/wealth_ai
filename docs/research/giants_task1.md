@@ -242,29 +242,29 @@
 
 ### 外部量測 2026-07-10(Online-Mind2Web 20-task subset,live web,自跑)
 
-measure-before-claim 的前置已執行:P1-1 匯入的 20 題 live 子集,以我方 agent 實跑(serial、難度階梯 step budget、second judge advisory on;artifact `runs/browser_eval/m2w_rerun/`)。
+measure-before-claim 的前置已執行:P1-1 匯入的 20 題 live 子集,以我方 agent 實跑(serial、難度階梯 step budget、second judge advisory on;artifact `runs/browser_eval/m2w_rerun/`(gitignored)+ tracked 快照 `data/browser_eval/external_runs/m2w_rerun/`,其 results.json 由 `tools/aggregate_run.py` 從 20 份 per-task summary.json 事後聚合,`aggregated_post_hoc=true`)。
 
 | 指標 | 數字 |
 |---|---|
 | success(pass / 可評分,排除環境失效) | **6/18 = 33.3%** |
 | success(raw pass / 20) | 6/20 = 30.0% |
 | 分難度 | easy 1/6、medium 4/8、hard 1/4 |
-| naive baseline 對照(同子集) | 4/20 = 20%(trivial pass) |
+| naive baseline 對照(同子集) | 4/20 = 20%(trivial pass;tracked 快照 `data/browser_eval/external_runs/naive_baseline/results.json`) |
 | 環境失效(ERR_HTTP2,依維護協議排除) | 2/20(可重現,orphan 首跑同錯) |
 | 成本 | 平均 **$0.0058/task**、18 題共 $0.10;平均 wall ~77s/task |
 | second judge(advisory) | **18/18 全 abstain** |
 
 **誠實界定與失敗面**:
 - **不贏 SOTA**:33% 遠低於 leaderboard 頂端(bu-max live 97.0%,雲端重工程系統)。我方是小樣本(n=18)、自建、自驗的真實數字,勝過 paper naive 22% / 我方 naive 20%,證明機制有加值,但**「超越 97.0%」不成立**——如實記錄。
-- **advisory second judge 在 live 任務全 abstain**:對 open-ended live 任務零訊號——這是誠實暴露的限制(judge 為 mock contract 條件設計,未對 live 泛化);verifier 仍是唯一裁判,運作正常(pass/fail/unknown 三態齊全)。修法待辦:second judge 的 live-task key-point 抽取(WebJudge 式),見 P0-8 延伸。
+- **advisory second judge 在 live 任務全 abstain**:對 open-ended live 任務零訊號——這是誠實暴露的限制(judge 為 mock contract 條件設計,未對 live 泛化);verifier 仍是唯一裁判,運作正常(pass/fail/unknown 三態齊全)。修法待辦:second judge 的 live-task key-point 抽取(WebJudge 式),見 P0-8 延伸。**(後續已落地並關閉,見「外部量測 abstain-fix」節)**
 - **easy < medium 反常**(1/6 vs 4/8):小樣本雜訊 + easy 題落在較難自動化的站點;不粉飾。
-- **committed harness 無法驅動 live 外部集**(repo gap):`tools/browser_eval.py` 與 P0-11 pool 皆 mock-only,本次 live 跑靠 scratchpad 臨時腳本 `run_m2w.py`。下一步:產品化 `tools/run_external_eval.py`(讀 external/*.json + run_agentic + 難度階梯 + second judge),讓外部量測可重現、可 CI——這也是「面試官拿新任務來驗」的必要能力。
+- **committed harness 無法驅動 live 外部集**(本波時點的 repo gap,**後續已落地**):本次 baseline 跑靠 scratchpad 臨時腳本 `run_m2w.py`;`tools/run_external_eval.py`(讀 external/*.json + run_agentic + 難度階梯 + second judge)其後已產品化並用於後續波次。已知殘留:該 runner 用單一共享 page,一次硬導覽失敗會 cascade 污染後續任務——abstain-fix 量測改用 isolated-context driver(每題獨立 context+page),per-task 隔離回饋進 runner 仍是待辦,見「外部量測 abstain-fix」節「量測基建」。
 
 degradation curve / impossible / open-ended / pass@k 的分項數字見 `docs/eval_report.md`。
 
 ### 外部量測 rerun 2026-07-10(post bucket-fix)
 
-同 20 題 live 子集重跑,套上三個 bucket 修復 + verifier 採 `robust_contains` 整合掛鉤 + second judge 經 Codex gateway 武裝(LLM extractor,非 offline)。artifact `runs/browser_eval/m2w_rerun_20260710/`;baseline artifact `runs/browser_eval/m2w_rerun/`(逐題 summary 可對)。
+同 20 題 live 子集重跑,套上三個 bucket 修復 + verifier 採 `robust_contains` 整合掛鉤 + second judge 經 Codex gateway 武裝(LLM extractor,非 offline)。artifact `runs/browser_eval/m2w_rerun_20260710/` + tracked 快照 `data/browser_eval/external_runs/m2w_rerun_20260710/`;baseline artifact `runs/browser_eval/m2w_rerun/` + tracked `data/browser_eval/external_runs/m2w_rerun/`(逐題 summary 可對)。
 
 | 指標 | baseline | rerun | 移動 |
 |---|---|---|---|
@@ -285,32 +285,39 @@ degradation curve / impossible / open-ended / pass@k 的分項數字見 `docs/ev
 
 **逐 bucket 裁決**:
 - **BUCKET 2(robust text_visible)= 有推動數字**。兩題在**相同步數**下純靠 verifier 比對翻轉 fail→pass:`iOS.` 尾點 strip、`Year Award` tier-2 非連續 token 子集。這是本波唯一可歸因、可複現的加分來源。`robust_contains` 掛鉤本 session 落到 `verifier.py:34`(tier 1 為舊 exact-substring 嚴格超集,721 pytest 全綠、mock verdict_accuracy 1.0 不變)。
-- **BUCKET 1(open-ended scoring)= 沒推動數字**。second judge 已經 gateway 武裝(每題 LLM 實際被呼叫,cost 0.00014–0.00042、共 $0.0057),但 **18/18 仍 abstain**;6 個 unknown 一個都沒拿到分。且 unknown 從 3 升到 6(baseline-subtraction 把更多 landmark 契約歸零)。結論:**live-abstain gap 未關閉**——不是 wiring(extractor 已 LLM),是結構性:WebJudge 的 evidence-grounding demotion 對 live 頁面一律降級,且 `run_agentic` 的三處 `verify_contract` 未帶 `open_ended_extractor`(判決時開放式評分沒接線,BUCKET 1 只到 verifier 參數層、未到 agent loop)。能力在、live 泛化不在,如實記錄。
+- **BUCKET 1(open-ended scoring)= 沒推動數字**。second judge 已經 gateway 武裝(每題 LLM 實際被呼叫,cost 0.00014–0.00042、共 $0.0057),但 **18/18 仍 abstain**;6 個 unknown 一個都沒拿到分。且 unknown 從 3 升到 6(baseline-subtraction 把更多 landmark 契約歸零)。結論:**live-abstain gap 未關閉**——不是 wiring(extractor 已 LLM),是結構性:WebJudge 的 evidence-grounding demotion 對 live 頁面一律降級,且 `run_agentic` 的三處 `verify_contract` 未帶 `open_ended_extractor`(判決時開放式評分沒接線,BUCKET 1 只到 verifier 參數層、未到 agent loop)。能力在、live 泛化不在,如實記錄。**(此洞已於後續 judge-fix 波關閉——wrapper unwrap + verdict-time 武裝,見「外部量測 abstain-fix」節)**
 - **BUCKET 3(navigation convergence)= 中性偏負**。早退閘門確實壓低了「兩三步就放棄」,但反作用是**不可收斂任務燒更多預算而非收斂**:student 32→46 步、medicare 23→25、且 espn 由 baseline 2 步 pass 被推成 29 步 wander→unknown(pass→unknown 回歸,最可能是早停閘門過度激進、亦可能 live variance)。本樣本上 BUCKET 3 沒把 wander 轉成 pass,反而貢獻了唯一一筆回歸。hard 3/4 的高分來自快速 pass(2–5 步),非收斂機制之功。
 
 **誠實 caveat**:
 - **n 小、live variance 大**:n=18,單跑;`Houston` 翻轉與 `Formula` 回歸都可能是站點內容跑間差異而非機制,+11.1pt 需視為含雜訊的方向指標,非穩定增益。
-- **這 20 題契約本身弱**:success condition 全是單一 landmark/搜尋關鍵字(非任務答案),落地即成立者被 baseline-subtraction 剔空 → 判決退化為 open-ended unknown。verifier 判決對這批是弱 proxy;真正的答案軸得靠 second judge,而它 live 全 abstain——兩層都對 live 未泛化,是本波最該補的洞。
-- **second-judge live-abstain gap 未關閉**:武裝 extractor 是必要非充分;下一步是 WebJudge 對 live 的 key-point 抽取放寬 grounding、以及把 `open_ended_extractor` 接進 `run_agentic` 的判決路徑(仍守 verifier 唯一裁判、abstain 退回 honest unknown)。
+- **這 20 題契約本身弱**:success condition 全是單一 landmark/搜尋關鍵字(非任務答案),落地即成立者被 baseline-subtraction 剔空 → 判決退化為 open-ended unknown。verifier 判決對這批是弱 proxy;真正的答案軸得靠 second judge,而它 live 全 abstain——兩層都對 live 未泛化,是本波最該補的洞。**(second-judge 層已於下節關閉;verifier landmark 層對這批弱契約仍是弱 proxy,屬題目契約設計限制)**
+- **second-judge live-abstain gap(本波時點未關閉,後續已關閉)**:武裝 extractor 是必要非充分;後續修復 = 根因 unwrap(commit `49bcc6e`,codex-gateway 回傳被 action-schema wrapper 包裹,judge 解析不到 body 而一律 abstain)+ `open_ended_extractor` 接進 `run_agentic` 判決路徑與 groundable evidence(commit `3258b73`)。最終量測見下節:judge abstain 6/6 → 1/6,殘餘 1 題為證據不足的 honest abstain。
 
-### 追補:abstain-gap 修復後的 6-unknown 定向重跑(2026-07-11)
+### 外部量測 abstain-fix 2026-07-10(post judge-fix)
 
-上節指出的兩個洞已修(commit `3258b73` wiring+grounding、`b561e37` runner 隔離):(1) `run_agentic` 最終 `verify_contract` 在零條件契約且 planner 有 LLM client 時武裝 `open_ended_extractor`;(2) 根因是證據被截在 ~4–5K 字使引文無可 quote——現改餵最終頁 `inner_text` 12K + P0-5 逐步摘錄,引文須真出現於此證據方能 grounded-satisfied,否則降級 abstain。只**定向重跑上一波 6 個 unknown**(artifact `runs/browser_eval/m2w_abstain_fix2_20260710/`),非全集。
+上節兩個洞的修復已落地並完成最終量測。根因修復 commit:**`49bcc6e`**(unwrap codex-gateway action-schema wrapper——gateway 回傳被 wrapper 包裹,judge 解析不到 body,live-abstain 的直接根因)+ **`3258b73`**(open-ended scorer 於 verdict 時武裝:`run_agentic` 最終 `verify_contract` 在零條件契約且 planner 有 LLM client 時接上 `open_ended_extractor`;證據改餵最終頁 `inner_text` 12K + P0-5 逐步摘錄,引文須真出現於證據方能 grounded-satisfied,否則降級 abstain);量測基建修復 `b561e37`(per-task context 隔離)。只**定向重跑 `m2w_rerun_20260710` 的 6 個 unknown**(任務集檔:`data/browser_eval/external/m2w_unknowns6.json`,sha256=`1acfc7a3a20a3bc20d5bb07cdaed243642272dcfeccb232028ff62d8d4226c9b`,與 run dir manifest 記載值一致),非全集。
 
-| 原 unknown 題 | 站點 | 難度 | 修復後 | 依據 |
-|---|---|---|---|---|
-| m2w-a6f0434ce6af | yahoo finance | easy | **pass** | 「Tesla 2023-03-17 收盤價」→ 導覽至 TSLA 歷史頁,證據含 `Mar 17, 2023 … Close 180.13`(與實際一致),3/3 key point grounded。**已人工抽查:非幻覺** |
-| m2w-6ca20f1da01e | gov.uk | medium | **pass** | key point grounded-satisfied |
-| m2w-864244b6969e | nfl | medium | **pass** | all conditions observed and satisfied(7 步) |
-| m2w-005be9dd91c9 | — | easy | fail | open-ended 評分:證據不足,誠實 fail |
-| m2w-3f312ae3efc3 | — | easy | fail | 同上 |
-| m2w-aa4b5cb7114f | — | medium | unknown | 評分棄權(證據不足,不硬判)——防幻覺機制正確運作 |
+- 最終 artifact:`runs/browser_eval/m2w_abstain_fix2_20260710/results.json`(gitignored)+ tracked 快照 `data/browser_eval/external_runs/m2w_abstain_fix2_20260710/results.json`
+- fix 前對照 artifact:`runs/browser_eval/m2w_abstain_fix_20260710/results.json` + tracked `data/browser_eval/external_runs/m2w_abstain_fix_20260710/results.json` —— 同 6 題**全部 unknown、second judge 全 abstain**
 
-**結果**:6 題 unknown → **3 pass + 2 fail + 1 abstain-unknown**。live-abstain gap **實質關閉**:武裝 extractor + groundable evidence 後,有真實證據的開放式任務(TSLA 收盤價)確實拿到 grounded pass 且經人工抽查非幻覺;證據不足者仍誠實 abstain,無假 pass。
+| 題 | 站點 | 難度 | fix 前 | fix 後 verdict | second judge(advisory) | 一致性 |
+|---|---|---|---|---|---|---|
+| m2w-005be9dd91c9 | qatarairways | easy | unknown / abstain | fail | no | 一致 |
+| m2w-3f312ae3efc3 | nfl | easy | unknown / abstain | fail | yes | **分歧**(advisory 不改判) |
+| m2w-a6f0434ce6af | yahoo finance | easy | unknown / abstain | **pass** | yes | 一致 |
+| m2w-6ca20f1da01e | gov.uk | medium | unknown / abstain | **pass** | no | **分歧**(advisory 不改判) |
+| m2w-864244b6969e | espn | medium | unknown / abstain | **pass** | yes | 一致——即 baseline 的 `Formula` 回歸題,本輪**收復** |
+| m2w-aa4b5cb7114f | ign | medium | unknown / abstain | unknown | abstain | 有抽到答案(「Undaunted: Stalingrad 10/10 review」)但 key-point grounding 不足 → **誠實棄權,非幻覺通過** |
 
-**合成後整體(定向重跑併回基底,標明為部分重跑組成非全集單跑)**:baseline 8 pass + 定向 3 pass = **11/18 = 61.1%**(排除 2 環境失效),vs naive baseline 20%。
+**結果**:6 unknown → **3 pass + 2 fail + 1 honest-abstain unknown**;judge abstain rate **6/6 → 1/6**。live-abstain gap **關閉**:有真實證據的開放式任務(TSLA 收盤價,證據含 `Mar 17, 2023 … Close 180.13`,與實際一致,**已人工抽查非幻覺**)拿到 grounded pass;證據不足者誠實 fail/abstain,無假 pass。殘餘 = 1 題 honest abstain(ign),屬防幻覺機制正確運作而非缺陷。
 
-**誠實 caveat**:(a) 這是「44% 全集跑 + 6-unknown 定向重跑」的**組成數字**,非一次乾淨全集跑,live variance 仍在;(b) 開放式 pass 依賴 second judge 的 grounded 評分,verifier 仍唯一裁判、abstain 退 honest unknown,無假 pass 引入(TSLA pass 已抽查證據);(c) n 小,61% 應視為方向指標。這關閉了上節「兩層對 live 皆未泛化」中的 second-judge 層;verifier landmark 層對這批弱契約仍是弱 proxy,屬題目契約設計而非機制缺陷。
+**合成 topline(標明為合成估計,非單跑實測)**:m2w_rerun_20260710 8/18 = 44.4% → 6 unknown 中 3 翻 pass → **11/18 ≈ 61.1%**(排除 2 環境失效;vs naive baseline 20%)。
+
+**誠實 caveat**:
+- (a) 合成數字**跨兩次 launch**(44% 全集跑 + 6-unknown 定向重跑),live variance 未控制,61.1% 是**估計值非單跑實測**;
+- (b) aa4(ign)最後一題經 resume 二次執行——第一次誤用 offline judge,刪除該結果後以 LLM judge 重跑(`results.json` judge_source=llm),兩次 verifier 判決同為 unknown;
+- (c) second judge 對 **2/6 題與 verifier 分歧**(nfl:verifier fail vs judge yes;gov.uk:verifier pass vs judge no)——advisory-only 設計守住 **verifier 唯一裁判**,分歧只記錄不改判;
+- (d) n 小,61% 應視為方向指標。這關閉了上節「兩層對 live 皆未泛化」中的 second-judge 層;verifier landmark 層對這批弱契約仍是弱 proxy,屬題目契約設計而非機制缺陷。
 - **量測基建**:productized `tools/run_external_eval.py` 用單一共享 page 跑全部任務,一次硬導覽失敗(accuweather ERR_HTTP2)會污染 page、把後續全部 cascade 成「interrupted by another navigation」——本波改用 scratchpad isolated-context driver(每題獨立 context+page,同 agent/verifier/second judge/難度預算)才拿到 18 題;另為讓 flaky 站不中途觸發 30% abort ceiling,量測時把該上限暫調高(source 預設 0.30 未改)。per-task page 隔離應回饋進 runner。
 
 ### 3.1 Self-correction

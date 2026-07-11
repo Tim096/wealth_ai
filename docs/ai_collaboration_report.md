@@ -8,7 +8,7 @@
 |---|---|
 | 架構與 schema 設計 | packages/* 全部 pydantic schema、不變量的 code-level 強制 |
 | 確定性 pipeline 實作 | SEC normalize/headings/toc/boundary/fetcher/resolver/main_doc(無 LLM) |
-| 對抗式稽核 harness | 56-agent workflow 稽核 11 家真實 10-K,證偽自報 pass rate |
+| 對抗式稽核 harness | 56-agent workflow 稽核 11 家真實 10-K,證偽自報 pass rate(內部審計過程,per-agent 輸出未完整留存為 artifact;方法紀錄 `prompts/eval_design/2026-07-10-adversarial-audit-workflow.md`)|
 | 失敗診斷與修復 | JPM cross-ref stub、三大 silent-failure class |
 | Eval 設計 | 分層 eval set、合成 fixtures + golden labels、held-out |
 | 文件與 prompt log | 全部 docs/ 與 prompts/ |

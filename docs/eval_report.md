@@ -25,7 +25,7 @@
 
 ### 對抗式稽核(這是本專案的驗證核心)
 
-用一個 multi-agent workflow(56 個 agent)稽核 sweep1 的 253 個 item:每個 ticker 一個 audit agent 檢查可疑 span(短 pass、低信心 pass、Item 7/8 內容真偽、TOC 洩漏),每個回報的 anomaly 再交給獨立的**對抗式驗證 agent**(prompt 設定為「盡力反駁這個 anomaly」),多數決才算成立。
+用一個 multi-agent workflow(56 個 agent)稽核 sweep1 的 253 個 item:每個 ticker 一個 audit agent 檢查可疑 span(短 pass、低信心 pass、Item 7/8 內容真偽、TOC 洩漏),每個回報的 anomaly 再交給獨立的**對抗式驗證 agent**(prompt 設定為「盡力反駁這個 anomaly」),多數決才算成立。**誠實標註**:這是一次性的內部審計過程——workflow 設計與結果摘要留存於 `prompts/eval_design/2026-07-10-adversarial-audit-workflow.md`,但 per-agent 逐一輸出未完整留存為 artifact;下方 31/12 等數字引自該紀錄,非可逐 agent 重放的 committed 資料。
 
 結果:**31 個 anomaly 確認、12 個被反駁**(反駁的多是「這其實是誠實的 incorporated_by_reference / None. 行為,不是 bug」——驗證層自己擋掉了誤報)。
 
@@ -75,16 +75,18 @@
 
 ### Status 可信度:XBRL 獨立 oracle(回答「如何確保 status 可信」)
 
-Item 8 對照 SEC companyfacts 的營收/淨利/總資產(非 LLM,免費、可重現)。11 家 sweep:
+Item 8 對照 SEC companyfacts 的營收/淨利/總資產(非 LLM,免費、可重現)。11 家 sweep,P0-10 wrapper 重組(`cross_ref.reassemble_wrapper_bodies`,commit 64de3ef)前→後對照:
 
-| 判定 | 家數 | 對應 pipeline status |
+| 判定 | P0-10 前(歷史 baseline) | P0-10 後(現行,artifact 2026-07-11 重生) |
 |---|---|---|
-| certified(2–3/3 數字命中)| **8**(AAPL/MSFT/NVDA*/GS/WMT/CAT/NEM/MRNA/KO 之中 status=pass 者)| 全部 pass |
-| contradicted(0/3)| 3(NVDA/JPM/XOM 的 Item 8 stub)| 全部 incorporated_by_reference(wrapper)|
+| certified(2–3/3 數字命中)| 8(AAPL/MSFT/GS/WMT/CAT/NEM/MRNA/KO)| **10**(AAPL/MSFT/JPM/GS/WMT/CAT/XOM/NEM/MRNA/KO)|
+| contradicted(0/3)| 3(NVDA/JPM/XOM 的 Item 8 stub)| **1**(NVDA,item8_status=incorporated_by_reference,三項 headline 皆不在 span——誠實指標 stub,非內容)|
 
-> 數字為 `tools/certify.py` 實際輸出,committed 於 `data/sec_eval/certification/item8_certification.json`(可重跑)。certify 現在會把 verdict 寫回 `ItemSegment.xbrl_check`,並在 pipeline 標 pass 但 XBRL contradicted 時翻成 needs_review——oracle 真正 gate 輸出,不只 print。
+**JPM/XOM 從 contradicted 轉 certified 是 P0-10 機制改進的直接證據**:兩家 Item 8 原是 wrapper IBR stub(財報數字不在 span → oracle 正確判 contradicted);wrapper 重組把附綁年報正文接回 item(status=`partial` + needs_review)後,重組 span 各含 3/3 XBRL headline → certified。NVDA 維持 contradicted 是正確行為:其 Item 8 仍是未重組的指標 stub。
 
-**pipeline 結構分類與獨立 XBRL oracle 零分歧(disagreements: none)。** 這是 high-confidence precision 的硬證據:被標 pass 的 Item 8,獨立事實源全數佐證。防禦是縱深的——若某結構 heuristic 未來誤標 Item 8 pass,XBRL 會抓到並降級。
+> 數字為 `tools/certify.py` 實際輸出(重跑:`.venv\Scripts\python tools\certify.py AAPL MSFT NVDA JPM GS WMT CAT XOM NEM MRNA KO`),artifact `data/sec_eval/certification/item8_certification.json`。certify 會把 verdict 寫回 `ItemSegment.xbrl_check`,並在 pipeline 標 pass 但 XBRL contradicted 時翻成 needs_review——oracle 真正 gate 輸出,不只 print。已知快照時差:`data/sec_eval/records/sweep3` 的 JPM/XOM 記錄檔是 P0-10 前存檔,其 `item8_status`(incorporated_by_reference)與 `xbrl_check` 欄位仍為舊值;權威判定以本 artifact 為準,dashboard 的 per-ticker `item8_xbrl` 與 `xbrl_summary` 為即時重算、已一致。
+
+**誠實揭露(disagreements 欄位)**:現行 artifact 的 `disagreements = ["JPM","XOM"]` 非空——不是 verdict 錯,而是 `agrees_with_pipeline` 欄位定義過窄(`tools/certify.py:49` 只把 status=="pass" 視為與 certified 一致,重組後的 `partial` 被記為不一致)。本報告舊版寫「零分歧」的前提(所有 certified 都是 status=pass)在 P0-10 之後不再成立,如實更正。縱深防禦的主張不變:若某結構 heuristic 未來誤標 Item 8 pass,XBRL 會抓到並降級。
 
 ### Eval 升級(2026-07-10):三引擎三角驗證 + offset F1 + 官方 span oracle
 
@@ -144,9 +146,40 @@ baseline 11 家全是 iXBRL(10 Workiva + 1 DFIN)——覆蓋缺口用分層抽�
 - 重跑:`.venv/Scripts/python -m pytest tests/test_landmines.py -q`
 - Artifact:`data/sec_eval/landmines/landmines.json`(header 曾有 total_tests=16 off-by-one,已修正為 15,commit `2fc9f06`;10 條 landmine 全數覆蓋)
 
+#### 外部 human-labeled benchmark:NTU itemseg 30-slice head-to-head(2026-07-10,誠實揭露輸)
+
+與三個 vendored 開源引擎在同一份 NTU 人工標註 gold(30-filing slice)上對跑:
+
+| 系統 | macro-F1(NTU 30-slice) | scored / failures |
+|---|---|---|
+| edgar_crawler | **0.6332** | 30 / 0 |
+| **ours**(合法 TOC-strip 落地後;TOC-strip 前 raw 0.5964 為歷史過程值,該次 run 的 artifact 未保存——現行可複核值即 0.6245) | **0.6245** | 28 / 2 |
+| datamule | 0.6244 | 28 / 2 |
+| edgartools 5.42.0 | 0.4386 | 26 / 4 |
+
+**單軸 F1 我們沒有贏**:輸 edgar_crawler 0.0087、追平 datamule(0.6245 ≈ 0.6244,非「贏」)——如實記錄,F1 tuning 已 CLOSED。差異化在驗證軸:全場唯一有多 oracle 驗證(XBRL/CYD/topic/2-of-N)、誠實 needs_review/棄權(false-pass 是自己量出來自己公布的:TOC-strip 落地前 **100/397**,artifact `data/sec_eval/calibration/calibration.json` 的 `strata.ntu_human_labeled.verifier_false_pass`;落地後 **79**,artifact `data/sec_eval/scoring/head_to_head.json` 的 `summary.ours.verifier_false_pass_items`——交付層移除的 TOC-bleed fp 不再計)、capture-first 覆蓋保證與 mutation harness 的系統——edgar_crawler 的 0.6332 是無法自我審計的數字。
+
+**軸差異聲明(NTU ItemSeg 論文 vs 本表)**:NTU 論文(arXiv 2502.08875)報的 BERT4ItemSeg macro-F1 **0.9825** 是 **per-line BIO 邊界分段分類 F1**、在 3,737 份標註 filing 上**監督式訓練**;本表的 0.62x 是 **item 全文抽取 F1**(30-filing slice、**zero-training**,未在該 gold 上調參)。兩者量的不是同一件事,不可直接比較——0.9825 不是本表的同軸天花板。NTU gold 在本 repo 的角色是**外部弱老師(一票),不是 gold 真值**(引用原則見 `docs/research/giants_task2.md` §4、`docs/research/external_benchmark_spike.md`)。
+
+- confidence 校準:AUROC(NTU human-labeled,n=512)= **0.6307**(gate ≥0.75 未達,MISS 如實記帳,不得引用 0.63 為「可接受」);ECE 0.1762。
+- risk-coverage 操作點(從 `data/sec_eval/calibration/calibration.json` `strata.ntu_human_labeled.risk_coverage` 實算;risk = P(錯誤 | confidence ≥ 閾值),不含 needs_review gate):
+
+| confidence 閾值 | coverage | risk(該 gate 下 false-pass rate)|
+|---|---|---|
+| ≥ 1.0 | 0.2988 | 0.2157 |
+| ≥ 0.9 | 0.7207 | 0.2249 |
+| ≥ 0.8 | 0.7559 | 0.2274 |
+| ≥ 0.7 | 0.8379 | 0.2424 |
+| ≥ 0.6 | 0.9531 | 0.2643 |
+| 全收(≥ 0.0)| 1.0000 | 0.2754 |
+
+  營運 gate(needs_review==False ∧ conf≥0.6,同 artifact `verifier_false_pass` 欄)另計:coverage **0.7754**、false-pass **0.2519**(gate 含 needs_review,故不落在純閾值曲線上)。誠實解讀:曲線幾乎平坦——閾值從 0 拉到 1.0 只把 risk 從 0.275 壓到 0.216,confidence 對 NTU 錯誤主體(boundary bleed)鑑別力弱,與 AUROC 0.6307 的 MISS 判定一致;這張表是「confidence gate 目前換不到精度」的量化證據,不是可用性宣稱。計算指令:`.venv\Scripts\python -c "import json; rc=json.load(open('data/sec_eval/calibration/calibration.json'))['strata']['ntu_human_labeled']['risk_coverage']; [print(r) for r in rc if r['threshold'] in (1.0,0.9,0.8,0.7,0.6,0.0)]"`
+- mutation harness:detection recall **全六類 1.0**(truncate/misalign/toc_anchor/wrapper_swallow/jitter/cross_swap),clean false-alarm 0.0056(門檻 recall ≥0.95 / false-alarm ≤0.05)。
+- Artifacts:`data/sec_eval/scoring/head_to_head.json`(4-engine、30 filings)、`data/sec_eval/calibration/calibration.json`;mutation harness:`tests/test_verifier_mutations.py`。裁決鏈(含 TOC-strip 對抗裁決與錯誤更正)見 `docs/research/giants_task2.md`。
+
 ## Browser Agent(題目一)
 
-Eval set(`data/browser_eval/tasks.json`,4 tasks,分層,offline mock sites)+ runner(`tools/browser_eval.py`)。實測 metrics(`runs/browser_eval/results.json`):
+Eval set(`data/browser_eval/tasks.json`,5 tasks:4 solvable + 1 expected-fail,分層,offline mock sites)+ runner(`tools/browser_eval.py`)。實測 metrics(`runs/browser_eval/results.json`):
 
 **穩定不變量(硬數字):**
 
@@ -202,7 +235,7 @@ RUN 級觀測(不改 agent 行為,AgentRewardBench 三維度):5 tasks mean_repet
 
 #### pass@k 與 flakiness(T1-5)
 
-`tools/browser_eval.py --repeat N`,每 pass 開頭清 selector memory 使樣本獨立可重現。Script Mode k=3:pass@1 = pass@k = **1.0**、flaky_rate = **0.0**、**deterministic = true**;Agent Mode(MockPlanner)同。確定性是量測證明的性質,不是斷言;非平凡 flakiness 需 live LLM planner(artifact note 已標,聚合機制已備好)。
+`tools/browser_eval.py --repeat N`,每 pass 開頭清 selector memory 使樣本獨立可重現。Script Mode k=3(n_tasks=5、n_solvable=4):pass@1 = pass@k = **1.0**、flaky_rate = **0.0**、**deterministic = true**(v1-nonexistent expected-fail,statuses fail×3 一致,依 aggregate_passk 排除於 pass@k 分母);Agent Mode(MockPlanner,3 solvable tasks)同。確定性是量測證明的性質,不是斷言;非平凡 flakiness 需 live LLM planner(artifact note 已標,聚合機制已備好)。2026-07-10 以 Script Mode 重跑還原 artifact(deterministic、file:// mock sites、LLM 成本 $0),regenerated 與 HEAD **byte-identical**(git diff 空);單 pass artifact 同步刷新於 `runs/browser_eval/results.json`。
 
 - 重跑:`.venv/Scripts/python tools/browser_eval.py --repeat 3 --agentic`
 - Artifact:`data/browser_eval/passk/passk_results.json`
@@ -311,12 +344,24 @@ answer channel 也擴充了 verifier 校準集:新 corruption class **answer_wro
 
 逐條事故報告見 `docs/failure_gallery.md` FG-BROWSER-007。
 
-### Browser held-out / 真實網站(誠實邊界)
+### Browser held-out / 真實網站(外部量測,2026-07-10)
 
-目前 eval 為 local mock sites(可控 UI 漂移,offline 可重現)。真實網站廣度 + WebArena/WebVoyager 對標列為 roadmap(`docs/prior_art.md`)。這是刻意選擇:mock sites 讓 selector-repair 的 before/after 可重現且無 flakiness,但尚未證明真實網站泛化——如實揭露。
+mock sites 仍是主軸(可控 UI 漂移,offline 可重現、零 flakiness)。真實網站泛化已有初步外部量測:**Online-Mind2Web 20-task live subset**(OSU-NLP-Group,CC-BY-4.0,COLM 2025,arXiv:2504.01382)自跑三波:
+
+| 波次 | success(pass / 可評分 18,排除 2 環境失效) | artifact(原始 run dir 為 gitignored;tracked 快照在 `data/browser_eval/external_runs/`)|
+|---|---|---|
+| baseline | 6/18 = **33.3%** | `runs/browser_eval/m2w_rerun/` + tracked 快照 `data/browser_eval/external_runs/m2w_rerun/`(其 `results.json` 由 `tools/aggregate_run.py` 從 20 份 per-task `summary.json` 事後聚合,`aggregated_post_hoc=true`;pass 6 / done 18 = 0.333 與本行一致)|
+| post bucket-fix rerun | 8/18 = **44.4%** | `runs/browser_eval/m2w_rerun_20260710/` + tracked 快照 `data/browser_eval/external_runs/m2w_rerun_20260710/` |
+| abstain-fix 定向重跑 6 unknown(任務集:`data/browser_eval/external/m2w_unknowns6.json`,sha256 `1acfc7a3a20a3bc20d5bb07cdaed243642272dcfeccb232028ff62d8d4226c9b`)| 6 unknown → **3 pass + 2 fail + 1 honest-abstain unknown** | fix 前對照(6 題全 unknown、judge 全 abstain):`runs/browser_eval/m2w_abstain_fix_20260710/` + tracked `data/browser_eval/external_runs/m2w_abstain_fix_20260710/`;最終:`runs/browser_eval/m2w_abstain_fix2_20260710/results.json` + tracked `data/browser_eval/external_runs/m2w_abstain_fix2_20260710/results.json` |
+| **合成 topline(明標合成估計,跨兩次 launch,非單跑實測)** | **11/18 ≈ 61.1%** | 上兩列合成 |
+
+- naive baseline 對照(同子集):4/20 = **20%**(`tools/naive_baseline.py`;tracked 快照 `data/browser_eval/external_runs/naive_baseline/results.json`)——機制有加值,但**不宣稱超越 SOTA**(bu-max live 97.0%)。
+- **與官方 benchmark 的可比性(明確聲明)**:這是**自建 20 題 live 子集**、成功條件多為單一 landmark、61.1% 是**跨兩次 launch 的合成估計**——**不可與官方 Online-Mind2Web leaderboard(300 題、WebJudge 評審、Browser Use ~97%)直接比較**。我們量的軸是 verifier 誠實性(abstain / unknown 行為與 false-pass 防禦),不是 leaderboard 分數。
+- second judge(advisory)abstain rate:**6/6 → 1/6**(殘餘 1 題 ign 為證據不足的誠實棄權,非缺陷);根因修復 commit `49bcc6e`(unwrap codex-gateway action-schema wrapper)+ `3258b73`(open-ended scorer verdict-time 武裝 + groundable final-page evidence),量測基建 `b561e37`。judge 與 verifier 2/6 分歧(nfl、gov.uk),advisory-only 不改判——**verifier 仍唯一裁判**。
+- 誠實 caveat:n 小、live variance 未控制,61.1% 是方向指標非穩定增益;這批題的 success condition 多為單一 landmark,verifier 對其是弱 proxy。逐題明細與 caveat a–d 見 `docs/research/giants_task1.md`「外部量測 abstain-fix 2026-07-10」節。
 
 ### 已知殘留(誠實邊界)
 
-1. **Wrapper / cross-reference-index 的真實內容尚未還原。** JPM/XOM/Intel/Citi 現在誠實標成 incorporated_by_reference / needs_review 指向 appended section 或年報,但 pipeline 還沒把那段 MD&A/財報「接回」對應 item。刻意不出貨脆弱的 title-based 猜測(Intel 正文無 emphasis 標記、標題重複當頁首,會出錯)——**錯的正文比誠實的指標更糟**。這需要 page-anchor resolution(第二遍),見 `insights_and_directions.md` §2。
+1. **同檔附綁 wrapper 已還原;跨檔 cross-reference-index 尚未。** JPM/XOM 指向本檔附綁年報區塊的 stub 已由 `cross_ref.reassemble_wrapper_bodies`(commit 64de3ef)以 page-anchor / section-anchor 還原(JPM Item 1C CYD coverage 0%→100%;兩家 Item 8 重組 span 均獲 XBRL 3/3 認證,見 `failure_gallery.md` FG-SEC-007/008)。Intel/Citi 指向**另外裝訂年報 exhibit** 的 cross-reference-index 正文仍未還原——刻意不出貨脆弱的 title-based 猜測(Intel 正文無 emphasis 標記、標題重複當頁首,會出錯),**錯的正文比誠實的指標更糟**,見 `insights_and_directions.md` §2。
 2. **boundary 精度已量化(2026-07-10)**:char-offset F1(建構性 gold,regression baseline,敏感度注入鎖在 `tests/test_scoring.py`:AAPL F1 1.0→0.9267)+ CYD 官方 iXBRL oracle(9/9 pass segment coverage 100%,首個外部 span 錨點)。人工 token-level 標註(絕對正確率)仍列 backlog。
 3. **`data/sec_eval/records/sweep1` 是刻意保留的修復前 baseline**,其 Item 8 仍顯示舊的(錯誤)pass——用於 before/after 對照(見上方 metrics 表)。當前正確結果在 `sweep3`(sweep2 降為歷史 baseline,漂移見「Eval 升級」段)。

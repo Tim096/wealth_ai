@@ -105,7 +105,7 @@
 
 ## 元層次(2):status 可信度的獨立驗證(XBRL)
 
-FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 加上一層**外部 oracle**:Item 8 對照 SEC XBRL companyfacts 的營收/淨利/總資產。11 家 sweep:7 家 pass 全被 XBRL `certified`、3 家 wrapper stub 被 `contradicted`,**pipeline 分類與獨立 oracle 零分歧**。這回答主管的核心問題「如何確保 status 可信」——不是 AI 自述,是對照結構化事實。詳見 `prompts/eval_design/2026-07-10-xbrl-and-cross-ref.md`。
+FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 加上一層**外部 oracle**:Item 8 對照 SEC XBRL companyfacts 的營收/淨利/總資產。11 家 sweep 現行結果(P0-10 wrapper 重組後,artifact 2026-07-11 重生):**certified 10 / contradicted 1**——NVDA 是唯一 contradicted(item8_status=incorporated_by_reference,誠實指標 stub,headline 數字確實不在 span);JPM/XOM 原為 contradicted,P0-10 重組後 span 各含 3/3 headline 轉 certified(artifact:`data/sec_eval/certification/item8_certification.json`)。注意 artifact 的 `disagreements=["JPM","XOM"]` 是 `agrees_with_pipeline` 欄位定義過窄(`tools/certify.py:49` 只認 status=="pass",重組後的 `partial` 被記為不一致),非 verdict 錯誤。這回答主管的核心問題「如何確保 status 可信」——不是 AI 自述,是對照結構化事實。詳見 `prompts/eval_design/2026-07-10-xbrl-and-cross-ref.md`。
 
 ## FG-BROWSER-001: v2 UI 漂移導致 selector 全失效 + decoy button 陷阱
 
@@ -126,11 +126,11 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Related Prompt | prompts/browser_agent/2026-07-10-selector-repair-design.md |
 | Related Commit | feat(browser): implement capability-aware agent with selector self-repair |
 
-**誠實邊界:** 這是 local mock site 的注入式漂移(可控、可重現);真實網站的漂移泛化尚未證明,列為 roadmap(WebArena/WebVoyager,見 prior_art)。
+**誠實邊界:** 這是 local mock site 的注入式漂移(可控、可重現);真實網站泛化已有初步外部量測——Online-Mind2Web 20-task live subset 自跑 33.3%(6/18)→ bucket-fix 44.4%(8/18)→ abstain-fix 合成 11/18 ≈ 61.1%(明標合成估計、n 小,vs naive baseline 20%;artifact `runs/browser_eval/m2w_rerun/`、`m2w_rerun_20260710/`、`m2w_abstain_fix_20260710/`、`m2w_abstain_fix2_20260710/`(gitignored 原始 run)+ tracked 快照 `data/browser_eval/external_runs/` 同名目錄,詳見 `docs/eval_report.md`;不可與官方 Online-Mind2Web leaderboard 直接比較,聲明見該節)。
 
 ## 稽核方法本身(元層次)
 
-這四個 FG 都不是我「讀 code 想出來的」,而是 **56 個 agent 的對抗式稽核**跑真實 filing 跑出來的,且每個都經過獨立 verifier「盡力反駁」後才留下(12 個被反駁的 anomaly 沒進這裡)。這個「用 AI 對抗式驗證 AI 產出」的 harness 本身,就是 SPEC 17 想證明的「AI 時代最稀缺的是驗證能力」。詳見 `prompts/eval_design/2026-07-10-adversarial-audit-workflow.md`。
+這四個 FG 都不是我「讀 code 想出來的」,而是 **56 個 agent 的對抗式稽核**跑真實 filing 跑出來的,且每個都經過獨立 verifier「盡力反駁」後才留下(12 個被反駁的 anomaly 沒進這裡)。**誠實標註**:此稽核是內部審計過程,per-agent 逐一輸出未完整留存為 artifact——留存的是 workflow 設計與結果摘要(`prompts/eval_design/2026-07-10-adversarial-audit-workflow.md`)與由它導出的修復(FG-SEC-001~004 各有 accession 級 evidence)。這個「用 AI 對抗式驗證 AI 產出」的 harness 本身,就是 SPEC 17 想證明的「AI 時代最稀缺的是驗證能力」。
 
 ---
 
@@ -321,3 +321,22 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Why It Still Failed | (已修結構性根因;wrapper 10-K 正文還原仍是 documented next step,見 FG-SEC-004/005)|
 | Related Prompt | prompts/browser_agent/(preflight 條件品質、answer channel 設計)|
 | Related Commit | f59c65d(baseline-subtraction)+ 711f336(answer channel)+ 06eb46b(auto vision / scroll / new-tab)|
+
+---
+
+## FG-BROWSER-008: gov.uk 題 verifier 判 pass,但 answer 是導航殘渣「Skip contents」(user-value false success,誠實列帳)
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-BROWSER-008 |
+| App | browser_agent / verifier(open-ended scoring)+ answer channel |
+| Input | Online-Mind2Web live 題 `m2w-6ca20f1da01e`(gov.uk,medium):「Find the Eligibility to get the child benefit and How it works and how to claim」(abstain-fix 定向重跑批次)|
+| Expected | pass 應伴隨對使用者有價值的交付內容 |
+| Actual | verifier 判 **pass**(open-ended scorer:3/3 key points grounded-satisfied,confidence 1.0),但 `answer` 欄位內容是「Skip contents」——gov.uk 頁面導航 skip-link 的殘渣,對使用者零價值。second judge(advisory)判 **no** |
+| Status | **open**(已記錄,維持 pass 不改判——理由見下)|
+| Failure Type | user-value false success(landmark/grounding 契約成立,交付內容無價值)|
+| Evidence | `runs/browser_eval/m2w_abstain_fix2_20260710/results.json` task `m2w-6ca20f1da01e`(gitignored 原始 run);tracked 快照 `data/browser_eval/external_runs/m2w_abstain_fix2_20260710/results.json`(同 task id)|
+| Root Cause | open-ended scorer 的 key-point grounding 以最終頁 `inner_text` 為證據——agent 確實抵達了含 eligibility / how-it-works / how-to-claim 內容的正確頁面,3 個 key point 全部 grounded,契約如實成立;但 answer channel 抓到的是 extract_text 命中的第一個元素(skip-link)。「頁面對」與「交付對」是兩件事,verifier 的 landmark/grounding 契約量的是前者——這是 verifier landmark 契約的已知結構性弱點(同 eval_report M2W 節「弱 proxy」聲明)|
+| 為什麼不改判 | second judge 是 **advisory-only**(設計鐵律:verifier 唯一裁判,judge 分歧只記錄不改判)。讓 judge 翻案等於引入一個未經 sens/spec 校準的第二裁判,已校準 verifier 的可信度基礎會被繞過;一致的規則比單案好看的數字重要。本案已如實計入 61.1% 合成 topline 的分子——這正是該數字須標「方向指標、不可與官方 leaderboard 比較」的原因之一 |
+| Next Fix | (1) answer-quality gate:純導航文字(skip-link、breadcrumb、cookie 條)不得作為 answer 交付,無實質 answer 時降 unknown;(2) open-ended scorer 把 answer 內容納入 grounding 證據(不只最終頁全文);(3) live 契約升級為「答案軸」條件(answer_matches 已有機制,這批外部題的契約未帶)|
+| Related Commit | 3258b73(open-ended scorer verdict-time 武裝——本案即其量測中暴露的殘餘弱點)|

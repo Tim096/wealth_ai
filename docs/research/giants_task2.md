@@ -443,3 +443,13 @@ combined-item、overshoot guard、full SEC suite 全綠。
 
 **誠實裁決不變**:F1 單軸我們仍輸 EC 0.0087、追平 datamule;**F1 line 維持 CLOSED**。TOC-strip 是
 可靠性/可讀性軸的產品特性(兩層交付),不是勝負宣稱。
+
+### NTU benchmark 軸差異聲明(2026-07-11,防誤讀)
+
+NTU ItemSeg 論文(arXiv 2502.08875)報的 **BERT4ItemSeg macro-F1 0.9825**(3,737 份標註 filing)量的是
+**per-line BIO 的 item 邊界分段分類**,且為**監督式訓練**(模型在該標註集上 train,見
+`docs/research/external_benchmark_spike.md`);本文件所有 head-to-head 數字量的是 **item 全文抽取 F1**
+(30-filing slice、**zero-training**,未在 NTU gold 上調任何參數)。兩者不同軸、不可直接比較——
+0.9825 **不是**我們 0.62x 的同軸天花板,把兩個數字並排比大小是誤讀。NTU gold 在本 repo 的角色是
+**外部弱老師(head-to-head 的一票),不是 gold 真值**(§4 引用限制;MEMORY 引用原則:外部老師當
+弱老師/一票,不當 gold)。

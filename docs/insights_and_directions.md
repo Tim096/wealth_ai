@@ -6,7 +6,7 @@
 
 **AI coding 把「寫出來」變便宜了,所以稀缺的不是產出,是驗證。** 這個專案的主體不是兩個 demo,是一套能證明自己何時對、何時錯、何時證據不足的 reliability 基礎設施。Browser Agent 與 SEC Extractor 只是拿來壓力測試它的兩個高難度負載。
 
-這在本次開發中不是口號:我的 SEC pipeline 通過 3 家 smoke test 後自報 75.9% pass;接著我用 56 個 agent 的**對抗式稽核**跑 11 家真實 10-K,證明其中 15 個 pass 是 silent failure(reference stub 被當成內容、末項吞掉整本財報)。**稽核抓到了我自己的系統在說謊,然後我才修。** 這就是「demo 不可信,所以要做 eval」的實際演出。
+這在本次開發中不是口號:我的 SEC pipeline 通過 3 家 smoke test 後自報 75.9% pass;接著我用 56 個 agent 的**對抗式稽核**(內部審計過程,per-agent 輸出未完整留存為 artifact;方法與結果摘要見 `prompts/eval_design/2026-07-10-adversarial-audit-workflow.md`)跑 11 家真實 10-K,證明其中 15 個 pass 是 silent failure(reference stub 被當成內容、末項吞掉整本財報)。**稽核抓到了我自己的系統在說謊,然後我才修。** 這就是「demo 不可信,所以要做 eval」的實際演出。
 
 ## 1. 如果直接把這兩題丟給 autonomous coding agent(OpenClaw / Hermes 類)會怎樣?
 
@@ -46,7 +46,7 @@ OpenClaw / Hermes 這類「LLM 自主驅動瀏覽器」的核心迴圈就是:看
 **SEC filing 自帶結構化 ground truth,大多數作業沒用到——這一條我已經實作了(`sec_core/xbrl.py`):**
 
 - **Inline XBRL / `companyfacts` API**(`https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json`):SEC 已把財報數字(Revenues、NetIncomeLoss、Assets…)結構化成機器可讀 fact。這是**免費、權威、非 LLM 的 cross-check**:
-  - **[已實作]** 驗證 Item 8 抽對了——抽出的財報 span 必須含 XBRL 的營收/淨利/總資產(各種 scale);對不上就是 wrapper/boundary 的硬證據。實測 11 家:7 家 pass 全 `certified`、3 家 wrapper stub `contradicted`,**pipeline 與獨立 oracle 零分歧**(`tools/certify.py`)。
+  - **[已實作]** 驗證 Item 8 抽對了——抽出的財報 span 必須含 XBRL 的營收/淨利/總資產(各種 scale);對不上就是 wrapper/boundary 的硬證據。實測 11 家(P0-10 wrapper 重組後):**certified 10 / contradicted 1**(NVDA 未重組的 IBR stub,誠實指標);JPM/XOM 原 contradicted,重組 span 各含 3/3 headline 後轉 certified(`tools/certify.py`,artifact `data/sec_eval/certification/item8_certification.json`)。
   - **[方向]** 反向定位:當 Item 8 被 XBRL contradicted,可全文搜尋這些數字出現在哪,自動指出真正財報位置 → 觸發 §2 的 wrapper resolution。
   - **[方向]** confidence calibration 黃金線:以 XBRL certified 與否當標籤,校準 confidence 對應實際正確率。
 

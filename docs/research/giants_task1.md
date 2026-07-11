@@ -262,6 +262,38 @@ measure-before-claim 的前置已執行:P1-1 匯入的 20 題 live 子集,以我
 
 degradation curve / impossible / open-ended / pass@k 的分項數字見 `docs/eval_report.md`。
 
+### 外部量測 rerun 2026-07-10(post bucket-fix)
+
+同 20 題 live 子集重跑,套上三個 bucket 修復 + verifier 採 `robust_contains` 整合掛鉤 + second judge 經 Codex gateway 武裝(LLM extractor,非 offline)。artifact `runs/browser_eval/m2w_rerun_20260710/`;baseline artifact `runs/browser_eval/m2w_rerun/`(逐題 summary 可對)。
+
+| 指標 | baseline | rerun | 移動 |
+|---|---|---|---|
+| success(pass / 可評分,排除環境失效) | **6/18 = 33.3%** | **8/18 = 44.4%** | **+11.1pt** |
+| success(raw pass / 20) | 6/20 = 30.0% | 8/20 = 40.0% | +10pt |
+| easy | 1/6 | 2/6 | +1 |
+| medium | 4/8 | 3/8 | −1 |
+| hard | 1/4 | 3/4 | +2 |
+| unknown 數(可評分池內) | 3 | 6 | +3(變差) |
+| 環境失效(ERR_HTTP2,排除) | 2/20(accuweather、ups) | 2/20(同兩站,可重現) | 同 |
+| second judge(advisory) | 18/18 abstain | **18/18 abstain(已武裝仍 abstain,cost>0)** | 未動 |
+
+**逐題移動(18 可評分,2 題 env-error 兩跑相同)**:
+- fail→pass(3):`iOS.`(recreation,尾點 strip)、`Year Award`(steam,非連續 token 子集)、`Houston`(apartments-hard,同 3 步翻轉、needle 非 brittle → 疑 live variance)。
+- pass→unknown(1,回歸):`Formula`(espn,baseline 2 步即 pass,rerun wander 29 步漂離 → unknown)。
+- fail→unknown(2,中性重分類):`Qatar Airways`(qatar)、`boardgame`(ign)——baseline-subtraction 把落地即成立的 landmark 剔為 vacuous,契約歸零 → open-ended unknown。
+- 其餘 12 題判決不變。
+
+**逐 bucket 裁決**:
+- **BUCKET 2(robust text_visible)= 有推動數字**。兩題在**相同步數**下純靠 verifier 比對翻轉 fail→pass:`iOS.` 尾點 strip、`Year Award` tier-2 非連續 token 子集。這是本波唯一可歸因、可複現的加分來源。`robust_contains` 掛鉤本 session 落到 `verifier.py:34`(tier 1 為舊 exact-substring 嚴格超集,721 pytest 全綠、mock verdict_accuracy 1.0 不變)。
+- **BUCKET 1(open-ended scoring)= 沒推動數字**。second judge 已經 gateway 武裝(每題 LLM 實際被呼叫,cost 0.00014–0.00042、共 $0.0057),但 **18/18 仍 abstain**;6 個 unknown 一個都沒拿到分。且 unknown 從 3 升到 6(baseline-subtraction 把更多 landmark 契約歸零)。結論:**live-abstain gap 未關閉**——不是 wiring(extractor 已 LLM),是結構性:WebJudge 的 evidence-grounding demotion 對 live 頁面一律降級,且 `run_agentic` 的三處 `verify_contract` 未帶 `open_ended_extractor`(判決時開放式評分沒接線,BUCKET 1 只到 verifier 參數層、未到 agent loop)。能力在、live 泛化不在,如實記錄。
+- **BUCKET 3(navigation convergence)= 中性偏負**。早退閘門確實壓低了「兩三步就放棄」,但反作用是**不可收斂任務燒更多預算而非收斂**:student 32→46 步、medicare 23→25、且 espn 由 baseline 2 步 pass 被推成 29 步 wander→unknown(pass→unknown 回歸,最可能是早停閘門過度激進、亦可能 live variance)。本樣本上 BUCKET 3 沒把 wander 轉成 pass,反而貢獻了唯一一筆回歸。hard 3/4 的高分來自快速 pass(2–5 步),非收斂機制之功。
+
+**誠實 caveat**:
+- **n 小、live variance 大**:n=18,單跑;`Houston` 翻轉與 `Formula` 回歸都可能是站點內容跑間差異而非機制,+11.1pt 需視為含雜訊的方向指標,非穩定增益。
+- **這 20 題契約本身弱**:success condition 全是單一 landmark/搜尋關鍵字(非任務答案),落地即成立者被 baseline-subtraction 剔空 → 判決退化為 open-ended unknown。verifier 判決對這批是弱 proxy;真正的答案軸得靠 second judge,而它 live 全 abstain——兩層都對 live 未泛化,是本波最該補的洞。
+- **second-judge live-abstain gap 未關閉**:武裝 extractor 是必要非充分;下一步是 WebJudge 對 live 的 key-point 抽取放寬 grounding、以及把 `open_ended_extractor` 接進 `run_agentic` 的判決路徑(仍守 verifier 唯一裁判、abstain 退回 honest unknown)。
+- **量測基建**:productized `tools/run_external_eval.py` 用單一共享 page 跑全部任務,一次硬導覽失敗(accuweather ERR_HTTP2)會污染 page、把後續全部 cascade 成「interrupted by another navigation」——本波改用 scratchpad isolated-context driver(每題獨立 context+page,同 agent/verifier/second judge/難度預算)才拿到 18 題;另為讓 flaky 站不中途觸發 30% abort ceiling,量測時把該上限暫調高(source 預設 0.30 未改)。per-task page 隔離應回饋進 runner。
+
 ### 3.1 Self-correction
 - **SOTA 做法**:BU 五級 locator cascade + loop detector;SK hash rebind + 修復預算;SG re-grounding 標準流程。
 - **我們已更強之處**:修復是 diagnosis-driven 而非 retry-driven(先分類再修,docstring 明言);repair 路徑零 LLM 成本(確定性 a11y 評分),SOTA 各家都要花 LLM;feasibility gate 防「修進成功」(empty_result 明確拒修);SG 的標準流程本來就是我們的核心迴圈。

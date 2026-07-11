@@ -58,6 +58,7 @@ Provenance = Literal[
     "offset_exact_span",         # body is a source-exact span addressed by offsets (normal path)
     "cross_reference_pointer",   # only a pointer into an annual report / another section was found
     "resolved_from_page_anchor", # wrapper body recovered from printed page-number anchors (source-exact)
+    "resolved_from_section_anchor",  # wrapper body recovered from the bound report's own section heading
     "unresolved",                # no addressable content found
 ]
 

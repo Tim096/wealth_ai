@@ -30,8 +30,9 @@
    "text_sha256": "aab4472de0c66721419b593614b15b81488b48ac39031d20f80b19cf2f6432d3"
   },
   "1C": {
-   "state": "null",
-   "reason": "incorporated_by_reference"
+   "state": "present",
+   "status_frozen": "partial",
+   "offsets_excluded": "needs_review flagged (P0-10 wrapper reassembly from page anchors) — no gold without human adjudication"
   },
   "2": {
    "state": "present",
@@ -63,16 +64,19 @@
    "reason": "reserved"
   },
   "7": {
-   "state": "null",
-   "reason": "incorporated_by_reference"
+   "state": "present",
+   "status_frozen": "partial",
+   "offsets_excluded": "needs_review flagged (P0-10 wrapper reassembly from page anchors) — no gold without human adjudication"
   },
   "7A": {
-   "state": "null",
-   "reason": "incorporated_by_reference"
+   "state": "present",
+   "status_frozen": "partial",
+   "offsets_excluded": "needs_review flagged (P0-10 wrapper reassembly from page anchors) — no gold without human adjudication"
   },
   "8": {
-   "state": "null",
-   "reason": "incorporated_by_reference"
+   "state": "present",
+   "status_frozen": "partial",
+   "offsets_excluded": "needs_review flagged (P0-10 wrapper reassembly from page anchors) — no gold without human adjudication"
   },
   "9": {
    "state": "present",

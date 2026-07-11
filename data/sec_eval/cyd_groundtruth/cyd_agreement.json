@@ -2,16 +2,15 @@
   "oracle": "CYD iXBRL block-tags (mandatory for fiscal years ending >= 2024-12-15)",
   "filings": 11,
   "verdicts": {
-    "agree": 9,
-    "disagree": 2,
+    "agree": 10,
+    "disagree": 1,
     "unavailable": 0,
     "not_required": 0
   },
   "disagreements": [
-    "JPM",
     "GS"
   ],
-  "coverage_mean_over_available": 0.8182,
+  "coverage_mean_over_available": 0.9091,
   "records": [
     {
       "ticker": "AAPL",
@@ -115,12 +114,12 @@
       "report_date": "2025-12-31",
       "mandatory": true,
       "filing_class": "standard",
-      "our_status": "incorporated_by_reference",
+      "our_status": "partial",
       "our_offsets": [
-        381586,
-        381756
+        751329,
+        771939
       ],
-      "our_chars": 170,
+      "our_chars": 20610,
       "official_intervals": [
         [
           762318,
@@ -155,11 +154,11 @@
       "n_text_blocks": 9,
       "n_fragments": 12,
       "n_hidden": 0,
-      "coverage": 0.0,
-      "containment": 0.0,
-      "verdict": "disagree",
-      "detail": "our segment covers only 0% of the official CYD-tagged span (6,871 chars, 9 text blocks) \u2014 the SEC-mandated Item 1C content lies outside our boundaries",
-      "needs_review_after": false
+      "coverage": 1.0,
+      "containment": 0.3334,
+      "verdict": "agree",
+      "detail": "our segment covers 100% of the official CYD-tagged span (6,871 chars, 9 text blocks)",
+      "needs_review_after": true
     },
     {
       "ticker": "GS",

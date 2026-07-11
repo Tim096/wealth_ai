@@ -10,10 +10,14 @@ submissions (they mark those fragments extracted/ok).
 
 We detect the class from structure alone and classify honestly: the items
 become `incorporated_by_reference` pointers to the annual-report page ranges,
-flagged needs_review, rather than fake bodies. Full body resolution (following
-the pointer into the annual-report exhibit) is a documented next step —
-docs/insights_and_directions.md §2 — deliberately not shipped as a fragile
-guess, because a wrong body is worse than an honest pointer.
+flagged needs_review, rather than fake bodies. When the referenced body is
+bound into the SAME document and prints page-number footers, the pointer IS
+resolved to a real source-exact span (L237-252 below via sec_core/page_map.py,
+provenance `resolved_from_page_anchor` — docs/insights_and_directions.md §2);
+`reassemble_wrapper_bodies` does the same for the JPM/XOM wrapper class whose
+stubs defer Items 7/7A/8 into an appended Financial Section. Only pointers to
+truly external documents (the proxy statement) or without resolvable anchors
+stay honest pointers, because a wrong body is worse than an honest pointer.
 """
 
 from __future__ import annotations
@@ -320,3 +324,145 @@ def build_cross_reference_segments(
                 warnings=[f"no cross-reference index entry found for item {code}"],
             ))
     return segments, breakdowns
+
+
+# --- wrapper body reassembly (the JPM / XOM class) ---------------------------
+# A wrapper 10-K keeps real item headings in the main Part I-IV text but writes
+# some items (JPM: 1C/7/7A/8; XOM: 7/7A/8) as one-sentence stubs deferring to a
+# Financial Section / annual report bound AFTER the last item heading.
+# boundary.py already cuts that appended block off the terminal item
+# (FG-SEC-004) and classifies the stubs incorporated_by_reference (FG-SEC-002);
+# this pass reassembles the deferred bodies: a stub that points into the
+# appended block by an explicit page range ("appears on pages 46-160") or a
+# quoted section title ('the section entitled "Market Risks"') is resolved to a
+# source-exact span inside the block. Pointers to external documents (proxy
+# statement) or without resolvable anchors are left untouched.
+
+_MIN_APPENDED_REGION = 20_000  # smaller tails are signature/exhibit furniture, not a bound report
+_MIN_RESOLVED_SPAN = 400
+# the FIRST page range mentioned is the item's own location; later ranges are
+# supplementary ("...should be read in conjunction with ... on pages 165-314")
+_STUB_PAGE_REF_RE = re.compile(r"pages?\s+\d{1,4}(?:\s*[-–]\s*\d{1,4})?", re.IGNORECASE)
+_QUOTED_SECTION_RE = re.compile(
+    r"section\s+entitled\s+[\"“]([^\"”]{4,120})[\"”]", re.IGNORECASE)
+_PROXY_STMT_RE = re.compile(r"proxy\s+statement", re.IGNORECASE)
+# the stub must point into THIS filing, not an external document
+_THIS_FILING_RE = re.compile(
+    r"financial\s+section|annual\s+report|on\s+pages?\s+\d", re.IGNORECASE)
+# generic top-level headings of a bound financial report — used only as END
+# boundaries for section-title spans, so Item 7A does not run into the audit
+# report and Item 8 does not swallow the exhibit index / signatures
+_SECTION_BOUNDARY_TITLES = (
+    "management's report on internal control over financial reporting",
+    "report of independent registered public accounting firm",
+    "index to exhibits",
+    "signatures",
+)
+
+
+def _find_section_anchor(doc: NormalizedDocument, region_start: int, title: str) -> int | None:
+    """Offset of `title` as a real standalone section-heading line inside the
+    appended region. The region's own table of contents repeats every title, so
+    occurrences followed by a cluster of bare page-number lines (TOC entries)
+    are skipped; a real heading is followed by prose."""
+    want = title.casefold().replace("’", "'")
+    lines = doc.lines
+    for i, ln in enumerate(lines):
+        if ln.start < region_start:
+            continue
+        if ln.text.strip().casefold().replace("’", "'") != want:
+            continue
+        following: list[str] = []
+        for x in lines[i + 1:i + 12]:
+            t = x.text.strip()
+            if not t:
+                continue
+            if len(t) >= 80:
+                break  # long prose line: the TOC pattern (if any) ends here
+            following.append(t)
+            if len(following) == 4:
+                break
+        if sum(1 for t in following if re.fullmatch(r"\d{1,4}", t)) >= 2:
+            continue  # a TOC entry (short titles alternating with page numbers)
+        return ln.start
+    return None
+
+
+def reassemble_wrapper_bodies(
+    doc: NormalizedDocument,
+    segments: list[ItemSegment],
+    breakdowns: dict[str, ConfidenceBreakdown],
+) -> int:
+    """Resolve incorporated_by_reference stubs that defer into an appended
+    Financial Section / annual report bound after the last item (JPM/XOM
+    wrapper class). Mutates matching segments in place to source-exact spans
+    (status partial, needs_review — boundary alignment is heuristic) and
+    returns how many items were reassembled."""
+    region_start = max((s.end_offset for s in segments), default=0)
+    region_end = len(doc.text)
+    if region_start <= 0 or region_end - region_start < _MIN_APPENDED_REGION:
+        return 0
+    pm = build_page_map(doc, start=region_start)
+
+    # plan: (segment, how, start, end|None); None ends resolve to the next anchor
+    plans: list[tuple[ItemSegment, str, int, int | None]] = []
+    anchors: list[int] = []
+    for seg in segments:
+        if seg.status != "incorporated_by_reference" or seg.provenance != "offset_exact_span":
+            continue
+        stub = doc.slice(seg.start_offset, seg.end_offset)
+        if _PROXY_STMT_RE.search(stub) or not _THIS_FILING_RE.search(stub):
+            continue  # external target (proxy) or not pointing into this filing
+        m = _STUB_PAGE_REF_RE.search(stub)
+        if m:
+            span = resolve_page_ref(pm, m.group(0))
+            if span is not None and span[1] - span[0] > _MIN_RESOLVED_SPAN:
+                plans.append((seg, f"the page range '{m.group(0)}' via printed "
+                                   f"page-number anchors", span[0], span[1]))
+            continue
+        qm = _QUOTED_SECTION_RE.search(stub)
+        if qm:
+            a = _find_section_anchor(doc, region_start, qm.group(1))
+            if a is not None:
+                plans.append((seg, f"the section heading {qm.group(1)!r}", a, None))
+                anchors.append(a)
+
+    for title in _SECTION_BOUNDARY_TITLES:
+        a = _find_section_anchor(doc, region_start, title)
+        if a is not None:
+            anchors.append(a)
+
+    resolved = 0
+    for seg, how, start, end in plans:
+        page_anchored = end is not None
+        if end is None:
+            later = sorted(a for a in anchors if a > start)
+            end = later[0] if later else region_end
+        if end - start <= _MIN_RESOLVED_SPAN:
+            continue
+        text = doc.slice(start, end)
+        seg.start_offset, seg.end_offset = start, end
+        seg.text_sha256 = sha256_text(text)
+        seg.status = "partial"
+        seg.provenance = ("resolved_from_page_anchor" if page_anchored
+                          else "resolved_from_section_anchor")
+        seg.needs_review = True
+        seg.warnings = [w for w in seg.warnings
+                        if "the span is the pointer text only" not in w]
+        seg.warnings.append(
+            f"wrapper 10-K: this item's body was deferred to the financial-report section "
+            f"bound after the last item heading; reassembled from {how} (source-exact span "
+            f"in the same document). Marked partial + needs_review because boundary "
+            f"alignment is heuristic — verify start/end against the filing."
+        )
+        bd = ConfidenceBreakdown(components=[
+            CC(name="content_substantiveness", score=1.4, max_score=2.0,
+               reason=f"reassembled a {end - start}-char body span from {how}"),
+            CC(name="heading_strength", score=1.5, max_score=2.0,
+               reason="anchor resolved from printed page-number footers" if page_anchored
+               else "anchor resolved from the bound report's own section heading"),
+        ])
+        breakdowns[seg.item_code] = bd
+        seg.confidence = bd.total
+        resolved += 1
+    return resolved

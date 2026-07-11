@@ -122,16 +122,16 @@
    "app": "sec_extractor",
    "failure_type": "silent_failure",
    "status": "fixed",
-   "summary": "Reference-stub wording variants at scale escaped detection (JPM 1C/7/7A/8, GS/XOM/MSFT/NVDA/CAT items) and were marked pass ~0.958",
+   "summary": "Reference-stub wording variants at scale escaped detection (JPM 1C/7/7A/8, GS/XOM/MSFT/NVDA/CAT items) and were marked pass ~0.958; guard = never 'pass' for a stub (P0-10 later reassembles JPM's four stubs into resolved 'partial' bodies)",
    "input": {"ticker": "JPM", "accession": "0001628280-26-008131", "note": "11-company sweep; JPM is the in-corpus representative"},
    "gallery": "docs/failure_gallery.md#fg-sec-002",
    "related_commits": ["0c46e9d"],
    "guarded_by": ["tests/test_refine.py"],
    "checks": [
-    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "1C", "expected": ["incorporated_by_reference"]},
-    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "7", "expected": ["incorporated_by_reference"]},
-    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "7A", "expected": ["incorporated_by_reference"]},
-    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "8", "expected": ["incorporated_by_reference"]}
+    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "1C", "expected": ["incorporated_by_reference", "partial"]},
+    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "7", "expected": ["incorporated_by_reference", "partial"]},
+    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "7A", "expected": ["incorporated_by_reference", "partial"]},
+    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "8", "expected": ["incorporated_by_reference", "partial"]}
    ]
   },
   {
@@ -194,15 +194,15 @@
    "failure_id": "FG-SEC-007",
    "app": "sec_extractor",
    "failure_type": "wrapper_boundary_ambiguity",
-   "status": "open",
-   "summary": "Wrapper 10-K Item 7/8 boundary definition diverges between engines (we mark the pointer stub incorporated_by_reference; edgartools extracts the appended full text); body resolution is the documented next step",
+   "status": "fixed",
+   "summary": "Wrapper 10-K Item 7/8 boundary definition diverged between engines (we kept the pointer stub; edgartools extracted the appended full text). Fixed by P0-10 wrapper body reassembly: stubs resolve to source-exact spans in the appended Financial Section (JPM 7=390,734 / 8=528,433 chars, Item 8 XBRL-certified 3/3), status partial + needs_review",
    "input": {"ticker": "JPM", "accession": "0001628280-26-008131"},
    "gallery": "docs/failure_gallery.md#fg-sec-007",
    "related_commits": ["4209c87"],
-   "guarded_by": ["tests/test_third_engine.py"],
+   "guarded_by": ["tests/test_third_engine.py", "tests/test_wrapper_reassembly.py"],
    "checks": [
-    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "7", "expected": ["incorporated_by_reference"]},
-    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "8", "expected": ["incorporated_by_reference"]}
+    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "7", "expected": ["partial"]},
+    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "8", "expected": ["partial"]}
    ]
   },
   {
@@ -210,14 +210,14 @@
    "app": "sec_extractor",
    "failure_type": "wrapper_body_unresolved",
    "status": "open",
-   "summary": "CYD iXBRL oracle proved JPM/GS wrapper Item 1C coverage is 0% (our 1C is a 170/247-char pointer stub; the officially tagged disclosure lives in the appended annual-report region); official_intervals are the input for future body resolution",
+   "summary": "CYD iXBRL oracle proved JPM/GS wrapper Item 1C coverage is 0%. JPM fixed by P0-10 reassembly (1C resolves to the pages-146-149 Operational Risk section; CYD coverage 0% -> 100%, verdict agree). GS stays open: its stub points at a subsection INSIDE its own extracted Item 7 (no appended wrapper) — a different class, still an honest pointer",
    "input": {"ticker": "JPM", "accession": "0001628280-26-008131"},
    "gallery": "docs/failure_gallery.md#fg-sec-008",
    "related_commits": ["99c9274"],
-   "guarded_by": ["tests/test_cyd.py"],
+   "guarded_by": ["tests/test_cyd.py", "tests/test_wrapper_reassembly.py"],
    "checks": [
-    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "1C", "expected": ["incorporated_by_reference"]},
-    {"type": "item_max_span_chars", "fixture": "JPM_FY2025", "item": "1C", "max_chars": 1000}
+    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "1C", "expected": ["partial"]},
+    {"type": "item_max_span_chars", "fixture": "JPM_FY2025", "item": "1C", "max_chars": 60000}
    ]
   },
   {

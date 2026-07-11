@@ -1,12 +1,16 @@
-"""Page-anchor resolution for cross-reference-index filings (Intel/Citi/GE).
+"""Page-anchor resolution for wrapper 10-Ks (Intel/Citi/GE and JPM/XOM).
 
-The main document of a wrapper 10-K is an index whose entries point to page
-ranges of a separately-paginated body ("Item 1A. Risk Factors  Pages 37-51").
-That body prints its page numbers as footer artifacts, which normalize to bare
-"\\d+" lines. We recover a page->offset map from the longest monotonic run of
-those markers, so a page range resolves to a real source-exact span — turning
-an honest pointer into actual extracted content, robustly (the page numbers are
-printed data, not a fragile title guess).
+A cross-reference-index filing's main document is an index whose entries point
+to page ranges of a separately-paginated body ("Item 1A. Risk Factors  Pages
+37-51"); a JPM/XOM-style wrapper keeps real item headings but defers Items
+7/7A/8 via stubs into a Financial Section bound after the last item. Either
+way the body prints its page numbers as footer artifacts, which normalize to
+bare "\\d+" lines. We recover a page->offset map from the longest monotonic run
+of those markers (optionally restricted to a document region, so an appended
+annual report's own pagination is not confused with the main part's), so a
+page range resolves to a real source-exact span — turning an honest pointer
+into actual extracted content, robustly (the page numbers are printed data,
+not a fragile title guess).
 """
 
 from __future__ import annotations
@@ -18,6 +22,9 @@ from sec_core.normalize import NormalizedDocument
 
 _BARE_NUM = re.compile(r"\d{1,4}")
 _PAGE_RANGE = re.compile(r"(\d{1,4})\s*[-–]\s*(\d{1,4})")
+# successive printed pages never jump this far; a larger gap in the LIS chain
+# means a stray year line ("2025") or unrelated number got threaded in
+_MAX_PAGE_GAP = 100
 
 
 @dataclass
@@ -32,9 +39,14 @@ class PageMap:
         return self.hi_page - self.lo_page >= 5  # a real body has many pages
 
 
-def build_page_map(doc: NormalizedDocument) -> PageMap:
+def build_page_map(doc: NormalizedDocument, start: int = 0, end: int | None = None) -> PageMap:
+    """Recover the page->offset map, optionally from the [start, end) region
+    only (a wrapper's appended Financial Section is paginated independently of
+    the main part, so its map must not mix in the main part's footers)."""
+    hi = len(doc.text) if end is None else end
     markers = [(ln.start, ln.end, int(ln.text.strip()))
-               for ln in doc.lines if _BARE_NUM.fullmatch(ln.text.strip())]
+               for ln in doc.lines
+               if start <= ln.start < hi and _BARE_NUM.fullmatch(ln.text.strip())]
     # The body's true pagination is the longest strictly-increasing subsequence
     # of page numbers taken in document (offset) order. LIS is robust to
     # front-matter noise, duplicate header/footer numbers, and missing markers —
@@ -56,6 +68,15 @@ def build_page_map(doc: NormalizedDocument) -> PageMap:
             chain.append(markers[end])
             end = prev[end]
         best = list(reversed(chain))
+    if best:
+        # split the chain at implausible jumps (stray year lines like "2025"
+        # thread into an increasing subsequence); keep the longest real run
+        runs: list[list[tuple[int, int, int]]] = [[best[0]]]
+        for m in best[1:]:
+            if m[2] - runs[-1][-1][2] > _MAX_PAGE_GAP:
+                runs.append([])
+            runs[-1].append(m)
+        best = max(runs, key=len)
     pm = PageMap()
     for start, end, page in best:
         pm.marker_start.setdefault(page, start)

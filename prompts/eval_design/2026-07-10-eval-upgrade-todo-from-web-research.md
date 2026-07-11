@@ -173,4 +173,4 @@ T1-1 → T2-1 → T2-2 → T1-2 → T2-3 → T1-3,其餘穿插。(實際執行:u
 - T2-5:`landmines.json` header total_tests=16 為 off-by-one(實 15;body test 名單正確)。→ 已修 `2fc9f06`。
 - T2-2:`tools/score_offsets.py` 輸出路徑寫死,對非正式目錄評分會覆寫 committed `offset_f1.json`。→ `--out` 於 `6e5f506` 已存在(驗證員看到 in-progress 版);`2fc9f06` 另補 records_dir 相對路徑正規化。
 
-測試總數 89 → 285(本波完成當下);dashboard render 測試 +6 後現為 291(`.venv/Scripts/python -m pytest tests -q` → 291 passed,零紅燈,2026-07-10 最終驗收複核)。
+測試總數 89 → 285(本波完成當下);dashboard render 測試 +6、敏感度注入鎖定測試 +1 後現為 292(`.venv/Scripts/python -m pytest tests -q` → 292 passed,零紅燈,2026-07-10 最終驗收複核)。

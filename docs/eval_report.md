@@ -109,7 +109,7 @@ edgartools 5.42.0 作第三獨立引擎,對「同一份 raw HTML」離線解析,
 
 record 現在 emit `start_offset`/`end_offset`/`text_sha256`/`toc_listed`。5 家(80 個 offset-gold items)macro-F1 over items = **1.0**、over filings = **1.0**;confusion:matched 82 / correct_null 33 / omission 0 / hallucination 0 / false_missing_alarm 0。
 
-**誠實標明:F1=1.0 是建構性結果**——gold 由 pipeline 當前 offsets 半自動凍結(條件:pass/partial + needs_review=false + triangulation agree,協定寫死在 `tools/freeze_offset_gold.py`,凍結後人工 spot-check 7 個 span 頭尾),價值是 **regression baseline** 而非絕對正確率宣稱。敏感度已驗證:注入 3 類 regression(邊界截短 2 萬字、pass→missing、幻覺 pass)後 F1 降至 **0.9853**(items)、AAPL 單票 **0.9267**,omission/hallucination 各 1 全被抓到。絕對正確率的獨立訊號是 triangulation(240/12)與 XBRL/CYD oracle。
+**誠實標明:F1=1.0 是建構性結果**——gold 由 pipeline 當前 offsets 半自動凍結(條件:pass/partial + needs_review=false + triangulation agree,協定寫死在 `tools/freeze_offset_gold.py`,凍結後人工 spot-check 7 個 span 頭尾),價值是 **regression baseline** 而非絕對正確率宣稱。敏感度已鎖成可重跑測試(`tests/test_scoring.py::test_sensitivity_injection_on_real_sweep3_aapl`):對真實 AAPL sweep3 record 注入 3 類 regression(1A 邊界截短 2 萬字、Item 3 pass→missing、Item 6 幻覺 pass)後 AAPL 單票 P/R/F1 = **0.9375/0.9191/0.9267**,omission/hallucination 各 1 全被抓到、boundary_moved 被 sha 區分。絕對正確率的獨立訊號是 triangulation(240/12)與 XBRL/CYD oracle。
 
 11 家 sweep3 tri-state:**present 178(70.4%)/ null 75(29.6%)/ MISSING 0**(GS/JPM 缺 Item 16 皆 optional 且 TOC 未列 → 正確映 null,分離 omission 與 hallucination)。
 
@@ -228,5 +228,5 @@ labeled full trajectory <60(論文 2606.09863 的 train 門檻)→ 誠實走 heu
 ### 已知殘留(誠實邊界)
 
 1. **Wrapper / cross-reference-index 的真實內容尚未還原。** JPM/XOM/Intel/Citi 現在誠實標成 incorporated_by_reference / needs_review 指向 appended section 或年報,但 pipeline 還沒把那段 MD&A/財報「接回」對應 item。刻意不出貨脆弱的 title-based 猜測(Intel 正文無 emphasis 標記、標題重複當頁首,會出錯)——**錯的正文比誠實的指標更糟**。這需要 page-anchor resolution(第二遍),見 `insights_and_directions.md` §2。
-2. **boundary 精度已量化(2026-07-10)**:char-offset F1(建構性 gold,regression baseline,敏感度注入驗證 0.9853/0.9267)+ CYD 官方 iXBRL oracle(9/9 pass segment coverage 100%,首個外部 span 錨點)。人工 token-level 標註(絕對正確率)仍列 backlog。
+2. **boundary 精度已量化(2026-07-10)**:char-offset F1(建構性 gold,regression baseline,敏感度注入鎖在 `tests/test_scoring.py`:AAPL F1 1.0→0.9267)+ CYD 官方 iXBRL oracle(9/9 pass segment coverage 100%,首個外部 span 錨點)。人工 token-level 標註(絕對正確率)仍列 backlog。
 3. **`data/sec_eval/records/sweep1` 是刻意保留的修復前 baseline**,其 Item 8 仍顯示舊的(錯誤)pass——用於 before/after 對照(見上方 metrics 表)。當前正確結果在 `sweep3`(sweep2 降為歷史 baseline,漂移見「Eval 升級」段)。

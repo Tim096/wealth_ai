@@ -212,3 +212,36 @@ def test_round_trip_detects_perturbed_boundary(alpha_record):
     row7 = next(r for r in s["items"] if r["item"] == "7")
     assert row7["f1"] < 1.0
     assert row7["sha_check"] == "boundary_moved"
+
+
+# --- sensitivity injection on real committed sweep3 (locks the eval_report
+# sensitivity numbers: the scorer must not be a rubber stamp on real data) ---
+SWEEP3 = ROOT / "data" / "sec_eval" / "records" / "sweep3"
+OFFSET_GOLD = ROOT / "data" / "golden_labels" / "offsets"
+
+
+def test_sensitivity_injection_on_real_sweep3_aapl():
+    rec = json.loads((SWEEP3 / "AAPL.json").read_text(encoding="utf-8-sig"))
+    gold = json.loads((OFFSET_GOLD / "AAPL.json").read_text(encoding="utf-8-sig"))
+    assert score_filing(rec, gold)["macro_f1"] == 1.0  # constructive baseline
+
+    mutated = json.loads(json.dumps(rec))
+    # 1) boundary regression: truncate Item 1A by 20k chars
+    mutated["items"]["1A"]["end_offset"] -= 20000
+    mutated["items"]["1A"]["text_sha256"] = "mutated"
+    # 2) omission: Item 3 vanishes although the TOC advertises it
+    mutated["items"]["3"]["status"] = "missing"
+    mutated["items"]["3"]["toc_listed"] = True
+    # 3) hallucination: Item 6 (gold null, reserved) claims content
+    mutated["items"]["6"]["status"] = "pass"
+
+    s = score_filing(mutated, gold)
+    assert (s["macro_precision"], s["macro_recall"], s["macro_f1"]) == (
+        0.9375, 0.9191, 0.9267)
+    assert s["outcome_counts"]["omission"] == 1
+    assert s["outcome_counts"]["hallucination"] == 1
+    rows = {r["item"]: r for r in s["items"]}
+    assert rows["1A"]["outcome"] == "matched" and rows["1A"]["f1"] < 1.0
+    assert rows["1A"]["sha_check"] == "boundary_moved"
+    assert rows["3"]["outcome"] == "omission" and rows["3"]["f1"] == 0.0
+    assert rows["6"]["outcome"] == "hallucination"

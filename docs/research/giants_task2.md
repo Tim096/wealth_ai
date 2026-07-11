@@ -213,3 +213,58 @@
 ### 5.5 缺席的直接對決
 
 ✅ 已落地為 P0-2 姊妹交付物 A:edgar-crawler、edgartools(5.42.0)、datamule 跑在同一份 gold set(NTU + 擴充 gold),輸出 per-item F1 對照表(新 tools/head_to_head.py)。sec-parser 因無 end-to-end item extractor(heading 偵測層)不參賽,如實註記。⏳ 實作未動工。
+
+---
+
+## 外部量測 rerun 2026-07-10(post wave-2)
+
+> Adversarial interpreter pass(16:50 當下盤點)。**結論先講:post-wave-2 的外部數字尚不存在。**
+> 磁碟上的 `data/sec_eval/scoring/head_to_head.json`(mtime 15:16)是 pre-wave 產物:schema 只有
+> `ours`/`edgartools` 兩 engine(wave-2 的 edgar_crawler/datamule 參賽 engine 不在內),summary 與
+> 16:46 備份的 h2h_prev.json 逐位元相同。16:31 重跑的 `calibration.json` 直接讀該 stale artifact,
+> 因此 AUROC/ECE 到小數第 4 位「不變」——這不是穩定,是輸入沒換。16:45 的 4-engine smoke(slice=2)
+> 證明新 pipeline 可跑,但 n=2 的數字是雜訊。完整 30-slice rerun 截至 16:51 尚未啟動(無對應 process)。
+
+### 數字表(before = pre-wave 實測;after = pending)
+
+| 指標 | 來源 | before(pre-wave) | after(post wave-2) | 手工重算驗證 |
+|---|---|---|---|---|
+| macro-F1(ours, n=28) | head_to_head.json, NTU 30-slice | 0.5961 | **pending(rerun 未跑)** | 0.5961 ✓(filings 逐筆平均) |
+| macro-F1(edgartools, n=26) | 同上 | 0.4386 | pending | 0.4386 ✓ |
+| AUROC(ntu_human_labeled, n=512) | calibration.json | 0.6277 | pending(16:31 檔 = stale 輸入重算) | 0.6277 ✓(rank-based 重算) |
+| ECE(ntu_human_labeled) | 同上 | 0.1753 | pending | 0.1753 ✓(10-bin 重算) |
+| verifier false-pass rate | 同上(gate: conf≥0.6 ∧ ¬needs_review) | 0.2410(107/444) | pending | 107/444=0.2410 ✓ |
+| AUROC(pseudo_gold_corpus_only, n=275) | calibration.json | 0.4288(比丟銅板差) | pending | — |
+
+數字本身內部一致、無造假;問題只在「rerun」的 after 欄還沒被量出來。任何把 0.5961/0.6277 當
+post-wave 成績引用的文件都是在引用 stale 數據。
+
+### 診斷:AUROC 為何卡在 0.63(從 512 筆 raw data 算,非臆測)
+
+512 個 gold item 中 141 個錯(27.5%)。錯誤分桶:
+
+1. **主導桶:boundary bleed(precision 稀釋)——123/141(87%)**。F1∈(0,0.5) 且其中 121 筆
+   fp 行數 > gold 行數:recall≈1、起點抓對,尾巴掃過下一個 item 把 precision 打死。
+   典型:item 6 錯 16 筆(平均 gold 33 行 vs fp 159 行)、item 9A 錯 15 筆(gold 17 vs fp 76)。
+   徹底 miss(F1=0)只有 18 筆——這不是「找不到」的問題,是「不知道停」的問題。
+2. **信心飽和讓 verifier 對主導桶全盲**:237/512(46%)conf=1.0、377/512(74%)conf≥0.9
+   (bin 平均 conf 0.9793、accuracy 卻只 0.7692);141 個錯裡 87 個(62%)落在 conf≥0.9,
+   needs_review 只攔到 19/141(13%)。verifier 目前量的是「item 有沒有找到、內容像不像」,
+   完全看不到 overshoot——分數軸對主導失敗模式零訊號,AUROC 自然沒有 headroom。
+3. **items 10–13(Part III IBR)是次要桶,且非 metric 冤枉**:40/141(28%),其中 28 筆
+   gold≤3 行(IBR stub 極小,幾行 fp 就把 F1 砸穿 0.5);平均 conf 0.762,落在非飽和區,
+   是 AUROC 目前僅存鑑別力的來源。label noise 不是主因:主導桶的 recall≈1 說明 NTU 行級
+   gold 與我們的抽取對得上,錯在我們多抓,不在標籤。
+4. **pseudo_gold AUROC 0.4288 < 0.5**:corpus teacher 的 disagree 與我們的 confidence 負相關
+   ——weak-label 分層只能當煙霧偵測,不能拿來調參(維持 P0-3「human-labeled 為主曲線」)。
+
+### 下一步修法(具體,可量測)
+
+- **給 verifier 一個 overshoot 訊號**:抽取行數 / size-band(P0 已落地)預期行數比值超過該 item
+  p95 時封頂 confidence 並強制 needs_review;加「抽取範圍內含下一 item header」的 containment
+  check。直接打 121 筆 fp>gold 的錯,並替 0.9–1.0 bin 解飽和。
+- **驗收門檻(下次 rerun 量)**:needs_review 對錯誤的攔截率 19/141→≥50%;conf≥0.9 桶內錯誤
+  87→減半;AUROC 0.6277→≥0.75。macro-F1 本身也會漲(bleed 修掉 = precision 直接回來),
+  但 F1 是副產品,主目標是讓信心軸重新有訊號。
+- **流程修正**:calibration 重跑前必須驗 head_to_head.json 的 engine schema(4-engine)與 mtime
+  晚於 pipeline wave 完成時間,否則就是這次的「數字全同」假象重演。

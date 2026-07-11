@@ -32,7 +32,8 @@ def _text_visible_hit(needle: str, visible_text: str) -> bool:
     """True only when the needle appears OUTSIDE zero-result echo lines."""
     kept = "\n".join(line for line in visible_text.splitlines()
                      if not _QUERY_ECHO_RE.search(line))
-    return needle.lower() in kept.lower()
+    from browser_agent.text_match import robust_contains
+    return robust_contains(needle, kept)
 
 
 def _download_ok(path: str, needle: str) -> str:

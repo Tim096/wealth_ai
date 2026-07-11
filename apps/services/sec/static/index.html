@@ -236,9 +236,16 @@ function renderSec(d){
   });
 }
 
+let SEC_ITEM_LOADING=false;
 async function showItem(code,highlight){
   if(!CUR_JOB)return;
-  const d=await(await fetch(api(`/api/jobs/${CUR_JOB}/item?code=`+encodeURIComponent(code)))).json();
+  if(SEC_ITEM_LOADING)return;           // 防連點:載入中忽略新點擊
+  SEC_ITEM_LOADING=true;
+  secBusy(true,`載入 Item ${code}…`);
+  let d;
+  try{
+    d=await(await fetch(api(`/api/jobs/${CUR_JOB}/item?code=`+encodeURIComponent(code)))).json();
+  }finally{SEC_ITEM_LOADING=false;secBusy(false);}
   if(!d.ok){$('#sDoc').textContent=d.error;return d;}
   const label=(d.code.startsWith('gap:')||d.code.startsWith('ex:'))?d.title:`Item ${d.code}. ${d.title}`;
   const head=`${label}\n`+
@@ -252,11 +259,24 @@ async function showItem(code,highlight){
   return d;
 }
 let SEC_MARKS=[];
+let RENDER_SEQ=0;                        // 取消尚未追加完的舊渲染
+const RENDER_CHUNK=65536;               // 64KB/塊:大 item(JPM Item 8 ≈ 52.8 萬字)分塊漸進渲染,避免單一節點排版凍結
 function renderDoc(q){
   const el=$('#sDoc');el.innerHTML='<span class="head"></span>';
   el.firstChild.textContent=SEC_DOC.head;SEC_MARKS=[];
-  const body=SEC_DOC.text;
-  if(!q){el.appendChild(document.createTextNode(body));return 0;}
+  const body=SEC_DOC.text;const seq=++RENDER_SEQ;
+  if(!q){
+    if(body.length<=RENDER_CHUNK){el.appendChild(document.createTextNode(body));return 0;}
+    let at=0;
+    const pump=()=>{
+      if(seq!==RENDER_SEQ)return;        // 已被新渲染取代
+      el.appendChild(document.createTextNode(body.slice(at,at+RENDER_CHUNK)));
+      at+=RENDER_CHUNK;
+      if(at<body.length)requestAnimationFrame(pump);
+    };
+    pump();                              // 第一塊同步,其餘逐幀追加
+    return 0;
+  }
   const low=body.toLowerCase(),needle=q.toLowerCase();let from=0;
   while(true){const at=low.indexOf(needle,from);if(at<0)break;
     if(at>from)el.appendChild(document.createTextNode(body.slice(from,at)));

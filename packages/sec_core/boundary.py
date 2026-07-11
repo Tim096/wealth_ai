@@ -7,7 +7,7 @@ reference / missing / ambiguous) honestly instead of faking pass.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from eval_core import ConditionCheck, combine_checks
 from observability_core import sha256_text
@@ -98,6 +98,42 @@ def _select_candidates(candidates: list[HeadingCandidate]) -> dict[str, Resolved
     return resolved
 
 
+def _canonical_title_re(code: str) -> re.Pattern[str]:
+    words = CANONICAL_ITEM_TITLES[code].split()
+    return re.compile(r"\b" + r"\s+".join(re.escape(w) for w in words) + r"\b", re.IGNORECASE)
+
+
+def _infer_combined_headings(resolved: dict[str, ResolvedItem]) -> None:
+    """Combined-item inference fallback (P0-9): a singular heading like
+    'Item 1. Business and Properties' leaves the covered item with no anchor of
+    its own — its content lands inside the first item's span but its recall
+    silently drops to zero as 'missing'. When a missing item's canonical title
+    appears verbatim in an earlier chosen heading's title text, treat the pair
+    as combined (same semantics as an explicit 'Items 1 and 2' heading) instead
+    of silently missing.
+    """
+    for i, code in enumerate(VALID_CODES):
+        r = resolved[code]
+        if r.chosen is not None or code == "6":  # 6 already has the reserved path
+            continue
+        title_re = _canonical_title_re(code)
+        for prev_code in reversed(VALID_CODES[:i]):
+            prev = resolved[prev_code]
+            # never chain: a heading already covering two items is exhausted
+            if prev.chosen is None or prev.chosen.combined_with:
+                continue
+            if not title_re.search(prev.chosen.title_text):
+                continue
+            r.chosen = replace(prev.chosen, code=code, combined_with=prev_code)
+            prev.chosen.combined_with = code
+            r.warnings.append(
+                f"no own heading for item {code}; inferred combined with item {prev_code} "
+                f"because its heading title contains "
+                f"{CANONICAL_ITEM_TITLES[code]!r}"
+            )
+            break
+
+
 def _end_of_document_body(doc: NormalizedDocument, last_start: int) -> int:
     m = _SIGNATURES_RE.search(doc.text, last_start)
     return m.start() if m else len(doc.text)
@@ -182,6 +218,7 @@ def _confidence(doc: NormalizedDocument, item: ResolvedItem, start: int, end: in
 def resolve_items(doc: NormalizedDocument, candidates: list[HeadingCandidate],
                   filing_id: str) -> tuple[list[ItemSegment], dict[str, ConfidenceBreakdown]]:
     resolved = _select_candidates(candidates)
+    _infer_combined_headings(resolved)
     chosen_items = [(code, r) for code, r in resolved.items() if r.chosen]
     chosen_items.sort(key=lambda x: x[1].chosen.start)  # type: ignore[union-attr]
 

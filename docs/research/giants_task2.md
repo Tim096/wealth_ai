@@ -348,8 +348,9 @@ recall(bleed 是這個 trade 的帳單),而換來的是全場**唯一**有驗證
 
 **結論先講:即使套用合法的 TOC-strip,我們 F1 仍沒贏。** 兩個對手數字(fresh artifact 逐位元確認):
 edgar_crawler **0.6332**、datamule **0.6244**、edgartools 0.4386;我們 raw **0.5964**。合法 TOC-strip
-後投影 **0.6244** —— **追平 datamule(0.6244 == 0.6244,非「贏」),仍輸 edgar_crawler 0.0088。**
-F1 tuning 就此 **CLOSED**,不再嘗試;敘事全面轉為可靠性/可驗證性差異化。
+後(當時投影,現已 **landed 並實測**,見下方「landed」小節)**0.6245** —— **追平 datamule
+(0.6245 ≈ 0.6244,非「贏」),仍輸 edgar_crawler 0.0087。** F1 tuning 就此 **CLOSED**,不再嘗試;
+敘事全面轉為可靠性/可驗證性差異化。
 
 #### 前一裁決的錯誤更正(誠實記帳)
 
@@ -395,3 +396,50 @@ F1**——所以它是特性揭露,不是勝負宣稱。
 一整組可審計配套隨附;edgar_crawler 的 0.6332 是一個**無法自我審計**的數字,錯了不知道錯。單軸比 F1
 我們輸 0.0088(對 EC)、追平 datamule;比「你敢不敢把輸出直接餵下游而不需人工復核」,對面三家連
 參賽資格都沒有。**F1 line: CLOSED as honest-narrative。**
+
+### 終判 2026-07-10 landed(TOC-navigation-backlink stripping 出貨,投影→實測)
+
+**結論先講:TOC-strip 從「投影 0.6244」升級為「shipped 兩層特性 + 實測 0.6245」。** 18:40 的
+0.6244 是在 scratchpad 對 item text 事後 strip 的重算;現已把它落地成真產品特性,並在真正的
+`tools/head_to_head.py` OURS adapter 上 **重跑實測**,不再是投影。
+
+**落地位置(兩層輸出)**:
+
+- `packages/sec_core/normalize.py`:`NormalizedDocument.clean_slice(start, end)` 為 delivery 層——
+  source-exact slice 移除 TOC 導覽 backlink 行;`_is_toc_backlink_line()` 精準辨識該類:整行文字
+  normalize 後 ∈ `_TOC_BACKLINK_PHRASES`(`table of contents` / `back to contents` /
+  `return to table of contents` …)**且**整行每個非空白字元都在內部錨點內(`FLAG_TOC_LINK`,即
+  `<a href="#...">` backlink)。`slice()`(provenance 層)不動——offsets / sha256 / coverage 全數
+  對原始 span 計算,backlink 仍在。
+- `packages/sec_core/pipeline.py`:`ExtractionResult.clean_text_of(code)` 交付 clean 文字;
+  `text_of(code)` 保持 raw span(兩層並存)。
+- `tools/head_to_head.py` OURS adapter 改吃 `clean_text_of`,故分數反映交付文字。**這不是
+  adapter-only convention-trim**(那需對所有引擎對稱套用)——strip 活在產品管線裡,adapter 只是
+  讀產品的交付輸出;EC/datamule/edgartools 用各自交付輸出(EC 自己就 strip,故 no-op)。
+
+**精準性(為何不是 metric hack)**:錨點閘門讓它比 18:40 的「純文字 match」更嚴——真正的
+`TABLE OF CONTENTS` 章節標題(非錨點)被保留;item 標題(`Item 1.`)文字不同不受影響;合法
+recurring 財務內容(如逐頁重複的 `Net sales`)因非 TOC 導覽片語、非 whole-line 錨點而**永不**被 strip。
+broad「duplicated=furniture」全 strip 仍是**非法**(§18:40 已證雙引擎雙降),未採用。
+
+**實測數字表(`tools/head_to_head.py`,NTU 30-slice,4-engine,cache-first 重跑;artifact:
+`data/sec_eval/scoring/head_to_head.json`)**:
+
+| 系統 | before(raw / pre-landing) | after(shipped clean delivery) | 對 ours 的落差 |
+|---|---|---|---|
+| edgar_crawler | 0.6332 | 0.6332(strip 對 EC no-op) | 我們 **輸 0.0087** |
+| datamule | 0.6244 | 0.6244(不受影響) | 我們 **追平** |
+| edgartools | 0.4386 | 0.4386(不受影響) | — |
+| **ours** | **0.5964** | **0.6245**(+0.0281) | — |
+
+實測 0.6245 vs 18:40 投影 0.6244 差 +0.0001,來自錨點閘門保留了少數非錨點 `TABLE OF CONTENTS`
+標題(投影版純文字 match 會多砍);方向是「更保守、更精準」,如實記錄不硬湊。side-effect:
+`verifier_false_pass_items` 100→79(被交付層移除的 TOC-bleed fp 不再算 false-pass)。
+
+**測試**:`tests/test_toc_backlink_strip.py`(7 tests)——backlink 被 strip、真實 body 句子與 recurring
+財務內容永不被 strip、非錨點標題保留、raw span/sha256 provenance 不變、無 backlink 時 clean==raw。
+mutation harness recall 全六類維持 **1.0**(clean false-alarm 0.0056);JPM/XOM reassembly、
+combined-item、overshoot guard、full SEC suite 全綠。
+
+**誠實裁決不變**:F1 單軸我們仍輸 EC 0.0087、追平 datamule;**F1 line 維持 CLOSED**。TOC-strip 是
+可靠性/可讀性軸的產品特性(兩層交付),不是勝負宣稱。

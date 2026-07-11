@@ -49,8 +49,19 @@ class ExtractionResult:
         return next(s for s in self.segments if s.item_code == code)
 
     def text_of(self, code: str) -> str:
+        """Raw source-exact span (provenance layer): offsets + sha256 address
+        exactly this text. Internal verifiers score against it."""
         s = self.segment(code)
         return self.doc.slice(s.start_offset, s.end_offset)
+
+    def clean_text_of(self, code: str) -> str:
+        """Delivered clean item text (delivery layer): the source-exact span with
+        table-of-contents navigation backlink lines removed. The raw span and its
+        offsets stay intact — this is the two-layer output described in
+        docs/research/giants_task2.md (clean text for consumption, offsets for
+        provenance)."""
+        s = self.segment(code)
+        return self.doc.clean_slice(s.start_offset, s.end_offset)
 
 
 _ADJUDICATOR_SYSTEM = (

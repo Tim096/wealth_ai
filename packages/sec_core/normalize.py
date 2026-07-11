@@ -8,6 +8,7 @@ mapping stays exact even through entity references.
 
 from __future__ import annotations
 
+import re
 from array import array
 from dataclasses import dataclass, field
 from html import unescape
@@ -38,6 +39,25 @@ _CHAR_MAP = {
 }
 
 
+_ALNUM_RE = re.compile(r"[^a-z0-9]+")
+
+# Table-of-contents navigation backlink phrases (delivery-layer furniture). A
+# whole line whose text is one of these AND sits entirely inside an internal
+# anchor (<a href="#...">, FLAG_TOC_LINK) is the "Table of Contents" backlink
+# that filings repeat at every page break to jump back to the index. This is
+# pagination navigation, not item content — edgar_crawler strips the same class
+# in its clean_text (TABLE OF CONTENTS | BACK TO CONTENTS | ...). We strip ONLY
+# this anchor-backed navigation class, never arbitrary recurring lines or
+# financial boilerplate (broad recurring-line stripping eats real content).
+_TOC_BACKLINK_PHRASES = frozenset({
+    "tableofcontents",
+    "backtocontents",
+    "backtotableofcontents",
+    "returntocontents",
+    "returntotableofcontents",
+})
+
+
 @dataclass
 class Line:
     start: int
@@ -60,7 +80,52 @@ class NormalizedDocument:
         return self.norm_to_raw[norm_offset]
 
     def slice(self, start: int, end: int) -> str:
+        """Source-exact span [start, end): the provenance record. Offsets,
+        sha256 and coverage are computed against this — never against clean_slice."""
         return self.text[start:end]
+
+    def _is_toc_backlink_line(self, line: Line) -> bool:
+        """A table-of-contents navigation backlink line (see _TOC_BACKLINK_PHRASES):
+        its whole text is a TOC nav phrase and every non-space char is inside an
+        internal anchor. Genuine 'TABLE OF CONTENTS' section headings (not anchors)
+        and item headings ('Item 1.') are excluded by construction."""
+        if _ALNUM_RE.sub("", line.text.lower()) not in _TOC_BACKLINK_PHRASES:
+            return False
+        anchored = False
+        for offset in range(line.start, line.end):
+            if self.text[offset].isspace():
+                continue
+            if not (self.flags[offset] & FLAG_TOC_LINK):
+                return False
+            anchored = True
+        return anchored
+
+    def clean_slice(self, start: int, end: int) -> str:
+        """Delivery-layer materialization of [start, end): the source-exact slice
+        with table-of-contents navigation backlink lines removed. This is a
+        derived clean view for downstream consumption — slice() remains the raw
+        provenance span (offsets / sha256 / coverage are unchanged)."""
+        if start >= end:
+            return self.text[start:end]
+        drops: list[tuple[int, int]] = []  # absolute [ln.start, drop_end) to remove
+        for ln in self.lines:
+            if ln.end <= start:
+                continue
+            if ln.start >= end:
+                break
+            if ln.start >= start and ln.end <= end and self._is_toc_backlink_line(ln):
+                # also drop the trailing newline so neighbours don't gain a blank line
+                drop_end = ln.end + 1 if ln.end < end and self.text[ln.end] == "\n" else ln.end
+                drops.append((ln.start, drop_end))
+        if not drops:
+            return self.text[start:end]
+        out: list[str] = []
+        cur = start
+        for ds, de in drops:
+            out.append(self.text[cur:ds])
+            cur = de
+        out.append(self.text[cur:end])
+        return "".join(out)
 
 
 class _Normalizer(HTMLParser):

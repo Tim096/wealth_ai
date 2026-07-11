@@ -7,8 +7,8 @@
   "ours": {
    "filings_scored": 28,
    "engine_failures": 2,
-   "macro_f1_filings": 0.5964,
-   "verifier_false_pass_items": 100
+   "macro_f1_filings": 0.6245,
+   "verifier_false_pass_items": 79
   },
   "edgartools": {
    "filings_scored": 26,
@@ -178,17 +178,17 @@
    "company": "DOBSON COMMUNICATIONS CORP",
    "date_filed": "2002/04/01",
    "link": "https://www.sec.gov/Archives/edgar/data/1035985/000095013402003064/d94706e10-k.htm",
-   "fetch_ms": 3.4,
+   "fetch_ms": 3.3,
    "engines": {
     "ours": {
      "items": {
       "1": {
-       "tp": 207,
-       "fp": 139,
-       "fn": 0,
-       "precision": 0.5983,
-       "recall": 1.0,
-       "f1": 0.7486
+       "tp": 191,
+       "fp": 56,
+       "fn": 16,
+       "precision": 0.7733,
+       "recall": 0.9227,
+       "f1": 0.8414
       },
       "2": {
        "tp": 2,
@@ -223,28 +223,28 @@
        "f1": 0.8293
       },
       "6": {
-       "tp": 60,
-       "fp": 210,
-       "fn": 0,
-       "precision": 0.2222,
-       "recall": 1.0,
-       "f1": 0.3636
+       "tp": 58,
+       "fp": 113,
+       "fn": 2,
+       "precision": 0.3392,
+       "recall": 0.9667,
+       "f1": 0.5022
       },
       "7": {
-       "tp": 186,
-       "fp": 279,
-       "fn": 0,
-       "precision": 0.4,
-       "recall": 1.0,
-       "f1": 0.5714
+       "tp": 171,
+       "fp": 195,
+       "fn": 15,
+       "precision": 0.4672,
+       "recall": 0.9194,
+       "f1": 0.6196
       },
       "8": {
-       "tp": 962,
-       "fp": 164,
-       "fn": 0,
-       "precision": 0.8544,
-       "recall": 1.0,
-       "f1": 0.9215
+       "tp": 916,
+       "fp": 111,
+       "fn": 46,
+       "precision": 0.8919,
+       "recall": 0.9522,
+       "f1": 0.9211
       },
       "9": {
        "tp": 1,
@@ -288,7 +288,7 @@
       },
       "14": {
        "tp": 0,
-       "fp": 410,
+       "fp": 311,
        "fn": 0,
        "precision": 0.0,
        "recall": 0.0,
@@ -296,11 +296,11 @@
       },
       "15": {
        "tp": 8,
-       "fp": 402,
+       "fp": 303,
        "fn": 0,
-       "precision": 0.0195,
+       "precision": 0.0257,
        "recall": 1.0,
-       "f1": 0.0383
+       "f1": 0.0502
       },
       "7A": {
        "tp": 4,
@@ -311,7 +311,7 @@
        "f1": 0.2667
       }
      },
-     "macro_f1": 0.4996,
+     "macro_f1": 0.519,
      "gold_lines_scored": 1743,
      "verifier": {
       "1": {
@@ -1415,17 +1415,17 @@
    "company": "EON COMMUNICATIONS CORP",
    "date_filed": "2003/10/29",
    "link": "https://www.sec.gov/Archives/edgar/data/1084752/000119312503069303/d10k.htm",
-   "fetch_ms": 2.5,
+   "fetch_ms": 2.6,
    "engines": {
     "ours": {
      "items": {
       "1": {
-       "tp": 145,
-       "fp": 103,
-       "fn": 0,
-       "precision": 0.5847,
-       "recall": 1.0,
-       "f1": 0.7379
+       "tp": 134,
+       "fp": 57,
+       "fn": 11,
+       "precision": 0.7016,
+       "recall": 0.9241,
+       "f1": 0.7976
       },
       "2": {
        "tp": 13,
@@ -1460,36 +1460,36 @@
        "f1": 0.7273
       },
       "6": {
-       "tp": 35,
-       "fp": 130,
-       "fn": 0,
-       "precision": 0.2121,
-       "recall": 1.0,
-       "f1": 0.35
+       "tp": 33,
+       "fp": 75,
+       "fn": 2,
+       "precision": 0.3056,
+       "recall": 0.9429,
+       "f1": 0.4615
       },
       "7": {
-       "tp": 199,
-       "fp": 212,
-       "fn": 0,
-       "precision": 0.4842,
-       "recall": 1.0,
-       "f1": 0.6525
+       "tp": 188,
+       "fp": 166,
+       "fn": 11,
+       "precision": 0.5311,
+       "recall": 0.9447,
+       "f1": 0.6799
       },
       "8": {
-       "tp": 443,
-       "fp": 156,
-       "fn": 0,
-       "precision": 0.7396,
-       "recall": 1.0,
-       "f1": 0.8503
+       "tp": 422,
+       "fp": 120,
+       "fn": 21,
+       "precision": 0.7786,
+       "recall": 0.9526,
+       "f1": 0.8569
       },
       "9": {
-       "tp": 7,
-       "fp": 75,
-       "fn": 0,
-       "precision": 0.0854,
-       "recall": 1.0,
-       "f1": 0.1573
+       "tp": 6,
+       "fp": 19,
+       "fn": 1,
+       "precision": 0.24,
+       "recall": 0.8571,
+       "f1": 0.375
       },
       "10": {
        "tp": 4,
@@ -1556,7 +1556,7 @@
        "f1": 0.6
       }
      },
-     "macro_f1": 0.6554,
+     "macro_f1": 0.6803,
      "gold_lines_scored": 1011,
      "verifier": {
       "1": {
@@ -2111,7 +2111,7 @@
    "company": "ISIS PHARMACEUTICALS INC",
    "date_filed": "2004/03/15",
    "link": "https://www.sec.gov/Archives/edgar/data/874015/000104746904007808/a2130713z10-k.htm",
-   "fetch_ms": 2.5,
+   "fetch_ms": 2.1,
    "engines": {
     "ours": {
      "items": {
@@ -3507,17 +3507,17 @@
    "company": "ESSENTIAL GROUP INC",
    "date_filed": "2005/03/30",
    "link": "https://www.sec.gov/Archives/edgar/data/1088000/000119312505064965/d10k.htm",
-   "fetch_ms": 2.5,
+   "fetch_ms": 2.3,
    "engines": {
     "ours": {
      "items": {
       "1": {
-       "tp": 105,
-       "fp": 70,
-       "fn": 0,
-       "precision": 0.6,
-       "recall": 1.0,
-       "f1": 0.75
+       "tp": 98,
+       "fp": 30,
+       "fn": 7,
+       "precision": 0.7656,
+       "recall": 0.9333,
+       "f1": 0.8412
       },
       "2": {
        "tp": 2,
@@ -3544,28 +3544,28 @@
        "f1": 0.8
       },
       "5": {
-       "tp": 10,
-       "fp": 64,
-       "fn": 0,
-       "precision": 0.1351,
-       "recall": 1.0,
-       "f1": 0.2381
+       "tp": 8,
+       "fp": 19,
+       "fn": 2,
+       "precision": 0.2963,
+       "recall": 0.8,
+       "f1": 0.4324
       },
       "6": {
-       "tp": 34,
-       "fp": 120,
-       "fn": 0,
-       "precision": 0.2208,
-       "recall": 1.0,
-       "f1": 0.3617
+       "tp": 32,
+       "fp": 75,
+       "fn": 2,
+       "precision": 0.2991,
+       "recall": 0.9412,
+       "f1": 0.4539
       },
       "7": {
-       "tp": 152,
-       "fp": 181,
-       "fn": 0,
-       "precision": 0.4565,
-       "recall": 1.0,
-       "f1": 0.6268
+       "tp": 143,
+       "fp": 143,
+       "fn": 9,
+       "precision": 0.5,
+       "recall": 0.9408,
+       "f1": 0.653
       },
       "8": {
        "tp": 2,
@@ -3640,12 +3640,12 @@
        "f1": 0.5714
       },
       "9A": {
-       "tp": 4,
-       "fp": 53,
-       "fn": 0,
-       "precision": 0.0702,
-       "recall": 1.0,
-       "f1": 0.1311
+       "tp": 3,
+       "fp": 7,
+       "fn": 1,
+       "precision": 0.3,
+       "recall": 0.75,
+       "f1": 0.4286
       },
       "9B": {
        "tp": 2,
@@ -3656,7 +3656,7 @@
        "f1": 0.8
       }
      },
-     "macro_f1": 0.5494,
+     "macro_f1": 0.5883,
      "gold_lines_scored": 854,
      "verifier": {
       "1": {
@@ -4243,17 +4243,17 @@
    "company": "GENERAL CABLE CORP /DE/",
    "date_filed": "2006/03/15",
    "link": "https://www.sec.gov/Archives/edgar/data/886035/000095015206002081/l18783ae10vk.htm",
-   "fetch_ms": 3.5,
+   "fetch_ms": 3.7,
    "engines": {
     "ours": {
      "items": {
       "1": {
-       "tp": 144,
-       "fp": 248,
-       "fn": 0,
-       "precision": 0.3673,
-       "recall": 1.0,
-       "f1": 0.5373
+       "tp": 135,
+       "fp": 157,
+       "fn": 9,
+       "precision": 0.4623,
+       "recall": 0.9375,
+       "f1": 0.6193
       },
       "2": {
        "tp": 35,
@@ -4264,12 +4264,12 @@
        "f1": 0.6306
       },
       "3": {
-       "tp": 24,
-       "fp": 106,
-       "fn": 0,
-       "precision": 0.1846,
-       "recall": 1.0,
-       "f1": 0.3117
+       "tp": 22,
+       "fp": 8,
+       "fn": 2,
+       "precision": 0.7333,
+       "recall": 0.9167,
+       "f1": 0.8148
       },
       "4": {
        "tp": 5,
@@ -4280,28 +4280,28 @@
        "f1": 0.8333
       },
       "5": {
-       "tp": 35,
-       "fp": 136,
-       "fn": 0,
-       "precision": 0.2047,
-       "recall": 1.0,
-       "f1": 0.3398
+       "tp": 33,
+       "fp": 38,
+       "fn": 2,
+       "precision": 0.4648,
+       "recall": 0.9429,
+       "f1": 0.6226
       },
       "6": {
-       "tp": 45,
-       "fp": 271,
-       "fn": 0,
-       "precision": 0.1424,
-       "recall": 1.0,
-       "f1": 0.2493
+       "tp": 43,
+       "fp": 173,
+       "fn": 2,
+       "precision": 0.1991,
+       "recall": 0.9556,
+       "f1": 0.3295
       },
       "7": {
-       "tp": 281,
-       "fp": 392,
-       "fn": 0,
-       "precision": 0.4175,
-       "recall": 1.0,
-       "f1": 0.5891
+       "tp": 263,
+       "fp": 310,
+       "fn": 18,
+       "precision": 0.459,
+       "recall": 0.9359,
+       "f1": 0.6159
       },
       "8": {
        "tp": 7,
@@ -4352,28 +4352,28 @@
        "f1": 0.4444
       },
       "14": {
-       "tp": 4,
-       "fp": 100,
-       "fn": 0,
-       "precision": 0.0385,
-       "recall": 1.0,
-       "f1": 0.0741
+       "tp": 3,
+       "fp": 1,
+       "fn": 1,
+       "precision": 0.75,
+       "recall": 0.75,
+       "f1": 0.75
       },
       "15": {
-       "tp": 1,
-       "fp": 189,
-       "fn": 7,
-       "precision": 0.0053,
-       "recall": 0.125,
-       "f1": 0.0101
+       "tp": 0,
+       "fp": 90,
+       "fn": 8,
+       "precision": 0.0,
+       "recall": 0.0,
+       "f1": 0.0
       },
       "1A": {
-       "tp": 107,
-       "fp": 223,
-       "fn": 0,
-       "precision": 0.3242,
-       "recall": 1.0,
-       "f1": 0.4897
+       "tp": 100,
+       "fp": 130,
+       "fn": 7,
+       "precision": 0.4348,
+       "recall": 0.9346,
+       "f1": 0.5935
       },
       "1B": {
        "tp": 1,
@@ -4384,20 +4384,20 @@
        "f1": 1.0
       },
       "7A": {
-       "tp": 22,
-       "fp": 163,
-       "fn": 0,
-       "precision": 0.1189,
-       "recall": 1.0,
-       "f1": 0.2126
+       "tp": 21,
+       "fp": 64,
+       "fn": 1,
+       "precision": 0.2471,
+       "recall": 0.9545,
+       "f1": 0.3925
       },
       "9A": {
-       "tp": 41,
-       "fp": 181,
-       "fn": 0,
-       "precision": 0.1847,
-       "recall": 1.0,
-       "f1": 0.3118
+       "tp": 37,
+       "fp": 85,
+       "fn": 4,
+       "precision": 0.3033,
+       "recall": 0.9024,
+       "f1": 0.454
       },
       "9B": {
        "tp": 1,
@@ -4408,7 +4408,7 @@
        "f1": 1.0
       }
      },
-     "macro_f1": 0.5036,
+     "macro_f1": 0.6069,
      "gold_lines_scored": 1980,
      "verifier": {
       "1": {
@@ -4528,13 +4528,9 @@
       }
      },
      "verifier_false_pass": [
-      "3",
-      "5",
       "11",
       "12",
       "13",
-      "14",
-      "1A",
       "7A",
       "9A"
      ]
@@ -5045,7 +5041,7 @@
    "company": "CITIZENS & NORTHERN CORP",
    "date_filed": "2007/03/02",
    "link": "https://www.sec.gov/Archives/edgar/data/810958/000095015207001718/l24216ae10vk.htm",
-   "fetch_ms": 2.7,
+   "fetch_ms": 3.3,
    "engines": {
     "ours": {
      "items": {
@@ -5845,12 +5841,12 @@
     "ours": {
      "items": {
       "1": {
-       "tp": 326,
-       "fp": 17,
-       "fn": 0,
-       "precision": 0.9504,
-       "recall": 1.0,
-       "f1": 0.9746
+       "tp": 303,
+       "fp": 6,
+       "fn": 23,
+       "precision": 0.9806,
+       "recall": 0.9294,
+       "f1": 0.9543
       },
       "2": {
        "tp": 2,
@@ -5877,12 +5873,12 @@
        "f1": 0.6667
       },
       "5": {
-       "tp": 23,
-       "fp": 36,
-       "fn": 0,
-       "precision": 0.3898,
-       "recall": 1.0,
-       "f1": 0.561
+       "tp": 20,
+       "fp": 5,
+       "fn": 3,
+       "precision": 0.8,
+       "recall": 0.8696,
+       "f1": 0.8333
       },
       "6": {
        "tp": 2,
@@ -5917,12 +5913,12 @@
        "f1": 0.6667
       },
       "10": {
-       "tp": 5,
-       "fp": 38,
-       "fn": 0,
-       "precision": 0.1163,
-       "recall": 1.0,
-       "f1": 0.2083
+       "tp": 4,
+       "fp": 5,
+       "fn": 1,
+       "precision": 0.4444,
+       "recall": 0.8,
+       "f1": 0.5714
       },
       "11": {
        "tp": 2,
@@ -5957,20 +5953,20 @@
        "f1": 0.8
       },
       "15": {
-       "tp": 30,
-       "fp": 43,
-       "fn": 0,
-       "precision": 0.411,
-       "recall": 1.0,
-       "f1": 0.5825
+       "tp": 27,
+       "fp": 12,
+       "fn": 3,
+       "precision": 0.6923,
+       "recall": 0.9,
+       "f1": 0.7826
       },
       "1A": {
-       "tp": 20,
-       "fp": 40,
-       "fn": 0,
-       "precision": 0.3333,
-       "recall": 1.0,
-       "f1": 0.5
+       "tp": 19,
+       "fp": 7,
+       "fn": 1,
+       "precision": 0.7308,
+       "recall": 0.95,
+       "f1": 0.8261
       },
       "1B": {
        "tp": 1,
@@ -6005,7 +6001,7 @@
        "f1": 0.6667
       }
      },
-     "macro_f1": 0.6827,
+     "macro_f1": 0.7398,
      "gold_lines_scored": 521,
      "verifier": {
       "1": {
@@ -6632,7 +6628,7 @@
    "company": "KODIAK ENERGY, INC.",
    "date_filed": "2008/03/17",
    "link": "https://www.sec.gov/Archives/edgar/data/1109553/000109690608000449/kodiak10k123107.htm",
-   "fetch_ms": 4.9,
+   "fetch_ms": 4.8,
    "engines": {
     "ours": {
      "items": {
@@ -7416,7 +7412,7 @@
    "company": "AUDIOVOX CORP",
    "date_filed": "2008/05/14",
    "link": "https://www.sec.gov/Archives/edgar/data/807707/000080770708000022/form10k.htm",
-   "fetch_ms": 8.1,
+   "fetch_ms": 8.6,
    "engines": {
     "ours": {
      "items": {
@@ -8851,17 +8847,17 @@
    "company": "Cereplast Inc",
    "date_filed": "2009/03/31",
    "link": "https://www.sec.gov/Archives/edgar/data/1324759/000136231009004558/c83189e10vk.htm",
-   "fetch_ms": 1.8,
+   "fetch_ms": 1.9,
    "engines": {
     "ours": {
      "items": {
       "1": {
-       "tp": 96,
-       "fp": 70,
-       "fn": 0,
-       "precision": 0.5783,
-       "recall": 1.0,
-       "f1": 0.7328
+       "tp": 90,
+       "fp": 25,
+       "fn": 6,
+       "precision": 0.7826,
+       "recall": 0.9375,
+       "f1": 0.8531
       },
       "2": {
        "tp": 3,
@@ -8888,12 +8884,12 @@
        "f1": 0.5
       },
       "5": {
-       "tp": 40,
-       "fp": 54,
-       "fn": 0,
-       "precision": 0.4255,
-       "recall": 1.0,
-       "f1": 0.597
+       "tp": 38,
+       "fp": 5,
+       "fn": 2,
+       "precision": 0.8837,
+       "recall": 0.95,
+       "f1": 0.9157
       },
       "6": {
        "tp": 2,
@@ -8904,12 +8900,12 @@
        "f1": 0.6667
       },
       "7": {
-       "tp": 62,
-       "fp": 102,
-       "fn": 0,
-       "precision": 0.378,
-       "recall": 1.0,
-       "f1": 0.5487
+       "tp": 57,
+       "fp": 56,
+       "fn": 5,
+       "precision": 0.5044,
+       "recall": 0.9194,
+       "f1": 0.6514
       },
       "8": {
        "tp": 2,
@@ -8928,20 +8924,20 @@
        "f1": 0.6667
       },
       "10": {
-       "tp": 56,
-       "fp": 90,
-       "fn": 0,
-       "precision": 0.3836,
-       "recall": 1.0,
-       "f1": 0.5545
+       "tp": 53,
+       "fp": 42,
+       "fn": 3,
+       "precision": 0.5579,
+       "recall": 0.9464,
+       "f1": 0.702
       },
       "11": {
-       "tp": 35,
-       "fp": 65,
-       "fn": 0,
-       "precision": 0.35,
-       "recall": 1.0,
-       "f1": 0.5185
+       "tp": 34,
+       "fp": 15,
+       "fn": 1,
+       "precision": 0.6939,
+       "recall": 0.9714,
+       "f1": 0.8095
       },
       "12": {
        "tp": 26,
@@ -8968,20 +8964,20 @@
        "f1": 0.5882
       },
       "15": {
-       "tp": 36,
-       "fp": 82,
-       "fn": 0,
-       "precision": 0.3051,
-       "recall": 1.0,
-       "f1": 0.4675
+       "tp": 34,
+       "fp": 33,
+       "fn": 2,
+       "precision": 0.5075,
+       "recall": 0.9444,
+       "f1": 0.6602
       },
       "1A": {
-       "tp": 85,
-       "fp": 67,
-       "fn": 0,
-       "precision": 0.5592,
-       "recall": 1.0,
-       "f1": 0.7173
+       "tp": 80,
+       "fp": 21,
+       "fn": 5,
+       "precision": 0.7921,
+       "recall": 0.9412,
+       "f1": 0.8602
       },
       "1B": {
        "tp": 2,
@@ -9016,7 +9012,7 @@
        "f1": 0.6667
       }
      },
-     "macro_f1": 0.6331,
+     "macro_f1": 0.6989,
      "gold_lines_scored": 931,
      "verifier": {
       "1": {
@@ -9135,9 +9131,7 @@
        "needs_review": false
       }
      },
-     "verifier_false_pass": [
-      "15"
-     ]
+     "verifier_false_pass": []
     },
     "edgartools": {
      "items": {
@@ -9645,17 +9639,17 @@
    "company": "GOLF ROUNDS COM INC",
    "date_filed": "2009/10/26",
    "link": "https://www.sec.gov/Archives/edgar/data/319016/000095012309053146/y02446e10vk.htm",
-   "fetch_ms": 1.1,
+   "fetch_ms": 1.2,
    "engines": {
     "ours": {
      "items": {
       "1": {
-       "tp": 52,
-       "fp": 38,
-       "fn": 0,
-       "precision": 0.5778,
-       "recall": 1.0,
-       "f1": 0.7324
+       "tp": 49,
+       "fp": 11,
+       "fn": 3,
+       "precision": 0.8167,
+       "recall": 0.9423,
+       "f1": 0.875
       },
       "2": {
        "tp": 2,
@@ -9698,20 +9692,20 @@
        "f1": 0.6667
       },
       "7": {
-       "tp": 29,
-       "fp": 47,
-       "fn": 0,
-       "precision": 0.3816,
-       "recall": 1.0,
-       "f1": 0.5524
+       "tp": 27,
+       "fp": 19,
+       "fn": 2,
+       "precision": 0.587,
+       "recall": 0.931,
+       "f1": 0.72
       },
       "8": {
-       "tp": 186,
-       "fp": 36,
-       "fn": 0,
-       "precision": 0.8378,
-       "recall": 1.0,
-       "f1": 0.9118
+       "tp": 174,
+       "fp": 18,
+       "fn": 12,
+       "precision": 0.9062,
+       "recall": 0.9355,
+       "f1": 0.9206
       },
       "9": {
        "tp": 2,
@@ -9722,28 +9716,28 @@
        "f1": 0.6667
       },
       "10": {
-       "tp": 16,
-       "fp": 45,
-       "fn": 0,
-       "precision": 0.2623,
-       "recall": 1.0,
-       "f1": 0.4156
+       "tp": 15,
+       "fp": 16,
+       "fn": 1,
+       "precision": 0.4839,
+       "recall": 0.9375,
+       "f1": 0.6383
       },
       "11": {
-       "tp": 29,
-       "fp": 36,
-       "fn": 0,
-       "precision": 0.4462,
-       "recall": 1.0,
-       "f1": 0.617
+       "tp": 28,
+       "fp": 7,
+       "fn": 1,
+       "precision": 0.8,
+       "recall": 0.9655,
+       "f1": 0.875
       },
       "12": {
-       "tp": 51,
-       "fp": 39,
-       "fn": 0,
-       "precision": 0.5667,
-       "recall": 1.0,
-       "f1": 0.7234
+       "tp": 49,
+       "fp": 11,
+       "fn": 2,
+       "precision": 0.8167,
+       "recall": 0.9608,
+       "f1": 0.8829
       },
       "13": {
        "tp": 2,
@@ -9786,7 +9780,7 @@
        "f1": 0.5
       }
      },
-     "macro_f1": 0.6307,
+     "macro_f1": 0.6871,
      "gold_lines_scored": 474,
      "verifier": {
       "1": {
@@ -9905,9 +9899,7 @@
        "needs_review": false
       }
      },
-     "verifier_false_pass": [
-      "10"
-     ]
+     "verifier_false_pass": []
     },
     "edgartools": {
      "items": {
@@ -10343,17 +10335,17 @@
    "company": "TERADATA CORP /DE/",
    "date_filed": "2010/02/26",
    "link": "https://www.sec.gov/Archives/edgar/data/816761/000119312510043063/d10k.htm",
-   "fetch_ms": 3.1,
+   "fetch_ms": 3.2,
    "engines": {
     "ours": {
      "items": {
       "1": {
-       "tp": 79,
-       "fp": 143,
-       "fn": 0,
-       "precision": 0.3559,
-       "recall": 1.0,
-       "f1": 0.5249
+       "tp": 72,
+       "fp": 74,
+       "fn": 7,
+       "precision": 0.4932,
+       "recall": 0.9114,
+       "f1": 0.64
       },
       "2": {
        "tp": 2,
@@ -10380,12 +10372,12 @@
        "f1": 1.0
       },
       "5": {
-       "tp": 75,
-       "fp": 102,
-       "fn": 0,
-       "precision": 0.4237,
-       "recall": 1.0,
-       "f1": 0.5952
+       "tp": 73,
+       "fp": 28,
+       "fn": 2,
+       "precision": 0.7228,
+       "recall": 0.9733,
+       "f1": 0.8295
       },
       "6": {
        "tp": 14,
@@ -10396,20 +10388,20 @@
        "f1": 0.4242
       },
       "7": {
-       "tp": 144,
-       "fp": 214,
-       "fn": 0,
-       "precision": 0.4022,
-       "recall": 1.0,
-       "f1": 0.5737
+       "tp": 133,
+       "fp": 149,
+       "fn": 11,
+       "precision": 0.4716,
+       "recall": 0.9236,
+       "f1": 0.6244
       },
       "8": {
-       "tp": 602,
-       "fp": 134,
-       "fn": 0,
-       "precision": 0.8179,
-       "recall": 1.0,
-       "f1": 0.8999
+       "tp": 572,
+       "fp": 88,
+       "fn": 30,
+       "precision": 0.8667,
+       "recall": 0.9502,
+       "f1": 0.9065
       },
       "9": {
        "tp": 1,
@@ -10420,12 +10412,12 @@
        "f1": 1.0
       },
       "10": {
-       "tp": 28,
-       "fp": 93,
-       "fn": 0,
-       "precision": 0.2314,
-       "recall": 1.0,
-       "f1": 0.3758
+       "tp": 27,
+       "fp": 18,
+       "fn": 1,
+       "precision": 0.6,
+       "recall": 0.9643,
+       "f1": 0.7397
       },
       "11": {
        "tp": 2,
@@ -10460,20 +10452,20 @@
        "f1": 0.6667
       },
       "15": {
-       "tp": 78,
-       "fp": 111,
-       "fn": 0,
-       "precision": 0.4127,
-       "recall": 1.0,
-       "f1": 0.5843
+       "tp": 73,
+       "fp": 40,
+       "fn": 5,
+       "precision": 0.646,
+       "recall": 0.9359,
+       "f1": 0.7644
       },
       "1A": {
-       "tp": 143,
-       "fp": 120,
-       "fn": 0,
-       "precision": 0.5437,
-       "recall": 1.0,
-       "f1": 0.7044
+       "tp": 133,
+       "fp": 54,
+       "fn": 10,
+       "precision": 0.7112,
+       "recall": 0.9301,
+       "f1": 0.8061
       },
       "1B": {
        "tp": 1,
@@ -10492,12 +10484,12 @@
        "f1": 0.375
       },
       "9A": {
-       "tp": 13,
-       "fp": 85,
-       "fn": 0,
-       "precision": 0.1327,
-       "recall": 1.0,
-       "f1": 0.2342
+       "tp": 12,
+       "fp": 10,
+       "fn": 1,
+       "precision": 0.5455,
+       "recall": 0.9231,
+       "f1": 0.6857
       },
       "9B": {
        "tp": 1,
@@ -10508,7 +10500,7 @@
        "f1": 1.0
       }
      },
-     "macro_f1": 0.6335,
+     "macro_f1": 0.7087,
      "gold_lines_scored": 1290,
      "verifier": {
       "1": {
@@ -10628,10 +10620,8 @@
       }
      },
      "verifier_false_pass": [
-      "10",
       "13",
-      "7A",
-      "9A"
+      "7A"
      ]
     },
     "edgartools": {
@@ -11145,12 +11135,12 @@
     "ours": {
      "items": {
       "1": {
-       "tp": 59,
-       "fp": 91,
-       "fn": 0,
-       "precision": 0.3933,
-       "recall": 1.0,
-       "f1": 0.5646
+       "tp": 54,
+       "fp": 39,
+       "fn": 5,
+       "precision": 0.5806,
+       "recall": 0.9153,
+       "f1": 0.7105
       },
       "2": {
        "tp": 3,
@@ -11186,27 +11176,27 @@
       },
       "6": {
        "tp": 4,
-       "fp": 252,
+       "fp": 195,
        "fn": 7,
-       "precision": 0.0156,
+       "precision": 0.0201,
        "recall": 0.3636,
-       "f1": 0.03
+       "f1": 0.0381
       },
       "7": {
-       "tp": 23,
-       "fp": 575,
-       "fn": 73,
-       "precision": 0.0385,
-       "recall": 0.2396,
-       "f1": 0.0663
+       "tp": 15,
+       "fp": 526,
+       "fn": 81,
+       "precision": 0.0277,
+       "recall": 0.1562,
+       "f1": 0.0471
       },
       "8": {
-       "tp": 24,
-       "fp": 59,
-       "fn": 490,
-       "precision": 0.2892,
-       "recall": 0.0467,
-       "f1": 0.0804
+       "tp": 0,
+       "fp": 26,
+       "fn": 514,
+       "precision": 0.0,
+       "recall": 0.0,
+       "f1": 0.0
       },
       "9": {
        "tp": 0,
@@ -11250,7 +11240,7 @@
       },
       "14": {
        "tp": 0,
-       "fp": 143,
+       "fp": 86,
        "fn": 2,
        "precision": 0.0,
        "recall": 0.0,
@@ -11265,12 +11255,12 @@
        "f1": 0.0
       },
       "1A": {
-       "tp": 66,
-       "fp": 83,
-       "fn": 0,
-       "precision": 0.443,
-       "recall": 1.0,
-       "f1": 0.614
+       "tp": 61,
+       "fp": 31,
+       "fn": 5,
+       "precision": 0.663,
+       "recall": 0.9242,
+       "f1": 0.7722
       },
       "1B": {
        "tp": 2,
@@ -11305,7 +11295,7 @@
        "f1": 0.0
       }
      },
-     "macro_f1": 0.1678,
+     "macro_f1": 0.179,
      "gold_lines_scored": 975,
      "verifier": {
       "1": {
@@ -11931,7 +11921,7 @@
    "company": "SK Shasta Acquisition Corp. 4",
    "date_filed": "2010/08/13",
    "link": "https://www.sec.gov/Archives/edgar/data/1439240/000114420410043781/v193300_10k.htm",
-   "fetch_ms": 1.7,
+   "fetch_ms": 1.6,
    "engines": {
     "ours": {
      "items": {
@@ -12728,12 +12718,12 @@
     "ours": {
      "items": {
       "1": {
-       "tp": 76,
-       "fp": 141,
-       "fn": 6,
-       "precision": 0.3502,
-       "recall": 0.9268,
-       "f1": 0.5084
+       "tp": 71,
+       "fp": 75,
+       "fn": 11,
+       "precision": 0.4863,
+       "recall": 0.8659,
+       "f1": 0.6228
       },
       "2": {
        "tp": 2,
@@ -12744,12 +12734,12 @@
        "f1": 0.4
       },
       "3": {
-       "tp": 13,
-       "fp": 109,
-       "fn": 0,
-       "precision": 0.1066,
-       "recall": 1.0,
-       "f1": 0.1926
+       "tp": 12,
+       "fp": 39,
+       "fn": 1,
+       "precision": 0.2353,
+       "recall": 0.9231,
+       "f1": 0.375
       },
       "4": {
        "tp": 1,
@@ -12760,36 +12750,36 @@
        "f1": 0.6667
       },
       "5": {
-       "tp": 30,
-       "fp": 104,
-       "fn": 0,
-       "precision": 0.2239,
-       "recall": 1.0,
-       "f1": 0.3659
+       "tp": 27,
+       "fp": 36,
+       "fn": 3,
+       "precision": 0.4286,
+       "recall": 0.9,
+       "f1": 0.5806
       },
       "6": {
-       "tp": 47,
-       "fp": 238,
-       "fn": 0,
-       "precision": 0.1649,
-       "recall": 1.0,
-       "f1": 0.2831
+       "tp": 45,
+       "fp": 169,
+       "fn": 2,
+       "precision": 0.2103,
+       "recall": 0.9574,
+       "f1": 0.3448
       },
       "7": {
-       "tp": 140,
-       "fp": 311,
-       "fn": 0,
-       "precision": 0.3104,
-       "recall": 1.0,
-       "f1": 0.4738
+       "tp": 131,
+       "fp": 249,
+       "fn": 9,
+       "precision": 0.3447,
+       "recall": 0.9357,
+       "f1": 0.5038
       },
       "8": {
-       "tp": 736,
-       "fp": 180,
-       "fn": 0,
-       "precision": 0.8035,
-       "recall": 1.0,
-       "f1": 0.891
+       "tp": 706,
+       "fp": 139,
+       "fn": 30,
+       "precision": 0.8355,
+       "recall": 0.9592,
+       "f1": 0.8931
       },
       "9": {
        "tp": 1,
@@ -12816,12 +12806,12 @@
        "f1": 0.4
       },
       "12": {
-       "tp": 14,
-       "fp": 88,
-       "fn": 0,
-       "precision": 0.1373,
-       "recall": 1.0,
-       "f1": 0.2414
+       "tp": 13,
+       "fp": 18,
+       "fn": 1,
+       "precision": 0.4194,
+       "recall": 0.9286,
+       "f1": 0.5778
       },
       "13": {
        "tp": 2,
@@ -12840,20 +12830,20 @@
        "f1": 0.2857
       },
       "15": {
-       "tp": 50,
-       "fp": 157,
-       "fn": 0,
-       "precision": 0.2415,
-       "recall": 1.0,
-       "f1": 0.3891
+       "tp": 48,
+       "fp": 88,
+       "fn": 2,
+       "precision": 0.3529,
+       "recall": 0.96,
+       "f1": 0.5161
       },
       "1A": {
-       "tp": 142,
-       "fp": 155,
-       "fn": 0,
-       "precision": 0.4781,
-       "recall": 1.0,
-       "f1": 0.6469
+       "tp": 133,
+       "fp": 93,
+       "fn": 9,
+       "precision": 0.5885,
+       "recall": 0.9366,
+       "f1": 0.7228
       },
       "1B": {
        "tp": 2,
@@ -12864,20 +12854,20 @@
        "f1": 0.8
       },
       "7A": {
-       "tp": 15,
-       "fp": 122,
-       "fn": 0,
-       "precision": 0.1095,
-       "recall": 1.0,
-       "f1": 0.1974
+       "tp": 14,
+       "fp": 52,
+       "fn": 1,
+       "precision": 0.2121,
+       "recall": 0.9333,
+       "f1": 0.3457
       },
       "9A": {
-       "tp": 35,
-       "fp": 122,
-       "fn": 0,
-       "precision": 0.2229,
-       "recall": 1.0,
-       "f1": 0.3646
+       "tp": 32,
+       "fp": 54,
+       "fn": 3,
+       "precision": 0.3721,
+       "recall": 0.9143,
+       "f1": 0.5289
       },
       "9B": {
        "tp": 1,
@@ -12888,7 +12878,7 @@
        "f1": 0.6667
       }
      },
-     "macro_f1": 0.4635,
+     "macro_f1": 0.5364,
      "gold_lines_scored": 1476,
      "verifier": {
       "1": {
@@ -13010,16 +13000,11 @@
      "verifier_false_pass": [
       "2",
       "3",
-      "5",
-      "7",
       "10",
       "11",
-      "12",
       "13",
       "14",
-      "15",
-      "7A",
-      "9A"
+      "7A"
      ]
     },
     "edgartools": {
@@ -13533,12 +13518,12 @@
     "ours": {
      "items": {
       "1": {
-       "tp": 207,
-       "fp": 353,
-       "fn": 0,
-       "precision": 0.3696,
-       "recall": 1.0,
-       "f1": 0.5398
+       "tp": 195,
+       "fp": 254,
+       "fn": 12,
+       "precision": 0.4343,
+       "recall": 0.942,
+       "f1": 0.5945
       },
       "2": {
        "tp": 56,
@@ -13581,12 +13566,12 @@
        "f1": 0.209
       },
       "7": {
-       "tp": 424,
-       "fp": 618,
-       "fn": 0,
-       "precision": 0.4069,
-       "recall": 1.0,
-       "f1": 0.5784
+       "tp": 399,
+       "fp": 532,
+       "fn": 25,
+       "precision": 0.4286,
+       "recall": 0.941,
+       "f1": 0.5889
       },
       "8": {
        "tp": 2,
@@ -13645,20 +13630,20 @@
        "f1": 0.4
       },
       "15": {
-       "tp": 85,
-       "fp": 294,
-       "fn": 0,
-       "precision": 0.2243,
-       "recall": 1.0,
-       "f1": 0.3664
+       "tp": 80,
+       "fp": 188,
+       "fn": 5,
+       "precision": 0.2985,
+       "recall": 0.9412,
+       "f1": 0.4533
       },
       "1A": {
-       "tp": 214,
-       "fp": 284,
-       "fn": 0,
-       "precision": 0.4297,
-       "recall": 1.0,
-       "f1": 0.6011
+       "tp": 201,
+       "fp": 186,
+       "fn": 13,
+       "precision": 0.5194,
+       "recall": 0.9393,
+       "f1": 0.6689
       },
       "1B": {
        "tp": 2,
@@ -13669,20 +13654,20 @@
        "f1": 0.8
       },
       "7A": {
-       "tp": 18,
-       "fp": 302,
-       "fn": 0,
-       "precision": 0.0563,
-       "recall": 1.0,
-       "f1": 0.1065
+       "tp": 17,
+       "fp": 192,
+       "fn": 1,
+       "precision": 0.0813,
+       "recall": 0.9444,
+       "f1": 0.1498
       },
       "9A": {
-       "tp": 15,
-       "fp": 124,
-       "fn": 0,
-       "precision": 0.1079,
-       "recall": 1.0,
-       "f1": 0.1948
+       "tp": 14,
+       "fp": 14,
+       "fn": 1,
+       "precision": 0.5,
+       "recall": 0.9333,
+       "f1": 0.6512
       },
       "9B": {
        "tp": 1,
@@ -13693,7 +13678,7 @@
        "f1": 0.5
       }
      },
-     "macro_f1": 0.4362,
+     "macro_f1": 0.4721,
      "gold_lines_scored": 2294,
      "verifier": {
       "1": {
@@ -13818,8 +13803,7 @@
       "10",
       "14",
       "15",
-      "7A",
-      "9A"
+      "7A"
      ]
     },
     "edgartools": {
@@ -14957,7 +14941,7 @@
    "company": "Carrier Alliance Holdings, Inc.",
    "date_filed": "2013/02/21",
    "link": "https://www.sec.gov/Archives/edgar/data/1027484/000101905613000267/carrier_10k11.htm",
-   "fetch_ms": 1.9,
+   "fetch_ms": 1.7,
    "engines": {
     "ours": {
      "items": {
@@ -15920,17 +15904,17 @@
    "company": "NEOGENOMICS INC",
    "date_filed": "2014/02/24",
    "link": "https://www.sec.gov/Archives/edgar/data/1077183/000119312514064714/d647097d10k.htm",
-   "fetch_ms": 3.0,
+   "fetch_ms": 3.3,
    "engines": {
     "ours": {
      "items": {
       "1": {
-       "tp": 227,
-       "fp": 267,
-       "fn": 0,
-       "precision": 0.4595,
-       "recall": 1.0,
-       "f1": 0.6297
+       "tp": 208,
+       "fp": 181,
+       "fn": 19,
+       "precision": 0.5347,
+       "recall": 0.9163,
+       "f1": 0.6753
       },
       "2": {
        "tp": 5,
@@ -15957,36 +15941,36 @@
        "f1": 0.6667
       },
       "5": {
-       "tp": 41,
-       "fp": 128,
-       "fn": 0,
-       "precision": 0.2426,
-       "recall": 1.0,
-       "f1": 0.3905
+       "tp": 39,
+       "fp": 25,
+       "fn": 2,
+       "precision": 0.6094,
+       "recall": 0.9512,
+       "f1": 0.7429
       },
       "6": {
-       "tp": 36,
-       "fp": 188,
-       "fn": 0,
-       "precision": 0.1607,
-       "recall": 1.0,
-       "f1": 0.2769
+       "tp": 34,
+       "fp": 85,
+       "fn": 2,
+       "precision": 0.2857,
+       "recall": 0.9444,
+       "f1": 0.4387
       },
       "7": {
-       "tp": 379,
-       "fp": 353,
-       "fn": 0,
-       "precision": 0.5178,
-       "recall": 1.0,
-       "f1": 0.6823
+       "tp": 355,
+       "fp": 272,
+       "fn": 24,
+       "precision": 0.5662,
+       "recall": 0.9367,
+       "f1": 0.7058
       },
       "8": {
-       "tp": 566,
-       "fp": 249,
-       "fn": 0,
-       "precision": 0.6945,
-       "recall": 1.0,
-       "f1": 0.8197
+       "tp": 538,
+       "fp": 172,
+       "fn": 28,
+       "precision": 0.7577,
+       "recall": 0.9505,
+       "f1": 0.8433
       },
       "9": {
        "tp": 1,
@@ -16037,20 +16021,20 @@
        "f1": 0.6667
       },
       "15": {
-       "tp": 54,
-       "fp": 147,
-       "fn": 0,
-       "precision": 0.2687,
-       "recall": 1.0,
-       "f1": 0.4235
+       "tp": 47,
+       "fp": 49,
+       "fn": 7,
+       "precision": 0.4896,
+       "recall": 0.8704,
+       "f1": 0.6267
       },
       "1A": {
-       "tp": 137,
-       "fp": 163,
-       "fn": 0,
-       "precision": 0.4567,
-       "recall": 1.0,
-       "f1": 0.627
+       "tp": 126,
+       "fp": 69,
+       "fn": 11,
+       "precision": 0.6462,
+       "recall": 0.9197,
+       "f1": 0.759
       },
       "1B": {
        "tp": 1,
@@ -16069,12 +16053,12 @@
        "f1": 0.8333
       },
       "9A": {
-       "tp": 12,
-       "fp": 112,
-       "fn": 0,
-       "precision": 0.0968,
-       "recall": 1.0,
-       "f1": 0.1765
+       "tp": 11,
+       "fp": 8,
+       "fn": 1,
+       "precision": 0.5789,
+       "recall": 0.9167,
+       "f1": 0.7097
       },
       "9B": {
        "tp": 1,
@@ -16085,7 +16069,7 @@
        "f1": 0.5
       }
      },
-     "macro_f1": 0.5759,
+     "macro_f1": 0.6496,
      "gold_lines_scored": 1597,
      "verifier": {
       "1": {
@@ -16205,10 +16189,7 @@
       }
      },
      "verifier_false_pass": [
-      "5",
-      "10",
-      "15",
-      "9A"
+      "10"
      ]
     },
     "edgartools": {
@@ -16717,7 +16698,7 @@
    "company": "FIRST BANCORP /PR/",
    "date_filed": "2014/03/17",
    "link": "https://www.sec.gov/Archives/edgar/data/1057706/000105770614000004/fbp12312013x10k.htm",
-   "fetch_ms": 28.9,
+   "fetch_ms": 28.4,
    "engines": {
     "ours": {
      "items": {
@@ -17360,17 +17341,17 @@
    "company": "Diversified Resources Inc.",
    "date_filed": "2015/02/13",
    "link": "https://www.sec.gov/Archives/edgar/data/1509692/000112785515000064/diversified10103114.htm",
-   "fetch_ms": 3.5,
+   "fetch_ms": 3.6,
    "engines": {
     "ours": {
      "items": {
       "1": {
-       "tp": 175,
-       "fp": 107,
-       "fn": 0,
-       "precision": 0.6206,
-       "recall": 1.0,
-       "f1": 0.7659
+       "tp": 166,
+       "fp": 71,
+       "fn": 9,
+       "precision": 0.7004,
+       "recall": 0.9486,
+       "f1": 0.8058
       },
       "2": {
        "tp": 2,
@@ -17413,12 +17394,12 @@
        "f1": 0.5
       },
       "7": {
-       "tp": 70,
-       "fp": 92,
-       "fn": 0,
-       "precision": 0.4321,
-       "recall": 1.0,
-       "f1": 0.6034
+       "tp": 67,
+       "fp": 50,
+       "fn": 3,
+       "precision": 0.5726,
+       "recall": 0.9571,
+       "f1": 0.7166
       },
       "8": {
        "tp": 2,
@@ -17445,12 +17426,12 @@
        "f1": 0.6364
       },
       "11": {
-       "tp": 30,
-       "fp": 73,
-       "fn": 0,
-       "precision": 0.2913,
-       "recall": 1.0,
-       "f1": 0.4511
+       "tp": 29,
+       "fp": 29,
+       "fn": 1,
+       "precision": 0.5,
+       "recall": 0.9667,
+       "f1": 0.6591
       },
       "12": {
        "tp": 19,
@@ -17461,12 +17442,12 @@
        "f1": 0.5352
       },
       "13": {
-       "tp": 12,
-       "fp": 81,
-       "fn": 0,
-       "precision": 0.129,
-       "recall": 1.0,
-       "f1": 0.2286
+       "tp": 11,
+       "fp": 37,
+       "fn": 1,
+       "precision": 0.2292,
+       "recall": 0.9167,
+       "f1": 0.3667
       },
       "14": {
        "tp": 9,
@@ -17509,12 +17490,12 @@
        "f1": 0.6667
       },
       "9A": {
-       "tp": 17,
-       "fp": 56,
-       "fn": 0,
-       "precision": 0.2329,
-       "recall": 1.0,
-       "f1": 0.3778
+       "tp": 16,
+       "fp": 12,
+       "fn": 1,
+       "precision": 0.5714,
+       "recall": 0.9412,
+       "f1": 0.7111
       },
       "9B": {
        "tp": 1,
@@ -17525,7 +17506,7 @@
        "f1": 0.5
       }
      },
-     "macro_f1": 0.5787,
+     "macro_f1": 0.6204,
      "gold_lines_scored": 957,
      "verifier": {
       "1": {
@@ -17645,9 +17626,7 @@
       }
      },
      "verifier_false_pass": [
-      "5",
-      "11",
-      "9A"
+      "5"
      ]
     },
     "edgartools": {
@@ -18156,7 +18135,7 @@
    "company": "4Cable TV International, Inc.",
    "date_filed": "2015/04/15",
    "link": "https://www.sec.gov/Archives/edgar/data/1421901/000159406215000098/form10k.htm",
-   "fetch_ms": 3.5,
+   "fetch_ms": 3.4,
    "engines": {
     "ours": {
      "items": {
@@ -18948,17 +18927,17 @@
    "company": "Diplomat Pharmacy, Inc.",
    "date_filed": "2016/02/29",
    "link": "https://www.sec.gov/Archives/edgar/data/1610092/000110465916101031/a16-5240_110k.htm",
-   "fetch_ms": 5.4,
+   "fetch_ms": 5.9,
    "engines": {
     "ours": {
      "items": {
       "1": {
-       "tp": 194,
-       "fp": 364,
-       "fn": 0,
-       "precision": 0.3477,
-       "recall": 1.0,
-       "f1": 0.516
+       "tp": 177,
+       "fp": 284,
+       "fn": 17,
+       "precision": 0.3839,
+       "recall": 0.9124,
+       "f1": 0.5405
       },
       "2": {
        "tp": 44,
@@ -18985,36 +18964,36 @@
        "f1": 0.5
       },
       "5": {
-       "tp": 12,
-       "fp": 111,
-       "fn": 0,
-       "precision": 0.0976,
-       "recall": 1.0,
-       "f1": 0.1778
+       "tp": 10,
+       "fp": 16,
+       "fn": 2,
+       "precision": 0.3846,
+       "recall": 0.8333,
+       "f1": 0.5263
       },
       "6": {
-       "tp": 42,
-       "fp": 219,
-       "fn": 0,
-       "precision": 0.1609,
-       "recall": 1.0,
-       "f1": 0.2772
+       "tp": 40,
+       "fp": 124,
+       "fn": 2,
+       "precision": 0.2439,
+       "recall": 0.9524,
+       "f1": 0.3883
       },
       "7": {
-       "tp": 192,
-       "fp": 333,
-       "fn": 0,
-       "precision": 0.3657,
-       "recall": 1.0,
-       "f1": 0.5356
+       "tp": 179,
+       "fp": 249,
+       "fn": 13,
+       "precision": 0.4182,
+       "recall": 0.9323,
+       "f1": 0.5774
       },
       "8": {
-       "tp": 689,
-       "fp": 182,
-       "fn": 0,
-       "precision": 0.791,
-       "recall": 1.0,
-       "f1": 0.8833
+       "tp": 654,
+       "fp": 120,
+       "fn": 35,
+       "precision": 0.845,
+       "recall": 0.9492,
+       "f1": 0.8941
       },
       "9": {
        "tp": 1,
@@ -19113,7 +19092,7 @@
        "f1": 0.5
       }
      },
-     "macro_f1": 0.4999,
+     "macro_f1": 0.5267,
      "gold_lines_scored": 1593,
      "verifier": {
       "1": {
@@ -19233,7 +19212,6 @@
       }
      },
      "verifier_false_pass": [
-      "5",
       "10",
       "11",
       "7A"
@@ -19750,36 +19728,36 @@
     "ours": {
      "items": {
       "10": {
-       "tp": 70,
-       "fp": 58,
-       "fn": 0,
-       "precision": 0.5469,
-       "recall": 1.0,
-       "f1": 0.7071
+       "tp": 64,
+       "fp": 25,
+       "fn": 6,
+       "precision": 0.7191,
+       "recall": 0.9143,
+       "f1": 0.805
       },
       "11": {
-       "tp": 243,
-       "fp": 34,
-       "fn": 5,
-       "precision": 0.8773,
-       "recall": 0.9798,
-       "f1": 0.9257
+       "tp": 223,
+       "fp": 15,
+       "fn": 25,
+       "precision": 0.937,
+       "recall": 0.8992,
+       "f1": 0.9177
       },
       "12": {
-       "tp": 51,
-       "fp": 52,
-       "fn": 0,
-       "precision": 0.4951,
-       "recall": 1.0,
-       "f1": 0.6623
+       "tp": 48,
+       "fp": 16,
+       "fn": 3,
+       "precision": 0.75,
+       "recall": 0.9412,
+       "f1": 0.8348
       },
       "13": {
-       "tp": 18,
-       "fp": 53,
-       "fn": 0,
-       "precision": 0.2535,
-       "recall": 1.0,
-       "f1": 0.4045
+       "tp": 16,
+       "fp": 16,
+       "fn": 2,
+       "precision": 0.5,
+       "recall": 0.8889,
+       "f1": 0.64
       },
       "14": {
        "tp": 10,
@@ -19798,7 +19776,7 @@
        "f1": 0.5714
       }
      },
-     "macro_f1": 0.6967,
+     "macro_f1": 0.7797,
      "gold_lines_scored": 466,
      "verifier": {
       "1": {
@@ -19917,9 +19895,7 @@
        "needs_review": false
       }
      },
-     "verifier_false_pass": [
-      "13"
-     ]
+     "verifier_false_pass": []
     },
     "edgartools": {
      "items": {
@@ -20091,7 +20067,7 @@
    "company": "WATTS WATER TECHNOLOGIES INC",
    "date_filed": "2017/02/24",
    "link": "https://www.sec.gov/Archives/edgar/data/795403/000155837017000970/wts-20161231x10k.htm",
-   "fetch_ms": 12.2,
+   "fetch_ms": 12.0,
    "engines": {
     "ours": {
      "items": {

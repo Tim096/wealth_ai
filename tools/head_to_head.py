@@ -124,7 +124,9 @@ def run_ours(raw_html: str, filing_id: str) -> tuple[dict[str, str] | None, dict
     items: dict[str, str] = {}
     verifier: dict[str, dict] = {}
     for seg in result.segments:
-        text = result.doc.slice(seg.start_offset, seg.end_offset)
+        # Score the DELIVERED clean text (two-layer output: TOC-navigation
+        # backlink lines removed; raw span/offsets unchanged for provenance).
+        text = result.clean_text_of(seg.item_code)
         if text.strip():
             items[seg.item_code] = text
         verifier[seg.item_code] = {

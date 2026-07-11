@@ -120,7 +120,7 @@ record 現在 emit `start_offset`/`end_offset`/`text_sha256`/`toc_listed`。5 �
 
 #### CYD 官方 ground truth:Item 1C span oracle(T2-3)
 
-SEC 對 FY ≥ 2024-12-15 強制 Item 1C 的 CYD taxonomy iXBRL block-tag——**唯一有官方機器可讀 span 的 item**。掃描同一份 raw HTML 的 `cyd:*TextBlock`(跟 ix:continuation 鏈、排除 ix:hidden),與我方 1C segment 比對。11/11 家全數適用:
+SEC 對 FY ≥ 2024-12-15 強制 Item 1C 的 CYD taxonomy iXBRL block-tag——**唯一有官方機器可讀 span 的 item**。掃描同一份 raw HTML 的 `cyd:*TextBlock`(跟 ix:continuation 鏈、排除 ix:hidden),與我方 1C segment 比對。11/11 家全數適用(下表為 wrapper 還原前 baseline;**現行 = 11 agree / 0 disagree**,見下方「wrapper 1C 還原」段):
 
 | verdict | 家數 | 說明 |
 |---|---|---|
@@ -129,8 +129,19 @@ SEC 對 FY ≥ 2024-12-15 強制 Item 1C 的 CYD taxonomy iXBRL block-tag——*
 
 這是 offset gold(建構性 F1)之外**第一個真正外部的 span 正確性錨點**。containment 94.6–99.6%,唯 CAT **73.1%** 是真訊號:我方 1C span 尾部吞了 CAT 非標準「Item 1D. Information about our Executive Officers」(1D 不在 VALID_CODES)——oracle 抓到我方 span 跑長。
 
+**Wrapper 1C 還原(2026-07-11,page-top section anchoring):CYD 11 agree / 0 disagree。** 修復鏈分兩步,如實記帳:
+
+1. 上表 2 個 disagree 中,JPM 先由 P0-10 page-anchor 部分還原(coverage 0%→100%,但 span 20,610 chars、containment 僅 **33.3%**——頁窗開頭吞了母 section「Operational Risk Management」,needs_review_after=true)→ 本波起點為 **10 agree / 1 disagree(GS)**。
+2. 本波(`packages/sec_core/cross_ref.py` page-top section anchoring,kill-switch `SEC_WRAPPER_SECTION_ANCHOR=0`)修掉兩個獨立根因、同一結構缺口(wrapper body resolution 沒讀「印刷頁面結構」):
+   - **GS 類(intra-document pointer)**:1C stub 是本檔內跨 item 指標(指向 Item 7 span 內部的 MD&A section);既有 `reassemble_wrapper_bodies` 只處理最後 item 之後的 appended region,stub 永遠停在 honest pointer。新 pass `resolve_intra_document_pointers` 把 quoted path 末段當 page-top heading 在被引 item span 內精確匹配,終點 = 下一個 page-top section;外加 item-topic guard(anchored heading 須與該 item canonical title 語彙相關)擋母章節引用——**wrong body 比 honest pointer 更糟**。結果:GS 1C = partial `resolved_from_section_anchor` 8,650 chars,coverage **100%**、containment **85.6%**(before:stub 247 chars、coverage/containment 0%)。
+   - **JPM 類(page-window 過寬)**:`_snap_window_to_item_section` 在 page-anchored 窗內找 canonical-title 匹配(SequenceMatcher ≥0.75)的 page-top section 並收斂 span。結果:JPM 1C = 9,745 chars,containment 33.3%→**70.5%**,span 終點 771903 與官方 CYD 終點完全一致,起點 762158 即「Cybersecurity risk」section heading(官方起點 762318 在其後)。
+
+   其餘 9 家(AAPL/MSFT/NVDA/WMT/CAT/XOM/NEM/MRNA/KO)coverage/containment/chars/verdict 數字逐位不變;artifact diff 中 MSFT/MRNA 的 `needs_review_after` false→true 為 length-prior(commit bf7e5fa)所致——上次 regen 基線在 64de3ef,較舊;kill-switch 驗證與 section-anchor 無關。kill-switch 實檔驗證 `SEC_WRAPPER_SECTION_ANCHOR=0` 完整還原 before 數字(GS 0%/247、JPM 33.3%/20,610)。通用結構規則,無 ticker 特例。
+
+**連帶效應誠實記錄**:GS 7A 曾被首版解析到「Risk Management」章節總覽(13k chars,wrong-body 風險),已由 item-topic guard 擋回 honest pointer;JPM 7/7A/8 page-anchor span 逐位不變。**F1 side-effect = 零**:head-to-head 30-slice 前景重跑,四引擎 macro-F1 逐位不變(ours 0.6245 / edgar_crawler 0.6332 / datamule 0.6244 / edgartools 0.4386;`verifier_false_pass_items` 68 不變;json diff 僅 fetch_ms 計時雜訊)——NTU slice 為 2001–2019 年檔,無 CYD 時代 wrapper 1C stub,無交集符合預期。Calibration 重生:AUROC/ECE/false-pass 全部逐位不變(ntu_human_labeled 0.6621/0.1133/0.2048),diff 僅 generated_at。守門:pytest `-m "not integration"` **772 passed**(before 763;+9 = `tests/test_section_anchor.py`)、mutation harness 六類 recall 全 1.0、clean false-alarm 0.0000/0.0056 不變。
+
 - 重跑:`SEC_EDGAR_USER_AGENT=<contact> .venv/Scripts/python tools/certify_cyd.py`(cache-first,無新網路)
-- Artifact:`data/sec_eval/cyd_groundtruth/cyd_agreement.json`
+- Artifacts:`data/sec_eval/cyd_groundtruth/cyd_agreement.json`(現行 11/0)、`data/sec_eval/scoring/head_to_head.json`、`data/sec_eval/calibration/calibration.json`
 
 #### 分層抽樣:format-era × filing agent(T2-4)
 
@@ -360,8 +371,61 @@ mock sites 仍是主軸(可控 UI 漂移,offline 可重現、零 flakiness)。�
 - second judge(advisory)abstain rate:**6/6 → 1/6**(殘餘 1 題 ign 為證據不足的誠實棄權,非缺陷);根因修復 commit `49bcc6e`(unwrap codex-gateway action-schema wrapper)+ `3258b73`(open-ended scorer verdict-time 武裝 + groundable final-page evidence),量測基建 `b561e37`。judge 與 verifier 2/6 分歧(nfl、gov.uk),advisory-only 不改判——**verifier 仍唯一裁判**。
 - 誠實 caveat:n 小、live variance 未控制,61.1% 是方向指標非穩定增益;這批題的 success condition 多為單一 landmark,verifier 對其是弱 proxy。逐題明細與 caveat a–d 見 `docs/research/giants_task1.md`「外部量測 abstain-fix 2026-07-10」節。
 
+### Browser held-out 凍結子集(2026-07-11,單跑,反 overfitting 證據)
+
+上表 61.1% 是**迭代後合成值**——agent/verifier 曾對那 20 題跨波次改進,無法排除「調到那 20 題上」。本波以凍結協定回答:
+
+- **選題規則(先凍結後跑,無任何 result-dependent 步驟)**:重用同一份 cached upstream fetch `runs/mind2web_import/raw.json`(300 題,hud-evals CC-BY mirror,2026-07-10 抓取,候選宇宙與原 import 相同)→ 套 `tools/import_mind2web.py` 同一組 committed 排除濾網(EXCLUDED_DOMAINS + login-text regex)→ 258 → 移除已在 `data/browser_eval/external/mind2web_subset.json` 的 20 個 source_task_id → 238(零重疊有 assertion)→ 依官方 level 分佈(easy 81 / medium 141 / hard 78 = 27/47/26%)largest-remainder 取 n=20 = easy 5 / medium 10 / hard 5(easy-medium 餘數 0.4/0.4 平手,取較大層)→ 每層依 source_task_id 升冪 FIRST-N,per_domain_cap=2。無題文檢視、無手挑。協定與 task 檔 sha256(`f143d634ab95cd3e3b203592229dc7c46c73a404e63a790c2dfd50c9e522bea0`)先凍結於 `runs/browser_eval/m2w_heldout_20260711/freeze_manifest.json`,manifest 明文反 overfitting 協定:單跑、結果如實報、**禁止改 agent/verifier 後重跑本集**;`--resume` 僅限 harness 中斷(未用到——單次 launch 跑完,exit 0)。
+- **分佈**:20 題:done 18、harness_error 2(皆 env-classified `site_unreachable`:m2w-0b51b4fa0295 carmax.com `net::ERR_HTTP2_PROTOCOL_ERROR`、m2w-11857213ca01 birkenstocks.com `net::ERR_CONNECTION_TIMED_OUT`;依 README taxonomy 排除於分母)。18 done:pass 12 / fail 5 / unknown 1 / env_blocked 0;aborted=false、resumed=0、not_run=0,無任何 done 題重跑。
+- **成功率**:gradable success = **12/18 = 66.7%**(pass / done non-env-blocked)。分難度:easy 3/5 = 60.0%、medium 7/10 = 70.0%、hard 2/3 = 66.7%(hard done 3,另 2 題即上述 harness error)。
+- **second judge(advisory,codex gateway `gpt-5.3-codex`,judge_source=llm)**:18 done 題 verdict 分佈 yes 5 / no 5 / abstain 8;≥1 條件級分歧 10 題;硬衝突 2 題(verifier pass vs judge no:m2w-180ed2ec377e umich.edu、m2w-05483c50cc9b bbb.org),無 fail/yes 衝突;judge 未改任何判定——**verifier 仍唯一裁判**。
+- **成本/延遲**:LLM 合計 **$0.0364**(agent $0.0316 + second judge $0.0049)、104,910 agent tokens;per-task agent loop mean 58.6s / median 45.3s / min 6.8s / max 168.0s;任務 wall 合計 1064s(~18 min),end-to-end(含 2 個導覽 timeout 與逐題 judge)~21 min(artifact 時間戳 freeze 09:51 → results 10:12),單次前景監督 launch,exit code 0。
+
+**可比性(強制聲明)**:原 20 題的 61.1% 是 ITERATED composite(agent/verifier 對其跨波改進),本 held-out 是不相交任務上的 SINGLE frozen run(禁止迭代)——兩個數字**並排是反 overfitting 證據,不是同分母比較**。held-out 單跑 66.7% ≥ 迭代後 61.1%,指向 pipeline 泛化而非對原 20 題過擬合;n=18 仍小、live variance 未控,同前節 caveat。
+
+- Artifacts:`data/browser_eval/external/m2w_heldout_20260711.json`、`runs/browser_eval/m2w_heldout_20260711/`(freeze_manifest / results / manifest / console.log;runs/ 為 gitignored,**追蹤快照在 `data/browser_eval/external_runs/m2w_heldout_20260711/`**)
+
+### Browser Agent 元件 Ablation(2026-07-11,P1-10,mock/script 確定性環境,$0、無 LLM)
+
+逐元件關閉量測,含 AgentOccam 式極簡對照臂(「機制是儀式嗎」的硬證據形式)。重現:`.venv\Scripts\python tools/ablation_bench.py --phase script`;`--phase agent`;`--merge`。全部前景跑完(script 7 配置 × 18 題 + agent 6 配置 × 8 題 = 174 runs,總 wall ~3 分鐘)。
+
+#### Script Mode — 18 任務(5 mock suite + 12 impossible + 1 baseline probe),判準 = verdict 對 expected 的正確數
+
+| Config | Correct | Δ vs full | Silent fail | 掉分任務 |
+|---|---|---|---|---|
+| full(現行) | 18/18 | — | 0 | — |
+| no_selector_repair | 15/18 | **−3** | 0 | search-v2-widget-drift, search-v2-gizmo-drift, search-v3-heldout(全部 drift/held-out 掛) |
+| no_overlay_dismiss | 16/18 | −2 | 0 | v2 兩題(cookie modal 攔截 click) |
+| no_selector_memory | 18/18 | **0** | 0 | 無;總 repairs 也 14 vs 14(見下方反直覺項) |
+| no_capability_guard | 16/18 | −2 | 0 | imp-refused-login/purchase:refused→honest fail(非 silent) |
+| no_baseline_subtract | 17/18 | −1 | **+1** | abl-baseline-vacuous:t0 已成立條件 → vacuous PASS |
+| minimal_agentoccam(全關,verifier 仍在) | 12/18 | −6 | +1 | 上述聯集 |
+| minimal + self-report 判準(無 verifier) | 4/18 | **−14** | **10 false success** | 「動作都執行成功=pass」把 10 個 impossible/fail 題報成功 |
+
+#### Agent Mode — 8 任務(5 suite × MockPlanner + 3 gate probes),run_agentic 確定性
+
+| Config | Correct | Δ | False-success vs verifier | 掉分任務 |
+|---|---|---|---|---|
+| full | 8/8 | — | 1/8(planner 自報 done,verifier 擋下) | — |
+| no_stagnation_nudge | 7/8 | −1 | 1/8 | probe-stagnation:無 nudge 燒完 10 步 fail(有 nudge 7 turns pass) |
+| no_giveup_gate | 7/8 | −1 | 1/8 | probe-giveup:soft give_up 第 2 步即被接受 → fail |
+| no_done_gate(emulated) | 7/8 | −1 | 2/8 | probe-done:第一個 done 被採信 → verifier fail |
+| no_overlay_dismiss | 6/8 | −2 | 3/8 | v2 兩題;planner 照樣喊 done(fsv=1)但 verifier 擋下 |
+| minimal_agentoccam(self-report 判準) | 5/8 | −3 | **4/8** | +1 silent failure(nonexistent 報 pass);5/8 中有 3 題是「說謊剛好對」(self-report pass、verifier fail、但 expected 恰為 pass) |
+
+**關鍵發現(誠實揭露,含反直覺與方法限制)**:
+
+1. 最大單一元件 = **selector repair**(關掉 −3/18,全部 drift + held-out 任務掛);其次 overlay dismissal(script −2、agent −2)。最大整體差異 = **verifier 本身**:AgentOccam 式 self-report 判準下 script 只剩 4/18 正確、10 個 false success(「動作都執行成功=完成」把 impossible 任務全報成功);agent minimal 4/8 false success + 1 silent failure。full 配置兩相全 0 silent failure。
+2. **反直覺、照實報**:no_selector_memory 完全零損失——verdict 0 掉分、總 repairs 14 vs 14 持平。細看:同版重跑省 2 次 repair(gizmo-drift 2→0),但跨版切換時 stale selector 多花 2 次 repair(v1-nonexistent 0→2),在 v1/v2 交錯的 suite 上淨值為 0。memory 的效益前提是站點版本穩定。另 no_selector_repair 平均延遲反而最低(592ms vs full 695ms)——不修復當然快,代價是 −3 correct。
+3. no_capability_guard 的 −2 是 refused→honest fail(verifier 仍擋 silent failure);guard 的價值是責任邊界語意與提前停止,在 mock 上不是防偽陽性的主力。no_baseline_subtract −1 且 +1 silent:t0 已成立的 landmark 條件會變 vacuous pass(INTC 失敗案例的重現)。
+4. Agent 三個 gate 各 −1,由專用確定性 probe 量到:stagnation nudge(卡住→nudge→7 turns pass;關掉→燒完 10 步 fail)、give_up gate(soft give_up 被駁回後恢復→pass;關掉→第 2 步放棄)、done gate(premature done 被駁回後補做→pass;關掉→第一個 done 定案→fail)。
+5. **方法限制**:(a) done gate 是 inline 程式碼無 module hook,gate-off 以 history-blind planner emulation 重現(results.json method 有註明);(b) second judge 未 ablate——advisory by design,verdict delta 結構上=0;(c) replay cache 未 ablate——單次跑不會命中,delta 結構上=0;(d) repairs 計數在 repair-off 配置代表「診斷出的失敗」非「修復」,以 correct 為主軸。
+6. **量測過程修掉一個真 bug(measure-fix-remeasure)**:ReplayCache 以 task 句子為 key,3 個 probe 與 suite v1-widget 同句,首輪 agent 量測被重放污染(probes turns=0、gate 未執行)。改為每題 fresh cache 後重測,上表為修正後數字。
+
+- Artifacts:`tools/ablation_bench.py`、`runs/browser_eval/ablation/results.json`(配置定義、patch 機制、per-task rows、重現指令;**追蹤快照 `data/browser_eval/ablation/results.json`**,runs/ 為 gitignored)、per-config raw:`runs/browser_eval/ablation/raw/script-*.json`、`runs/browser_eval/ablation/raw/agent-*.json`
+
 ### 已知殘留(誠實邊界)
 
-1. **同檔附綁 wrapper 已還原;跨檔 cross-reference-index 尚未。** JPM/XOM 指向本檔附綁年報區塊的 stub 已由 `cross_ref.reassemble_wrapper_bodies`(commit 64de3ef)以 page-anchor / section-anchor 還原(JPM Item 1C CYD coverage 0%→100%;兩家 Item 8 重組 span 均獲 XBRL 3/3 認證,見 `failure_gallery.md` FG-SEC-007/008)。Intel/Citi 指向**另外裝訂年報 exhibit** 的 cross-reference-index 正文仍未還原——刻意不出貨脆弱的 title-based 猜測(Intel 正文無 emphasis 標記、標題重複當頁首,會出錯),**錯的正文比誠實的指標更糟**,見 `insights_and_directions.md` §2。
+1. **同檔附綁 wrapper 已還原;跨檔 cross-reference-index 尚未。** JPM/XOM 指向本檔附綁年報區塊的 stub 已由 `cross_ref.reassemble_wrapper_bodies`(commit 64de3ef)以 page-anchor / section-anchor 還原(JPM Item 1C CYD coverage 0%→100%;兩家 Item 8 重組 span 均獲 XBRL 3/3 認證,見 `failure_gallery.md` FG-SEC-007/008)。2026-07-11 page-top section anchoring 收尾:GS 1C(本檔內跨 item 指標)還原 + JPM 1C 頁窗收斂到子 section,CYD oracle 現為 **11 agree / 0 disagree**(見上方 T2-3「wrapper 1C 還原」段;kill-switch `SEC_WRAPPER_SECTION_ANCHOR=0`)。Intel/Citi 指向**另外裝訂年報 exhibit** 的 cross-reference-index 正文仍未還原——刻意不出貨脆弱的 title-based 猜測(Intel 正文無 emphasis 標記、標題重複當頁首,會出錯),**錯的正文比誠實的指標更糟**,見 `insights_and_directions.md` §2。
 2. **boundary 精度已量化(2026-07-10)**:char-offset F1(建構性 gold,regression baseline,敏感度注入鎖在 `tests/test_scoring.py`:AAPL F1 1.0→0.9267)+ CYD 官方 iXBRL oracle(9/9 pass segment coverage 100%,首個外部 span 錨點)。人工 token-level 標註(絕對正確率)仍列 backlog。
 3. **`data/sec_eval/records/sweep1` 是刻意保留的修復前 baseline**,其 Item 8 仍顯示舊的(錯誤)pass——用於 before/after 對照(見上方 metrics 表)。當前正確結果在 `sweep3`(sweep2 降為歷史 baseline,漂移見「Eval 升級」段)。

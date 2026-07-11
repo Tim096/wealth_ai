@@ -52,7 +52,7 @@
 |---|---|---|---|
 | OM | 300 題 live 任務、reference_length 難度分層、WebJudge(85.7% 人類一致)、任務失效維護協議 | 23 題自建 deterministic offline set + impossible 軸(12 題)+ open-ended 軸 + degradation curve(perception/action/execution × 3 強度)+ pass@k/flakiness;**judge 校準(Rogan-Gladen sens 1.0/spec 1.0,n=50:24 success + 26 corrupted,confusion tp24/fn0/fp0/tn26;雙 1.0 出自小校準集,artifact 未附 CI)是對方沒有的**;缺外部任務廣度、缺第二裁判 | 互有 |
 | BG | oracle cheat() 全管線校準、repro manifest、per-task 狀態三分法、watchdog relaunch、seeded 任務家族 | verifier 離線校準有(calibrate_verifier.py)但無 end-to-end oracle;harness 單迴圈、無 per-task 落盤、一個 hang 卡全場;無 repro manifest | 落後 |
-| SV | ablation + backbone-sensitivity 紀律 | degradation curve 是對「環境」消融,對「我們元件」的逐一移除量測全缺 | 落後 |
+| SV | ablation + backbone-sensitivity 紀律 | degradation curve 是對「環境」消融;元件逐一移除量測已於 2026-07-11 落地(`tools/ablation_bench.py`,含 AO minimal 對照臂,見 P1-10 落地註) | 已補(原落後) |
 | SK | 兩段式 judge(deterministic gate + LLM judge)、judge I/O artifacts | deterministic gate 與 artifact 保留**比 Skyvern 強**(全確定性 + EvidenceStore + 校準);缺 LLM 第二意見與 is_updated 旗標 | 互有 |
 
 ### 1.4 Silent-failure prevention(無聲失敗防治)— 我們的主場
@@ -191,6 +191,7 @@
 **P1-10 Ablation harness + AgentOccam minimal-baseline control arm** `S-M / medium`
 - 來源合併:SV ablation 紀律、**AO simplicity-vs-mechanism 對照**。What:tools/ablation_eval.py 逐元件關閉量測成功率/steps/tokens 三軸——feature flags 天然存在(AGENT_VISION、plan_steps=None、MemoryStore 清空、跳過 _dismiss_overlay);可加同 harness 換 backbone 敏感度表。
 - **新增 minimal-baseline control arm(AO 論證的硬證據形式)**:只測「移除我們的元件」不足以反駁「機制是儀式」——必加一支 reduced-action + cleaned-obs + 無 repair/memory/vision 的極簡 agent 跑同一 task set。若極簡臂接近全配臂,每個機制的存在都需用該差值辯護。AgentOccam 的階梯式 config(`reduced_action.yml`→`reduced_action-X_scrolling-obs_opt-history.yml`)即範本;其 WebArena ablation(16.5→23.1 砍 action→~27 去 scroll→~34 obs 清洗→~37 selective history→43.1 planning tree)證明去 scroll/全頁觀察與 obs 清洗是最大單項增益,值得對照我們 observer 的 `_candidate_lines` 自查冗餘 StaticText/table token。**AO 的反命題也直接判定我們某些計畫項不必要**:多 agent planner/actor 分離(AO 單 agent 勝 Agent-E)、任務策略回灌 planner prompt(+SteP 掉 2 分)——replan 應做成 in-context branch/prune 而非新角色,Script-Mode 知識只走確定性重放不回灌 prompt。落點:新 `tools/ablation_eval.py`、`docs/eval_report.md`。
+- **✅ 落地 2026-07-11(`tools/ablation_bench.py`,含 AO minimal control arm 實測)**:script 7 配置 × 18 題 + agent 6 配置 × 8 題 = 174 runs,mock 確定性、$0 無 LLM。full 兩相全對(18/18、8/8,0 silent failure);最大單一元件 = selector repair(關掉 −3/18);**AO 極簡臂沒有接近全配臂**——minimal_agentoccam(verifier 仍在)12/18、換 self-report 判準(無 verifier)剩 **4/18 + 10 false success**、agent minimal 4/8 false success:機制差值逐項有帳,反證「機制是儀式」。反直覺照錄:no_selector_memory 零損失(repairs 14 vs 14,效益前提是站點版本穩定)。量測中修掉 ReplayCache 同句污染 bug 後重測(measure-fix-remeasure)。完整表與方法限制見 `docs/eval_report.md`「Browser Agent 元件 Ablation」節;artifact `runs/browser_eval/ablation/results.json` + `raw/*.json`。
 
 **P1-11 語意化 wait policy** `S / medium`
 - 來源:SV。What:observer 加 spinner/skeleton/aria-busy 偵測 JS;動作後改「有 loading 指示器才輪詢等(上限 3×2s)」取代固定 networkidle+300ms。落點:`observer.py`、`agent.py:608-613`。
@@ -319,6 +320,25 @@ degradation curve / impossible / open-ended / pass@k 的分項數字見 `docs/ev
 - (c) second judge 對 **2/6 題與 verifier 分歧**(nfl:verifier fail vs judge yes;gov.uk:verifier pass vs judge no)——advisory-only 設計守住 **verifier 唯一裁判**,分歧只記錄不改判;
 - (d) n 小,61% 應視為方向指標。這關閉了上節「兩層對 live 皆未泛化」中的 second-judge 層;verifier landmark 層對這批弱契約仍是弱 proxy,屬題目契約設計而非機制缺陷。
 - **量測基建**:productized `tools/run_external_eval.py` 用單一共享 page 跑全部任務,一次硬導覽失敗(accuweather ERR_HTTP2)會污染 page、把後續全部 cascade 成「interrupted by another navigation」——本波改用 scratchpad isolated-context driver(每題獨立 context+page,同 agent/verifier/second judge/難度預算)才拿到 18 題;另為讓 flaky 站不中途觸發 30% abort ceiling,量測時把該上限暫調高(source 預設 0.30 未改)。per-task page 隔離應回饋進 runner。
+
+### 外部量測 held-out 2026-07-11(凍結 20 題不相交子集,單跑,反 overfitting)
+
+61.1% 的方法論弱點是「迭代後合成」——agent/verifier 曾對原 20 題跨波次改進(bucket-fix、abstain-fix 都是照著那批任務修的),無法排除 overfitting。本波以 pre-registered 凍結協定補上這塊證據:
+
+**選題規則(先凍結後跑,零 result-dependent 步驟;凍結於 `runs/browser_eval/m2w_heldout_20260711/freeze_manifest.json`,task 檔 sha256 `f143d634ab95cd3e3b203592229dc7c46c73a404e63a790c2dfd50c9e522bea0`)**:(1) 重用同一份 cached upstream fetch `runs/mind2web_import/raw.json`(300 題,hud-evals CC-BY mirror,2026-07-10 抓取)——候選宇宙與原 import 完全相同;(2) 套 `tools/import_mind2web.py` 同一組 committed 排除濾網(EXCLUDED_DOMAINS + login-text regex)→ 258;(3) 移除已在 `data/browser_eval/external/mind2web_subset.json` 的 20 個 source_task_id → 238(零重疊有 assertion);(4) 依官方 level 分佈(easy 81/medium 141/hard 78 = 27/47/26%)largest-remainder 取 n=20 = easy 5 / medium 10 / hard 5(餘數平手 0.4/0.4 取較大層);(5) 每層依 source_task_id 升冪 FIRST-N,per_domain_cap=2。無題文檢視、無手挑、無 cherry-picking。manifest 明文:單跑、如實報、**修改 agent/verifier 後重跑本集為禁手**;`--resume` 僅限 harness 中斷(未用到)。
+
+| 指標 | 數字 |
+|---|---|
+| 分佈 | 20 題:done 18、harness_error 2(env-classified site_unreachable:carmax.com `ERR_HTTP2_PROTOCOL_ERROR`、birkenstocks.com `ERR_CONNECTION_TIMED_OUT`,依 taxonomy 排除於分母);18 done:pass 12 / fail 5 / unknown 1 |
+| **gradable success** | **12/18 = 66.7%** |
+| 分難度 | easy 3/5 = 60.0%、medium 7/10 = 70.0%、hard 2/3 = 66.7%(hard +2 harness error) |
+| second judge(advisory,gateway gpt-5.3-codex) | yes 5 / no 5 / abstain 8;條件級分歧 10 題;硬衝突 2(verifier pass vs judge no:umich.edu、bbb.org),無 fail/yes 衝突;judge 未改任何判定 |
+| 成本 / 延遲 | LLM $0.0364(agent $0.0316 + judge $0.0049)、104,910 agent tokens;agent loop mean 58.6s / median 45.3s / max 168.0s;任務 wall ~18 min、end-to-end ~21 min(artifact 時間戳 freeze 09:51 → results 10:12),單次前景 launch,exit 0 |
+| harness | aborted=false、resumed=0、not_run=0,無任何 done 題重跑 |
+
+**可比性(強制聲明)**:61.1% 是 ITERATED composite、66.7% 是 disjoint 任務上的 SINGLE frozen run——並排是**反 overfitting 證據,非同分母比較**。held-out 單跑 66.7% ≥ 迭代後 61.1%,指向 pipeline 泛化而非調參到原 20 題;n=18 小、live variance 未控,照舊為方向指標。
+
+- Artifacts:`data/browser_eval/external/m2w_heldout_20260711.json`、`runs/browser_eval/m2w_heldout_20260711/{freeze_manifest.json, results.json, manifest.json, console.log}`
 
 ### 3.1 Self-correction
 - **SOTA 做法**:BU 五級 locator cascade + loop detector;SK hash rebind + 修復預算;SG re-grounding 標準流程。

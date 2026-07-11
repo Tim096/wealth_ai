@@ -75,7 +75,7 @@
 | P0-7 | **第四/第五仲裁票**:(a) vendor edgar-crawler regex core 為第四 engine + apply_triangulation 擴為 2-of-N 投票;(b) sec-api.io free-tier(100 lifetime calls)仲裁協定,先打 12 個既有 disagree,回應立即 disk cache;(c) **datamule**(pip,commit `122fc54` 2026-06-25,後端 doc2dict)`get_section('item1a')` 為第五票——樣式驅動路線,與我方 regex 驅動及 (a)(b) 皆實作獨立,且對 pre-2001 .txt 有路徑。**明確排除 SRAF**:調查確認其不產生 item 邊界(見 §1.5),不是票源;其 cleaned text 至多當「獨立清洗管道同輸入變體」的弱 ablation(offset 不對齊、Item 8 表格殘缺,不可當內容 gold) | 多票血統獨立(sec-api 閉源,agree 權重最高;datamule 無公開 benchmark,當票不當 gold);比對機制可直接重用(third_engine.py:73-129 shingle containment 即所需度量形狀) | M | high | (a) 新 sec_core engine module + tools/triangulate.py:47-48 call site + ConfidenceComponent 擴充;(b) 新 tools/arbitrate_secapi.py + data/sec_eval/arbitration/;(c) requirements-dev + engine adapter |
 | P0-8 | **CI golden-drift harness + typed known-bad manifest**:raw HTML 快取進 fixtures、failure gallery 的 FG-SEC-001..009 轉 machine-readable manifest 欄位、pytest 內跑 live pipeline 對凍結 gold 重測 | 對標 edgartools 54-fixture corpus;目前 score_offsets 手動跑且依賴網路 fetch,drift 無 CI 防線 | M | high | fixtures dir + manifest.json typed marker 欄位 + pytest |
 | P0-9 | **Combined-item 推斷 fallback**:singular header 'Item 1. Business and Properties' 且 Item 2 無 anchor 時,檢查前項 title_text 是否含缺項 canonical title,標 combined 而非靜默 missing | 內容未丟失(span 正確跑到下個 anchor)但 Item 2 recall 靜默為零;consumer 端(third_engine.py:132 combined containment)已 ready | M | high | boundary.py resolve_items 的 r.chosen is None 分支 + items.py CANONICAL_ITEM_TITLES |
-| P0-10 | **Wrapper body reassembly(JPM/XOM class)**:IBR stub 之後把 deferred Financial Section 正文重組回 item;順手修 cross_ref.py:13-16 stale docstring(寫 'not shipped' 但 L237-252 已實作 page-anchor resolution) | MEMORY 既定下一步;Intel class 已有 resolved_from_page_anchor,JPM/XOM 是最後一塊。stale docstring 會讓評審誤判已有能力 | M | high | cross_ref.py + page_map.py 延伸;docstring 一行修 |
+| P0-10 | **Wrapper body reassembly(JPM/XOM class)**:IBR stub 之後把 deferred Financial Section 正文重組回 item;順手修 cross_ref.py:13-16 stale docstring(寫 'not shipped' 但 L237-252 已實作 page-anchor resolution)。**✅ 2026-07-11 收尾:page-top section anchoring(GS intra-doc pointer + JPM 頁窗收斂),CYD oracle 11 agree / 0 disagree,見文末「Wrapper section-anchor 收尾」節** | MEMORY 既定下一步;Intel class 已有 resolved_from_page_anchor,JPM/XOM 是最後一塊。stale docstring 會讓評審誤判已有能力 | M | high | cross_ref.py + page_map.py 延伸;docstring 一行修 |
 | P0-11 | **Per-(form,item) 經驗 size band 硬性 guardrail**:從 agree-且-pass 的 sweep 條目算 p50,band p50/5..p50*8,出帶 → hard needs_review / 再抽取;**外加 whole-filing 不變式(SRAF)**:sum-of-items 字數 ≲ LM_10X_Summaries 該 accession 的 whole-doc word count,離群即 flag(注意 SRAF 是 whole-filing 粒度,只能供全檔上界,不能供 per-item band) | 現在只有全域 50..3,000,000 chars 一條帶(boundary.py:163-170),不分 item;素材(our_words/engine_words)已在 data/sec_eval 內,免新標註;SRAF Summaries 是血統獨立的免費對帳源 | M | high | 新 sec_core/size_bands.py + boundary.py 或 pipeline.py 掛檢查;SRAF CSV join 進 tools/ |
 | P0-12 | **Cost discipline 落地量測**:(a) LLM adjudicator wire 一次真實 client + 量測單筆 $/裁決(現值 <$0.005 是估計,cost_latency_report.md:42 自承「無量測背書」);(b) eval record + tools/sweep_metrics.py 加 per-filing 成本欄(llm_calls、tokens、usd;現在只聚合 latency_ms,零成本欄位);(c) cost_latency_report.md 換上實測數字 | §5.2 批判成立:cost discipline 四維度之一的核心數字是估計值,A++ 不可接受;S effort 即可終結 | S | high | pipeline.py LLM tier wiring + tools/sweep_metrics.py 成本欄 + docs/cost_latency_report.md |
 
@@ -522,3 +522,33 @@ IBR 35(Part III stub,conf ~0.6–0.7,非本訊號射程;是否「stub ⇒ needs_
 missing 8(conf 已 0.0,AUROC 側已正確排序)、partial 5。長度/位置類 gold-free 訊號在此錯誤主體上的
 天花板已實測見底:AUROC 0.75 與攔截 ≥50% 兩個 gate **維持未達成**,需要能看「span 內容是否屬於該
 item」的訊號(topic_check 的更強版本),不是更多尺寸先驗。
+
+### Wrapper section-anchor 收尾 2026-07-11(P0-10 完成:CYD 11 agree / 0 disagree)
+
+**結論先講:CYD agreement 從 10/1 修到 11/0(11 家,`tools/certify_cyd.py`),F1 與 calibration 零連帶變動,shipped。**
+
+**before/after(artifact `data/sec_eval/cyd_groundtruth/cyd_agreement.json`)**:
+
+| 家 | BEFORE | AFTER |
+|---|---|---|
+| GS 1C | incorporated_by_reference stub 247 chars(485610–485857),coverage 0.0% / containment 0.0% | partial `resolved_from_section_anchor` 8,650 chars(779931–788581),coverage **100%** / containment **85.6%** |
+| JPM 1C | partial `resolved_from_page_anchor` 20,610 chars(751329–771939),coverage 100% / containment **33.3%**(官方 6,871 chars 只佔我方 span 三分之一),needs_review_after=true | partial 9,745 chars(762158–771903),coverage 100% / containment **70.5%**——span 終點 771903 與官方 CYD 終點完全一致,起點 762158 = "Cybersecurity risk" section heading(官方起點 762318 在其後) |
+| 其餘 9 家 | AAPL/MSFT/NVDA/WMT/CAT/XOM/NEM/MRNA/KO 數字逐位不變 | 同(artifact diff 中 MSFT/MRNA 的 `needs_review_after` false→true 為 length-prior commit bf7e5fa 所致——上次 regen 基線在 64de3ef;kill-switch 驗證與 section-anchor 無關) |
+
+kill-switch 實檔驗證:`SEC_WRAPPER_SECTION_ANCHOR=0` 完整還原 before 數字(GS 0%/247、JPM 33.3%/20,610)。
+
+**根因(兩個獨立根因,同一個結構缺口:wrapper body resolution 沒有讀「印刷頁面結構」)**:
+
+1. **GS 類(intra-document pointer)**:1C stub 是本檔內跨 item 指標('See "MD&A - Risk Management - Cybersecurity Risk Management" in Part II, Item 7 of this Form 10-K'),目標 section 在 Item 7 span(491459–800755)內部;既有 `reassemble_wrapper_bodies` 只處理「最後一個 item 之後的 appended region」(GS 尾端僅 ~2k < 20k 門檻),且 quoted-title regex 只認 "section entitled",stub 永遠停在 honest pointer,官方 span(781048–788580)落在邊界外 → disagree。
+2. **JPM 類(page-window 過寬)**:1C stub 指到 "pages 146-149",page-anchor 解析取整個頁窗,但頁窗開頭是母 section(Operational Risk Management, p.146),CYD 只標 p.147 起的 Cybersecurity risk 子 section → 我方 span 起點早了 ~11k chars,containment 33%。
+
+**修法(通用結構規則,無 ticker 特例)**:`packages/sec_core/cross_ref.py` 新增 page-top section anchoring——裝訂報告每頁印頁碼 marker + 重複的短 furniture 行(公司 banner、running header),某頁第一個非 furniture 行若是短行即為 top-level section 起點(續頁開頭是長 prose)。兩個消費者:(a) 新 pipeline pass `resolve_intra_document_pointers`:把 quoted path 最後一段當 page-top heading 在被引用 item span 內做精確標題匹配,終點 = 下一個 page-top section(furniture 修剪);外加 **item-topic guard**(anchored heading 必須與該 item canonical title 語彙相關),擋掉母章節引用(GS 7A 引 "Risk Management" 章首)——**wrong body 比 honest pointer 更糟**;(b) `reassemble_wrapper_bodies` 內 `_snap_window_to_item_section`:page-anchored 窗內若有 canonical-title 匹配(SequenceMatcher ≥0.75)的 page-top section,span 收斂到該 section。
+
+**連帶效應誠實記錄**:GS 7A 曾被首版解析到 "Risk Management" 章節總覽(13k chars,wrong-body 風險),已由 item-topic guard 擋回 honest pointer;JPM 7/7A/8 page-anchor span 逐位不變。
+
+**F1 / calibration 零連帶(前景重跑實測)**:head_to_head 30-slice(`tools/head_to_head.py --slice 30`,四引擎)F1 零變動——ours macro_f1 **0.6245**(28 scored / 2 failures)、edgar_crawler 0.6332、datamule 0.6244、edgartools 0.4386;`verifier_false_pass_items` 68 不變;json diff 僅 fetch_ms 計時雜訊(artifact `data/sec_eval/scoring/head_to_head.json`)。NTU slice 為 2001–2019 年檔,無 CYD 時代 wrapper 1C stub,故無交集,符合預期。Calibration 重生(`tools/calibrate_sec_confidence.py`,pseudo-gold 軸會重跑 pipeline):AUROC/ECE/false-pass 全部逐位不變(ntu_human_labeled 0.6621/0.1133/0.2048;pseudo_gold_corpus_only 0.3459/0.2168/0.1854;sweep3 pass mean 0.9752),`calibration.json` diff 僅 generated_at timestamp → confidence 分佈未受影響。
+
+**守門**:pytest `-m "not integration"` **772 passed / 50 deselected / 0 failed**(before 763;+9 = `tests/test_section_anchor.py`);mutation harness 全綠:六類 detection recall 全 1.0,clean false-alarm 0.0000(fixture n=18、proxy n=177)/ 0.0056(sweep3 recorded 1/178);ruff 修改檔全過。
+
+- 修改檔:`packages/sec_core/cross_ref.py`、`packages/sec_core/pipeline.py`、`tests/test_section_anchor.py`
+- Artifacts:`data/sec_eval/cyd_groundtruth/cyd_agreement.json`、`data/sec_eval/scoring/head_to_head.json`、`data/sec_eval/calibration/calibration.json`

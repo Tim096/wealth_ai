@@ -81,6 +81,7 @@ def test_should_abort_thresholds():
     assert ew.should_abort(1, 1) is False   # below ERROR_ABORT_MIN: never trips
     assert ew.should_abort(2, 2) is False
     assert ew.should_abort(3, 3) is True    # 100% > 30% at min attempts
+    assert ew.should_abort(1, 3) is False   # a single error never aborts (order-independent)
     assert ew.should_abort(1, 4) is False   # 25% <= 30%
     assert ew.should_abort(3, 10) is False  # exactly 30% is NOT > 30%
     assert ew.should_abort(4, 10) is True

@@ -117,8 +117,12 @@ def load_done_summary(task_id: str, out_root: Path = RUNS_ROOT) -> dict | None:
 
 def should_abort(n_error: int, n_attempted: int) -> bool:
     """True once >ERROR_ABORT_RATE of attempted tasks errored, after at least
-    ERROR_ABORT_MIN attempts (so a single early error cannot kill the run)."""
-    return n_attempted >= ERROR_ABORT_MIN and n_error / n_attempted > ERROR_ABORT_RATE
+    ERROR_ABORT_MIN attempts. A single error can never abort, regardless of
+    when it is accounted — without the n_error >= 2 clause, 1 error among 3
+    attempts (33% > 30%) aborted or not depending on result-arrival order,
+    which made the pool guard flaky on slow runners."""
+    return (n_attempted >= ERROR_ABORT_MIN and n_error >= 2
+            and n_error / n_attempted > ERROR_ABORT_RATE)
 
 
 def scan_incomplete(task_ids: list[str], out_root: Path = RUNS_ROOT) -> list[str]:

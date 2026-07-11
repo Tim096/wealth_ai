@@ -66,7 +66,7 @@ Fetch → main-document detection → normalize with offset mapping → multi-de
 ## Current status (2026-07-11)
 
 - Implemented: everything in the Layers table above, including both task pipelines end-to-end, the eval system (verifier calibration, degradation curves, impossible/open-ended sets, pass@k, triangulation, offset F1, CYD/XBRL oracles, external NTU head-to-head, Online-Mind2Web live subset, prompt-injection adversarial suite) with committed artifacts under `data/`.
-- Tests: **793 collected** — quick lane `-m "not integration"`: 743 passed / 50 integration deselected (integration lane includes real-browser and gateway e2e). Originally 16 tests in the foundation phase; this document previously understated the suite.
-- CI: `.github/workflows/ci.yml` is configured but has **never run** (first run on push) — stated plainly, not implied as green.
+- Tests: **813 collected** — quick lane `-m "not integration"`: 763 passed / 50 integration deselected (integration lane includes real-browser and gateway e2e). Originally 16 tests in the foundation phase; this document previously understated the suite.
+- CI: `.github/workflows/ci.yml` — first run green on the `v1.0-submission` tag tree (run 29134525031: ruff clean + 743 selected → 742 passed / 1 skipped); the 20 length-prior tests added after the tag get verified on the next push.
 - Reports with real data: `eval_report.md`, `cost_latency_report.md`, `failure_gallery.md`, `supported_and_unsupported.md`.
 - Not implemented / explicit boundaries: cross-document exhibit body resolution (Intel/Citi class beyond same-file wrappers), pre-2001 SGML text-mode normalizer, OCR path for scanned PDFs — see `supported_and_unsupported.md` and `insights_and_directions.md`.

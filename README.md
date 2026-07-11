@@ -13,7 +13,7 @@
 | 共用層 | evidence store(兩題共用)、三態 verdict、eval case、LLM 成本紀錄 | 已實作 |
 | Eval Dashboard | 兩題 eval、XBRL 認證、browser repair trace(真實數據) | `apps/web/eval-dashboard/`,自包含 HTML |
 
-**793 tests**(快跑 `-m "not integration"`:**743 passed / 50 integration deselected**;integration lane 含真實瀏覽器 + gateway e2e)。**CI 設定已就緒(`.github/workflows/ci.yml`),首跑於 push 後——尚未執行過,不宣稱綠燈。** 完整規格:[docs/SPEC.md](docs/SPEC.md)。手動測 Task 1:[docs/setup_codex_gateway.md](docs/setup_codex_gateway.md)。
+**813 tests**(快跑 `-m "not integration"`:**763 passed / 50 integration deselected**;integration lane 含真實瀏覽器 + gateway e2e)。**CI 綠(`.github/workflows/ci.yml`,run 29134525031 於 `v1.0-submission` tag 樹:ruff 全過 + 743 selected → 742 passed / 1 skipped;其後新增 length-prior 20 tests,下次 push 由 CI 驗證)。** 完整規格:[docs/SPEC.md](docs/SPEC.md)。手動測 Task 1:[docs/setup_codex_gateway.md](docs/setup_codex_gateway.md)。
 
 ## 核心原則(已在 code 層強制,不是文件宣示)
 
@@ -39,7 +39,7 @@ python -m venv .venv
 .venv\Scripts\python -m playwright install chromium
 $env:SEC_EDGAR_USER_AGENT = "your-name your@email"
 
-.venv\Scripts\python -m pytest -m "not integration"     # 743 passed(全集 793 tests)
+.venv\Scripts\python -m pytest -m "not integration"     # 763 passed(全集 813 tests)
 .venv\Scripts\python tools\browser_killer_demo.py       # 題目一:v1→v2 selector 自修復
 .venv\Scripts\python tools\browser_agent_live.py --mock # 題目一:Agent Mode 迴圈(免 key)
 .venv\Scripts\python tools\eval_one.py AAPL             # 題目二:抽取一份 10-K
@@ -91,7 +91,7 @@ data/       sec_eval(fixtures + records), golden_labels, mock_sites(v1/v2), raw_
 docs/       SPEC, architecture, eval_report, cost_latency_report, failure_gallery,
             supported_and_unsupported, insights_and_directions, prior_art, ai_collaboration_report
 prompts/    所有影響開發的 prompt + 決策(含 rejected)
-tests/      793 tests(快跑 lane 743 + integration 50)
+tests/      813 tests(快跑 lane 763 + integration 50)
 ```
 
 ## 部署(Zeabur)

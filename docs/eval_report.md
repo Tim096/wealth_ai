@@ -157,23 +157,23 @@ baseline 11 家全是 iXBRL(10 Workiva + 1 DFIN)——覆蓋缺口用分層抽�
 | datamule | 0.6244 | 28 / 2 |
 | edgartools 5.42.0 | 0.4386 | 26 / 4 |
 
-**單軸 F1 我們沒有贏**:輸 edgar_crawler 0.0087、追平 datamule(0.6245 ≈ 0.6244,非「贏」)——如實記錄,F1 tuning 已 CLOSED。差異化在驗證軸:全場唯一有多 oracle 驗證(XBRL/CYD/topic/2-of-N)、誠實 needs_review/棄權(false-pass 是自己量出來自己公布的:TOC-strip 落地前 **100/397**,artifact `data/sec_eval/calibration/calibration.json` 的 `strata.ntu_human_labeled.verifier_false_pass`;落地後 **79**,artifact `data/sec_eval/scoring/head_to_head.json` 的 `summary.ours.verifier_false_pass_items`——交付層移除的 TOC-bleed fp 不再計)、capture-first 覆蓋保證與 mutation harness 的系統——edgar_crawler 的 0.6332 是無法自我審計的數字。
+**單軸 F1 我們沒有贏**:輸 edgar_crawler 0.0087、追平 datamule(0.6245 ≈ 0.6244,非「贏」)——如實記錄,F1 tuning 已 CLOSED。差異化在驗證軸:全場唯一有多 oracle 驗證(XBRL/CYD/topic/2-of-N)、誠實 needs_review/棄權(false-pass 是自己量出來自己公布的:TOC-strip 落地前 **100/397**(歷史 artifact,`git show v1.0-submission:data/sec_eval/calibration/calibration.json` 的 `strata.ntu_human_labeled.verifier_false_pass`);TOC-strip 落地後 **79**;length prior 上線後 **68/332**(coverage 0.6484,現行 `data/sec_eval/scoring/head_to_head.json` 的 `summary.ours.verifier_false_pass_items` 與 `calibration.json`)——交付層移除的 TOC-bleed fp 不再計)、capture-first 覆蓋保證與 mutation harness 的系統——edgar_crawler 的 0.6332 是無法自我審計的數字。
 
 **軸差異聲明(NTU ItemSeg 論文 vs 本表)**:NTU 論文(arXiv 2502.08875)報的 BERT4ItemSeg macro-F1 **0.9825** 是 **per-line BIO 邊界分段分類 F1**、在 3,737 份標註 filing 上**監督式訓練**;本表的 0.62x 是 **item 全文抽取 F1**(30-filing slice、**zero-training**,未在該 gold 上調參)。兩者量的不是同一件事,不可直接比較——0.9825 不是本表的同軸天花板。NTU gold 在本 repo 的角色是**外部弱老師(一票),不是 gold 真值**(引用原則見 `docs/research/giants_task2.md` §4、`docs/research/external_benchmark_spike.md`)。
 
-- confidence 校準:AUROC(NTU human-labeled,n=512)= **0.6307**(gate ≥0.75 未達,MISS 如實記帳,不得引用 0.63 為「可接受」);ECE 0.1762。
+- confidence 校準(2026-07-11 length prior 上線後,NTU human-labeled,n=512):AUROC = **0.6621**(gate ≥0.75 仍 **MISS**,如實記帳,不得引用為「可接受」);ECE **0.1133**;needs_review 錯誤攔截 **39/118 = 33.1%**(gate ≥50% 仍 MISS)。歷史值:舊 pairing 報 0.6307/ECE 0.1762(stale pairing,已在 `docs/research/giants_task2.md`「Gate rerun 2026-07-11」更正);同 pairing 無 prior 的可比 before 為 AUROC 0.6711——length prior 換到攔截率與 hi-conf 解飽和,AUROC 微降 0.009,取捨與歸因見該節。
 - risk-coverage 操作點(從 `data/sec_eval/calibration/calibration.json` `strata.ntu_human_labeled.risk_coverage` 實算;risk = P(錯誤 | confidence ≥ 閾值),不含 needs_review gate):
 
 | confidence 閾值 | coverage | risk(該 gate 下 false-pass rate)|
 |---|---|---|
-| ≥ 1.0 | 0.2988 | 0.2157 |
-| ≥ 0.9 | 0.7207 | 0.2249 |
-| ≥ 0.8 | 0.7559 | 0.2274 |
-| ≥ 0.7 | 0.8379 | 0.2424 |
-| ≥ 0.6 | 0.9531 | 0.2643 |
-| 全收(≥ 0.0)| 1.0000 | 0.2754 |
+| ≥ 1.0 | 0.2305 | 0.1356 |
+| ≥ 0.9 | 0.5605 | 0.1638 |
+| ≥ 0.8 | 0.5918 | 0.1683 |
+| ≥ 0.7 | 0.8105 | 0.1831 |
+| ≥ 0.6 | 0.9395 | 0.2162 |
+| 全收(≥ 0.0)| 1.0000 | 0.2305 |
 
-  營運 gate(needs_review==False ∧ conf≥0.6,同 artifact `verifier_false_pass` 欄)另計:coverage **0.7754**、false-pass **0.2519**(gate 含 needs_review,故不落在純閾值曲線上)。誠實解讀:曲線幾乎平坦——閾值從 0 拉到 1.0 只把 risk 從 0.275 壓到 0.216,confidence 對 NTU 錯誤主體(boundary bleed)鑑別力弱,與 AUROC 0.6307 的 MISS 判定一致;這張表是「confidence gate 目前換不到精度」的量化證據,不是可用性宣稱。計算指令:`.venv\Scripts\python -c "import json; rc=json.load(open('data/sec_eval/calibration/calibration.json'))['strata']['ntu_human_labeled']['risk_coverage']; [print(r) for r in rc if r['threshold'] in (1.0,0.9,0.8,0.7,0.6,0.0)]"`
+  營運 gate(needs_review==False ∧ conf≥0.6,同 artifact `verifier_false_pass` 欄)另計:coverage **0.6484**、false-pass **0.2048**(gate 含 needs_review,故不落在純閾值曲線上)。誠實解讀:length prior 後曲線不再平坦——閾值從 0 拉到 1.0 把 risk 從 0.231 壓到 0.136,confidence 開始換得到精度,但 AUROC/攔截兩個主 gate 仍未達成,殘餘錯誤主體(pass 42 筆內容錯位 + IBR 35)非尺寸異常,長度軸天花板已實測見底(`docs/research/giants_task2.md`「Gate rerun 2026-07-11」)。計算指令:`.venv\Scripts\python -c "import json; rc=json.load(open('data/sec_eval/calibration/calibration.json'))['strata']['ntu_human_labeled']['risk_coverage']; [print(r) for r in rc if r['threshold'] in (1.0,0.9,0.8,0.7,0.6,0.0)]"`
 - mutation harness:detection recall **全六類 1.0**(truncate/misalign/toc_anchor/wrapper_swallow/jitter/cross_swap),clean false-alarm 0.0056(門檻 recall ≥0.95 / false-alarm ≤0.05)。
 - Artifacts:`data/sec_eval/scoring/head_to_head.json`(4-engine、30 filings)、`data/sec_eval/calibration/calibration.json`;mutation harness:`tests/test_verifier_mutations.py`。裁決鏈(含 TOC-strip 對抗裁決與錯誤更正)見 `docs/research/giants_task2.md`。
 

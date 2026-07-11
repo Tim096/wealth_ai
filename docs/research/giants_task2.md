@@ -335,9 +335,63 @@ recall(bleed 是這個 trade 的帳單),而換來的是全場**唯一**有驗證
 2. **2 筆「no items extracted」filings**:edgar_crawler 在這兩筆拿 ~0.9–0.99,我們拿 0。
    修回任何一筆的邊際貢獻大於整個 A-bucket ceiling,是下一個最高槓桿目標。
 3. **Containment adapter 的 furniture-line 重複計數**(C-bucket,6/15):重複頁眉每次出現
-   都算 fp,單筆可灌 100–200 fp。對雙方對稱(6 筆 C-bucket 上我們與 edgar_crawler fp 逐筆
-   相同),head-to-head 公平,不改;但引用「87% boundary bleed」診斷時必須註明含此 artifact 膨脹。
+   都算 fp,單筆可灌 100–200 fp。~~對雙方對稱,head-to-head 公平,不改~~ —— **此判斷有誤,
+   已於 18:40 終判修正(見下節)**。當時憑 macro-level 概括判「對稱/公平」,但 per-item probe
+   證明其中一類(Table of Contents 導覽 backlink)是**非對稱**的:EC 會 strip 掉、我們留著。
+   引用「87% boundary bleed」診斷時必須註明含此 artifact 膨脹。
 4. **下一個訊號(gold-free)**:不依賴 heading 可偵測性的 per-item 長度先驗——span 長度
    相對 filing 總長的占比分布,超出 p95 即封頂 confidence + needs_review;或候選有
    next-item-anchor 時量 span 終點與 anchor 距離。這是 AUROC 0.63→0.75 與攔截率 ≥50%
    兩個 MISS gate 的同一把鑰匙。
+
+### 終判 2026-07-10 18:40(furniture-strip 對抗裁決後,F1 線收束)
+
+**結論先講:即使套用合法的 TOC-strip,我們 F1 仍沒贏。** 兩個對手數字(fresh artifact 逐位元確認):
+edgar_crawler **0.6332**、datamule **0.6244**、edgartools 0.4386;我們 raw **0.5964**。合法 TOC-strip
+後投影 **0.6244** —— **追平 datamule(0.6244 == 0.6244,非「贏」),仍輸 edgar_crawler 0.0088。**
+F1 tuning 就此 **CLOSED**,不再嘗試;敘事全面轉為可靠性/可驗證性差異化。
+
+#### 前一裁決的錯誤更正(誠實記帳)
+
+18:05 版點 3 憑 macro-level 概括判 furniture-fp「對雙方對稱、head-to-head 公平」。**這是錯的。**
+Per-item probe 拆帳後真相是**混合**,不是全對稱也不是全furniture:
+
+- **恰有一類是非對稱的**:`Table of Contents` 導覽 backlink。EC 把它 strip 掉(`ec_A == ec_raw`
+  no-op、12 個 probe item `ec_contains_toc` 全 false、`ec_fp=4`),我們留著。典型 2713014 item14
+  一個 315-char span 內含 1 條實體 TOC line,卻因 scorer「per gold-row-position × doc-wide substring
+  containment」機制,匹配到全文 100 條同文字 gold row → `fp=100`。scorer 機制(Agent-2 的讀法)
+  **成立**;但「furniture 非對稱解釋整個 gap」(Agent-2)**不成立**。
+- **非-TOC recurring furniture 是對稱的**:all-O 公司/子公司頁眉兩引擎逐筆相同(13004153 item5=50
+  both、item7A=79 both、19146310 item3=13 both、item7A=25 both),EC **不** strip 這些。前一裁決
+  說「對稱」在這一類上是對的,錯在把它推廣到 TOC。
+- **高-fp item 是真過抽,不是 furniture**:item15 fp=402(furniture 僅 140、EC=0)、10216298 item2
+  fp=284(furniture 7、EC=0)、6404122 item9 fp=75(furniture 0、EC=19)。殘餘 0.0088 是真的
+  segmentation-boundary neighbor-bleed,**不是** scorer artifact。
+
+#### 真實 post-strip 數字表(exact head_to_head scorer 重算)
+
+| 系統 | raw macro-F1 | 合法 TOC-strip 後 | 對 ours 的落差 |
+|---|---|---|---|
+| edgar_crawler | 0.6332 | 0.6332(strip 對 EC 為 no-op) | 我們 **輸 0.0088** |
+| datamule | 0.6244 | 0.6244 | 我們 **追平**(非贏) |
+| **ours** | **0.5964** | **0.6244**(+0.0280) | — |
+| edgartools | 0.4386 | — | — |
+
+TOC-strip 的 +0.0280 吃掉了對 EC 之 0.0368 gap 的 ~76%,但收不掉最後 0.0088;broad
+「duplicated=furniture」全 strip 是**非法**的(吃掉真實 recurring 財務內容,ours 0.5964→0.57、
+EC 0.6332→0.5905 雙降),不採用。
+
+#### TOC-strip 是真產品特性,不是 metric hack
+
+這不是為了刷分才臨時砍字。它是**雙層輸出**設計的一部分:對外交付 **clean text**(移除 TOC 導覽
+backlink 等純導覽 furniture)**同時保留 source offsets** 回指原文 span,下游要原始位元可還原。它獨立
+於評分存在、對可讀性與下游 diff 有實質價值;放進評分只是誠實地把這層算進去。即便如此它**沒讓我們贏
+F1**——所以它是特性揭露,不是勝負宣稱。
+
+#### 最終定位(單軸 F1 輸、可靠性軸唯一贏)
+
+正確敘事:我們用 precision 換 capture-first recall(bleed 是這筆 trade 的帳單),換來全場**唯一**
+自我審計的系統——false-pass 100 筆是我們自己量出來自己公布的,AUROC/ECE/coverage/mutation-recall
+一整組可審計配套隨附;edgar_crawler 的 0.6332 是一個**無法自我審計**的數字,錯了不知道錯。單軸比 F1
+我們輸 0.0088(對 EC)、追平 datamule;比「你敢不敢把輸出直接餵下游而不需人工復核」,對面三家連
+參賽資格都沒有。**F1 line: CLOSED as honest-narrative。**

@@ -21,6 +21,7 @@ from sec_core.cross_ref import (
 )
 from sec_core.headings import HeadingCandidate, detect_candidates
 from sec_core.items import ItemSegment
+from sec_core.length_prior import apply_length_prior
 from sec_core.normalize import NormalizedDocument, normalize_html
 from sec_core.size_bands import apply_size_bands
 from sec_core.toc import assess_toc
@@ -258,6 +259,15 @@ def extract_from_html(
     # supported class) — pre-2003 schemas get their own group once sampled.
     # A high-side violation also caps confidence (overshoot_size_ratio).
     apply_size_bands(segments, doc, breakdowns=breakdowns)
+
+    # Gold-free per-item length prior (scale-invariant complement to the
+    # absolute size bands): a substantive pass span whose share of the WHOLE
+    # filing falls outside the corpus-derived [p05, p95] per-item ratio band
+    # is out-of-distribution in either direction (overshoot = bleed,
+    # undershoot = fragment) — needs_review + capped confidence. The span is
+    # never changed. Kill-switch for attribution runs: SEC_LENGTH_PRIOR=0.
+    if os.environ.get("SEC_LENGTH_PRIOR") != "0":
+        apply_length_prior(segments, doc, breakdowns=breakdowns)
 
     # Discoverability: when Item 8 is only a pointer stub, tell the reader WHERE
     # the financial statements actually are (often Item 15) instead of leaving

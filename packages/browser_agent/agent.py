@@ -176,6 +176,31 @@ def _no_progress_entry(h: str) -> bool:
             or h.endswith(":fail"))
 
 
+# BUCKET 3a give_up classification: a give_up naming a HARD block (CAPTCHA /
+# login / paywall / HTTP 403) or a genuine impossibility is honoured at once —
+# a fast, honest refusal (and the impossible-task path stays fast). A soft
+# "can't find it / no candidate" give_up matches nothing here and is gated by
+# remaining budget so a hard/multi-step task is not abandoned 2-3 steps in.
+_HARD_GIVEUP_CUES = (
+    "captcha", "recaptcha", "unusual traffic", "are you a robot", "robot check",
+    "login", "log in", "sign in", "sign-in", "signin", "authenticat",
+    "account required", "requires an account", "paywall", "subscription required",
+    "subscribe to", "payment", "requires payment", "purchase required",
+    "402", "403", "forbidden", "access denied", "blocked by",
+    "impossible", "not possible", "cannot be completed", "cannot be done",
+    "does not exist", "doesn't exist", "no such", "not available anywhere",
+)
+
+
+def _hard_giveup(reason: str) -> bool:
+    """True when a give_up reason names a genuine dead-end (a hard block or an
+    impossibility), so it is honoured immediately. A soft give_up ('can't find
+    the button', 'no candidate advances the task') matches nothing here and is
+    gated by remaining step budget."""
+    r = (reason or "").lower()
+    return any(cue in r for cue in _HARD_GIVEUP_CUES)
+
+
 def stagnation_nudge(planner_steps: list, page_hashes: list[str],
                      history: list[str], step_i: int, max_steps: int,
                      plan_steps: list[str] | None = None) -> str:
@@ -206,23 +231,31 @@ def stagnation_nudge(planner_steps: list, page_hashes: list[str],
                 "to reveal the target.")
     if step_i < _NUDGE_LADDER[0]:
         return ""
-    rep = repetition_report(planner_steps[-6:])
-    stalled = len(page_hashes) >= 4 and len(set(page_hashes[-4:])) == 1
+    # BUCKET 3b: widen the repetition window (catch an A-B-A-B wander cycle a
+    # 6-step window misses) and trip the frozen-page detector one observation
+    # earlier (3 identical hashes = 2 unchanged transitions) so a silent-failure
+    # wander is caught sooner.
+    rep = repetition_report(planner_steps[-8:])
+    stalled = len(page_hashes) >= 3 and len(set(page_hashes[-3:])) == 1
     if not (rep["loop_detected"] or stalled):
         return ""
-    why = ("page unchanged for 3 steps" if stalled
+    why = ("page unchanged" if stalled
            else f"same move repeated {max(rep['max_consecutive_repeat'], rep['loop_repeats'])}x")
+    # BUCKET 3b: restate the current subgoal so the nudge DIRECTS a strategy
+    # switch back toward the planned route, not merely escalates tone.
+    aim = f" Refocus on the plan: {'; '.join(plan_steps)}." if plan_steps else ""
     if step_i >= _NUDGE_LADDER[2]:
         return (f"NUDGE-FINAL({why}; only {remaining} steps left): you ARE "
                 "stuck. Abandon this approach NOW — take the most direct "
                 "different route (goto a target URL / extract what is already "
-                "on screen), or give_up honestly.")
+                "on screen), or give_up honestly." + aim)
     if step_i >= _NUDGE_LADDER[1]:
         return (f"NUDGE-STRONG({why}): this approach is not working. Switch "
                 "strategy THIS turn: a different element, press instead of "
-                "click, goto a seen href, or scroll to new content.")
-    return (f"NUDGE({why}): you may be looping — re-read ACTIONS SO FAR and "
-            "pick an action different from the repeated one.")
+                "click, goto a seen href, or scroll to new content." + aim)
+    return (f"NUDGE({why}): you may be looping — STOP repeating the last move "
+            "and switch approach: a different element, press instead of click, "
+            "goto a seen href, or scroll to reveal the target." + aim)
 
 
 @dataclass
@@ -955,18 +988,24 @@ class BrowserAgent:
                                                   mode="agent", detail=decision.reason)))
                 _emit(f"↻ 重試:{decision.reason}")
                 continue
-            # Don't accept the FIRST give_up: the reported failure was quitting
-            # with the task nearly done (only download + navigate-to-section
-            # left). Reject one give_up with a concrete nudge so the model must
-            # try a genuinely different action before we honour a second one.
-            if decision.kind == "give_up" and give_ups < 1:
-                give_ups += 1
-                history.append(f"give_up_rejected({decision.reason})")
-                trace.append(_stamp_obs(StepTrace(step="planner", action="give_up_rejected",
-                                                  ok=False, mode="agent", detail=decision.reason)))
-                _emit("↻ 先別放棄——換一個具體做法再試(直接 goto 目標檔案的 href / 用 download / 關掉彈窗)")
-                self.page.wait_for_timeout(200)
-                continue
+            # BUCKET 3a early-give_up gate: honour a give_up at once only when it
+            # names a HARD block / impossibility (a fast, honest refusal — the
+            # impossible-task path stays fast). Otherwise, while AMPLE step
+            # budget remains (< ~40%) OR it is the first give_up, reject it with
+            # a concrete strategy nudge — the observed failure was quitting a
+            # hard/multi-step task 2-3 steps in with the budget barely touched.
+            # A real dead-end must survive a genuinely different approach first;
+            # past the budget floor an already-nudged give_up is honoured.
+            if decision.kind == "give_up":
+                ample = step_i < max(2, int(max_steps * 0.4))
+                if not _hard_giveup(decision.reason) and (ample or give_ups < 1):
+                    give_ups += 1
+                    history.append(f"give_up_rejected({decision.reason})")
+                    trace.append(_stamp_obs(StepTrace(step="planner", action="give_up_rejected",
+                                                      ok=False, mode="agent", detail=decision.reason)))
+                    _emit("↻ 先別放棄——換一個具體做法再試(直接 goto 目標檔案的 href / 用 download / 關掉彈窗)")
+                    self.page.wait_for_timeout(200)
+                    continue
             # P0-3 done-rejection front gate (BU pre_done_verification, SV 終止
             # 雙閘門): the loop verdict above already judged THIS state — a
             # "done" while it is not pass is finishing on expectation and

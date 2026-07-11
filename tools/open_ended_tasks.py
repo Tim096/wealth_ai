@@ -35,24 +35,44 @@ from browser_agent.memory_store import MemoryStore
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))                    # `tools.` imports when run as a script
 from tools.impossible_tasks import build, uri    # noqa: E402
+from tools.eval_worker import (                  # noqa: E402
+    RUNS_ROOT, HarnessAbort, arm_watchdog, harness_report, load_done_summary,
+    run_guarded, should_abort,
+)
 TASKS = ROOT / "data" / "browser_eval" / "tasks.json"
 OUT = ROOT / "data" / "browser_eval" / "open_ended"
+RUNS = RUNS_ROOT                                 # per-task summary.json root (P0-9)
 
 
-def run_all(tasks: list[dict]) -> list[dict]:
+def run_all(tasks: list[dict], resume: bool = False) -> list[dict]:
+    """P0-9: guarded like impossible_tasks.run_all — per-task summary.json,
+    Playwright watchdog, >30% error abort. A raised task is BOTH a measured
+    crash row (FIX-1: the crash IS the failure mode under test, so it stays in
+    summarize) AND a harness-error for the abort guard / harness block."""
     rows: list[dict] = []
+    n_error = n_attempted = 0
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": 1000, "height": 800})
+        arm_watchdog(page)
         for task in tasks:
+            if resume:
+                prior = load_done_summary(task["task_id"], out_root=RUNS)
+                if prior:
+                    row = prior["row"]
+                    row["harness_status"] = "done"
+                    row["resumed"] = True
+                    rows.append(row)
+                    continue
             mem = MemoryStore(OUT / f"_mem-{task['task_id']}.json")
-            try:
+
+            def _one(task=task, mem=mem):
                 page.goto(uri(task["site"]))
                 agent = BrowserAgent(page, mem, site="mockshop", task_type="search",
                                      artifact_dir=None, evidence_store=None)
                 steps, contract = build(task)
                 run = agent.run(task["task_id"], steps, contract)
-                rows.append({
+                return {
                     "task_id": task["task_id"], "site": task["site"],
                     "expected": task["expect_status"], "status": run.status,
                     "crashed": False,
@@ -64,17 +84,30 @@ def run_all(tasks: list[dict]) -> list[dict]:
                     "verifier_status": run.verifier.status,
                     "verifier_reason": run.verifier.reason,
                     "missing_evidence": run.verifier.missing_evidence,
-                })
-            except Exception as e:  # noqa: BLE001 — a crash IS the measured failure mode
-                rows.append({
+                }
+
+            summary = run_guarded(task["task_id"], _one, out_root=RUNS)
+            (OUT / f"_mem-{task['task_id']}.json").unlink(missing_ok=True)
+            n_attempted += 1
+            if summary["harness_status"] == "done":
+                row = summary["row"]
+                row["harness_status"] = "done"
+            else:
+                # a crash IS the measured failure mode here — keep the crashed-row
+                # shape for summarize(), plus the harness axis for the guard
+                n_error += 1
+                row = {
                     "task_id": task["task_id"], "site": task["site"],
                     "expected": task["expect_status"], "status": "error",
                     "crashed": True, "matches_expected": False,
                     "vacuous_pass": False, "steps_executed": 0,
-                    "verifier_status": "", "verifier_reason": f"{type(e).__name__}: {e}",
+                    "verifier_status": "", "verifier_reason": summary["error"],
                     "missing_evidence": [],
-                })
-            (OUT / f"_mem-{task['task_id']}.json").unlink(missing_ok=True)
+                    "harness_status": "error", "harness_error": summary["error"],
+                }
+            rows.append(row)
+            if should_abort(n_error, n_attempted):
+                raise HarnessAbort(rows, n_error, n_attempted)
         browser.close()
     return rows
 
@@ -98,11 +131,18 @@ def main() -> None:
     if not tasks:
         raise SystemExit("no open_ended_tasks in data/browser_eval/tasks.json")
 
-    rows = run_all(tasks)
+    aborted = False
+    try:
+        rows = run_all(tasks)
+    except HarnessAbort as ab:
+        rows = ab.rows          # partial rows are persisted, not thrown away
+        aborted = True
+        print(ab)
     metrics = summarize(rows)
     out = {
         "generated_by": "tools/open_ended_tasks.py",
         "source_tasks": "data/browser_eval/tasks.json -> open_ended_tasks",
+        "harness": harness_report(rows, n_planned=len(tasks), aborted=aborted),
         "definition": {
             "vacuous_pass": "status 'pass' on a contract with ZERO success conditions — "
                             "nothing was proven, so pass is never correct here",
@@ -128,6 +168,8 @@ def main() -> None:
         print(f"  {tag:<12} {r['task_id']:<26} status={r['status']:<8} "
               f"expected={r['expected']}  steps={r['steps_executed']}")
     print(f"\nwrote {OUT / 'open_ended_results.json'}")
+    if aborted:
+        raise SystemExit(2)
 
 
 if __name__ == "__main__":

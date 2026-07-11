@@ -15,12 +15,19 @@ non-trivial in Agent Mode with a live LLM planner. `--agentic` additionally
 runs a small Agent Mode subset (MockPlanner offline, still deterministic) to
 show the same pass@k machinery drives the LLM path. Basis: pass@k as the
 stability axis for stochastic agents (agent-eval literature; live LLM only).
+
+P0-9 harness persistence + watchdog: every task runs under tools/eval_worker's
+guard — per-task try/finally summary.json, Playwright-level timeout, a
+done/error/incomplete harness axis SEPARATE from the verdict layer (metrics
+count done only), `--resume` relaunch masking, and a >30% error-rate abort
+that still persists the partial rows.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -31,6 +38,11 @@ from browser_agent.memory_store import MemoryStore
 from observability_core import EvidenceStore
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))                    # `tools.` imports when run as a script
+from tools.eval_worker import (                  # noqa: E402
+    HarnessAbort, arm_watchdog, harness_report, load_done_summary,
+    run_guarded, scan_incomplete, should_abort,
+)
 TASKS = ROOT / "data" / "browser_eval" / "tasks.json"
 OUT = ROOT / "runs" / "browser_eval"
 EVIDENCE = ROOT / "data" / "browser_eval" / "evidence"
@@ -72,44 +84,104 @@ def _row(run, task) -> dict:
     }
 
 
-def run_script_pass(page, tasks: list[dict], mem_path: Path, evidence=None) -> list[dict]:
+def _error_row(task: dict, summary: dict) -> dict:
+    """Harness-error stub row — carries NO verdict-layer fields (the two axes
+    stay separate); excluded from metrics/pass@k, reported in the harness block."""
+    return {"task_id": task["task_id"], "layer": task["layer"], "site": task["site"],
+            "expected": task["expect_status"], "harness_status": "error",
+            "harness_error": summary["error"]}
+
+
+def run_script_pass(page, tasks: list[dict], mem_path: Path, evidence=None,
+                    resume: bool = False) -> list[dict]:
     """One full Script-Mode pass over the task set with FRESH selector memory.
     Clearing memory per pass makes each pass an independent, reproducible sample
-    (memory accumulation would make repair counts drift across passes)."""
+    (memory accumulation would make repair counts drift across passes).
+
+    P0-9: every task runs under the harness guard (per-task summary.json via
+    try/finally + Playwright-level watchdog); a crashing task yields an error
+    row instead of killing the pass, and >30% harness errors raise HarnessAbort
+    with the partial rows. resume=True masks tasks a prior launch finished."""
     if mem_path.exists():
         mem_path.unlink()
     mem = MemoryStore(mem_path)
-    rows = []
+    arm_watchdog(page)
+    rows: list[dict] = []
+    n_error = n_attempted = 0
     for task in tasks:
-        page.goto(uri(task["site"]))
-        agent = BrowserAgent(page, mem, site="mockshop", task_type="search",
-                             artifact_dir=OUT / task["task_id"], evidence_store=evidence)
-        steps, contract = build(task)
-        run = agent.run(task["task_id"], steps, contract)
-        rows.append(_row(run, task))
+        if resume:
+            prior = load_done_summary(task["task_id"], out_root=OUT)
+            if prior:
+                row = prior["row"]
+                row["harness_status"] = "done"
+                row["resumed"] = True
+                rows.append(row)
+                continue
+
+        def _one(task=task):
+            page.goto(uri(task["site"]))
+            agent = BrowserAgent(page, mem, site="mockshop", task_type="search",
+                                 artifact_dir=OUT / task["task_id"], evidence_store=evidence)
+            steps, contract = build(task)
+            return _row(agent.run(task["task_id"], steps, contract), task)
+
+        summary = run_guarded(task["task_id"], _one, out_root=OUT)
+        n_attempted += 1
+        if summary["harness_status"] == "done":
+            row = summary["row"]
+            row["harness_status"] = "done"
+        else:
+            n_error += 1
+            row = _error_row(task, summary)
+        rows.append(row)
+        if should_abort(n_error, n_attempted):
+            raise HarnessAbort(rows, n_error, n_attempted)
     return rows
 
 
 def run_agentic_pass(page, tasks: list[dict], mem_path: Path) -> list[dict]:
     """One Agent-Mode pass using the offline deterministic MockPlanner (no key).
     Demonstrates the pass@k machinery on the LLM path; MockPlanner is still
-    deterministic, so real flakiness only shows with a live planner."""
+    deterministic, so real flakiness only shows with a live planner.
+    Guarded like the script pass; summaries live under <task_id>--agentic so
+    they never mask/overwrite the Script-Mode summary for the same task."""
     from browser_agent.planner import MockPlanner
     if mem_path.exists():
         mem_path.unlink()
     mem = MemoryStore(mem_path)
-    rows = []
+    arm_watchdog(page)
+    rows: list[dict] = []
+    n_error = n_attempted = 0
     for task in tasks:
-        page.goto(uri(task["site"]))
-        agent = BrowserAgent(page, mem, site="mockshop", task_type="search")
-        _, contract = build(task)
-        run = agent.run_agentic(task["task_id"], contract, MockPlanner(task["query"]), max_steps=6)
-        rows.append(_row(run, task))
+        def _one(task=task):
+            page.goto(uri(task["site"]))
+            agent = BrowserAgent(page, mem, site="mockshop", task_type="search")
+            _, contract = build(task)
+            run = agent.run_agentic(task["task_id"], contract, MockPlanner(task["query"]),
+                                    max_steps=6)
+            return _row(run, task)
+
+        summary = run_guarded(f"{task['task_id']}--agentic", _one, out_root=OUT)
+        n_attempted += 1
+        if summary["harness_status"] == "done":
+            row = summary["row"]
+            row["harness_status"] = "done"
+        else:
+            n_error += 1
+            row = _error_row(task, summary)
+        rows.append(row)
+        if should_abort(n_error, n_attempted):
+            raise HarnessAbort(rows, n_error, n_attempted)
     return rows
 
 
 def compute_metrics(rows: list[dict]) -> dict:
-    """Single-pass metrics (unchanged from the original runner)."""
+    """Single-pass VERDICT metrics — computed over harness-done rows ONLY;
+    error/incomplete rows are reported in the separate harness block (P0-9).
+    Rows without a harness_status key (legacy callers) count as done."""
+    rows = [r for r in rows if r.get("harness_status", "done") == "done"]
+    if not rows:
+        return {"tasks": 0}
     n = len(rows)
     return {
         "tasks": n,
@@ -178,7 +250,7 @@ def aggregate_passk(rows_by_task: dict, k: int) -> dict:
     return {"summary": summary, "per_task": per_task}
 
 
-def main(repeat: int = 1, agentic: bool = False) -> None:
+def main(repeat: int = 1, agentic: bool = False, resume: bool = False) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     spec = json.loads(TASKS.read_text(encoding="utf-8"))
     tasks = spec["tasks"]
@@ -187,8 +259,12 @@ def main(repeat: int = 1, agentic: bool = False) -> None:
     agentic_subset = [t for t in tasks if t["expect_status"] == "pass"][:3]
     evidence = EvidenceStore(EVIDENCE)
 
+    # incomplete-from-prior-run (harness died mid-task) — reported, never in metrics
+    incomplete_prior = scan_incomplete([t["task_id"] for t in tasks], out_root=OUT)
+
     script_passes: list[list[dict]] = []
     agentic_passes: list[list[dict]] = []
+    aborted = False
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": 1000, "height": 800})
@@ -196,30 +272,60 @@ def main(repeat: int = 1, agentic: bool = False) -> None:
             # evidence only on the first pass — appending N copies would just
             # bloat the shared evidence log without adding signal.
             ev = evidence if rep == 0 else None
-            script_passes.append(run_script_pass(page, tasks, OUT / "selector_memory.json", ev))
-            if agentic:
-                agentic_passes.append(
-                    run_agentic_pass(page, agentic_subset, OUT / "selector_memory_agentic.json"))
+            try:
+                script_passes.append(run_script_pass(
+                    page, tasks, OUT / "selector_memory.json", ev, resume=resume))
+                if agentic:
+                    agentic_passes.append(run_agentic_pass(
+                        page, agentic_subset, OUT / "selector_memory_agentic.json"))
+            except HarnessAbort as ab:
+                # persist the partial rows instead of losing the whole set
+                target = script_passes if len(script_passes) == rep else agentic_passes
+                target.append(ab.rows)
+                aborted = True
+                print(f"\n{ab}")
+                break
         browser.close()
 
-    # backward-compatible single-pass results.json (pass 0) — unchanged contract
+    # backward-compatible single-pass results.json (pass 0) — plus the P0-9
+    # harness block (done/error/incomplete axis, separate from verdicts)
     rows0 = script_passes[0]
     metrics = compute_metrics(rows0)
+    harness = harness_report(rows0, n_planned=len(tasks), aborted=aborted)
+    harness["incomplete_from_prior_run"] = incomplete_prior
     (OUT / "results.json").write_text(
-        json.dumps({"metrics": metrics, "tasks": rows0}, indent=2), encoding="utf-8")
+        json.dumps({"metrics": metrics, "harness": harness, "tasks": rows0}, indent=2),
+        encoding="utf-8")
 
     print("browser eval metrics (pass 1):")
     for k, v in metrics.items():
         print(f"  {k}: {v}")
+    print(f"  harness: done={harness['done']} error={harness['error']} "
+          f"not_run={harness['not_run']} resumed={harness['resumed']} "
+          f"aborted={harness['aborted']}")
     print()
     for r in rows0:
+        if r.get("harness_status", "done") != "done":
+            print(f"  ERR {r['task_id']:<28} harness=error  {r['harness_error']}")
+            continue
         mark = "OK " if r["correct"] else "XX "
         print(f"  {mark}{r['task_id']:<28} status={r['status']:<8} expected={r['expected']:<8} "
               f"repairs={r['repairs']} fp={r['false_positive']}")
     print(f"\nwrote {OUT / 'results.json'}")
 
+    if aborted:
+        # partial results are persisted above; the committed pass@k artifact
+        # must never be rebuilt from an aborted (partial) run
+        raise SystemExit(2)
+
     if repeat > 1 or agentic:
         PASSK.mkdir(parents=True, exist_ok=True)
+        # pass@k is a VERDICT-layer aggregation: only harness-done rows have a
+        # verdict, so error stubs are excluded before collation.
+        done_only = [[r for r in rows if r.get("harness_status", "done") == "done"]
+                     for rows in script_passes]
+        agentic_done = [[r for r in rows if r.get("harness_status", "done") == "done"]
+                        for rows in agentic_passes]
         result = {
             "repeat": repeat,
             "note": ("Script Mode is deterministic by construction (memory cleared "
@@ -227,10 +333,10 @@ def main(repeat: int = 1, agentic: bool = False) -> None:
                      "the expected, reportable property. Non-trivial flakiness needs a "
                      "live LLM planner (Agent Mode, gateway); the offline MockPlanner "
                      "shown here is also deterministic."),
-            "script_mode": aggregate_passk(collate(script_passes), repeat),
+            "script_mode": aggregate_passk(collate(done_only), repeat),
         }
         if agentic:
-            result["agent_mode_mock"] = aggregate_passk(collate(agentic_passes), repeat)
+            result["agent_mode_mock"] = aggregate_passk(collate(agentic_done), repeat)
         (PASSK / "passk_results.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
 
         s = result["script_mode"]["summary"]
@@ -249,7 +355,12 @@ if __name__ == "__main__":
                     help="run every task N times and aggregate pass@1 vs pass@k + flaky_rate")
     ap.add_argument("--agentic", action="store_true",
                     help="also run a small Agent Mode subset (offline MockPlanner) through pass@k")
+    ap.add_argument("--resume", action="store_true",
+                    help="relaunch masking: skip tasks whose runs/browser_eval/<task_id>/"
+                         "summary.json says a prior launch already finished them")
     args = ap.parse_args()
     if args.repeat < 1:
         ap.error("--repeat must be >= 1")
-    main(repeat=args.repeat, agentic=args.agentic)
+    if args.resume and args.repeat != 1:
+        ap.error("--resume only makes sense for a single-pass relaunch (--repeat 1)")
+    main(repeat=args.repeat, agentic=args.agentic, resume=args.resume)

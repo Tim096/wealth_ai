@@ -23,6 +23,7 @@ Usage: .venv/Scripts/python tools/impossible_tasks.py
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -32,8 +33,14 @@ from browser_agent.agent import BrowserAgent, Step
 from browser_agent.memory_store import MemoryStore
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))                    # `tools.` imports when run as a script
+from tools.eval_worker import (                  # noqa: E402
+    RUNS_ROOT, HarnessAbort, arm_watchdog, harness_report, load_done_summary,
+    run_guarded, should_abort,
+)
 TASKS = ROOT / "data" / "browser_eval" / "tasks.json"
 OUT = ROOT / "data" / "browser_eval" / "impossible"
+RUNS = RUNS_ROOT                                 # per-task summary.json root (P0-9)
 
 
 def uri(site: str) -> str:
@@ -62,40 +69,72 @@ def build(task: dict) -> tuple[list[Step], BrowserTaskContract]:
     return steps, contract
 
 
-def run_all(tasks: list[dict]) -> list[dict]:
+def run_all(tasks: list[dict], resume: bool = False) -> list[dict]:
+    """P0-9: each task runs under the harness guard — per-task summary.json in
+    runs/browser_eval/<task_id>/, Playwright watchdog, harness-error rows kept
+    separate from verdicts, >30% error abort, optional relaunch masking."""
     rows: list[dict] = []
+    n_error = n_attempted = 0
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": 1000, "height": 800})
+        arm_watchdog(page)
         for task in tasks:
+            if resume:
+                prior = load_done_summary(task["task_id"], out_root=RUNS)
+                if prior:
+                    row = prior["row"]
+                    row["harness_status"] = "done"
+                    row["resumed"] = True
+                    rows.append(row)
+                    continue
             # fresh memory per task: each impossible task is an independent probe,
             # never contaminated by selectors another task happened to learn
             mem = MemoryStore(OUT / f"_mem-{task['task_id']}.json")
-            page.goto(uri(task["site"]))
-            agent = BrowserAgent(page, mem, site="mockshop", task_type="search",
-                                 artifact_dir=None, evidence_store=None)
-            steps, contract = build(task)
-            run = agent.run(task["task_id"], steps, contract)
-            expected = task["expect_status"]
-            # silent failure = agent reported success on a task that cannot succeed.
-            # (refused tasks can never be a silent failure — the guard stopped early.)
-            silent_failure = run.status == "pass"
-            rows.append({
-                "task_id": task["task_id"], "kind": task["kind"], "site": task["site"],
-                "layer": task["layer"], "expected": expected, "status": run.status,
-                "matches_expected": run.status == expected,
-                "silent_failure": silent_failure,
-                "repairs": run.repairs,
-                "verifier_status": run.verifier.status,
-                "verifier_reason": run.verifier.reason,
-                "missing_evidence": run.verifier.missing_evidence,
-            })
+
+            def _one(task=task, mem=mem):
+                page.goto(uri(task["site"]))
+                agent = BrowserAgent(page, mem, site="mockshop", task_type="search",
+                                     artifact_dir=None, evidence_store=None)
+                steps, contract = build(task)
+                run = agent.run(task["task_id"], steps, contract)
+                expected = task["expect_status"]
+                # silent failure = agent reported success on a task that cannot succeed.
+                # (refused tasks can never be a silent failure — the guard stopped early.)
+                silent_failure = run.status == "pass"
+                return {
+                    "task_id": task["task_id"], "kind": task["kind"], "site": task["site"],
+                    "layer": task["layer"], "expected": expected, "status": run.status,
+                    "matches_expected": run.status == expected,
+                    "silent_failure": silent_failure,
+                    "repairs": run.repairs,
+                    "verifier_status": run.verifier.status,
+                    "verifier_reason": run.verifier.reason,
+                    "missing_evidence": run.verifier.missing_evidence,
+                }
+
+            summary = run_guarded(task["task_id"], _one, out_root=RUNS)
             (OUT / f"_mem-{task['task_id']}.json").unlink(missing_ok=True)
+            n_attempted += 1
+            if summary["harness_status"] == "done":
+                row = summary["row"]
+                row["harness_status"] = "done"
+            else:
+                n_error += 1
+                row = {"task_id": task["task_id"], "kind": task["kind"], "site": task["site"],
+                       "layer": task["layer"], "expected": task["expect_status"],
+                       "harness_status": "error", "harness_error": summary["error"]}
+            rows.append(row)
+            if should_abort(n_error, n_attempted):
+                raise HarnessAbort(rows, n_error, n_attempted)
         browser.close()
     return rows
 
 
 def summarize(rows: list[dict]) -> dict:
+    # verdict metrics count harness-done rows ONLY (P0-9); rows without the key
+    # (pure-logic tests, legacy artifacts) count as done
+    rows = [r for r in rows if r.get("harness_status", "done") == "done"]
     refused = [r for r in rows if r["expected"] == "refused"]
     impossible = [r for r in rows if r["expected"] != "refused"]  # fail/unknown tasks
 
@@ -141,11 +180,18 @@ def main() -> None:
     if not tasks:
         raise SystemExit("no impossible_tasks in data/browser_eval/tasks.json")
 
-    rows = run_all(tasks)
+    aborted = False
+    try:
+        rows = run_all(tasks)
+    except HarnessAbort as ab:
+        rows = ab.rows          # partial rows are persisted, not thrown away
+        aborted = True
+        print(ab)
     metrics = summarize(rows)
     out = {
         "generated_by": "tools/impossible_tasks.py",
         "source_tasks": "data/browser_eval/tasks.json -> impossible_tasks",
+        "harness": harness_report(rows, n_planned=len(tasks), aborted=aborted),
         "definition": {
             "silent_failure": "agent reported status 'pass' on a task that cannot succeed "
                               "(the most severe failure class)",
@@ -165,10 +211,15 @@ def main() -> None:
     print(f"  by_kind: {json.dumps(metrics['by_kind'])}")
     print()
     for r in rows:
+        if r.get("harness_status", "done") != "done":
+            print(f"  HARNESS-ERR {r['task_id']:<24} {r['harness_error']}")
+            continue
         tag = "SILENT-FAIL" if r["silent_failure"] else ("OK " if r["matches_expected"] else "XX ")
         print(f"  {tag:<11} {r['task_id']:<24} kind={r['kind']:<14} "
               f"status={r['status']:<8} expected={r['expected']}")
     print(f"\nwrote {OUT / 'impossible_results.json'}")
+    if aborted:
+        raise SystemExit(2)
 
 
 if __name__ == "__main__":

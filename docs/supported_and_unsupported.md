@@ -17,6 +17,21 @@ pipeline 產生的**確切字串值**(非概念):
 
 > `ItemStatus` enum 亦定義 `unsupported`,但目前程式以 `filing_class` + `missing` 表達不支援,尚未在單一 item 上 emit `unsupported`——如實揭露此 doc/code 命名細節。
 
+## Format-era 支援表(2026-07-10 分層抽樣實測,T2-4)
+
+按年代格式 × filing agent 分層抽樣,每個缺口層實跑 1–2 份(artifact:`data/sec_eval/stratification/stratification.json`;重跑:`SEC_EDGAR_USER_AGENT=<contact> .venv/Scripts/python tools/stratified_sample.py`):
+
+| Era | 實測樣本 | 行為 | coverage | 支援 |
+|---|---|---|---|---|
+| **text_pre2001**(純文字 SGML)| AAPL FY1996、KO FY1997 | normalize 正常但 heading detector 0 candidate,22 item 全 missing;partition invariant 仍成立(整份=單一 unclassified block,零 silent drop)| 0.0 | **Unsupported**(見 FG-SEC-009)|
+| html_2001_2008 | AAPL 2004(0001047469-04-035975)| 17 pass | 0.9824 | Supported |
+| xbrl_2009_2018 | AAPL 2013(0001193125-13-416534)| 15 pass + 5 IBR | 0.9592 | Supported |
+| ixbrl_2019plus | baseline 11 家 + Toppan 樣本 | 現行主路徑 | ≥0.91 | Supported |
+
+**Filing-agent 驗證**:靠文件頭 generator comment 偵測(非 body 公司名,避免 Merrill Lynch 類誤判)。三家 agent 全過 pipeline、cov ≥0.91、無 agent-specific 破損:Workiva、DFIN(Donnelley)、Toppan Merrill(cov 0.9107)。生態系抽樣(efts 2025-02,n=40):Workiva 31 / unknown 8 / Toppan 1——Workiva 壟斷,baseline(10 Workiva + 1 DFIN)是合理抽樣,補 Toppan 後三家皆有實測。
+
+**CAT 非標準 Item 1D 發現**(CYD oracle 抓到,T2-3):CAT 10-K 有非標準的「Item 1D. Information about our Executive Officers」;1D 不在 `VALID_CODES`,我方 Item 1C span 尾部把它吞入 → CYD containment 73.1%(coverage 仍 100%)。這是官方 oracle 抓到「span 跑長」的真訊號,列為 landmine 候選(非標準 item code)。Evidence:`data/sec_eval/cyd_groundtruth/cyd_agreement.json` records[CAT]。
+
 ## Unstable / 邊界不穩定(SPEC 要求的第三類,誠實揭露 flaky 風險)
 
 | Unstable 情形 | 風險 | 目前緩解 |
@@ -38,7 +53,8 @@ pipeline 產生的**確切字串值**(非概念):
 
 - **cross-reference-index 的正文尚未還原**:目前誠實標為指標,但還沒「跟著指標進 annual-report exhibit 把正文接回來」。這是明確的下一步(`insights_and_directions.md` §2),刻意不出貨脆弱的猜測版——**錯的正文比誠實的指標更糟**。
 - **掃描 PDF 老 filing**:標 `unsupported`;正確作法是 OCR path(非 LLM),見 insights §3。
-- **token-level boundary IoU** 尚未對真實 filing 量化(合成 fixtures 有 status-level golden labels)。
+- **pre-2001 純文字 SGML**:Unsupported(見上方 format-era 表與 FG-SEC-009);修法是 text-mode normalizer,非本波範圍。
+- **boundary 精度已量化(2026-07-10)**:char-offset F1(建構性 gold,regression baseline;敏感度注入驗證 0.9853)+ CYD 官方 iXBRL oracle(9/9 pass segment coverage 100%)。人工 token-level 標註(絕對正確率)仍列 backlog。見 `eval_report.md`「Eval 升級」段。
 
 ## Browser Agent 支援範圍
 

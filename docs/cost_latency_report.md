@@ -74,3 +74,25 @@ Item 8 對 companyfacts 交叉驗證:每家多 1 次 `companyfacts` fetch(cache 
 2. LLM 不在主路徑(hallucination 與成本同時歸零,只留 ambiguous fallback)。
 3. Selector memory:漂移修復一次記住,第二次同類 task 免 repair。
 4. Raw cache 永久保存:eval 重跑免費。
+
+## 2026-07-10 eval 升級波:成本註記
+
+本波 11 項 eval(T1-1~T1-6、T2-1~T2-5)**全部離線 deterministic、零 LLM 成本**:browser 側(verifier 校準、擾動矩陣、impossible set、trajectory、pass@k、false-success detector)走 headless chromium + 純函式,無 LLM call;SEC 側(三角驗證、offset F1、CYD oracle、分層抽樣、landmines)全走 cache-first EDGAR,重跑零網路(triangulate 對「同一份 cached raw HTML」離線解析;CYD tag 就在同檔內,無新抓取)。數字與解讀見 `eval_report.md`「Eval 升級」段;artifacts 全部 committed。
+
+新工具重跑指令清單:
+
+| 工具 | 指令 |
+|---|---|
+| Verifier 校準 + Rogan-Gladen | `.venv/Scripts/python tools/calibrate_verifier.py` |
+| Impossible set / silent-failure | `.venv/Scripts/python tools/impossible_tasks.py` |
+| Trajectory metrics | `.venv/Scripts/python tools/trajectory_metrics.py` |
+| pass@k / flakiness | `.venv/Scripts/python tools/browser_eval.py --repeat 3 --agentic` |
+| Degradation curve | `.venv/Scripts/python tools/degradation_curve.py` |
+| False-success detector | `.venv/Scripts/python -m tools.false_success_detector`(僅 -m 形式)|
+| 三引擎 triangulation | `SEC_EDGAR_USER_AGENT=<contact> .venv/Scripts/python tools/triangulate.py` |
+| char-offset F1 | `.venv/Scripts/python tools/score_offsets.py data/sec_eval/records/sweep3` |
+| CYD Item 1C oracle | `SEC_EDGAR_USER_AGENT=<contact> .venv/Scripts/python tools/certify_cyd.py` |
+| 分層抽樣 | `SEC_EDGAR_USER_AGENT=<contact> .venv/Scripts/python tools/stratified_sample.py` |
+| Landmines | `.venv/Scripts/python -m pytest tests/test_landmines.py -q` |
+
+已知重跑副作用(對抗式驗證員發現,如實揭露):`degradation_curve.json` 內嵌 per-probe latency_ms → 重跑非 byte-stable(metric 欄位完全確定);`tools/browser_eval.py` 會 append `data/browser_eval/evidence/*.jsonl`(既有設計);`tools/score_offsets.py` 對任意目錄評分都覆寫 committed `offset_f1.json`(輸出路徑寫死)。重跑後如非刻意更新 artifact,`git restore` 之。其餘 artifact(calibration/impossible/trajectory/passk/false_success/triangulation/cyd)重跑皆 byte-identical。

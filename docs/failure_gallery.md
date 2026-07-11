@@ -131,3 +131,153 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 ## 稽核方法本身(元層次)
 
 這四個 FG 都不是我「讀 code 想出來的」,而是 **56 個 agent 的對抗式稽核**跑真實 filing 跑出來的,且每個都經過獨立 verifier「盡力反駁」後才留下(12 個被反駁的 anomaly 沒進這裡)。這個「用 AI 對抗式驗證 AI 產出」的 harness 本身,就是 SPEC 17 想證明的「AI 時代最稀缺的是驗證能力」。詳見 `prompts/eval_design/2026-07-10-adversarial-audit-workflow.md`。
+
+---
+
+# 2026-07-10 eval 升級波新增
+
+以下 8 條由 11 項 eval 升級(verifier 校準、擾動矩陣、impossible set、三角驗證、CYD oracle、分層抽樣)量測抓出。Browser 4 條為 **measure-first 刻意不修**:校準/量測必須呈現系統現狀,每條各有 pure-logic test 鎖住——未來修復時 test 會翻面提醒重跑對應 artifact。
+
+---
+
+## FG-SEC-006: edgartools 第三引擎 Item 16 section misattribution(三角驗證抓到引擎端錯誤)
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-SEC-006 |
+| App | sec_extractor(third-engine triangulation)|
+| Input | NEM / NVDA / WMT FY2025 10-K,Item 16 |
+| Expected | edgartools item 16 = "Form 10-K Summary / None." |
+| Actual | edgartools 的 part_iv_item_16 section 裝的是 Item 1 TOC 行(NEM:「ITEM 1.BUSINESS6Introduction6...」)、MD&A 所得稅段(NVDA)、Item 1 Business 內文(WMT)——engine 端 section misattribution |
+| Status | 我方 span 正確("None." 7 詞);verdict=disagree、needs_review=true(三角驗證無仲裁者,不能單方判自己贏)|
+| Failure Type | 第三引擎 section misattribution(被三角驗證正確呈現為歧異)|
+| Evidence | `data/sec_eval/triangulation/triangulation.json` records[NEM/NVDA/WMT].items['16'](overlap 0.0)|
+| Root Cause | edgartools TOC-based 偵測抓錯區段 |
+| Repair Attempt | 無(engine 端問題;我方策略是 disagree 一律扣 confidence + needs_review)|
+| Related Commit | 4209c87 |
+
+---
+
+## FG-SEC-007: wrapper 10-K 的 Item 7/8 邊界定義歧異(兩引擎各自誠實)
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-SEC-007 |
+| App | sec_extractor(third-engine triangulation)|
+| Input | JPM / XOM FY2025 wrapper 10-K,Items 7/8 |
+| Expected | 兩引擎對 item 內容位置一致 |
+| Actual | 我方標 incorporated_by_reference(指標 stub 40–96 詞),edgartools 直接抽出附綁年報全文(19,548–90,470 詞),overlap ≤0.21 → disagree,我方 confidence 降至 0.51–0.64 |
+| Status | 語意上兩邊各自誠實但邊界定義不同;needs_review=true |
+| Failure Type | wrapper 10-K 邊界定義歧異(正是此 class 需要人審的證據)|
+| Evidence | `data/sec_eval/triangulation/triangulation.json` records[JPM/XOM].items['7'/'8'] |
+| Root Cause | wrapper filing 的 item body resolution 是 documented next step(見 FG-SEC-004/005、insights §2)|
+| Repair Attempt | 無(cross-reference body resolution 屬第二遍)|
+| Related Commit | 4209c87 |
+
+---
+
+## FG-SEC-008: CYD oracle 證實 JPM/GS wrapper 的 Item 1C coverage 0%(並給出精確目標位置)
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-SEC-008 |
+| App | sec_extractor(CYD iXBRL oracle)|
+| Input | JPM / GS FY2025 wrapper 10-K,Item 1C |
+| Expected | Item 1C segment 含 SEC 強制 CYD block-tag 的 cybersecurity disclosure |
+| Actual | 我方 1C 是 170/247 char 的 incorporated_by_reference 指標 stub;官方 tagged span(6,871/7,402 chars)在同一份 HTML 的年報區(JPM 落在所有 item segment 之外;GS 落在我方 Item 7 內),coverage 0% |
+| Status | 我方 status 誠實(IBR、非 pass);oracle verdict=disagree 記錄在 cyd_check,不翻 needs_review |
+| Failure Type | wrapper-10-K body 未解析(既知 class);CYD oracle 首次給出可機讀的目標位置 |
+| Evidence | `data/sec_eval/cyd_groundtruth/cyd_agreement.json` records[JPM/GS](official_intervals 有精確 normalized offsets)|
+| Root Cause | cross-reference/wrapper filing 的 item body resolution 是 documented next step;CYD tag 證明 body 就在同檔可定位 |
+| Repair Attempt | 無(超出本項範圍;official_intervals 是未來 body-resolution 的直接輸入)|
+| Related Commit | 99c9274 |
+
+---
+
+## FG-SEC-009: pre-2001 純文字 SGML filing 完全不支援(誠實 unsupported,非 crash 非假 pass)
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-SEC-009 |
+| App | sec_extractor(format-source stratification)|
+| Input | AAPL FY1996(0000320193-96-000023)、KO FY1997(0000021344-98-000004)pre-2001 純文字 SGML 10-K |
+| Expected | 切出 Item 1/1A/7/8 等 body span |
+| Actual | normalize 正常(256,658 / 315,036 chars 保留)但 detect_candidates 回 0(HTML-oriented,依賴 block-tag line 結構),22 item 全 missing + 1 reserved,coverage 0.0,filing_class 降為 non_10k |
+| Status | 誠實 unsupported;partition invariant 仍成立(tiled=true,整份為單一 unclassified block,零 silent drop)——「先全抓再分類」原則的正面示範 |
+| Failure Type | format-era 不支援(HTML normalizer 用在 plain-text SGML)|
+| Evidence | `data/sec_eval/stratification/stratification.json` era_strata_runs[text_pre2001] |
+| Root Cause | normalize 只在 BLOCK_TAG 邊界 emit newline,純文字的 `\n` 被 `_emit_text` 當一般空白折疊 → heading 不在 line start、無 bold/heading flag → 0 candidate |
+| Repair Attempt | 無(pre-2001 世代非本波範圍;正解是 text-mode normalizer,或維持 unsupported class)|
+| Related Commit | 54bc872 |
+
+---
+
+## FG-BROWSER-002: verifier filename-needle bypass(download 內容錯但檔名對 → FP)
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-BROWSER-002 |
+| App | browser_agent / verifier(download_exists)|
+| Input | calibration case `cal-bad-dlname-annual-report`——needle="annual report",檔名 "annual report 2025.htm",檔案內容是 captcha 擋頁("Are you a robot?...")|
+| Expected | fail(內容不含 needle)|
+| Actual | pass(verifier FP;T1-1 校準 46 triples 中唯一 FP,即 specificity 0.9583 的來源)|
+| Status | 未修,刻意保留(measure-first:校準必須呈現 verifier 現狀)|
+| Failure Type | verifier filename-needle bypass |
+| Evidence | `data/browser_eval/calibration/calibration_results.json` per_case `cal-bad-dlname-annual-report` verdict=pass;`tests/test_calibrate_verifier.py::test_known_fp_filename_needle_bypass_is_surfaced` |
+| Root Cause | `packages/browser_agent/verifier.py` `_download_ok` 第 41 行 `return "pass" if (n in content or n in os.path.basename(path).lower()) else "fail"`——basename 單獨即可授予 pass,與檔頭註解「filename is a weak secondary signal」矛盾 |
+| Repair Attempt | 無:移除 filename fallback 會讓 binary PDF 合法下載變 FN,是 FP/FN trade-off,留待決策。修 verifier 後需重跑 `tools/calibrate_verifier.py` 更新 artifacts(test 會翻面提醒)|
+| Related Commit | 3e9034a |
+
+---
+
+## FG-BROWSER-003: needle-in-query-echo silent failure(impossible set 抓到的真實 FP)
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-BROWSER-003 |
+| App | browser_agent / verifier(text_visible)|
+| Input | impossible case `imp-product-teleporter`——site=v3_heldout,query="teleporter"(catalog 無此商品),success_conditions=[text_visible "Teleporter"],無 forbidden |
+| Expected | fail(商品不存在,0 hits,無 Teleporter 商品列)|
+| Actual | pass(verifier FP → silent failure;silent_failure_rate 0.1 的那 1/10)|
+| Status | 未修,刻意保留 |
+| Failure Type | needle-in-query-echo(success needle 命中「結果頁回顯的查詢字串」而非真商品列)|
+| Evidence | `data/browser_eval/impossible/impossible_results.json` per-task imp-product-teleporter status=pass;`tests/test_impossible_tasks.py::test_known_silent_failure_teleporter_is_surfaced` |
+| Root Cause | v3 doSearch 對 0 hits 仍插入 status 文字 `0 results for "teleporter"`;verifier text_visible 做 substring 比對,needle 命中回顯而非商品。同家族:commit eeff01b「stop mining a URL token as success needle」、論文 One-Token-to-Fool-Judge(arxiv 2507.08794)。對照組 imp-product-hoverboard 同樣 leak,但因帶 forbidden `error_text_visible "0 results"` 被擋下——證明空結果 silent failure 目前靠 forbidden 守,text_visible 本身擋不住 query-echo |
+| Repair Attempt | 無。修法候選:text_visible 排除 results-status 回顯區 / 要求命中真 product-row 元素 / product_absent 任務一律附 forbidden 0-results。修後需重跑 `tools/impossible_tasks.py` |
+| Related Commit | 12ccf34 |
+
+---
+
+## FG-BROWSER-004: repair fallback 到不可行元素(silent wrong-element click)
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-BROWSER-004 |
+| App | browser_agent / repair(repair_target submit_button)|
+| Input | mutation 矩陣 action-heavy cell——submit 是無 role 的 `<span onclick>`,不進 a11y 枚舉;頁上唯一候選是搜尋 input(aria-label "Search products")|
+| Expected | repair 回報 no viable candidate(誠實找不到)|
+| Actual | repair「修復」到搜尋 input 並點擊之,click 回 ok(silent wrong-element click),trace 全綠,只有最終 verifier 擋下(fail)|
+| Status | 未修,刻意保留 |
+| Failure Type | repair fallback to non-actionable element(weak word-match score 2.0 > 0 門檻)|
+| Evidence | `data/browser_eval/artifacts/degradation_curve.json` runs[action-heavy] repairs=2 status=fail;`tests/test_mutation_sites.py::test_known_weakness_submit_repair_falls_back_to_input` |
+| Root Cause | `packages/browser_agent/repair.py` `_score_candidate`——submit_button purpose 對 input 仍給 word-match +2.0,repair_target 只要 score>0 就選,無「動作可行性」檢查 |
+| Repair Attempt | 無(修法候選:submit purpose 要求 tag/role 至少一項命中,或 score 門檻 >2)。修後需重跑 `tools/degradation_curve.py` |
+| Related Commit | 1bef360 |
+
+---
+
+## FG-BROWSER-005: bait-field DOM-order tie-break(誘餌欄位搶走 query)
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-BROWSER-005 |
+| App | browser_agent / repair(repair_target search_box)|
+| Input | mutation 矩陣 perception-heavy cell——可見 "Promo code" 誘餌欄位在前,真搜尋框無 aria、generic placeholder("Type here...")|
+| Expected | 填入真搜尋框(表單內、緊鄰 submit)|
+| Actual | 兩欄位同分 2.5,tie 由 DOM 順序決定 → query 填進 Promo 欄位 → 空查詢 → fail(checkpoint 也 fail:degradation curve 上可見失敗發生在輸入階段)|
+| Status | 未修,刻意保留 |
+| Failure Type | bait-field DOM-order tie-break |
+| Evidence | `data/browser_eval/artifacts/degradation_curve.json` cells[perception-heavy] checkpoint_rate=0.0;`tests/test_mutation_sites.py::test_known_weakness_bait_field_wins_tie_by_dom_order` |
+| Root Cause | `repair.py` `_score_candidate` 無 form-context/鄰近性訊號,unlabeled 真欄位無法勝出;want_value 對兩者皆不命中 |
+| Repair Attempt | 無(修法候選:form 內元素加分、與 submit 候選同 form 的欄位加分;vision channel 亦可解)。修後需重跑 `tools/degradation_curve.py` |
+| Related Commit | 1bef360 |

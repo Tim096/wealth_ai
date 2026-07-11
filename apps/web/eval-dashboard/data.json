@@ -506,9 +506,9 @@
     {
      "intensity": 3,
      "cell": "perception-heavy",
-     "success_rate": 0.0,
-     "checkpoint_rate": 0.0,
-     "recovery_rate": 0.0,
+     "success_rate": 1.0,
+     "checkpoint_rate": 1.0,
+     "recovery_rate": 1.0,
      "avg_repairs": 2.0
     }
    ],

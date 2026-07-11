@@ -173,27 +173,33 @@ def test_build_curves_shares_clean_as_intensity_zero_and_flags_monotonicity():
     assert dc.build_curves(summaries)["action"]["monotone_non_increasing_success"] is False
 
 
-# --- surfaced weaknesses (measure-first: locked, deliberately unfixed) ---
-def test_known_weakness_submit_repair_falls_back_to_input():
-    # action-heavy family: when NO clickable submit candidate exists (a11y
-    # omission), repair_target still "repairs" onto the search input (weak
-    # word-match score) and the click on it silently does nothing. Locked so a
-    # future repair fix flips this test and forces a curve re-run.
+# --- formerly surfaced weaknesses, now repaired (FIX-3) ---
+def test_fixed_submit_repair_refuses_infeasible_input():
+    """FIX-3 (FG-BROWSER-004)。修復前:submit_button 對唯一的 input 候選仍靠
+    word-match +2.0 入選(rr.ok True → 點下去 silent no-op 還全綠);修復後:
+    動作可行性 gate——非 button/[role=button]/input[type=submit]/a 的候選
+    無論字面分數多高都不可入選 → 誠實回 no viable candidate。"""
     only_input = [cand(tag="input", id="entry", aria_label="Search products")]
     rr = repair_target("submit_button", obs(only_input))
-    assert rr.ok                               # <- the weakness: no honest "not found"
-    assert "entry" in rr.durable_selector
+    assert not rr.ok
+    assert rr.chosen_reason == "no viable candidate"
+    assert rr.considered                       # still explainable on refusal
 
 
-def test_known_weakness_bait_field_wins_tie_by_dom_order():
-    # perception-heavy family: an unlabeled real search field scores the same
-    # as a visible bait field; the tie breaks by DOM order, so the bait field
-    # (earlier in the DOM) wins and the query lands in the wrong field.
+def test_fixed_bait_field_loses_to_form_context():
+    """FIX-3 (FG-BROWSER-005)。修復前:promo 誘餌與 unlabeled 真欄位同分 2.5,
+    DOM 順序 tie-break 選中較早的誘餌欄位;修復後:form-context 訊號——與
+    submit 候選同 form 的欄位 +1.0、form 外誘餌不加分且 bait 字樣扣分 →
+    真欄位勝出,query 落在對的欄位。"""
     bait = cand(index=0, tag="input", id="promo", placeholder="Promo code")
-    real = cand(index=1, tag="input", id="term-entry", placeholder="Type here...")
-    rr = repair_target("search_box", obs([bait, real]), want_value="widget")
+    real = cand(index=1, tag="input", id="term-entry", placeholder="Type here...",
+                form="finder")
+    submit = cand(index=2, tag="div", role="button", id="go-act",
+                  aria_label="Search", form="finder")
+    rr = repair_target("search_box", obs([bait, real, submit]), want_value="widget")
     assert rr.ok
-    assert "promo" in rr.durable_selector      # <- the weakness: bait chosen
+    assert "term-entry" in rr.durable_selector
+    assert "promo" not in rr.durable_selector
 
 
 # --- integration: four representative cells, end-to-end headless ---

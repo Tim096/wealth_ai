@@ -73,7 +73,32 @@ def _is_decoy(cand: ElementCandidate) -> bool:
     return "decoy" in blob or "fake" in blob
 
 
-def _score_candidate(cand: ElementCandidate, purpose: str, want_value: str) -> tuple[float, str]:
+# Action feasibility gate (FG-BROWSER-004): a purpose implies the element
+# classes that can actually PERFORM the action. Word-match alone (no tag/role
+# corroboration) must never select an element the action cannot work on — if
+# nothing feasible exists, the honest answer is "no viable candidate".
+_FILL_PURPOSES = {"search_box"}
+_CLICKABLE_INPUT_TYPES = {"submit", "button", "image", "reset"}
+_UNFILLABLE_INPUT_TYPES = _CLICKABLE_INPUT_TYPES | {"checkbox", "radio", "hidden", "file", "range"}
+# fields whose wording marks them as bait for a search/query purpose
+_BAIT_WORDS = ("promo", "coupon", "discount", "voucher", "gift card")
+
+
+def _feasible(cand: ElementCandidate, purpose: str) -> bool:
+    if purpose in _FILL_PURPOSES:
+        return ((cand.tag == "input" and cand.type not in _UNFILLABLE_INPUT_TYPES)
+                or cand.tag == "textarea" or cand.role in ("searchbox", "textbox"))
+    if purpose == "result_link":
+        return cand.tag == "a" or cand.role == "link"
+    if purpose == "filter_dropdown":
+        return cand.tag == "select" or cand.role in ("listbox", "combobox")
+    # submit_button / download_button / unknown purposes: clickable classes
+    return (cand.tag in ("button", "a") or cand.role in ("button", "link")
+            or (cand.tag == "input" and cand.type in _CLICKABLE_INPUT_TYPES))
+
+
+def _score_candidate(cand: ElementCandidate, purpose: str, want_value: str,
+                     submit_forms: frozenset[str] = frozenset()) -> tuple[float, str]:
     hints = _PURPOSE_HINTS.get(purpose, _PURPOSE_HINTS["submit_button"])
     reasons: list[str] = []
     score = 0.0
@@ -81,6 +106,8 @@ def _score_candidate(cand: ElementCandidate, purpose: str, want_value: str) -> t
         return -1.0, "not visible"
     if _is_decoy(cand):
         return -1.0, "looks like a decoy element"
+    if not _feasible(cand, purpose):
+        return -1.0, f"infeasible for {purpose} (no actionable tag/role)"
     if cand.tag in hints["tags"]:
         score += 2.0; reasons.append(f"tag={cand.tag}")
     if cand.type in hints["types"]:
@@ -88,13 +115,25 @@ def _score_candidate(cand: ElementCandidate, purpose: str, want_value: str) -> t
     if cand.role in hints["roles"]:
         score += 1.5; reasons.append(f"role={cand.role}")
     blob = f"{cand.aria_label} {cand.placeholder} {cand.name} {cand.text} {cand.id}".lower()
-    if any(w in blob for w in hints["words"]):
+    word_hit = any(w in blob for w in hints["words"])
+    if word_hit:
         score += 2.0; reasons.append("purpose word match")
     # for a submit button, a real form button beats a bare icon with no semantics
     if purpose == "submit_button" and cand.type == "submit":
         score += 1.0; reasons.append("type=submit")
     if want_value and want_value.lower() in blob:
         score += 1.0; reasons.append("value hint match")
+    if purpose in _FILL_PURPOSES:
+        # form-context signal (FG-BROWSER-005): the field sharing a form with a
+        # submit control beats a free-floating bait field of identical wording
+        if cand.form and cand.form in submit_forms:
+            score += 1.0; reasons.append("same form as a submit control")
+        elif cand.form:
+            score += 0.5; reasons.append("inside a form")
+        # bait wording never helps a search/query purpose; without a purpose
+        # word it actively counts against the candidate
+        if not word_hit and any(w in blob for w in _BAIT_WORDS):
+            score -= 1.0; reasons.append("bait-like wording (promo/coupon/discount)")
     return score, ", ".join(reasons) or "weak match"
 
 
@@ -111,9 +150,14 @@ def repair_target(purpose: str, obs: Observation, want_value: str = "") -> Repai
     """Find the best candidate for `purpose` in the current observation.
     Acts on the exact element via its data-aid handle, but remembers it by a
     durable semantic selector so the memory survives a page reload."""
+    # forms that contain a viable submit control — the form-context signal
+    # (FG-BROWSER-005) that separates the real field from a bait field
+    submit_forms = frozenset(
+        c.form for c in obs.candidates
+        if c.form and c.visible and not _is_decoy(c) and _feasible(c, "submit_button"))
     scored = []
     for c in obs.candidates:
-        s, why = _score_candidate(c, purpose, want_value)
+        s, why = _score_candidate(c, purpose, want_value, submit_forms)
         scored.append((s, why, c))
     scored.sort(key=lambda x: x[0], reverse=True)
     considered = [f"{c.tag}#{c.id or '-'}[{c.aria_label or c.placeholder or c.text[:20]}] "

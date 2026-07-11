@@ -11,6 +11,7 @@
     "checkpoint": "mid-task: query present in the REAL search field ([data-sb] ground-truth instrumentation, invisible to the agent's observer), verified via verify_contract(field_value_equals) with runner-collected evidence",
     "fault_encountered": "any repair-mode step in the trace (incl. modal dismissal)",
     "recovered": "fault_encountered AND final verdict pass (mid-task recovery)",
+    "honest_refusals": "repair steps that returned 'no viable candidate' (feasibility gate, FIX-3) instead of acting on an infeasible element \u2014 a fail with refusals is an honest fail, not a silent wrong click",
     "determinism": "attempt-counter + input-event-anchored faults, no Math.random; fresh selector memory per probe"
   },
   "cells": {
@@ -61,13 +62,13 @@
       "level": 3,
       "level_name": "heavy",
       "n": 3,
-      "success_rate": 0.0,
-      "checkpoint_rate": 0.0,
+      "success_rate": 1.0,
+      "checkpoint_rate": 1.0,
       "fault_encountered_rate": 1.0,
-      "recovery_rate": 0.0,
+      "recovery_rate": 1.0,
       "avg_repairs": 2.0,
       "statuses": [
-        "fail"
+        "pass"
       ]
     },
     "action-light": {
@@ -185,9 +186,9 @@
         {
           "intensity": 3,
           "cell": "perception-heavy",
-          "success_rate": 0.0,
-          "checkpoint_rate": 0.0,
-          "recovery_rate": 0.0,
+          "success_rate": 1.0,
+          "checkpoint_rate": 1.0,
+          "recovery_rate": 1.0,
           "avg_repairs": 2.0
         }
       ],
@@ -275,10 +276,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 0,
+      "honest_refusals": 0,
       "fault_encountered": false,
       "recovered": false,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 962.5
+      "latency_ms": 936.6
     },
     {
       "cell": "clean",
@@ -286,10 +288,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 0,
+      "honest_refusals": 0,
       "fault_encountered": false,
       "recovered": false,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 917.5
+      "latency_ms": 906.4
     },
     {
       "cell": "clean",
@@ -297,10 +300,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 0,
+      "honest_refusals": 0,
       "fault_encountered": false,
       "recovered": false,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 907.7
+      "latency_ms": 939.4
     },
     {
       "cell": "perception-light",
@@ -308,10 +312,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 2,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": true,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 979.0
+      "latency_ms": 969.1
     },
     {
       "cell": "perception-light",
@@ -319,10 +324,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 2,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": true,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 968.1
+      "latency_ms": 996.8
     },
     {
       "cell": "perception-light",
@@ -330,10 +336,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 2,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": true,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 985.7
+      "latency_ms": 938.1
     },
     {
       "cell": "perception-medium",
@@ -341,65 +348,71 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 2,
+      "honest_refusals": 0,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 972.9
+    },
+    {
+      "cell": "perception-medium",
+      "query": "gizmo",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "honest_refusals": 0,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 962.0
+    },
+    {
+      "cell": "perception-medium",
+      "query": "sprocket",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "honest_refusals": 0,
+      "fault_encountered": true,
+      "recovered": true,
+      "verifier_reason": "all conditions observed and satisfied",
+      "latency_ms": 970.0
+    },
+    {
+      "cell": "perception-heavy",
+      "query": "widget",
+      "status": "pass",
+      "checkpoint": "pass",
+      "repairs": 2,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": true,
       "verifier_reason": "all conditions observed and satisfied",
       "latency_ms": 982.8
     },
     {
-      "cell": "perception-medium",
+      "cell": "perception-heavy",
       "query": "gizmo",
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 2,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": true,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 969.7
+      "latency_ms": 994.4
     },
     {
-      "cell": "perception-medium",
+      "cell": "perception-heavy",
       "query": "sprocket",
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 2,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": true,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 987.0
-    },
-    {
-      "cell": "perception-heavy",
-      "query": "widget",
-      "status": "fail",
-      "checkpoint": "fail",
-      "repairs": 2,
-      "fault_encountered": true,
-      "recovered": false,
-      "verifier_reason": "violated: text_visible:results for, text_visible:Widget Pro 3000",
-      "latency_ms": 1020.1
-    },
-    {
-      "cell": "perception-heavy",
-      "query": "gizmo",
-      "status": "fail",
-      "checkpoint": "fail",
-      "repairs": 2,
-      "fault_encountered": true,
-      "recovered": false,
-      "verifier_reason": "violated: text_visible:results for, text_visible:Gizmo Deluxe",
-      "latency_ms": 1025.7
-    },
-    {
-      "cell": "perception-heavy",
-      "query": "sprocket",
-      "status": "fail",
-      "checkpoint": "fail",
-      "repairs": 2,
-      "fault_encountered": true,
-      "recovered": false,
-      "verifier_reason": "violated: text_visible:results for, text_visible:Sprocket XL",
-      "latency_ms": 1027.4
+      "latency_ms": 998.1
     },
     {
       "cell": "action-light",
@@ -407,10 +420,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 2,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": true,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 980.3
+      "latency_ms": 953.1
     },
     {
       "cell": "action-light",
@@ -418,10 +432,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 2,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": true,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 988.0
+      "latency_ms": 998.2
     },
     {
       "cell": "action-light",
@@ -429,10 +444,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 2,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": true,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 956.8
+      "latency_ms": 959.5
     },
     {
       "cell": "action-medium",
@@ -440,10 +456,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 2,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": true,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 956.4
+      "latency_ms": 959.7
     },
     {
       "cell": "action-medium",
@@ -451,10 +468,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 2,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": true,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 1000.6
+      "latency_ms": 967.1
     },
     {
       "cell": "action-medium",
@@ -462,10 +480,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 2,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": true,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 1041.1
+      "latency_ms": 949.5
     },
     {
       "cell": "action-heavy",
@@ -473,10 +492,11 @@
       "status": "fail",
       "checkpoint": "pass",
       "repairs": 2,
+      "honest_refusals": 1,
       "fault_encountered": true,
       "recovered": false,
       "verifier_reason": "violated: text_visible:results for, text_visible:Widget Pro 3000",
-      "latency_ms": 976.0
+      "latency_ms": 922.5
     },
     {
       "cell": "action-heavy",
@@ -484,10 +504,11 @@
       "status": "fail",
       "checkpoint": "pass",
       "repairs": 2,
+      "honest_refusals": 1,
       "fault_encountered": true,
       "recovered": false,
       "verifier_reason": "violated: text_visible:results for, text_visible:Gizmo Deluxe",
-      "latency_ms": 1006.8
+      "latency_ms": 927.2
     },
     {
       "cell": "action-heavy",
@@ -495,10 +516,11 @@
       "status": "fail",
       "checkpoint": "pass",
       "repairs": 2,
+      "honest_refusals": 1,
       "fault_encountered": true,
       "recovered": false,
       "verifier_reason": "violated: text_visible:results for, text_visible:Sprocket XL",
-      "latency_ms": 998.4
+      "latency_ms": 947.7
     },
     {
       "cell": "execution-light",
@@ -506,10 +528,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 0,
+      "honest_refusals": 0,
       "fault_encountered": false,
       "recovered": false,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 911.5
+      "latency_ms": 911.1
     },
     {
       "cell": "execution-light",
@@ -517,10 +540,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 0,
+      "honest_refusals": 0,
       "fault_encountered": false,
       "recovered": false,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 907.5
+      "latency_ms": 912.1
     },
     {
       "cell": "execution-light",
@@ -528,10 +552,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 0,
+      "honest_refusals": 0,
       "fault_encountered": false,
       "recovered": false,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 900.9
+      "latency_ms": 925.9
     },
     {
       "cell": "execution-medium",
@@ -539,10 +564,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 1,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": true,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 931.6
+      "latency_ms": 929.6
     },
     {
       "cell": "execution-medium",
@@ -550,10 +576,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 1,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": true,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 949.4
+      "latency_ms": 938.2
     },
     {
       "cell": "execution-medium",
@@ -561,10 +588,11 @@
       "status": "pass",
       "checkpoint": "pass",
       "repairs": 1,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": true,
       "verifier_reason": "all conditions observed and satisfied",
-      "latency_ms": 961.4
+      "latency_ms": 926.7
     },
     {
       "cell": "execution-heavy",
@@ -572,10 +600,11 @@
       "status": "fail",
       "checkpoint": "pass",
       "repairs": 1,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": false,
       "verifier_reason": "violated: text_visible:results for, text_visible:Widget Pro 3000",
-      "latency_ms": 979.5
+      "latency_ms": 951.3
     },
     {
       "cell": "execution-heavy",
@@ -583,10 +612,11 @@
       "status": "fail",
       "checkpoint": "pass",
       "repairs": 1,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": false,
       "verifier_reason": "violated: text_visible:results for, text_visible:Gizmo Deluxe",
-      "latency_ms": 930.7
+      "latency_ms": 964.9
     },
     {
       "cell": "execution-heavy",
@@ -594,10 +624,11 @@
       "status": "fail",
       "checkpoint": "pass",
       "repairs": 1,
+      "honest_refusals": 0,
       "fault_encountered": true,
       "recovered": false,
       "verifier_reason": "violated: text_visible:results for, text_visible:Sprocket XL",
-      "latency_ms": 937.1
+      "latency_ms": 963.3
     }
   ]
 }

@@ -41,6 +41,10 @@ _ENUMERATE_JS = r"""
       placeholder: el.getAttribute('placeholder') || '',
       text: (el.textContent || '').trim().slice(0, 80),
       href: el.getAttribute('href') || '',
+      // enclosing form (id, else its document.forms index) — repair's
+      // form-context signal for disambiguating fields (FG-BROWSER-005)
+      form: (function () { const f = el.closest('form');
+        return f ? (f.id || 'form' + Array.prototype.indexOf.call(document.forms, f)) : ''; })(),
       // selection state for a choice control, so the planner knows which option
       // is ALREADY chosen and does not click it again (that would unselect it)
       checked: el.getAttribute('aria-checked') || (el.checked === true ? 'true' : ''),
@@ -68,6 +72,7 @@ class ElementCandidate:
     x: int
     y: int
     checked: str = ""       # aria-checked / .checked for radio/checkbox options
+    form: str = ""          # enclosing form id / index ('' = outside any form)
 
     def css(self) -> str:
         """A durable selector to REMEMBER this element across runs — prefers a

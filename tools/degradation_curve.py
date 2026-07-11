@@ -113,9 +113,15 @@ def run_cell(page, cell_id: str, query: str, product: str, mem_path: Path) -> di
     steps = r1.steps + r2.steps
     fault = any(s.mode == "repair" for s in steps)
     repairs = r1.repairs + r2.repairs
+    # FIX-3 honesty marker: a repair that finds NO feasible candidate refuses
+    # ("no viable candidate") instead of clicking an infeasible element; that
+    # distinction belongs in the committed artifact, not just the trace.
+    honest_refusals = sum(1 for s in steps
+                          if s.mode == "repair" and s.detail == "no viable candidate")
     return {
         "cell": cell_id, "query": query, "status": r2.status,
         "checkpoint": ck.status, "repairs": repairs,
+        "honest_refusals": honest_refusals,
         "fault_encountered": fault,
         "recovered": bool(fault and r2.status == "pass"),
         "verifier_reason": r2.verifier.reason,
@@ -199,6 +205,9 @@ def main() -> None:
                           "runner-collected evidence",
             "fault_encountered": "any repair-mode step in the trace (incl. modal dismissal)",
             "recovered": "fault_encountered AND final verdict pass (mid-task recovery)",
+            "honest_refusals": "repair steps that returned 'no viable candidate' (feasibility "
+                               "gate, FIX-3) instead of acting on an infeasible element — a "
+                               "fail with refusals is an honest fail, not a silent wrong click",
             "determinism": "attempt-counter + input-event-anchored faults, no Math.random; "
                            "fresh selector memory per probe",
         },

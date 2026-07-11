@@ -33,7 +33,7 @@
    "company": "HNET NET",
    "date_filed": "2001/04/30",
    "link": "https://www.sec.gov/Archives/edgar/data/831232/000092838501500540/d10k.txt",
-   "fetch_ms": 1.0,
+   "fetch_ms": 1.1,
    "engines": {
     "ours": {
      "error": "no items extracted"
@@ -178,7 +178,7 @@
    "company": "DOBSON COMMUNICATIONS CORP",
    "date_filed": "2002/04/01",
    "link": "https://www.sec.gov/Archives/edgar/data/1035985/000095013402003064/d94706e10-k.htm",
-   "fetch_ms": 3.3,
+   "fetch_ms": 3.4,
    "engines": {
     "ours": {
      "items": {
@@ -1415,7 +1415,7 @@
    "company": "EON COMMUNICATIONS CORP",
    "date_filed": "2003/10/29",
    "link": "https://www.sec.gov/Archives/edgar/data/1084752/000119312503069303/d10k.htm",
-   "fetch_ms": 2.6,
+   "fetch_ms": 2.5,
    "engines": {
     "ours": {
      "items": {
@@ -2111,7 +2111,7 @@
    "company": "ISIS PHARMACEUTICALS INC",
    "date_filed": "2004/03/15",
    "link": "https://www.sec.gov/Archives/edgar/data/874015/000104746904007808/a2130713z10-k.htm",
-   "fetch_ms": 2.4,
+   "fetch_ms": 2.5,
    "engines": {
     "ours": {
      "items": {
@@ -2809,7 +2809,7 @@
    "company": "CATERPILLAR INC",
    "date_filed": "2005/02/24",
    "link": "https://www.sec.gov/Archives/edgar/data/18230/000001823005000218/form10k_2004.htm",
-   "fetch_ms": 1.8,
+   "fetch_ms": 1.7,
    "engines": {
     "ours": {
      "items": {
@@ -3507,7 +3507,7 @@
    "company": "ESSENTIAL GROUP INC",
    "date_filed": "2005/03/30",
    "link": "https://www.sec.gov/Archives/edgar/data/1088000/000119312505064965/d10k.htm",
-   "fetch_ms": 2.4,
+   "fetch_ms": 2.5,
    "engines": {
     "ours": {
      "items": {
@@ -4243,7 +4243,7 @@
    "company": "GENERAL CABLE CORP /DE/",
    "date_filed": "2006/03/15",
    "link": "https://www.sec.gov/Archives/edgar/data/886035/000095015206002081/l18783ae10vk.htm",
-   "fetch_ms": 3.6,
+   "fetch_ms": 3.5,
    "engines": {
     "ours": {
      "items": {
@@ -5045,7 +5045,7 @@
    "company": "CITIZENS & NORTHERN CORP",
    "date_filed": "2007/03/02",
    "link": "https://www.sec.gov/Archives/edgar/data/810958/000095015207001718/l24216ae10vk.htm",
-   "fetch_ms": 2.9,
+   "fetch_ms": 2.7,
    "engines": {
     "ours": {
      "items": {
@@ -7416,7 +7416,7 @@
    "company": "AUDIOVOX CORP",
    "date_filed": "2008/05/14",
    "link": "https://www.sec.gov/Archives/edgar/data/807707/000080770708000022/form10k.htm",
-   "fetch_ms": 8.2,
+   "fetch_ms": 8.1,
    "engines": {
     "ours": {
      "items": {
@@ -8053,7 +8053,7 @@
    "company": "OMEGA PROTEIN CORP",
    "date_filed": "2009/03/10",
    "link": "https://www.sec.gov/Archives/edgar/data/1053650/000119312509049801/d10k.htm",
-   "fetch_ms": 3.3,
+   "fetch_ms": 3.1,
    "engines": {
     "ours": {
      "items": {
@@ -8851,7 +8851,7 @@
    "company": "Cereplast Inc",
    "date_filed": "2009/03/31",
    "link": "https://www.sec.gov/Archives/edgar/data/1324759/000136231009004558/c83189e10vk.htm",
-   "fetch_ms": 1.7,
+   "fetch_ms": 1.8,
    "engines": {
     "ours": {
      "items": {
@@ -9645,7 +9645,7 @@
    "company": "GOLF ROUNDS COM INC",
    "date_filed": "2009/10/26",
    "link": "https://www.sec.gov/Archives/edgar/data/319016/000095012309053146/y02446e10vk.htm",
-   "fetch_ms": 1.2,
+   "fetch_ms": 1.1,
    "engines": {
     "ours": {
      "items": {
@@ -12723,7 +12723,7 @@
    "company": "Support.com, Inc.",
    "date_filed": "2011/03/11",
    "link": "https://www.sec.gov/Archives/edgar/data/1104855/000114036111016096/form10k.htm",
-   "fetch_ms": 5.6,
+   "fetch_ms": 5.5,
    "engines": {
     "ours": {
      "items": {
@@ -14328,7 +14328,7 @@
    "company": "Abtech Holdings, Inc.",
    "date_filed": "2012/03/30",
    "link": "https://www.sec.gov/Archives/edgar/data/1405858/000114420412018496/v307123_10k.htm",
-   "fetch_ms": 2.3,
+   "fetch_ms": 2.4,
    "engines": {
     "ours": {
      "items": {
@@ -14957,7 +14957,7 @@
    "company": "Carrier Alliance Holdings, Inc.",
    "date_filed": "2013/02/21",
    "link": "https://www.sec.gov/Archives/edgar/data/1027484/000101905613000267/carrier_10k11.htm",
-   "fetch_ms": 2.0,
+   "fetch_ms": 1.9,
    "engines": {
     "ours": {
      "items": {
@@ -15751,7 +15751,7 @@
    "company": "Integrated Electric Systems Corp.",
    "date_filed": "2013/07/16",
    "link": "https://www.sec.gov/Archives/edgar/data/1402486/000116552713000641/g6936a.txt",
-   "fetch_ms": 0.9,
+   "fetch_ms": 0.8,
    "engines": {
     "ours": {
      "error": "no items extracted"
@@ -15920,7 +15920,7 @@
    "company": "NEOGENOMICS INC",
    "date_filed": "2014/02/24",
    "link": "https://www.sec.gov/Archives/edgar/data/1077183/000119312514064714/d647097d10k.htm",
-   "fetch_ms": 3.2,
+   "fetch_ms": 3.0,
    "engines": {
     "ours": {
      "items": {
@@ -16717,7 +16717,7 @@
    "company": "FIRST BANCORP /PR/",
    "date_filed": "2014/03/17",
    "link": "https://www.sec.gov/Archives/edgar/data/1057706/000105770614000004/fbp12312013x10k.htm",
-   "fetch_ms": 30.3,
+   "fetch_ms": 28.9,
    "engines": {
     "ours": {
      "items": {
@@ -17360,7 +17360,7 @@
    "company": "Diversified Resources Inc.",
    "date_filed": "2015/02/13",
    "link": "https://www.sec.gov/Archives/edgar/data/1509692/000112785515000064/diversified10103114.htm",
-   "fetch_ms": 3.6,
+   "fetch_ms": 3.5,
    "engines": {
     "ours": {
      "items": {
@@ -18948,7 +18948,7 @@
    "company": "Diplomat Pharmacy, Inc.",
    "date_filed": "2016/02/29",
    "link": "https://www.sec.gov/Archives/edgar/data/1610092/000110465916101031/a16-5240_110k.htm",
-   "fetch_ms": 5.5,
+   "fetch_ms": 5.4,
    "engines": {
     "ours": {
      "items": {
@@ -19745,7 +19745,7 @@
    "company": "FLUIDIGM CORP",
    "date_filed": "2016/04/27",
    "link": "https://www.sec.gov/Archives/edgar/data/1162194/000119312516559771/d183522d10ka.htm",
-   "fetch_ms": 20.0,
+   "fetch_ms": 1.6,
    "engines": {
     "ours": {
      "items": {
@@ -20091,7 +20091,7 @@
    "company": "WATTS WATER TECHNOLOGIES INC",
    "date_filed": "2017/02/24",
    "link": "https://www.sec.gov/Archives/edgar/data/795403/000155837017000970/wts-20161231x10k.htm",
-   "fetch_ms": 80.1,
+   "fetch_ms": 12.2,
    "engines": {
     "ours": {
      "items": {

@@ -19,9 +19,12 @@ from __future__ import annotations
 
 import os
 import re
+import threading
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, Header, HTTPException, Query, UploadFile
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel
 
@@ -259,7 +262,28 @@ def _find(state: dict, q: str) -> dict:
 
 
 # ------------------------------------------------------------------- FastAPI
-app = FastAPI(title="wealth-sec", description="SEC 10-K item-level extractor — Task 2")
+@asynccontextmanager
+async def _lifespan(_: FastAPI):
+    """Pre-warm the demo tickers in ONE background thread (non-blocking, keeps
+    the worker pool free): fills the ephemeral raw-filing disk cache AND the
+    result memo, so first clicks after a container start are instant.
+    Set PREWARM_TICKERS="" to disable (e.g. offline tests)."""
+    tickers = [t.strip().upper() for t in
+               os.environ.get("PREWARM_TICKERS", "INTC,AAPL,MSFT").split(",") if t.strip()]
+
+    def run() -> None:
+        for t in tickers:
+            if JOBS.lookup("extract", t, "") is None:
+                JOBS.run_sync("extract", t, lambda t=t: _run_extract(t, ""), memo_key="")
+
+    if tickers:
+        threading.Thread(target=run, daemon=True, name="sec-prewarm").start()
+    yield
+
+
+app = FastAPI(title="wealth-sec", description="SEC 10-K item-level extractor — Task 2",
+              lifespan=_lifespan)
+app.add_middleware(GZipMiddleware, minimum_size=1024)   # 68KB item JSON → ~15KB on the wire
 
 
 class ExtractRequest(BaseModel):
@@ -303,9 +327,18 @@ def extract(req: ExtractRequest) -> dict:
     if not query:
         raise HTTPException(status_code=400, detail="ticker (or query) is required")
     accession = req.accession.strip()
-    job = JOBS.submit("extract", query.upper(),
-                      lambda: _run_extract(query, accession))
-    return {"ok": True, "job_id": job.job_id, "status": job.status}
+    label = query.upper()
+    # Result cache: a done job for the same (ticker, accession) is returned
+    # inline (payload included — the UI can render with zero polling); a
+    # queued/running one is reused instead of spawning duplicate work.
+    job = JOBS.lookup("extract", label, accession)
+    if job is None:
+        job = JOBS.submit("extract", label,
+                          lambda: _run_extract(query, accession), memo_key=accession)
+    out = {"ok": True, "job_id": job.job_id, "status": job.status}
+    if job.status == "done" and job.payload:
+        out.update(job.payload)
+    return out
 
 
 @app.post("/api/upload", dependencies=AUTH)

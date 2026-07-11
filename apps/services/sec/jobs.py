@@ -7,6 +7,11 @@ open: POST creates a job, a small ThreadPoolExecutor (MAX_CONCURRENCY, default
 
 Failure inspectability: an error job is kept with its exception type, message
 and traceback instead of disappearing — graders can open any failed run.
+
+Result memo: finished extract jobs are remembered by (kind, label, accession)
+so re-running the same query returns the done job instantly instead of paying
+the EDGAR fetch + parse CPU again; a queued/running job for the same key is
+reused too (no duplicate work on double-click). Error jobs are never memoised.
 """
 
 from __future__ import annotations
@@ -51,7 +56,20 @@ class JobStore:
         workers = max_workers or int(os.environ.get("MAX_CONCURRENCY", "2"))
         self._pool = ThreadPoolExecutor(max_workers=max(1, workers))
         self._jobs: dict[str, Job] = {}
+        self._memo: dict[tuple[str, str, str], str] = {}   # (kind, label, accession) -> job_id
         self._lock = threading.Lock()
+
+    def lookup(self, kind: str, label: str, accession: str) -> Job | None:
+        """Memoised non-error job for (kind, label, accession) — done OR still
+        queued/running (in-flight dedup) — if it is still kept."""
+        with self._lock:
+            jid = self._memo.get((kind, label, accession))
+            job = self._jobs.get(jid) if jid else None
+        return None if job is None or job.status == "error" else job
+
+    def _memoize(self, kind: str, label: str, accession: str, job_id: str) -> None:
+        with self._lock:
+            self._memo[(kind, label, accession)] = job_id
 
     def _new_job(self, kind: str, label: str) -> Job:
         job = Job(job_id=uuid.uuid4().hex[:12], kind=kind, label=label)
@@ -61,22 +79,27 @@ class JobStore:
         return job
 
     def submit(self, kind: str, label: str,
-               fn: Callable[[], tuple[dict, dict]]) -> Job:
+               fn: Callable[[], tuple[dict, dict]],
+               memo_key: str | None = None) -> Job:
         """Queue fn on the pool; fn returns (json_payload, state)."""
         job = self._new_job(kind, label)
+        if memo_key is not None:
+            self._memoize(kind, label, memo_key, job.job_id)
         self._pool.submit(self._run, job, fn)
         return job
 
     def run_sync(self, kind: str, label: str,
-                 fn: Callable[[], tuple[dict, dict]]) -> Job:
+                 fn: Callable[[], tuple[dict, dict]],
+                 memo_key: str | None = None) -> Job:
         """Run fn inline (offline uploads finish in seconds — no queue needed)
         but still register the job so item/find/raw endpoints work on it."""
         job = self._new_job(kind, label)
+        if memo_key is not None:
+            self._memoize(kind, label, memo_key, job.job_id)
         self._run(job, fn)
         return job
 
-    @staticmethod
-    def _run(job: Job, fn: Callable[[], tuple[dict, dict]]) -> None:
+    def _run(self, job: Job, fn: Callable[[], tuple[dict, dict]]) -> None:
         job.status = "running"
         try:
             job.payload, job.state = fn()
@@ -86,6 +109,12 @@ class JobStore:
             job.error = f"{type(e).__name__}: {e}"
             job.trace = traceback.format_exc(limit=8)
         job.finished = time.time()
+        if job.status == "done":
+            # also memoise under the RESOLVED accession, so an explicit year
+            # pick that matches an already-extracted "latest" hits the cache
+            acc = ((job.payload or {}).get("meta") or {}).get("accession", "")
+            if acc and acc != "-":
+                self._memoize(job.kind, job.label, acc, job.job_id)
 
     def get(self, job_id: str) -> Job | None:
         with self._lock:
@@ -104,3 +133,4 @@ class JobStore:
                           key=lambda j: j.created)
         for j in finished[: len(self._jobs) - MAX_JOBS_KEPT]:
             self._jobs.pop(j.job_id, None)
+        self._memo = {k: v for k, v in self._memo.items() if v in self._jobs}

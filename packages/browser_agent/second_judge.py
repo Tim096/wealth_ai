@@ -43,8 +43,16 @@ from pathlib import Path
 
 from observability_core import sha256_text
 
-# how much cached visible text an LLM extractor prompt carries
-_EVIDENCE_TEXT_CAP = 4000
+# how much cached visible text an LLM extractor prompt carries. Raised from
+# 4000 so the FINAL observation of an open-ended run (agent passes up to
+# _OPEN_ENDED_FINAL_TEXT_CAP chars of final page text) is quotable in full —
+# a span the extractor never saw can neither be quoted nor grounded.
+_EVIDENCE_TEXT_CAP = 12_000
+
+# how many recent per-step obs excerpts (P0-5 persistence) ride along as
+# additional quotable evidence, and their combined character budget
+_STEP_EXCERPTS_MAX = 10
+_STEP_EXCERPTS_CHAR_CAP = 2_500
 
 # extractor proposal states (LLM output contract) / final judgment verdicts
 _PROPOSALS = ("satisfied", "not_satisfied", "cannot_tell")
@@ -178,6 +186,11 @@ class LLMExtractor:
         user = (f"Condition: {cond_type}: {value}\n\n"
                 f"Cached page snapshot\nURL: {evidence.get('url', '')}\n"
                 f"Visible text:\n{(evidence.get('visible_text') or '')[:_EVIDENCE_TEXT_CAP]}")
+        excerpts = _step_excerpts(evidence)
+        if excerpts:
+            user += ("\n\nEarlier per-step page excerpts (also verbatim-quotable "
+                     "evidence — the page may have navigated away since):\n"
+                     + "\n---\n".join(excerpts))
         parsed, resp = self.client.complete_json(_SYSTEM, user)
         out = {"extracted": None, "judgment": "cannot_tell",
                "reason": "malformed judge output", "cost_usd": resp.cost_usd}
@@ -193,6 +206,20 @@ class LLMExtractor:
 
 def _norm(s: str) -> str:
     return " ".join(s.split()).casefold()
+
+
+def _step_excerpts(evidence: dict) -> list[str]:
+    """Bounded view of the P0-5 per-step obs excerpts riding in the evidence
+    dict (key 'step_excerpts'): the most recent _STEP_EXCERPTS_MAX, trimmed to
+    a combined _STEP_EXCERPTS_CHAR_CAP. Absent/empty → []."""
+    raw = evidence.get("step_excerpts") or []
+    out, budget = [], _STEP_EXCERPTS_CHAR_CAP
+    for e in [str(x) for x in raw if str(x).strip()][-_STEP_EXCERPTS_MAX:]:
+        if budget <= 0:
+            break
+        out.append(e[:budget])
+        budget -= len(e)
+    return out
 
 
 def judge_condition(cond_type: str, value: str, evidence: dict,
@@ -212,7 +239,13 @@ def judge_condition(cond_type: str, value: str, evidence: dict,
     cost = float(out.get("cost_usd", 0.0))
     judgment = out.get("judgment")
     if judgment == "satisfied":
-        hay = _norm(f"{evidence.get('url', '')}\n{evidence.get('visible_text', '')}")
+        # Grounding haystack: cached url + visible text PLUS the per-step obs
+        # excerpts (when the caller supplied them) — a quote that appears in
+        # the final-page text or in a persisted step snapshot is grounded; a
+        # quote appearing NOWHERE still demotes to abstain (no hallucinated pass).
+        hay = _norm("\n".join([evidence.get("url", ""),
+                               evidence.get("visible_text", ""),
+                               *_step_excerpts(evidence)]))
         if not extracted or _norm(extracted) not in hay:
             return MicroJudgment(key, "abstain", extracted,
                                  "not supported: extracted span absent from cached "

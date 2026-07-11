@@ -11,11 +11,19 @@ keeping the abstain fallback so no unmet task is ever fabricated into a pass.
 verifier.py stays the SOLE judge: scoring is opt-in (an extractor must be
 injected). With no extractor the behaviour is unchanged (honest unknown), which
 is what every existing eval relies on. Offline (no LLM key) always abstains.
+
+HOLE A follow-up (live 18/18 abstain): run_agentic now ARMS the scorer at
+verdict time when the planner has a live LLM client (same client), and the
+quotable evidence is the final page's text at a raised bounded budget plus the
+P0-5 per-step obs excerpts — a quote grounded in either passes the demotion; a
+quote appearing NOWHERE still demotes to abstain (no hallucinated pass).
 """
 
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+
+import pytest
 
 from browser_core import BrowserTaskContract, ForbiddenCondition, SuccessCondition
 from browser_agent import second_judge as sj
@@ -206,6 +214,177 @@ def test_verify_forbidden_violation_beats_scoring():
     v = verify_contract(contract, obs, open_ended_extractor=_llm(client))
     assert v.status == "fail"
     assert client.calls == 0                       # scoring never reached
+
+
+# ============================================================================
+# HOLE A grounding: richer evidence (final-page text + P0-5 step excerpts)
+# ============================================================================
+class _RecordingClient(_ScriptedClient):
+    """_ScriptedClient that also records every user prompt it saw."""
+
+    def __init__(self, key_points, judgments):
+        super().__init__(key_points, judgments)
+        self.prompts = []
+
+    def complete_json(self, system, user, image_path=None):
+        self.prompts.append(user)
+        return super().complete_json(system, user, image_path)
+
+    def available(self):
+        return True
+
+
+def test_supplied_open_ended_evidence_overrides_default_obs():
+    # the span lives ONLY in the caller-supplied evidence (the run_agentic
+    # final-page re-read), not in obs.visible_text → grounding must use it
+    client = _ScriptedClient(
+        key_points=["the order confirmation is shown"],
+        judgments=[{"extracted": "Order #A123 confirmed", "judgment": "satisfied",
+                    "reason": "confirmation visible"}])
+    ev = {"url": _Obs().url,
+          "visible_text": "MockShop\nThank you!\nOrder #A123 confirmed\n"}
+    v = verify_contract(_open_contract("下單", "an order was placed"), _Obs(),
+                        open_ended_extractor=_llm(client), open_ended_evidence=ev)
+    assert v.status == "pass"
+
+
+def test_final_text_beyond_old_4k_cap_is_quotable_and_grounds():
+    # live-abstain root cause: a span past the old 4000-char prompt cap could
+    # neither be quoted nor grounded. With the raised budget the extractor SEES
+    # it (prompt carries it) and the demotion accepts it.
+    span = "GROUND-TRUTH-TOKEN order shipped"
+    ev = {"url": "https://shop.example/done",
+          "visible_text": ("filler line\n" * 700) + span + "\n"}   # span at ~8.4k chars
+    assert ev["visible_text"].find(span) > 4000
+    client = _RecordingClient(
+        key_points=["the order shipped notice is shown"],
+        judgments=[{"extracted": span, "judgment": "satisfied", "reason": "seen"}])
+    v = verify_contract(_open_contract("出貨了嗎", "order shipped"), _Obs(),
+                        open_ended_extractor=_llm(client), open_ended_evidence=ev)
+    assert v.status == "pass"
+    assert any(span in p for p in client.prompts)     # extractor actually saw it
+
+
+def test_step_excerpt_grounds_midrun_evidence():
+    # the confirmation was visible mid-run (P0-5 persisted excerpt) and the
+    # final page navigated away — the quote grounds against the excerpt
+    client = _ScriptedClient(
+        key_points=["a booking confirmation appeared"],
+        judgments=[{"extracted": "Booking BK-77 confirmed", "judgment": "satisfied",
+                    "reason": "was shown at step 3"}])
+    ev = {"url": _Obs().url, "visible_text": "MockShop\nHome page\n",
+          "step_excerpts": ["Search results", "Booking BK-77 confirmed — thank you"]}
+    v = verify_contract(_open_contract("訂位", "a booking was made"), _Obs(),
+                        open_ended_extractor=_llm(client), open_ended_evidence=ev)
+    assert v.status == "pass"
+
+
+def test_quote_nowhere_in_final_text_or_excerpts_still_demoted():
+    # NO FALSE SUCCESS on the widened grounding surface: a quote absent from
+    # BOTH the final-page text and every step excerpt demotes → unknown
+    client = _ScriptedClient(
+        key_points=["a refund was issued"],
+        judgments=[{"extracted": "Refund of $999 issued", "judgment": "satisfied",
+                    "reason": "hallucinated"}])
+    ev = {"url": _Obs().url, "visible_text": "MockShop\nHome page\n",
+          "step_excerpts": ["Search results", "Cart is empty"]}
+    v = verify_contract(_open_contract("退款", "a refund was issued"), _Obs(),
+                        open_ended_extractor=_llm(client), open_ended_evidence=ev)
+    assert v.status == "unknown"
+
+
+def test_step_excerpts_are_bounded():
+    # only the most recent _STEP_EXCERPTS_MAX ride along, within the char cap
+    ev = {"step_excerpts": [f"excerpt-{i}" for i in range(30)]}
+    out = sj._step_excerpts(ev)
+    assert len(out) == sj._STEP_EXCERPTS_MAX
+    assert out[-1] == "excerpt-29" and out[0] == "excerpt-20"    # most recent kept
+    big = {"step_excerpts": ["x" * 2_000, "y" * 2_000, "z" * 2_000]}
+    assert sum(len(e) for e in sj._step_excerpts(big)) <= sj._STEP_EXCERPTS_CHAR_CAP
+
+
+# ============================================================================
+# run_agentic wiring (live-like, playwright): the extractor is armed at
+# verdict time from the planner's own client; offline stays honest unknown
+# ============================================================================
+class _DoneWithClientPlanner:
+    """Scripted planner that claims done and CARRIES an LLM client — the shape
+    run_agentic's open-ended arming keys on (planner.client.available())."""
+
+    def __init__(self, client):
+        self.client = client
+
+    def available(self):
+        return True
+
+    def next_action(self, task, success_conditions, obs, history,
+                    plan_steps=None, image_path=None):
+        from browser_agent.planner import PlannerDecision
+        return PlannerDecision(kind="done", reason="looked around, finished")
+
+
+def _run_open_ended_live(tmp_path, page_html, client):
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from browser_agent.agent import BrowserAgent
+    from browser_agent.memory_store import MemoryStore
+
+    contract = BrowserTaskContract(
+        task_id="open-live", natural_language_task="找找 MockShop 有什麼有趣的商品",
+        expected_outcome="user browsed the catalog", success_conditions=[])
+    with sync_playwright() as p:
+        b = p.chromium.launch(headless=True)
+        page = b.new_page()
+        page.set_content(page_html)
+        agent = BrowserAgent(page, MemoryStore(tmp_path / "m.json"), "live", "agentic")
+        run = agent.run_agentic("open-live", contract,
+                                _DoneWithClientPlanner(client), max_steps=4)
+        b.close()
+    return run
+
+
+@pytest.mark.integration
+def test_run_agentic_open_ended_evidence_on_final_page_passes(tmp_path):
+    # HOLE A wired end-to-end: completion evidence IS in the final page text →
+    # the armed scorer grounds the quote and the verdict is a REAL pass
+    client = _RecordingClient(
+        key_points=["a laptop product is visible in the catalog"],
+        judgments=[{"extracted": "UltraBook Pro 14 in stock",
+                    "judgment": "satisfied", "reason": "laptop visible"}])
+    run = _run_open_ended_live(
+        tmp_path, "<h1>MockShop</h1><p>UltraBook Pro 14 in stock</p>", client)
+    assert run.status == "pass"
+    assert "open-ended scoring" in run.verifier.reason
+    assert client.calls >= 2                        # key points + >=1 judgment
+
+
+@pytest.mark.integration
+def test_run_agentic_open_ended_hallucinated_quote_stays_unknown(tmp_path):
+    # NO FALSE SUCCESS at the wiring level: the LLM claims satisfied with a
+    # span the page never showed → demoted → honest unknown, never pass
+    client = _RecordingClient(
+        key_points=["a discount coupon is displayed"],
+        judgments=[{"extracted": "SAVE20 coupon applied",
+                    "judgment": "satisfied", "reason": "trust me"}])
+    run = _run_open_ended_live(tmp_path, "<h1>MockShop</h1><p>plain page</p>", client)
+    assert run.status == "unknown"
+    assert "open-ended task: no machine-checkable success condition" in run.verifier.reason
+
+
+@pytest.mark.integration
+def test_run_agentic_open_ended_offline_client_unchanged_unknown(tmp_path):
+    # planner carries a client that reports unavailable → the scorer is never
+    # armed, no LLM call is made, and the verdict is the unchanged honest unknown
+    class _OfflineClient(_RecordingClient):
+        def available(self):
+            return False
+
+    client = _OfflineClient(key_points=["x"], judgments=[])
+    run = _run_open_ended_live(
+        tmp_path, "<h1>MockShop</h1><p>UltraBook Pro 14 in stock</p>", client)
+    assert run.status == "unknown"
+    assert client.calls == 0
 
 
 # ============================================================================

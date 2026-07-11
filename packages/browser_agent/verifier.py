@@ -146,7 +146,7 @@ def subtract_baseline(contract: BrowserTaskContract, obs: Observation,
 
 
 def _score_open_ended(contract: BrowserTaskContract, obs: Observation,
-                      extractor) -> VerifierResult | None:
+                      extractor, evidence: dict | None = None) -> VerifierResult | None:
     """Evidence-grounded scoring for the empty-condition (open-ended) case.
     Delegates to the WebJudge-style scorer (second_judge.score_open_ended): the
     task is decomposed into observable key points and each is judged against the
@@ -154,9 +154,13 @@ def _score_open_ended(contract: BrowserTaskContract, obs: Observation,
     pass). A grounded yes/no becomes a real pass/fail; an abstain returns None so
     the caller falls through to the honest `unknown`. verifier stays the SOLE
     judge — this is a scoring capability it gains for the zero-condition case,
-    not a second authority."""
+    not a second authority. `evidence` lets the caller supply a RICHER quotable
+    snapshot than the default (e.g. run_agentic passes the final page's full
+    text plus the P0-5 per-step obs excerpts, so mid-run evidence a navigation
+    swept away can still ground a quote); default stays url + visible_text."""
     from browser_agent.second_judge import score_open_ended
-    evidence = {"url": obs.url, "visible_text": obs.visible_text}
+    if evidence is None:
+        evidence = {"url": obs.url, "visible_text": obs.visible_text}
     r = score_open_ended(contract.natural_language_task,
                          contract.expected_outcome, evidence, extractor)
     if r["verdict"] not in ("yes", "no"):
@@ -175,7 +179,8 @@ def _score_open_ended(contract: BrowserTaskContract, obs: Observation,
 def verify_contract(contract: BrowserTaskContract, obs: Observation,
                     extracted: dict[str, str] | None = None,
                     latched: dict[str, int] | None = None,
-                    open_ended_extractor=None) -> VerifierResult:
+                    open_ended_extractor=None,
+                    open_ended_evidence: dict | None = None) -> VerifierResult:
     """`latched` is the P0-5 mid-run ledger {'type:value': step-satisfied-at}.
     A success condition that is NOT satisfied by the final observation but WAS
     observed satisfied mid-run counts as pass (latch semantics — a navigation
@@ -210,7 +215,8 @@ def verify_contract(contract: BrowserTaskContract, obs: Observation,
             # through evidence-grounded WebJudge scoring instead of a blanket
             # unknown. A grounded pass/fail is returned; an abstain (evidence
             # insufficient / offline) falls through to the honest unknown below.
-            scored = _score_open_ended(contract, obs, open_ended_extractor)
+            scored = _score_open_ended(contract, obs, open_ended_extractor,
+                                       open_ended_evidence)
             if scored is not None:
                 return scored
         return VerifierResult(

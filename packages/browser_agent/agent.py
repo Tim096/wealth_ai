@@ -146,6 +146,11 @@ _REPLAN_FAILS = 3
 # The P0-6 Budget caps (steps/tokens/USD/wall-clock) remain the HARD stop:
 # this only sizes the loop, it never loosens a Budget dimension.
 DEFAULT_MAX_STEPS = 8
+
+# Open-ended verdict evidence: the final page's text is re-read at this raised
+# (but bounded) budget so key-point quotes have something to ground against —
+# the observer's 5k obs cap was too truncated to quote from (live 18/18 abstain).
+_OPEN_ENDED_FINAL_TEXT_CAP = 12_000
 STEP_BUDGET_BY_DIFFICULTY = {"easy": 8, "medium": 15, "hard": 25}
 
 
@@ -1097,8 +1102,35 @@ class BrowserAgent:
                 step="latch", action="ledger", ok=True, mode="agent",
                 detail="satisfied-at-step ledger: "
                        + "; ".join(f"{k} @step{v}" for k, v in latched.items())))
+        # Open-ended arming (HOLE A wire-up): a ZERO-condition contract routes
+        # through the evidence-grounded WebJudge scorer at VERDICT time — but
+        # only when the planner actually has a live LLM client (same client,
+        # no second credential path). Offline / mock planners pass None and the
+        # behaviour is the unchanged honest unknown. The quotable evidence is
+        # the final page's text at a raised, bounded budget (the observer's
+        # 5k obs cap is too truncated to quote from) plus the P0-5 per-step
+        # obs excerpts, so mid-run evidence a navigation swept away can still
+        # ground a quote. Non-empty contracts never reach this path.
+        oe_extractor = None
+        oe_evidence = None
+        if not contract.success_conditions:
+            _avail = getattr(getattr(planner, "client", None), "available", None)
+            if callable(_avail) and _avail():
+                from browser_agent.second_judge import LLMExtractor
+                oe_extractor = LLMExtractor(planner.client)
+                try:
+                    final_text = self.page.inner_text("body")[:_OPEN_ENDED_FINAL_TEXT_CAP]
+                except Exception:  # noqa: BLE001 — fall back to the capped obs text
+                    final_text = obs.visible_text
+                oe_evidence = {
+                    "url": obs.url,
+                    "visible_text": final_text or obs.visible_text,
+                    "step_excerpts": [s.obs_excerpt for s in trace if s.obs_excerpt],
+                }
         _tv = time.perf_counter()
-        verdict = verify_contract(contract, obs, extracted, latched=latched)
+        verdict = verify_contract(contract, obs, extracted, latched=latched,
+                                  open_ended_extractor=oe_extractor,
+                                  open_ended_evidence=oe_evidence)
         phase["verify_ms"] += (time.perf_counter() - _tv) * 1000
         # P0-10 write-back: only a VERIFIER-passed run banks its sequence —
         # the cache can never contain an unverified trajectory.

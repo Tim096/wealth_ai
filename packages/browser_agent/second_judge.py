@@ -65,6 +65,21 @@ _SYSTEM = (
     '"cannot_tell", "reason": string}'
 )
 
+# WebJudge (arXiv:2504.01382) key-point decomposition: an open-ended task with
+# ZERO machine-checkable conditions is turned into a short list of concrete,
+# observable key points that must ALL hold on the final page. Each point is then
+# judged by the SAME grounded extractor stage above, so no hallucinated span can
+# pass. The prompt forbids inventing requirements the task did not ask for.
+_KEYPOINTS_SYSTEM = (
+    "You decompose an open-ended web task into a SHORT list (at most 5) of "
+    "concrete, OBSERVABLE key points that must ALL be true on the final page "
+    "for the task to count as completed. Each key point is a single checkable "
+    "fact a user would SEE on the page. Do NOT invent requirements the task "
+    "did not ask for, and do NOT restate the whole task as one point. If the "
+    "task has no observable completion criterion at all, return an empty list. "
+    'Respond with JSON only: {"key_points": [string, ...]}'
+)
+
 
 class SecondJudgeSmokeError(RuntimeError):
     """The stub-pass smoke run did not come out all-yes: the judge pipeline
@@ -289,6 +304,78 @@ def judge_open_ended(natural_language_task: str, expected_outcome: str,
     j.reason = f"open-ended task {natural_language_task!r}: {j.reason}"
     score = {"yes": 1.0, "no": 0.0}.get(j.verdict)
     return {"judgment": j, "score": score}
+
+
+def extract_key_points(natural_language_task: str, expected_outcome: str,
+                       client) -> tuple[list[str], float]:
+    """WebJudge key-point extraction: decompose an open-ended task into the
+    concrete observable facts that must hold for completion (temperature 0 in
+    the client). A malformed / non-list response yields no key points (the
+    caller then falls back to a single expected_outcome judgment). Returns
+    (key_points, cost_usd)."""
+    user = (f"Task: {natural_language_task}\n"
+            f"Expected outcome: {expected_outcome}")
+    parsed, resp = client.complete_json(_KEYPOINTS_SYSTEM, user)
+    cost = float(getattr(resp, "cost_usd", 0.0))
+    if isinstance(parsed, dict) and not parsed.get("_parse_error"):
+        kps = parsed.get("key_points")
+        if isinstance(kps, list):
+            return [str(k).strip() for k in kps if str(k).strip()], cost
+    return [], cost
+
+
+def _aggregate_open_ended(judgments: list[MicroJudgment]) -> tuple[str, float | None]:
+    """Completion semantics for an open-ended task: every key point must be
+    grounded-satisfied to pass. Any refuted point -> no; all satisfied -> yes;
+    otherwise (a point could not be confirmed from the evidence) -> abstain, the
+    honest boundary — never a pass on unconfirmed evidence."""
+    verdicts = [j.verdict for j in judgments]
+    if any(v == "no" for v in verdicts):
+        return "no", 0.0
+    if verdicts and all(v == "yes" for v in verdicts):
+        return "yes", 1.0
+    return "abstain", None
+
+
+def score_open_ended(natural_language_task: str, expected_outcome: str,
+                     evidence: dict, extractor) -> dict:
+    """Evidence-grounded WebJudge scoring for the zero-condition (open-ended)
+    bucket: decompose the task into key points (LLM), judge each against the
+    cached evidence with the SAME Extractor/Verifier demotion (a 'satisfied'
+    whose quoted span is absent from the evidence is demoted to abstain — no
+    hallucinated pass), then aggregate to a real yes/no or an honest abstain.
+    The LLM capability rides on the extractor: an extractor with no `.client`
+    (the OfflineExtractor) abstains, because open-ended semantics are not
+    judgeable without an LLM. When key-point extraction yields nothing, falls
+    back to the single expected_outcome judgment (judge_open_ended). Returns
+    {verdict, score, key_points, judgments, reason, cost_usd}."""
+    client = getattr(extractor, "client", None)
+    if client is None:
+        j = MicroJudgment(
+            "open_ended", "abstain", None,
+            "open-ended semantics are not judgeable offline (extractor has no "
+            "LLM client); honest abstain", extractor.source)
+        return {"verdict": "abstain", "score": None, "key_points": [],
+                "judgments": [j], "reason": j.reason, "cost_usd": 0.0}
+    key_points, kp_cost = extract_key_points(
+        natural_language_task, expected_outcome, client)
+    if not key_points:
+        r = judge_open_ended(natural_language_task, expected_outcome,
+                             evidence, extractor)
+        j = r["judgment"]
+        return {"verdict": j.verdict, "score": r["score"], "key_points": [],
+                "judgments": [j],
+                "reason": f"no key points extracted; {j.reason}",
+                "cost_usd": round(kp_cost + j.cost_usd, 6)}
+    judgments = [judge_condition("key_point", kp, evidence, extractor)
+                 for kp in key_points]
+    verdict, score = _aggregate_open_ended(judgments)
+    n_yes = sum(j.verdict == "yes" for j in judgments)
+    reason = (f"open-ended task {natural_language_task!r}: "
+              f"{n_yes}/{len(judgments)} key points grounded-satisfied")
+    cost = round(kp_cost + sum(j.cost_usd for j in judgments), 6)
+    return {"verdict": verdict, "score": score, "key_points": key_points,
+            "judgments": judgments, "reason": reason, "cost_usd": cost}
 
 
 def diff_with_primary(judgments: list[MicroJudgment],

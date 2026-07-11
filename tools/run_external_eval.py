@@ -298,9 +298,11 @@ def summarize(rows: list[dict]) -> dict:
 
 def run_eval(entries: list[dict], planner, run_dir: Path, *, extractor,
              max_steps: int | None, resume: bool, headed: bool) -> dict:
-    """Full run: guarded per-task execution over a single persistent browser
-    session, one summary.json per task, then the success-rate rollup. Returns
-    the payload written to results.json."""
+    """Full run: guarded per-task execution over a single browser but a FRESH
+    context+page PER TASK (a hard navigation failure in task N — e.g. an
+    ERR_HTTP2 poisoned page cascading 'interrupted by another navigation' —
+    must never bleed into task N+1), one summary.json per task, then the
+    success-rate rollup. Returns the payload written to results.json."""
     from playwright.sync_api import sync_playwright
 
     task_ids = [e["task_id"] for e in entries]
@@ -312,10 +314,6 @@ def run_eval(entries: list[dict], planner, run_dir: Path, *, extractor,
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=not headed)
-        context = browser.new_context(viewport={"width": 1100, "height": 850},
-                                      accept_downloads=True)
-        page = context.new_page()
-        arm_watchdog(page)
         try:
             for entry in entries:
                 if resume:
@@ -329,11 +327,21 @@ def run_eval(entries: list[dict], planner, run_dir: Path, *, extractor,
                 if isinstance(planner, MockPlanner):
                     planner = MockPlanner(_query_hint(entry["natural_language_task"]))
 
-                summary = run_guarded(
-                    entry["task_id"],
-                    lambda e=entry: run_task(page, e, planner, run_dir, evidence,
-                                             extractor, max_steps),
-                    out_root=run_dir)
+                context = browser.new_context(viewport={"width": 1100, "height": 850},
+                                              accept_downloads=True)
+                page = context.new_page()
+                arm_watchdog(page)
+                try:
+                    summary = run_guarded(
+                        entry["task_id"],
+                        lambda e=entry: run_task(page, e, planner, run_dir, evidence,
+                                                 extractor, max_steps),
+                        out_root=run_dir)
+                finally:
+                    try:
+                        context.close()
+                    except Exception:  # noqa: BLE001 — a dead context must not mask the row
+                        pass
                 n_attempted += 1
                 if summary["harness_status"] == "done":
                     row = summary["row"]

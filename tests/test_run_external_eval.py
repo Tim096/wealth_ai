@@ -175,6 +175,54 @@ def test_run_task_smoke_mocks_agent(monkeypatch, tmp_path):
     assert "second_judge" not in row        # extractor off
 
 
+@pytest.mark.integration
+def test_fresh_context_per_task_isolates_nav_failure(monkeypatch, tmp_path):
+    """HOLE B regression: a hard navigation failure in task N (unreachable URL)
+    must NOT bleed into task N+1 (the shared-page cascade: one poisoned page
+    turned every later goto into 'interrupted by another navigation'). Runs the
+    REAL run_eval browser loop — fresh context+page per task — with run_task
+    stubbed to just navigate, so no LLM/agent is needed. Task 2 must come out
+    harness_status=done with its page content actually readable, and the P0-9
+    summary schema + env-error classification must hold for both rows."""
+    pytest.importorskip("playwright.sync_api")
+
+    entries = [
+        {"task_id": "t_dead", "difficulty": "easy",
+         "website": "http://127.0.0.1:9/",              # discard port: refused fast
+         "natural_language_task": "unreachable"},
+        {"task_id": "t_ok", "difficulty": "easy",
+         "website": "data:text/html,<h1>Mock OK</h1>",
+         "natural_language_task": "mock site"},
+    ]
+
+    def fake_run_task(page, entry, planner, run_dir, evidence, extractor, max_steps):
+        # the navigation is the real thing under test; the agent is not.
+        page.goto(entry["website"], wait_until="domcontentloaded", timeout=10_000)
+        assert "Mock OK" in page.content()   # task 2's page is genuinely clean
+        return {"task_id": entry["task_id"], "difficulty": entry["difficulty"],
+                "website": entry["website"], "status": "pass",
+                "verifier_reason": "ok"}
+
+    monkeypatch.setattr(m, "run_task", fake_run_task)
+    payload = m.run_eval(entries, planner=object(), run_dir=tmp_path,
+                         extractor=None, max_steps=None, resume=False, headed=False)
+
+    rows = {r["task_id"]: r for r in payload["tasks"]}
+    # task 1: harness error, classified environmental — not an agent failure
+    assert rows["t_dead"]["harness_status"] == "error"
+    assert rows["t_dead"]["env_error"] == "site_unreachable"
+    # task 2: ran clean AFTER the hard failure — the isolation guarantee
+    assert rows["t_ok"]["harness_status"] == "done"
+    assert rows["t_ok"]["status"] == "pass"
+    assert payload["metrics"]["overall"]["success_rate"] == 1.0  # env excluded
+    # P0-9: both per-task summary.json files persisted with the schema intact
+    import json
+    s_dead = json.loads((tmp_path / "t_dead" / "summary.json").read_text(encoding="utf-8"))
+    s_ok = json.loads((tmp_path / "t_ok" / "summary.json").read_text(encoding="utf-8"))
+    assert s_dead["harness_status"] == "error" and s_dead["error"]
+    assert s_ok["harness_status"] == "done" and s_ok["row"]["status"] == "pass"
+
+
 def test_run_task_smoke_respects_max_steps_override(monkeypatch, tmp_path):
     monkeypatch.setattr(m, "execute_task",
                         lambda *a, **k: fake_run(status="fail", reason="violated"))

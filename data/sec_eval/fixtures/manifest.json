@@ -1,0 +1,241 @@
+{
+ "schema_version": 1,
+ "purpose": "P0-8 CI golden-drift harness: frozen raw-filing fixtures + typed known-bad manifest (FG-SEC-001..009). tests/test_golden_drift.py re-runs the live pipeline against these fixtures OFFLINE and asserts (a) frozen offset gold reproduces exactly and (b) every machine-checkable known-bad regression stays fixed/honest.",
+ "provenance": "Raw filings are public SEC EDGAR data (see docs/research/giants_task2.md licensing section). Each fixture was fetched via sec_core.fetcher (rate-limited, declared user-agent) and frozen here as deterministic gzip (mtime=0). raw_sha256 is the hash of the DECOMPRESSED bytes and matches the fetch-cache meta. To regenerate: fetch source_url, verify sha256, gzip -9.",
+ "fixtures": {
+  "AAPL_FY2025": {
+   "file": "AAPL_FY2025_10k.htm.gz",
+   "ticker": "AAPL",
+   "cik": 320193,
+   "accession": "0000320193-25-000079",
+   "form": "10-K",
+   "report_date": "2025-09-27",
+   "era": "html",
+   "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+   "raw_sha256": "548ae59778cf08ee0f2ee088e7ece20d947076c3c01f74d2d65db4c2777e436a",
+   "raw_bytes": 1520208,
+   "gold": "data/golden_labels/offsets/AAPL.json"
+  },
+  "JPM_FY2025": {
+   "file": "JPM_FY2025_10k.htm.gz",
+   "ticker": "JPM",
+   "cik": 19617,
+   "accession": "0001628280-26-008131",
+   "form": "10-K",
+   "report_date": "2025-12-31",
+   "era": "html",
+   "source_url": "https://www.sec.gov/Archives/edgar/data/19617/000162828026008131/jpm-20251231.htm",
+   "raw_sha256": "4d9febdbc2038dcdca8726053286df4cbbfd48885051cbd781efcc3becb66a23",
+   "raw_bytes": 12927325,
+   "gold": "data/golden_labels/offsets/JPM.json"
+  },
+  "KO_FY2025": {
+   "file": "KO_FY2025_10k.htm.gz",
+   "ticker": "KO",
+   "cik": 21344,
+   "accession": "0001628280-26-010047",
+   "form": "10-K",
+   "report_date": "2025-12-31",
+   "era": "html",
+   "source_url": "https://www.sec.gov/Archives/edgar/data/21344/000162828026010047/ko-20251231.htm",
+   "raw_sha256": "22dd41f1aab4928f94a5f80e9497cf6203f27baa7c3f4e9088a6dd0aee929c66",
+   "raw_bytes": 3758140,
+   "gold": "data/golden_labels/offsets/KO.json"
+  },
+  "MSFT_FY2025": {
+   "file": "MSFT_FY2025_10k.htm.gz",
+   "ticker": "MSFT",
+   "cik": 789019,
+   "accession": "0000950170-25-100235",
+   "form": "10-K",
+   "report_date": "2025-06-30",
+   "era": "html",
+   "source_url": "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/msft-20250630.htm",
+   "raw_sha256": "99d693f6c1544144ebeee92954f151a85bc62111837530a42855953bc01d0bbe",
+   "raw_bytes": 8158067,
+   "gold": "data/golden_labels/offsets/MSFT.json"
+  },
+  "NEM_FY2025": {
+   "file": "NEM_FY2025_10k.htm.gz",
+   "ticker": "NEM",
+   "cik": 1164727,
+   "accession": "0001164727-26-000010",
+   "form": "10-K",
+   "report_date": "2025-12-31",
+   "era": "html",
+   "source_url": "https://www.sec.gov/Archives/edgar/data/1164727/000116472726000010/nem-20251231.htm",
+   "raw_sha256": "35ab1a54d48d9991b1612c3a3a28623267081cfb8e054f71501b14c7a30340cc",
+   "raw_bytes": 9143706,
+   "gold": "data/golden_labels/offsets/NEM.json"
+  },
+  "AAPL_FY1996": {
+   "file": "AAPL_FY1996_10k.txt.gz",
+   "ticker": "AAPL",
+   "cik": 320193,
+   "accession": "0000320193-96-000023",
+   "form": "10-K",
+   "report_date": "1996-09-27",
+   "era": "text_pre2001",
+   "source_url": "https://www.sec.gov/Archives/edgar/data/320193/0000320193-96-000023.txt",
+   "raw_sha256": "915e22de4b965b7f270fdbe42e1aaa8e0adab6723419c5bb43610d49eea9c154",
+   "raw_bytes": 271212,
+   "gold": null
+  },
+  "KO_FY1997": {
+   "file": "KO_FY1997_10k.txt.gz",
+   "ticker": "KO",
+   "cik": 21344,
+   "accession": "0000021344-98-000004",
+   "form": "10-K",
+   "report_date": "1997-12-31",
+   "era": "text_pre2001",
+   "source_url": "https://www.sec.gov/Archives/edgar/data/21344/0000021344-98-000004.txt",
+   "raw_sha256": "8eb074bc2f8d5b96caae372293df6a370caa648b3cf4d13cfbcca119dcc71d07",
+   "raw_bytes": 377407,
+   "gold": null
+  }
+ },
+ "check_types": {
+  "item_status_in": "segment for `item` on `fixture` must have status in `expected`",
+  "item_max_span_chars": "segment span (end-start) must be <= `max_chars`",
+  "item_span_excludes": "segment span text must contain none of `forbidden_substrings`",
+  "filing_class": "pipeline filing_class for `fixture` must equal `expected`",
+  "all_items_status_in": "every segment status on `fixture` must be in `expected`"
+ },
+ "known_bad": [
+  {
+   "failure_id": "FG-SEC-001",
+   "app": "sec_extractor",
+   "failure_type": "silent_failure",
+   "status": "fixed",
+   "summary": "JPM Item 11 cross-reference stub ('Refer to Item 10.', 51 chars) was marked pass at confidence 0.96",
+   "input": {"ticker": "JPM", "accession": "0001628280-26-008131"},
+   "gallery": "docs/failure_gallery.md#fg-sec-001",
+   "related_commits": ["892ae0b", "0c46e9d"],
+   "guarded_by": ["tests/test_refine.py"],
+   "checks": [
+    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "11", "expected": ["incorporated_by_reference"]}
+   ]
+  },
+  {
+   "failure_id": "FG-SEC-002",
+   "app": "sec_extractor",
+   "failure_type": "silent_failure",
+   "status": "fixed",
+   "summary": "Reference-stub wording variants at scale escaped detection (JPM 1C/7/7A/8, GS/XOM/MSFT/NVDA/CAT items) and were marked pass ~0.958",
+   "input": {"ticker": "JPM", "accession": "0001628280-26-008131", "note": "11-company sweep; JPM is the in-corpus representative"},
+   "gallery": "docs/failure_gallery.md#fg-sec-002",
+   "related_commits": ["0c46e9d"],
+   "guarded_by": ["tests/test_refine.py"],
+   "checks": [
+    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "1C", "expected": ["incorporated_by_reference"]},
+    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "7", "expected": ["incorporated_by_reference"]},
+    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "7A", "expected": ["incorporated_by_reference"]},
+    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "8", "expected": ["incorporated_by_reference"]}
+   ]
+  },
+  {
+   "failure_id": "FG-SEC-003",
+   "app": "sec_extractor",
+   "failure_type": "boundary_leak",
+   "status": "fixed",
+   "summary": "Part divider / page number / running header leaked into span tails (AAPL Item 4 ended with 'Apple Inc. | 2025 Form 10-K | 18 / PART II')",
+   "input": {"ticker": "AAPL", "accession": "0000320193-25-000079"},
+   "gallery": "docs/failure_gallery.md#fg-sec-003",
+   "related_commits": ["0c46e9d"],
+   "guarded_by": ["tests/test_refine.py"],
+   "checks": [
+    {"type": "item_span_excludes", "fixture": "AAPL_FY2025", "item": "4", "forbidden_substrings": ["PART II", "Form 10-K |"]},
+    {"type": "item_max_span_chars", "fixture": "AAPL_FY2025", "item": "4", "max_chars": 500}
+   ]
+  },
+  {
+   "failure_id": "FG-SEC-004",
+   "app": "sec_extractor",
+   "failure_type": "boundary_runaway",
+   "status": "fixed",
+   "summary": "Terminal item swallowed the entire appended annual report (JPM Item 15 = 985,564 chars; XOM Item 16 = 311,785 chars) at confidence 1.0",
+   "input": {"ticker": "JPM", "accession": "0001628280-26-008131", "note": "XOM not in drift corpus; JPM is the in-corpus representative"},
+   "gallery": "docs/failure_gallery.md#fg-sec-004",
+   "related_commits": ["0c46e9d"],
+   "guarded_by": ["tests/test_refine.py"],
+   "checks": [
+    {"type": "item_max_span_chars", "fixture": "JPM_FY2025", "item": "15", "max_chars": 100000}
+   ]
+  },
+  {
+   "failure_id": "FG-SEC-005",
+   "app": "sec_extractor",
+   "failure_type": "filing_class_misclassification",
+   "status": "fixed_detection_only",
+   "summary": "Cross-reference-index filings (INTC/Citi) were shredded into fragments or all-missing; body resolution into the annual-report exhibit is a documented next step",
+   "input": {"ticker": "INTC", "note": "INTC/Citi filings not in drift corpus (kept lean); detection logic is pure-code guarded"},
+   "gallery": "docs/failure_gallery.md#fg-sec-005",
+   "related_commits": [],
+   "guarded_by": ["tests/test_cross_ref.py"],
+   "checks": []
+  },
+  {
+   "failure_id": "FG-SEC-006",
+   "app": "sec_extractor",
+   "failure_type": "third_engine_misattribution",
+   "status": "engine_side",
+   "summary": "edgartools attributed Item 1 TOC/MD&A content to Item 16 on NEM/NVDA/WMT; our span ('None.') is correct and triangulation honestly reports disagree+needs_review",
+   "input": {"ticker": "NEM", "accession": "0001164727-26-000010"},
+   "gallery": "docs/failure_gallery.md#fg-sec-006",
+   "related_commits": ["4209c87"],
+   "guarded_by": ["tests/test_third_engine.py"],
+   "checks": [
+    {"type": "item_status_in", "fixture": "NEM_FY2025", "item": "16", "expected": ["pass"]},
+    {"type": "item_max_span_chars", "fixture": "NEM_FY2025", "item": "16", "max_chars": 200}
+   ]
+  },
+  {
+   "failure_id": "FG-SEC-007",
+   "app": "sec_extractor",
+   "failure_type": "wrapper_boundary_ambiguity",
+   "status": "open",
+   "summary": "Wrapper 10-K Item 7/8 boundary definition diverges between engines (we mark the pointer stub incorporated_by_reference; edgartools extracts the appended full text); body resolution is the documented next step",
+   "input": {"ticker": "JPM", "accession": "0001628280-26-008131"},
+   "gallery": "docs/failure_gallery.md#fg-sec-007",
+   "related_commits": ["4209c87"],
+   "guarded_by": ["tests/test_third_engine.py"],
+   "checks": [
+    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "7", "expected": ["incorporated_by_reference"]},
+    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "8", "expected": ["incorporated_by_reference"]}
+   ]
+  },
+  {
+   "failure_id": "FG-SEC-008",
+   "app": "sec_extractor",
+   "failure_type": "wrapper_body_unresolved",
+   "status": "open",
+   "summary": "CYD iXBRL oracle proved JPM/GS wrapper Item 1C coverage is 0% (our 1C is a 170/247-char pointer stub; the officially tagged disclosure lives in the appended annual-report region); official_intervals are the input for future body resolution",
+   "input": {"ticker": "JPM", "accession": "0001628280-26-008131"},
+   "gallery": "docs/failure_gallery.md#fg-sec-008",
+   "related_commits": ["99c9274"],
+   "guarded_by": ["tests/test_cyd.py"],
+   "checks": [
+    {"type": "item_status_in", "fixture": "JPM_FY2025", "item": "1C", "expected": ["incorporated_by_reference"]},
+    {"type": "item_max_span_chars", "fixture": "JPM_FY2025", "item": "1C", "max_chars": 1000}
+   ]
+  },
+  {
+   "failure_id": "FG-SEC-009",
+   "app": "sec_extractor",
+   "failure_type": "format_era_unsupported",
+   "status": "unsupported",
+   "summary": "pre-2001 plain-text SGML 10-Ks are honestly unsupported: normalize keeps the text but candidate detection is HTML-oriented, so 0 candidates, all items missing/reserved, filing_class non_10k — no crash, no fake pass",
+   "input": {"ticker": "AAPL/KO", "accession": "0000320193-96-000023 / 0000021344-98-000004"},
+   "gallery": "docs/failure_gallery.md#fg-sec-009",
+   "related_commits": ["54bc872"],
+   "guarded_by": [],
+   "checks": [
+    {"type": "filing_class", "fixture": "AAPL_FY1996", "expected": "non_10k"},
+    {"type": "all_items_status_in", "fixture": "AAPL_FY1996", "expected": ["missing", "reserved"]},
+    {"type": "filing_class", "fixture": "KO_FY1997", "expected": "non_10k"},
+    {"type": "all_items_status_in", "fixture": "KO_FY1997", "expected": ["missing", "reserved"]}
+   ]
+  }
+ ]
+}

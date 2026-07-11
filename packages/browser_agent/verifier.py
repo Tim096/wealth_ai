@@ -96,6 +96,29 @@ def _check_forbidden(cond, obs: Observation) -> str:
     return "unknown"
 
 
+def subtract_baseline(contract: BrowserTaskContract, obs: Observation,
+                      ) -> tuple[BrowserTaskContract, list[str]]:
+    """Baseline-subtraction (premature-landmark guard). A success condition that
+    is ALREADY satisfied at t0 — start page loaded, before ANY action — cannot
+    be evidence the task was completed: it was true when nothing had been done
+    (the observed INTC failure: condition text_visible:intc, a token of the task
+    sentence, was true on the very first EDGAR search page → false PASS).
+    Such conditions are vacuous; drop them and report what was dropped so the
+    trace shows it. If everything is dropped, the emptied contract flows into
+    the open-ended gate in verify_contract: honest unknown, never a vacuous
+    pass. download_exists is untouched (nothing is downloaded at t0 → unknown,
+    not pass). Returns (effective contract, dropped ["type:value", ...])."""
+    kept, dropped = [], []
+    for c in contract.success_conditions:
+        if _check_success(c, obs, {}) == "pass":
+            dropped.append(f"{c.type}:{c.value}")
+        else:
+            kept.append(c)
+    if not dropped:
+        return contract, []
+    return contract.model_copy(update={"success_conditions": kept}), dropped
+
+
 def verify_contract(contract: BrowserTaskContract, obs: Observation,
                     extracted: dict[str, str] | None = None) -> VerifierResult:
     extracted = extracted or {}

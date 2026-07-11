@@ -164,9 +164,22 @@ Return EXACTLY ONE JSON object, nothing else:
        {"type":"download_exists","value":"<distinctive text the SAVED FILE must contain, or \"\">"}
      download_exists is verified against the file's BYTES on disk, not its name: if the task says to download a document AND locate a section in it (e.g. "download the 10-K and find Risk Factors"), set value to that section's exact heading ("Risk Factors") so a wrong or blocked page saved to disk cannot count as success. Use "" only when any file is acceptable.
      Prefer a distinctive phrase in the language the target page will render (English site -> English phrase). Keep each value short and literal (a title, a heading, a ticker, a section name) — not a whole sentence, not vague words that appear everywhere.
-     NEVER use an id/slug/token taken from a URL as a text_visible value — it does not appear as text on the page and would fail even when the task succeeded. For submitting a form, the completion landmark is the POST-SUBMIT page: use url_contains of the response URL (a Google Form lands on ".../formResponse") or the confirmation text the form shows after submit ("已送出" / "response has been recorded"), never a value copied from the form's link.
+     NEVER use an id/slug/token taken from a URL as a text_visible value — it does not appear as text on the page and would fail even when the task succeeded.
+     NEVER echo the task sentence: a condition must describe the state of the DELIVERABLE (the answer text, the destination page's landmark, the downloaded content), not repeat an entity name/ticker/word the task itself contains. A token like "intc" from the task is visible on any search/results page long before anything is done, so it proves nothing — such short task-echo text_visible values are rejected by a code guard. For submitting a form, the completion landmark is the POST-SUBMIT page: use url_contains of the response URL (a Google Form lands on ".../formResponse") or the confirmation text the form shows after submit ("已送出" / "response has been recorded"), never a value copied from the form's link.
 
 Rules: pick conditions that are SUFFICIENT (met => task genuinely done) and NECESSARY (task done => met). If the task is a search/read, the condition is the answer text or a landmark of the destination page. If it downloads a document to inspect, prefer download_exists carrying the section/heading to confirm. For an open-ended task ("find the most popular X", "找找有什麼有趣的商品", "播放某首歌"), still TRY a best-effort weak condition — text_visible of a query keyword, or a landmark of the destination page (its title/section). But if nothing observable would truthfully prove completion, return an empty array [] — the run then ends as an honest `unknown` for human review. NEVER invent a condition just to have one: a fabricated condition that fails on a genuinely-completed task is worse than none. Do not require login/CAPTCHA text. Never fabricate a value you don't expect to literally appear."""
+
+
+def _task_echo(value: str, task: str) -> bool:
+    """Task-echo guard (premature-landmark source reduction): a SHORT
+    text_visible value lifted verbatim from the task sentence — an entity
+    name/ticker like "intc" — is rendered by any search/results page the moment
+    the agent types it, i.e. it can be true before the task has done anything
+    (the observed INTC 10-K false PASS). Normalised (lowercase, collapsed
+    whitespace) substring match, ≤3 whitespace tokens; longer quoted phrases
+    usually describe the real deliverable and are kept."""
+    v = " ".join(value.lower().split())
+    return bool(v) and len(v.split()) <= 3 and v in " ".join(task.lower().split())
 
 
 class LLMPlanner:
@@ -202,6 +215,8 @@ class LLMPlanner:
                 continue
             if t != "download_exists" and not (0 < len(v) <= 120):
                 continue
+            if t == "text_visible" and _task_echo(v, task):
+                continue   # premature landmark: a task-sentence token proves nothing
             conds.append(f"{t}:{v}")
 
         def _clean_list(key: str, cap: int) -> list[str]:

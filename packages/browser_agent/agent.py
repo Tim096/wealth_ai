@@ -26,7 +26,7 @@ from browser_agent.memory_store import MemoryStore
 from browser_agent.observer import PageObserver
 from browser_agent.repair import diagnose_failure, repair_target
 from browser_agent.trajectory import repetition_report
-from browser_agent.verifier import verify_contract
+from browser_agent.verifier import subtract_baseline, verify_contract
 from observability_core import EvidenceRecord, EvidenceStore, VerifierResult, sha256_text
 
 
@@ -433,6 +433,18 @@ class BrowserAgent:
         llm_cost = 0.0
         give_ups = 0
         self._dismiss_overlay(trace)
+        # Baseline-subtraction (premature-landmark kill): a condition already
+        # true on the OPENING page proves nothing about completion — e.g. the
+        # INTC failure where text_visible:intc (a task-sentence token) was true
+        # on the first search page → false PASS. Drop t0-true conditions here;
+        # if none remain, the run continues on the open-ended path (honest
+        # unknown + full trace for human review), never a vacuous pass.
+        contract, baseline_dropped = subtract_baseline(contract, self.observer.observe())
+        if baseline_dropped:
+            trace.append(StepTrace(
+                step="baseline", action="subtract", ok=True, mode="agent",
+                detail="開場即成立、已剔除的條件(不能作為完成證據):" + "; ".join(baseline_dropped)))
+            _emit(f"🚫 條件在開場就成立(vacuous),已剔除:{'; '.join(baseline_dropped)}")
         verdict = VerifierResult(status="unknown", reason="no steps taken")
         _emit(f"🧠 想任務:{contract.natural_language_task}")
         for _ in range(max_steps):
@@ -542,6 +554,13 @@ class BrowserAgent:
             )
         trace: list[StepTrace] = []
         self._dismiss_modal_if_present(trace)
+        # same premature-landmark guard as run_agentic: a t0-true condition is
+        # vacuous evidence and must not be able to carry the final verdict
+        contract, baseline_dropped = subtract_baseline(contract, self.observer.observe())
+        if baseline_dropped:
+            trace.append(StepTrace(
+                step="baseline", action="subtract", ok=True, mode="script",
+                detail="開場即成立、已剔除的條件(不能作為完成證據):" + "; ".join(baseline_dropped)))
         repairs = 0
         for step in steps:
             out = self._resolve_and_run(step, trace)

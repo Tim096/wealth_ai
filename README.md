@@ -13,7 +13,7 @@
 | 共用層 | evidence store(兩題共用)、三態 verdict、eval case、LLM 成本紀錄 | 已實作 |
 | Eval Dashboard | 兩題 eval、XBRL 認證、browser repair trace(真實數據) | `apps/web/eval-dashboard/`,自包含 HTML |
 
-**292 tests 通過**(含真實瀏覽器 integration test + gateway e2e)。完整規格:[docs/SPEC.md](docs/SPEC.md)。手動測 Task 1:[docs/setup_codex_gateway.md](docs/setup_codex_gateway.md)。
+**303 tests 通過**(含真實瀏覽器 integration test + gateway e2e)。完整規格:[docs/SPEC.md](docs/SPEC.md)。手動測 Task 1:[docs/setup_codex_gateway.md](docs/setup_codex_gateway.md)。
 
 ## 核心原則(已在 code 層強制,不是文件宣示)
 
@@ -26,7 +26,7 @@
 
 雙擊 **`啟動測試中心.bat`** → 自動開 `http://127.0.0.1:8765`,一頁測兩題:
 
-- **題目一**:輸入自然語言任務 → 另開真實瀏覽器視窗全程可看,頁面串流每一步(思考→動作→驗證),最終由 verifier 判 PASS/FAIL/REFUSED。
+- **題目一**:輸入自然語言任務 → 另開真實瀏覽器視窗全程可看,頁面串流每一步(思考→動作→驗證),最終由 verifier 判 PASS/FAIL/REFUSED;開放式(無可機讀驗證條件)任務照跑並錄 trace,結果誠實判 **UNKNOWN**(交人工審 trace),不 crash 也不 vacuous pass。
 - **題目二**:輸入 ticker → 逐 item 檢視 status/confidence/provenance/XBRL/topic,點任一 item 讀 source-exact 原文;可一鍵下載原始 filing(byte-for-byte)。
 
 (Codex gateway 自動啟動;需先 `codex login` 一次。另有獨立視窗版:`啟動Agent.bat`、`驗證SEC.bat`。)
@@ -39,7 +39,7 @@ python -m venv .venv
 .venv\Scripts\python -m playwright install chromium
 $env:SEC_EDGAR_USER_AGENT = "your-name your@email"
 
-.venv\Scripts\python -m pytest                          # 292 passed
+.venv\Scripts\python -m pytest                          # 303 passed
 .venv\Scripts\python tools\browser_killer_demo.py       # 題目一:v1→v2 selector 自修復
 .venv\Scripts\python tools\browser_agent_live.py --mock # 題目一:Agent Mode 迴圈(免 key)
 .venv\Scripts\python tools\eval_one.py AAPL             # 題目二:抽取一份 10-K
@@ -86,7 +86,7 @@ data/       sec_eval(fixtures + records), golden_labels, mock_sites(v1/v2), raw_
 docs/       SPEC, architecture, eval_report, cost_latency_report, failure_gallery,
             supported_and_unsupported, insights_and_directions, prior_art, ai_collaboration_report
 prompts/    所有影響開發的 prompt + 決策(含 rejected)
-tests/      292 tests
+tests/      303 tests
 ```
 
 ## 已知邊界(誠實揭露)
@@ -95,7 +95,7 @@ tests/      292 tests
 - **Browser Agent 目前對本地 mock sites 完整驗證**;真實網站廣度 + WebArena/WebVoyager 對標列為 roadmap(`docs/prior_art.md`)。
 - **token-level boundary 已量化(2026-07-10)**:char-offset F1(建構性 gold,regression baseline,敏感度注入驗證 0.9853)+ CYD 官方 iXBRL oracle(9/9 pass segment coverage 100%);人工標註的絕對正確率仍列 backlog。見 `docs/eval_report.md`。
 - **pre-2001 純文字 SGML filing:Unsupported**(heading detector 0 candidate,誠實全 missing,partition invariant 仍成立)。見 `docs/supported_and_unsupported.md` format-era 支援表。
-- **Browser 4 個 measure-first 保留的已知弱點**(verifier filename-needle bypass、query-echo silent failure、repair fallback 到不可行元素、bait-field tie-break),刻意不修、各有 test 鎖住,見 `docs/failure_gallery.md` FG-BROWSER-002~005。
+- **Browser 4 個 measure-first 弱點已於 2026-07-10 修復**(verifier filename-needle bypass、query-echo silent failure、repair fallback 到不可行元素、bait-field tie-break;commit c4ac7cd / 3f0b1e9):校準 specificity 0.9583→1.0、FP rate 0.0417→0.0、impossible silent_failure_rate 0.1→0.0、perception degradation curve 尾端 0.0→1.0。原 `test_known_*` 已翻寫為 `test_fixed_*` 並重跑 artifact。另修復開放式(零條件)任務 crash → 誠實 unknown(FG-BROWSER-006,commit 2fec949)。逐條前→後見 `docs/failure_gallery.md` FG-BROWSER-002~006 與 `docs/eval_report.md`「修復迭代」段。
 
 ## AI 協作方式
 

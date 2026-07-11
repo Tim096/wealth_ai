@@ -173,22 +173,22 @@ Eval set(`data/browser_eval/tasks.json`,4 tasks,分層,offline mock sites)+ runn
 
 46 個 by-construction triple(22 success + 24 corrupted,4 種損毀 class:needle_removed / wrong_url / download_wrong_content / confident_false_claim)餵 verifier:
 
-| Metric | 值 |
+| Metric | 值(2026-07-10 修復後)|
 |---|---|
 | sensitivity | **1.000** |
-| specificity | **0.9583** |
-| FP rate | **0.0417**(1 個真實 FP:filename-needle bypass → FG-BROWSER-002)|
+| specificity | **1.0**（修復前 0.9583）|
+| FP rate | **0.0**（修復前 0.0417；唯一 FP filename-needle bypass 已於 c4ac7cd 修掉,FG-BROWSER-002）|
 | FN rate | 0.000 |
 | corrupted unknown rate | 0.125(unknown 單獨列,不併入 fail)|
 
-Rogan-Gladen 校正後成功率 = **0.7913**(apparent 0.8,分母 0.9583,status=ok)。**校準範圍聲明**:僅涵蓋 url_contains / text_visible / download_exists + 4 種 forbidden;table_extracted / screenshot_region_changed / field_value_equals 為結構性 unknown,排除且寫進 artifact 的 `scope.excluded_condition_types`。confident_false_claim class 0 pass——證實 verifier 不吃 agent 自述。
+Rogan-Gladen 校正後成功率 = **0.8**(apparent 0.8,分母 1.0,status=ok;修復前 0.7913／分母 0.9583)。**校準範圍聲明**:僅涵蓋 url_contains / text_visible / download_exists + 4 種 forbidden;table_extracted / screenshot_region_changed / field_value_equals 為結構性 unknown,排除且寫進 artifact 的 `scope.excluded_condition_types`。confident_false_claim class 0 pass——證實 verifier 不吃 agent 自述。corrupted 三態現為 {pass 0 / fail 21 / unknown 3},confusion FP=0。
 
 - 重跑:`.venv/Scripts/python tools/calibrate_verifier.py`(零瀏覽器)
 - Artifacts:`data/browser_eval/calibration/calibration_results.json`(cases 自包含可跨機器重播:`calibration_cases.json`)
 
 #### Impossible-task set:silent-failure rate(T1-3)
 
-12 cases(10 impossible + 2 refused;product_absent / feature_absent / false_premise / unobservable / refused),真 headless chromium end-to-end:**silent_failure_rate = 0.1**(1/10)、honest_outcome_rate = 0.9(7 fail + 2 unknown)、refused 2/2 正確擋下(0 leaked to action)。那 1 個真實 silent failure(query-echo teleporter → FG-BROWSER-003)是量測出來的誠實數字,不是 cooked 0.0——這正是 impossible set 的價值。
+12 cases(10 impossible + 2 refused;product_absent / feature_absent / false_premise / unobservable / refused),真 headless chromium end-to-end。**2026-07-10 修復後**:**silent_failure_rate = 0.0**(修復前 0.1／1-of-10)、honest_outcome_rate = **1.0**(8 fail + 2 unknown;修復前 0.9)、expect_status_accuracy = **1.0**(修復前 0.9167)、refused 2/2 正確擋下(0 leaked to action)。原本那個真實 silent failure(query-echo teleporter → FG-BROWSER-003)在 c4ac7cd 由 text_visible 空結果回顯遮罩修掉,teleporter 從 pass 翻成正確的 fail——measure(0.1)→ fix → remeasure(0.0)的完整閉環,不是一開始就 cook 出的 0.0。
 
 - 重跑:`.venv/Scripts/python tools/impossible_tasks.py`
 - Artifact:`data/browser_eval/impossible/impossible_results.json`
@@ -209,17 +209,48 @@ RUN 級觀測(不改 agent 行為,AgentRewardBench 三維度):5 tasks mean_repet
 
 #### 三軸擾動 + degradation curve(T1-2)
 
-mutation-site 矩陣(StressWeb 路線):clean + 3 軸(perception / action / execution)× 3 強度 = 10 cells × 3 queries = 30 probes,全部 deterministic(無 Math.random,test 鎖;generator 與 committed HTML 有 drift-lock test)。success_rate:clean/light/medium 全 1.0、三軸 heavy 全 0.0;**三軸 curve 皆 monotone non-increasing(1.0→1.0→1.0→0.0)**。checkpoint 解離訊號定位失敗位置:perception-heavy ckpt=0.0(失敗在輸入階段)vs action/execution-heavy ckpt=1.0(失敗在下游)。mid-task recovery:light/medium = 1.0、heavy = 0.0、無 fault 的 cell 誠實回 null。avg_repairs 呈現「成功但有成本」中間態(light/medium 2.0/1.0 vs clean 0.0)。矩陣抓出 2 個真實 repair 弱點(FG-BROWSER-004/005),measure-first 刻意不修、各有 test 鎖住。
+mutation-site 矩陣(StressWeb 路線):clean + 3 軸(perception / action / execution)× 3 強度 = 10 cells × 3 queries = 30 probes,全部 deterministic(無 Math.random,test 鎖;generator 與 committed HTML 有 drift-lock test)。三軸 curve 皆 **monotone non-increasing**。avg_repairs 呈現「成功但有成本」中間態(light/medium 2.0/1.0 vs clean 0.0)。矩陣原本抓出 2 個真實 repair 弱點(FG-BROWSER-004/005),measure-first 先量測、**2026-07-10 由 commit 3f0b1e9 修復並重跑**:
+
+- **perception 軸(FG-BROWSER-005,bait-field tie-break)**:form-context tie-break 讓真搜尋框勝出誘餌 Promo 欄位。perception curve 1.0→1.0→1.0→**0.0** 變 1.0→1.0→1.0→**1.0**;perception-heavy success 0.0→**1.0**、checkpoint 0.0→**1.0**、recovery 0.0→**1.0**。
+- **action 軸(FG-BROWSER-004,repair fallback 到不可行元素)**:可行性 gate 讓 repair 對 `<span onclick>` submit(不進 a11y 枚舉)回「no viable candidate」而非 silent wrong click。action-heavy success **仍 0.0**(submit 真的不存在),但 fail 得**更誠實**:3/3 run honest_refusals=1;curve 1.0→1.0→1.0→0.0 不變、checkpoint 1.0 不變。artifact 新增 `honest_refusals` 欄位把「誠實 fail vs silent wrong click」寫進 committed 數字。
+
+checkpoint 解離訊號仍定位失敗位置:action/execution-heavy ckpt=1.0(失敗在下游)。mid-task recovery:light/medium = 1.0、無 fault 的 cell 誠實回 null。其餘 8 cells 判定與 repairs 完全不變。
 
 - 重跑:`.venv/Scripts/python tools/degradation_curve.py`(注意:artifact 內嵌 per-probe latency_ms,重跑非 byte-stable;全部 metric 欄位確定性重現)
 - Artifact:`data/browser_eval/artifacts/degradation_curve.json`
 
 #### 輕量 false-success detector(T1-6,heuristic 路線)
 
-labeled full trajectory <60(論文 2606.09863 的 train 門檻)→ 誠實走 heuristic 前哨,不硬 train:24 個 claimed-pass 上 **precision 1.0 / recall 0.5 / flag_rate 0.0417**(tp 1 / fp 0 / fn 1 / tn 22)。TP = teleporter query-echo;FN = filename-bypass(download-content 超出 visible-text 特徵範疇,誠實漏抓,test 鎖住)。表面 proxy(closing 語氣、序列長度)刻意單獨不足以 flag——直接對應論文警告「judge 過度倚賴表面訊號」。TF-IDF+XGBoost 版寫進 artifact 的 roadmap(前置條件:≥60 labeled trajectory + trajectory log 補存 agent 自述)。detector 是 opt-in triage hint,**絕不改判定**(verdict_unchanged invariant 有 test 鎖)。
+labeled full trajectory <60(論文 2606.09863 的 train 門檻)→ 誠實走 heuristic 前哨,不硬 train。**2026-07-10 修復後**:兩個 ground-truth false success(teleporter query-echo、filename-bypass)在 verifier 上游(c4ac7cd)被消滅,detector 已無假 pass 可抓——applicable claimed-pass 24→**22**、confusion {tp1/fp0/fn1/tn22}→**{tp0/fp0/fn0/tn22}**、flag_rate 0.0417→**0.0**、precision 1.0→**null**、recall 0.5→**null**(分母歸零,已在 artifact `known_limitations` 寫明:代價是此 corpus 上 recall 暫不可量測——上游把 false success 修光是好事,但也讓下游 detector 在此 corpus 失去可量測樣本)。表面 proxy(closing 語氣、序列長度)刻意單獨不足以 flag——直接對應論文警告「judge 過度倚賴表面訊號」。TF-IDF+XGBoost 版寫進 artifact 的 roadmap(前置條件:≥60 labeled trajectory + trajectory log 補存 agent 自述)。detector 是 opt-in triage hint,**絕不改判定**(verdict_unchanged invariant 有 test 鎖)。
 
 - 重跑:`.venv/Scripts/python -m tools.false_success_detector`(script 形式亦可,sys.path bootstrap 已補,commit `2fc9f06`)
 - Artifact:`data/browser_eval/false_success/detector_results.json`
+
+#### 開放式(不可驗證)任務:誠實 unknown 而非 crash / vacuous pass(2026-07-10,FIX-1)
+
+無可機讀驗證條件的任務(如「隨便逛逛看有什麼有趣的」)過去會讓 run crash(contract `success_conditions` min_length=1 → ValidationError → status=ERROR),或在繞過後 vacuous pass(什麼都沒證明卻回 pass)。修復(commit 2fec949)讓這類任務:contract 允許空條件、verifier 空 success 時先跑 forbidden、否則短路回 **unknown** + 明講需人工審 trace、agent 照常執行並錄 trace。3 個開放式 case 實測:status 全 unknown、**crashes 0 / vacuous_passes 0 / honest_unknown_rate 1.0**、traces_recorded 3(每 case trace steps 2/3/2 > 0)。這是三態鐵律在「開放式任務」上的落地:缺可驗證證據 → unknown,絕不 vacuous pass、絕不 crash 掉誠實輸入。
+
+- 重跑:`.venv/Scripts/python tools/open_ended_tasks.py`
+- Artifact:`data/browser_eval/open_ended/open_ended_results.json`
+
+### 修復迭代(2026-07-10):measure → fix → remeasure 前→後對照
+
+上面 6 項 eval 升級刻意先 measure-first 呈現系統現狀(4 個 browser 弱點 + 1 個開放式 crash),本波把它們全數修掉並重跑 artifact。舊數字保留在上文為歷史 baseline——measure-fix-remeasure 是本專案的方法論賣點,不抹掉「修復前」。
+
+| 指標 / case | 修復前 | 修復後 | commit | artifact |
+|---|---|---|---|---|
+| 校準 specificity | 0.9583 | **1.0** | c4ac7cd | `calibration/calibration_results.json` |
+| 校準 FP rate | 0.0417 | **0.0** | c4ac7cd | 同上 |
+| 校準 Rogan-Gladen corrected | 0.7913 | **0.8** | c4ac7cd | 同上 |
+| corrupted 三態 | pass1/fail20/unknown3 | **pass0/fail21/unknown3** | c4ac7cd | 同上 |
+| impossible silent_failure_rate | 0.1 | **0.0** | c4ac7cd | `impossible/impossible_results.json` |
+| impossible honest_outcome_rate | 0.9 | **1.0** | c4ac7cd | 同上 |
+| degradation perception curve | 1.0→1.0→1.0→0.0 | **1.0→1.0→1.0→1.0** | 3f0b1e9 | `artifacts/degradation_curve.json` |
+| degradation action-heavy | fail(silent wrong click)| **fail(honest_refusals=1)** | 3f0b1e9 | 同上 |
+| detector confusion | tp1/fp0/fn1/tn22 | **tp0/fp0/fn0/tn22**(recall 0.5→null)| c4ac7cd | `false_success/detector_results.json` |
+| 開放式任務 | crash / vacuous-pass 風險 | **honest_unknown_rate 1.0,crashes 0** | 2fec949 | `open_ended/open_ended_results.json` |
+
+FG-BROWSER-002~006 的逐條 Repair 說明見 `docs/failure_gallery.md`。
 
 ### Browser held-out / 真實網站(誠實邊界)
 

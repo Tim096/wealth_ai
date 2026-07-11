@@ -50,7 +50,9 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 from browser_core import BrowserTaskContract, ForbiddenCondition, SuccessCondition
-from browser_agent.agent import BrowserAgent, Step
+from browser_agent.agent import (
+    DEFAULT_MAX_STEPS, BrowserAgent, Step, resolve_max_steps,
+)
 from browser_agent.cost_metrics import cost_metrics
 from browser_agent.memory_store import MemoryStore
 from browser_agent.observer import PageObserver
@@ -64,8 +66,9 @@ from observability_core import EvidenceStore
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))                    # `tools.` imports when run as a script
 from tools.eval_worker import (                  # noqa: E402
-    HarnessAbort, arm_watchdog, harness_report, load_done_summary,
-    run_guarded, run_pool, scan_incomplete, session_cost_model, should_abort,
+    HarnessAbort, WORKER_TASK_TIMEOUT_S, arm_watchdog, harness_report,
+    load_done_summary, run_guarded, run_pool, scan_incomplete,
+    session_cost_model, should_abort,
 )
 TASKS = ROOT / "data" / "browser_eval" / "tasks.json"
 OUT = ROOT / "runs" / "browser_eval"
@@ -77,6 +80,15 @@ PASSK = ROOT / "data" / "browser_eval" / "passk"
 
 def uri(version: str) -> str:
     return (ROOT / "data" / "mock_sites" / version / "index.html").resolve().as_uri()
+
+
+def watchdog_timeout_s(max_steps: int) -> float:
+    """P1-15: the pool's wall-clock watchdog scales LINEARLY with the step
+    budget — a 25-step hard task gets 25/8 of the base 8-step timeout instead
+    of being killed at the easy-task deadline; a smaller budget never shrinks
+    it below the base. The P0-6 Budget caps inside the run stay the hard stop;
+    this only keeps the harness from killing a legitimately long task."""
+    return WORKER_TASK_TIMEOUT_S * max(1.0, max_steps / DEFAULT_MAX_STEPS)
 
 
 def build(task: dict):
@@ -220,12 +232,17 @@ def run_script_pass(page, tasks: list[dict], mem_path: Path, evidence=None,
     return rows
 
 
-def run_agentic_pass(page, tasks: list[dict], mem_path: Path) -> list[dict]:
+def run_agentic_pass(page, tasks: list[dict], mem_path: Path,
+                     max_steps: int | None = None) -> list[dict]:
     """One Agent-Mode pass using the offline deterministic MockPlanner (no key).
     Demonstrates the pass@k machinery on the LLM path; MockPlanner is still
     deterministic, so real flakiness only shows with a live planner.
     Guarded like the script pass; summaries live under <task_id>--agentic so
-    they never mask/overwrite the Script-Mode summary for the same task."""
+    they never mask/overwrite the Script-Mode summary for the same task.
+
+    P1-15: the per-task step budget comes from resolve_max_steps — CLI
+    `--max-steps` override > task `max_steps` field > `difficulty` tier
+    (easy 8 / medium 15 / hard 25) > default 8."""
     from browser_agent.planner import MockPlanner
     if mem_path.exists():
         mem_path.unlink()
@@ -239,7 +256,7 @@ def run_agentic_pass(page, tasks: list[dict], mem_path: Path) -> list[dict]:
             agent = BrowserAgent(page, mem, site="mockshop", task_type="search")
             _, contract = build(task)
             run = agent.run_agentic(task["task_id"], contract, MockPlanner(task["query"]),
-                                    max_steps=6)
+                                    max_steps=resolve_max_steps(task, max_steps))
             return _row(run, task)
 
         summary = run_guarded(f"{task['task_id']}--agentic", _one, out_root=OUT)
@@ -256,7 +273,8 @@ def run_agentic_pass(page, tasks: list[dict], mem_path: Path) -> list[dict]:
     return rows
 
 
-def run_parallel_pass(tasks: list[dict], workers: int, resume: bool = False):
+def run_parallel_pass(tasks: list[dict], workers: int, resume: bool = False,
+                      max_steps: int | None = None):
     """P0-11: one Script-Mode pass over the task set on the subprocess worker
     pool (tools/eval_worker.run_pool). Each worker keeps one browser session
     across its tasks (session pool — cold start amortized) with a fresh context
@@ -286,8 +304,13 @@ def run_parallel_pass(tasks: list[dict], workers: int, resume: bool = False):
                 continue
         to_run.append(task)
 
+    # P1-15: the pool watchdog deadline follows the LARGEST step budget in the
+    # set — one shared deadline, so no task is killed at a smaller task's cap.
+    budget_s = watchdog_timeout_s(
+        max((resolve_max_steps(t, max_steps) for t in to_run), default=DEFAULT_MAX_STEPS))
     try:
-        summaries, pool_stats = run_pool(to_run, workers=workers, out_root=OUT, mem_dir=OUT)
+        summaries, pool_stats = run_pool(to_run, workers=workers, out_root=OUT,
+                                         mem_dir=OUT, task_timeout_s=budget_s)
     except HarnessAbort as ab:
         # re-raise with row-shaped partials so main() persists them as usual
         raise HarnessAbort([to_row(s) for s in ab.rows], ab.n_error, ab.n_attempted) from None
@@ -400,7 +423,8 @@ def aggregate_passk(rows_by_task: dict, k: int) -> dict:
 
 
 def main(repeat: int = 1, agentic: bool = False, resume: bool = False,
-         workers: int = 1, second_judge: bool = False) -> None:
+         workers: int = 1, second_judge: bool = False,
+         max_steps: int | None = None) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     judge_ctx = None
     if second_judge:
@@ -428,7 +452,8 @@ def main(repeat: int = 1, agentic: bool = False, resume: bool = False,
         # P0-11 parallel path: single Script-Mode pass on the subprocess pool
         # (no browser in this process — every session lives in a worker)
         try:
-            rows, scalability = run_parallel_pass(tasks, workers, resume=resume)
+            rows, scalability = run_parallel_pass(tasks, workers, resume=resume,
+                                                  max_steps=max_steps)
             script_passes.append(rows)
         except HarnessAbort as ab:
             script_passes.append(ab.rows)
@@ -448,7 +473,8 @@ def main(repeat: int = 1, agentic: bool = False, resume: bool = False,
                         judge_ctx=judge_ctx if rep == 0 else None))
                     if agentic:
                         agentic_passes.append(run_agentic_pass(
-                            page, agentic_subset, OUT / "selector_memory_agentic.json"))
+                            page, agentic_subset, OUT / "selector_memory_agentic.json",
+                            max_steps=max_steps))
                 except HarnessAbort as ab:
                     # persist the partial rows instead of losing the whole set
                     target = script_passes if len(script_passes) == rep else agentic_passes
@@ -566,6 +592,11 @@ if __name__ == "__main__":
                     help="P0-8: advisory second judge — per-condition micro-judgments "
                          "diffed against the primary verifier; writes "
                          "runs/browser_eval/second_judge.json (verdicts untouched)")
+    ap.add_argument("--max-steps", type=int, default=None,
+                    help="P1-15: override the per-task step budget for every task; "
+                         "without it each task resolves its own budget — task "
+                         "`max_steps` field > `difficulty` tier (easy 8 / medium 15 "
+                         "/ hard 25) > default 8. P0-6 budget caps stay the hard stop")
     args = ap.parse_args()
     if args.repeat < 1:
         ap.error("--repeat must be >= 1")
@@ -577,5 +608,8 @@ if __name__ == "__main__":
         ap.error("--workers applies to the single-pass Script-Mode run only")
     if args.second_judge and (args.repeat != 1 or args.agentic or args.workers > 1):
         ap.error("--second-judge applies to the single-pass sequential Script-Mode run only")
+    if args.max_steps is not None and args.max_steps < 1:
+        ap.error("--max-steps must be >= 1")
     main(repeat=args.repeat, agentic=args.agentic, resume=args.resume,
-         workers=args.workers, second_judge=args.second_judge)
+         workers=args.workers, second_judge=args.second_judge,
+         max_steps=args.max_steps)

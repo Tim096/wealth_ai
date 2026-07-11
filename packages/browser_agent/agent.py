@@ -138,6 +138,34 @@ def vision_escalation_reason(history: list[str], page_hashes: list[str],
 _NUDGE_LADDER = (5, 8, 12)
 _REPLAN_FAILS = 3
 
+# P1-15 long-horizon step budgets: the historical default stays 8 (existing
+# sets unchanged), but a task definition can now size its own loop — an
+# explicit `max_steps` field, or a `difficulty` tier — and an explicit
+# override (CLI flag) beats both. Imported medium/hard sets (P1-1
+# reference_length layering) are no longer doomed by a one-size-fits-all 8.
+# The P0-6 Budget caps (steps/tokens/USD/wall-clock) remain the HARD stop:
+# this only sizes the loop, it never loosens a Budget dimension.
+DEFAULT_MAX_STEPS = 8
+STEP_BUDGET_BY_DIFFICULTY = {"easy": 8, "medium": 15, "hard": 25}
+
+
+def resolve_max_steps(task: dict | None = None,
+                      override: int | None = None) -> int:
+    """Resolve the step budget for one task. Precedence: explicit override
+    (CLI flag) > task['max_steps'] field > task['difficulty'] tier >
+    DEFAULT_MAX_STEPS. Malformed values (non-positive, unknown tier) fall
+    through to the next source so a bad field can never zero the run."""
+    if override is not None and override > 0:
+        return override
+    if task:
+        ms = task.get("max_steps")
+        if isinstance(ms, int) and not isinstance(ms, bool) and ms > 0:
+            return ms
+        tier = STEP_BUDGET_BY_DIFFICULTY.get(str(task.get("difficulty", "")).lower())
+        if tier:
+            return tier
+    return DEFAULT_MAX_STEPS
+
 
 def _no_progress_entry(h: str) -> bool:
     """A history entry that advanced nothing: a failed action, a planner noop,
@@ -673,7 +701,7 @@ class BrowserAgent:
         raise ValueError(f"unknown step kind {step.kind}")
 
     def run_agentic(self, task_id: str, contract: BrowserTaskContract, planner,
-                    max_steps: int = 8, on_step=None, plan_steps=None,
+                    max_steps: int = DEFAULT_MAX_STEPS, on_step=None, plan_steps=None,
                     budget: Budget | None = None) -> TaskRun:
         """Agent Mode (SPEC 6.2): an LLM planner chooses actions from the
         controlled schema; each is capability-screened and executed; the

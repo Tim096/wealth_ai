@@ -218,6 +218,7 @@
 
 ## 外部量測 rerun 2026-07-10(post wave-2)
 
+> (歷史紀錄,16:50 盤點;17:23 rerun 已補齊 after 欄,見下表。)
 > Adversarial interpreter pass(16:50 當下盤點)。**結論先講:post-wave-2 的外部數字尚不存在。**
 > 磁碟上的 `data/sec_eval/scoring/head_to_head.json`(mtime 15:16)是 pre-wave 產物:schema 只有
 > `ours`/`edgartools` 兩 engine(wave-2 的 edgar_crawler/datamule 參賽 engine 不在內),summary 與
@@ -225,19 +226,48 @@
 > 因此 AUROC/ECE 到小數第 4 位「不變」——這不是穩定,是輸入沒換。16:45 的 4-engine smoke(slice=2)
 > 證明新 pipeline 可跑,但 n=2 的數字是雜訊。完整 30-slice rerun 截至 16:51 尚未啟動(無對應 process)。
 
-### 數字表(before = pre-wave 實測;after = pending)
+### 數字表(before = pre-wave 實測;after = post overshoot-guard rerun 實測)
 
-| 指標 | 來源 | before(pre-wave) | after(post wave-2) | 手工重算驗證 |
+Rerun 於 2026-07-10 17:22–17:23 完成(overshoot guard `7940dbe` 之後),artifacts committed
+`8589577`:head_to_head.json 為 4-engine schema、30 filings;calibration.json generated_at
+17:23,讀的是同分鐘的新 h2h。Adversarial 重算(獨立腳本,非引用 tool 輸出):macro-F1 由
+30 筆 per-filing 逐筆平均重算全數吻合;ECE 由 10-bin reliability bins 重算 = 0.1762(exact);
+conf≥0.9 錯誤 = 369×(1−0.7751) = 83.0;攔截拆帳 141−100(false pass)−12(conf<0.6 bins
+實算)= 29 needs_review,閉合。
+
+| 指標 | 來源 | before(pre-wave) | after(post-fix) | 手工重算驗證 |
 |---|---|---|---|---|
-| macro-F1(ours, n=28) | head_to_head.json, NTU 30-slice | 0.5961 | **pending(rerun 未跑)** | 0.5961 ✓(filings 逐筆平均) |
-| macro-F1(edgartools, n=26) | 同上 | 0.4386 | pending | 0.4386 ✓ |
-| AUROC(ntu_human_labeled, n=512) | calibration.json | 0.6277 | pending(16:31 檔 = stale 輸入重算) | 0.6277 ✓(rank-based 重算) |
-| ECE(ntu_human_labeled) | 同上 | 0.1753 | pending | 0.1753 ✓(10-bin 重算) |
-| verifier false-pass rate | 同上(gate: conf≥0.6 ∧ ¬needs_review) | 0.2410(107/444) | pending | 107/444=0.2410 ✓ |
-| AUROC(pseudo_gold_corpus_only, n=275) | calibration.json | 0.4288(比丟銅板差) | pending | — |
+| macro-F1(ours, n=28) | head_to_head.json, NTU 30-slice | 0.5961 | **0.5964** | 0.5964 ✓(filings 逐筆平均) |
+| macro-F1(edgartools, n=26) | 同上 | 0.4386 | 0.4386 | 0.4386 ✓ |
+| macro-F1(edgar_crawler, n=30) | 同上(wave-2 新參賽) | — | 0.6332 | 0.6332 ✓ |
+| macro-F1(datamule, n=28) | 同上(wave-2 新參賽) | — | 0.6244 | 0.6244 ✓ |
+| AUROC(ntu_human_labeled, n=512) | calibration.json | 0.6277 | **0.6307** | binned 下界 0.5984 一致 ✓ |
+| ECE(ntu_human_labeled) | 同上 | 0.1753 | 0.1762 | 0.1762 ✓(10-bin 重算, exact) |
+| verifier false-pass rate | 同上(gate: conf≥0.6 ∧ ¬needs_review) | 0.2410(107/444) | **0.2519(100/397)** | 100/397=0.2519 ✓;coverage 397/512=0.7754 ✓ |
+| AUROC(pseudo_gold_corpus_only, n=275) | calibration.json | 0.4288(比丟銅板差) | 0.4139 | —(aux,維持煙霧偵測定位) |
 
-數字本身內部一致、無造假;問題只在「rerun」的 after 欄還沒被量出來。任何把 0.5961/0.6277 當
-post-wave 成績引用的文件都是在引用 stale 數據。
+### 驗收門檻判定(§下一步修法設的 gate,誠實記帳)
+
+| Gate | 目標 | after 實測 | 判定 |
+|---|---|---|---|
+| needs_review 錯誤攔截率 | 19/141 → **≥50%** | 29/141 = **20.6%** | **MISS**(+10 items,遠不及) |
+| conf≥0.9 桶內錯誤 | 87 → **減半(≤44)** | **83** | **MISS**(−4) |
+| AUROC(NTU) | 0.6277 → **≥0.75** | **0.6307** | **MISS**(+0.003) |
+| macro-F1(副產品) | 上漲 | 0.5961 → 0.5964 | PASS(邊際,+0.0003) |
+
+三個主 gate 全 MISS。Guard 確實上線(38 筆樣本落在 0.70–0.75 封頂區、sweep3 clean corpus
+零新增誤報),但對 NTU 錯誤主體幾乎無感。
+
+### 修後殘餘主導桶(為何 guard 打不到)
+
+修前診斷的 123/141 boundary-bleed 桶,修後仍有 46 個錯誤停在 conf=1.0、83 個在 conf≥0.9。
+原因是 containment check 的前提——「吞進去的下一個 item heading 能被 headings.py detector
+以 strict_regex + DOM/visual 佐證找到」——在 NTU 主導桶大多不成立:bleed 多為 cascade
+選擇錯誤或 heading 形態偵測不到(bare/變體 heading、表格內 heading),containment 無訊號;
+size-ratio 單獨在 NTU 上鑑別力不足(band 是 corpus p95-proxy,對 IBR stub 與長 item 同時
+失準)。下一個訊號需要不依賴「heading 可偵測」:候選有 next-item-anchor 時量 span 終點與
+anchor 的距離,或 per-item gold-free 長度先驗(相對於 filing 總長的占比分布)。在該訊號
+落地前,AUROC ≥0.75 與 ≥50% 攔截這兩個 gate 維持未達成狀態,不得引用 0.63 為「可接受」。
 
 ### 診斷:AUROC 為何卡在 0.63(從 512 筆 raw data 算,非臆測)
 

@@ -5,10 +5,12 @@ segments are flagged for the (separate, optional) adjudicator.
 
 from __future__ import annotations
 
+import os
 import time
 from dataclasses import dataclass, field
 
 from observability_core import EvidenceRecord, EvidenceStore, VerifierResult, sha256_text
+from sec_core.adjudicator import BoundaryEvidence
 from sec_core.boundary import resolve_items
 from sec_core.confidence import ConfidenceBreakdown
 from sec_core.cross_ref import (
@@ -33,6 +35,13 @@ class ExtractionResult:
     filing_class: str = "standard"  # standard | cross_reference_index | non_10k
     latency_ms: float = 0.0
     warnings: list[str] = field(default_factory=list)
+    # LLM adjudication tier accounting (SPEC 7.13). Always zero on the
+    # deterministic path — only adjudicate_ambiguous() increments these.
+    llm_calls: int = 0
+    llm_input_tokens: int = 0
+    llm_output_tokens: int = 0
+    llm_cost_usd: float = 0.0
+    llm_call_records: list = field(default_factory=list)  # list[LLMCallRecord]
 
     def segment(self, code: str) -> ItemSegment:
         return next(s for s in self.segments if s.item_code == code)
@@ -40,6 +49,121 @@ class ExtractionResult:
     def text_of(self, code: str) -> str:
         s = self.segment(code)
         return self.doc.slice(s.start_offset, s.end_offset)
+
+
+_ADJUDICATOR_SYSTEM = (
+    "You adjudicate one ambiguous SEC 10-K item boundary. Two heading candidates are "
+    "given with surrounding source context. Decide which candidate starts the real item "
+    "body (not a table-of-contents entry, cross-reference or stray mention). Reply with "
+    'ONE JSON object exactly: {"decision": "candidate_a"|"candidate_b"|"unknown", '
+    '"confidence": <0.0-1.0>, "evidence_quote": "exact substring copied verbatim from '
+    'one candidate\'s context", "reason": "short reason"}. Never generate, summarize or '
+    'rewrite filing text. If unsure, decision must be "unknown".'
+)
+
+
+def _candidate_context(doc: NormalizedDocument, start: int, before: int = 200, after: int = 700) -> str:
+    return doc.slice(max(0, start - before), min(len(doc.text), start + after))
+
+
+def adjudicate_ambiguous(result: ExtractionResult, client=None) -> int:
+    """LLM boundary-adjudication tier (SPEC 7.13). OFF the deterministic path:
+    runs only when explicitly invoked (or via SEC_LLM_ADJUDICATE=1), and only on
+    segments the deterministic pipeline marked ambiguous that still have a
+    surviving runner-up candidate. The LLM only chooses between existing
+    candidates — it never produces filing text, and the chosen span/offsets are
+    left unchanged (the decision is recorded as evidence + warning;
+    needs_review stays raised). Schema gate: output must validate as
+    AdjudicatorDecision AND the evidence_quote must be a verbatim substring of
+    the supplied context, else the decision is downgraded to unknown. Every
+    call is accounted as an LLMCallRecord and aggregated onto the result
+    (llm_calls / llm_*_tokens / llm_cost_usd). Returns the number of LLM calls.
+    """
+    from llm_core.calls import LLMCallRecord
+    from llm_core.openai_client import OpenAIClient
+    from sec_core.adjudicator import AdjudicatorDecision
+    from sec_core.boundary import _score
+
+    if client is None:
+        client = OpenAIClient()
+    if not client.available():
+        result.warnings.append(
+            "LLM adjudication requested but no client configured "
+            "(set OPENAI_API_KEY / OPENAI_BASE_URL) — segments stay ambiguous")
+        return 0
+
+    calls = 0
+    for seg in result.segments:
+        if seg.status != "ambiguous":
+            continue
+        chosen = next((c for c in result.candidates
+                       if c.code == seg.item_code and c.start == seg.start_offset), None)
+        others = [c for c in result.candidates
+                  if c.code == seg.item_code and not c.toc_rejected and c.start != seg.start_offset]
+        if chosen is None or not others:
+            continue  # ambiguity came from a verifier-unknown, not a runner-up duel
+        runner_up = max(others, key=_score)
+        ctx_a = _candidate_context(result.doc, chosen.start)
+        ctx_b = _candidate_context(result.doc, runner_up.start)
+        user = (
+            f"Item code: {seg.item_code}\nCanonical title: {seg.canonical_title}\n\n"
+            f"Candidate A (offset {chosen.start}, detectors {sorted(chosen.detectors)}, "
+            f"score {_score(chosen):.2f}):\n---\n{ctx_a}\n---\n\n"
+            f"Candidate B (offset {runner_up.start}, detectors {sorted(runner_up.detectors)}, "
+            f"score {_score(runner_up):.2f}):\n---\n{ctx_b}\n---\n\n"
+            "Which candidate starts the real item body?"
+        )
+        parsed, resp = client.complete_json(_ADJUDICATOR_SYSTEM, user)
+        calls += 1
+        result.llm_calls += 1
+        result.llm_input_tokens += resp.input_tokens
+        result.llm_output_tokens += resp.output_tokens
+        result.llm_cost_usd += resp.cost_usd
+
+        schema_valid = True
+        try:
+            decision = AdjudicatorDecision(
+                decision=parsed.get("decision", "unknown"),
+                confidence=float(parsed.get("confidence", 0.0)),
+                evidence_quote=str(parsed.get("evidence_quote", "")),
+                reason=str(parsed.get("reason", "")),
+            )
+        except (ValueError, TypeError):
+            schema_valid = False
+            decision = AdjudicatorDecision(
+                decision="unknown", confidence=0.0, evidence_quote="",
+                reason="adjudicator output failed schema validation")
+        if (decision.decision != "unknown"
+                and decision.evidence_quote not in ctx_a and decision.evidence_quote not in ctx_b):
+            decision = AdjudicatorDecision(
+                decision="unknown", confidence=0.0, evidence_quote="",
+                reason="evidence_quote is not a verbatim substring of the supplied context — downgraded")
+
+        result.llm_call_records.append(LLMCallRecord(
+            call_id=f"{result.filing_id}-item{seg.item_code}-adj{calls}",
+            run_id=f"sec-{result.filing_id}",
+            purpose="boundary_adjudicator",
+            model=resp.model,
+            prompt_sha256=resp.prompt_sha256,
+            input_tokens=resp.input_tokens,
+            output_tokens=resp.output_tokens,
+            cost_usd=resp.cost_usd,
+            latency_ms=resp.latency_ms,
+            schema_valid=schema_valid,
+        ))
+        picked = runner_up if decision.decision == "candidate_b" else chosen
+        seg.evidence.append(BoundaryEvidence(
+            kind="llm_adjudication",
+            detail=f"decision={decision.decision} confidence={decision.confidence:.2f}: {decision.reason}",
+            source_offset_start=picked.start,
+            source_offset_end=picked.end,
+            quote=decision.evidence_quote,
+        ))
+        seg.needs_review = True
+        seg.warnings.append(
+            f"LLM adjudicator: {decision.decision} (confidence {decision.confidence:.2f}); "
+            f"span unchanged — decision recorded as evidence, human review still required")
+    return calls
 
 
 def extract_from_html(
@@ -139,6 +263,13 @@ def extract_from_html(
         )
     if not candidates:
         result.warnings.append("no item heading candidates found — unsupported or non-10-K document")
+
+    # Optional LLM adjudication tier (SPEC 7.13): opt-in only, so the default
+    # pipeline stays deterministic and $0. Adjudication latency is accounted in
+    # llm_call_records, not in parse latency_ms.
+    if os.environ.get("SEC_LLM_ADJUDICATE") == "1" and any(
+            s.status == "ambiguous" for s in segments):
+        adjudicate_ambiguous(result)
 
     if evidence_store is not None:
         rid = run_id or f"sec-{filing_id}"

@@ -26,6 +26,12 @@ def main() -> None:
     tri_counts: Counter[str] = Counter()
     tri_available = True
     missing_alarms: list[str] = []  # "TICKER:item" where tri-state == MISSING
+    llm_calls_total = 0
+    llm_tokens_total = 0
+    llm_usd_total = 0.0
+    # older records predate the P0-12 cost columns; they ran the deterministic
+    # pipeline only, so counting them as 0 LLM cost is exact, not an estimate
+    llm_cols_present = all("llm_calls" in rec for rec in records)
 
     for rec in records:
         items = rec["items"]
@@ -41,11 +47,14 @@ def main() -> None:
                 missing_alarms.append(f"{rec['ticker']}:{code}")
         confidences_pass += [v["confidence"] for v in items.values() if v["status"] == "pass"]
         latencies.append(rec["latency_ms"])
+        llm_calls_total += rec.get("llm_calls", 0)
+        llm_tokens_total += rec.get("llm_tokens", 0)
+        llm_usd_total += rec.get("llm_usd", 0.0)
         substantive = sum(v for k, v in c.items() if k in ("pass", "partial", "incorporated_by_reference", "reserved"))
         per_ticker_rows.append(
             f"| {rec['ticker']} | {rec['form']} {rec['report_date']} | {rec['raw_chars']:,} "
             f"| {c['pass']} | {c['missing']} | {substantive} | {rec['toc_rejected']}/{rec['candidates']} "
-            f"| {rec['latency_ms']:.0f} |"
+            f"| {rec['latency_ms']:.0f} | {rec.get('llm_calls', 0)} | ${rec.get('llm_usd', 0.0):.4f} |"
         )
 
     total_items = sum(status_counts.values())
@@ -73,9 +82,11 @@ def main() -> None:
     print(f"pass-item confidence: mean {sum(confidences_pass)/len(confidences_pass):.3f}, "
           f"min {min(confidences_pass):.3f}")
     print(f"parse latency ms: mean {sum(latencies)/len(latencies):.0f}, max {max(latencies):.0f}")
+    note = "" if llm_cols_present else " (pre-P0-12 records: deterministic-only runs, 0 LLM cost by construction)"
+    print(f"llm cost: calls {llm_calls_total}, tokens {llm_tokens_total}, usd ${llm_usd_total:.4f}{note}")
     print()
-    print("| ticker | filing | raw chars | pass | missing | substantive | toc_rej/cand | latency ms |")
-    print("|---|---|---|---|---|---|---|---|")
+    print("| ticker | filing | raw chars | pass | missing | substantive | toc_rej/cand | latency ms | llm calls | llm usd |")
+    print("|---|---|---|---|---|---|---|---|---|---|")
     for row in per_ticker_rows:
         print(row)
 

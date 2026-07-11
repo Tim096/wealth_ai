@@ -34,12 +34,21 @@ Content-addressed cache,讀取驗 sha256,corruption raise。同一 filing 重跑
 
 Item 8 對 companyfacts 交叉驗證:每家多 1 次 `companyfacts` fetch(cache 後 0),純字串比對 <1 ms。11 家認證總 live fetch ≤ 11 次。**成本可忽略,價值是獨立 oracle**(見 `data/sec_eval/certification/item8_certification.json`)。
 
-### LLM 成本(誠實說明)
+### LLM 成本(實測,2026-07-10)
 
-**目前主路徑 0 個 LLM call — 因為確定性 pipeline 已覆蓋 253/253 items,ambiguous adjudicator 的觸發率為 0%,尚未接上真實 LLM client。** 所以「$0 LLM」是「不需要」與「escalation path 尚未 wired」兩者兼有,不宜宣稱為已驗證的成本控制成果。
+**主路徑仍是 0 個 LLM call — 確定性 pipeline 覆蓋 253/253 items,ambiguous 觸發率 0%。** adjudicator tier 已 wired(`pipeline.adjudicate_ambiguous()`,opt-in:`SEC_LLM_ADJUDICATE=1` 或顯式呼叫),並以真實 LLM 實測過單筆 $/裁決。真實 sweep 無 ambiguous 樣本,量測用合成 ambiguous fixture(兩個非 TOC 的 Item 1 heading 對決,同 `tests/test_adjudicator_wiring.py`),經完整 wired 路徑:`extract_from_html` → `adjudicate_ambiguous` → `OpenAIClient` → codex exec(ChatGPT OAuth,帳號預設模型)→ `codex --json` 回報的**真實 token usage**。
 
-- 已 wired 且量測:確定性抽取($0)、XBRL 認證($0,公開 API)。
-- 尚未 wired:`LLMCallRecord` / `AdjudicatorDecision` schema 存在但未實例化。啟用後每次裁決 ~2K input tokens;以 Haiku 級估 <$0.005/裁決——**這是估計值,無量測背書**,標明為 roadmap。
+| 指標(3 次重複,實測)| 值 |
+|---|---|
+| input tokens / 裁決 | 17,910(固定;其中 adjudicator prompt 本體僅 ~2.6K chars ≈ ~650 tokens,其餘 ~17K 是 codex CLI harness 的固定 system prompt 開銷)|
+| output tokens / 裁決 | mean 686(230–1,103,含 reasoning tokens)|
+| **$/裁決(codex 通道牌價換算)** | **mean $0.0058**($0.0049–$0.0067;tokens 實測 × `OPENAI_PRICE_IN/OUT` 預設 $0.25/$2.0 per 1M)|
+| $/裁決(直連 API 等效,無 harness 開銷)| ~$0.0015(~650 in + 686 out tokens 換算)|
+| 延遲 / 裁決 | mean 12,887 ms(7.1–16.6 s;codex exec 啟動 + reasoning 主導)|
+| 邊際現金成本(ChatGPT OAuth 訂閱)| $0 |
+| schema gate | 3/3 通過(decision=candidate_b 正確、evidence_quote 皆 verbatim)|
+
+舊估計「<$0.005/裁決」對照:codex 通道實測 $0.0058(harness 開銷墊高),直連 API 等效 ~$0.0015(低於估計)。**per-filing 成本欄已入帳**:`ExtractionResult` 帶 `llm_calls / llm_input_tokens / llm_output_tokens / llm_cost_usd / llm_call_records`(deterministic 路徑恆為 0,by construction);`tools/sweep_metrics.py` 聚合並輸出 per-filing `llm calls / llm usd` 欄(舊 records 無此欄=純確定性 run,計 0 是精確值非估計)。
 
 ### 擴充性
 

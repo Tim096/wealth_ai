@@ -1,0 +1,92 @@
+{
+  "artifact": "T2-5 landmine catalogue as executable eval cases",
+  "generated_by": "tests/test_landmines.py (offline, deterministic, no network / no LLM)",
+  "rerun": ".venv/Scripts/python -m pytest tests/test_landmines.py -q",
+  "bar": "a landmine passes when the pipeline never fakes a pass: the correct outcome is an honest status (reserved / missing / incorporated_by_reference / partial+needs_review), never a fabricated body.",
+  "total_tests": 16,
+  "result": "16 passed",
+  "landmines": [
+    {
+      "id": "L1-item6-era",
+      "source": "sec.gov/files/form10-k.pdf — Item 6 abolished 2021-02-10",
+      "tests": [
+        "test_item6_bracket_reserved_is_reserved_not_pass",
+        "test_item6_omitted_entirely_is_reserved_not_missing_failure",
+        "test_item6_pre2021_selected_financial_data_is_substantive_pass"
+      ],
+      "handled": true,
+      "behaviour": "'[Reserved]' -> reserved; item omitted entirely -> reserved (absence of an abolished item is not a failure); pre-2021 'Selected Financial Data' body -> substantive pass."
+    },
+    {
+      "id": "L2-item9c-item16-conditional",
+      "source": "Item 9C (HFCAA) and Item 16 (Form 10-K Summary) are conditional/optional",
+      "tests": [
+        "test_item9c_hfcaa_present_is_source_exact_pass",
+        "test_item9c_absent_is_honest_missing_not_crash",
+        "test_item16_optional_present_is_pass_absent_is_missing"
+      ],
+      "handled": true,
+      "behaviour": "present -> source-exact pass; absent -> honest 'missing' with empty span (tri-state scorer maps not-TOC-listed missing to null, not a real omission)."
+    },
+    {
+      "id": "L3-items-7-and-7a-combined",
+      "source": "combined heading (same shape as existing 'Items 1 and 2')",
+      "tests": ["test_items_7_and_7a_combined_share_one_span"],
+      "handled": true,
+      "behaviour": "both 7 and 7A -> partial, share one span, both carry a 'combined' warning."
+    },
+    {
+      "id": "L4-formtypes-exact-match",
+      "source": "efts.sec.gov formTypes is exact-match: '10-K' excludes '10-K/A'",
+      "tests": ["test_collect_10k_includes_amendments_excludes_other_forms"],
+      "handled": true,
+      "behaviour": "resolver._collect_10k collects 10-K + 10-K/A, rejects 10-Q / 8-K / NT 10-K; amendment flagged is_amendment. No exact-match trap in our fetcher."
+    },
+    {
+      "id": "L5-toc-pre-exclusion",
+      "source": "TOC must be excluded before anchoring, not only compared after",
+      "tests": ["test_toc_only_item_is_never_emitted_as_a_fake_body"],
+      "handled": true,
+      "note": "assess_toc is post-hoc (marks toc_rejected only when a later body duplicate exists). For a TOC-only item with NO body, a SECOND mechanism catches it: boundary document-order enforcement drops the TOC candidate (start < prev_start), so the item comes back 'missing' with an empty span, never the dotted TOC line as content. Candidate is never silently dropped — it keeps its toc_reasons.",
+      "behaviour": "Item listed only in anchored TOC -> missing, empty span, TOC line not leaked."
+    },
+    {
+      "id": "L6-part-iii-incorporated-by-reference",
+      "source": "Part III may incorporate by reference to DEF 14A (proxy)",
+      "tests": ["test_part_iii_incorporated_by_reference_is_not_faked_pass"],
+      "handled": true,
+      "behaviour": "Item 10/11 pointing to the proxy -> incorporated_by_reference (not a faked pass). Fetching the DEF 14A and the 120-day rule is a documented network step, out of the offline pipeline's scope."
+    },
+    {
+      "id": "L7-edgartools-454-item-collision",
+      "source": "edgartools GitHub issue #454 — Part I/II item-number collision, 'Item 1' returns the wrong section",
+      "tests": ["test_duplicate_item1_heading_does_not_steal_the_real_body"],
+      "handled": true,
+      "behaviour": "canonical-code + document-order resolver keeps the real Part I Item 1 body and rejects a later stray 'Item 1.' running header. We do not reproduce edgartools' collision."
+    },
+    {
+      "id": "L8-glossy-ars-wrap",
+      "source": "10-K bundled with a glossy annual report (EX-13); wrapper 10-K binds a Financial Section after the last item",
+      "tests": [
+        "test_glossy_ars_wrap_picks_the_10k_not_the_larger_ex13",
+        "test_wrapper_terminal_item_does_not_swallow_appended_financial_section"
+      ],
+      "handled": true,
+      "behaviour": "main-doc scorer picks the 10-K over the LARGER EX-13 annual report (exhibit penalty); terminal item's span is cut at the appended 'FINANCIAL SECTION' break instead of swallowing ~30K chars."
+    },
+    {
+      "id": "L9-cross-reference-index",
+      "source": "Intel / Citi class: main document is a page-range index into a bound annual report",
+      "tests": ["test_cross_reference_index_items_are_pointers_not_bodies"],
+      "handled": true,
+      "behaviour": "filing_class=cross_reference_index; each item -> incorporated_by_reference pointer, provenance=cross_reference_pointer, needs_review=True, empty sha (never a fabricated body)."
+    },
+    {
+      "id": "L10-large-filing-offset-consistency",
+      "source": "edgartools chunks filings past a ~50MB threshold; offsets can drift across chunk boundaries",
+      "tests": ["test_large_filing_offsets_stay_source_exact"],
+      "handled": true,
+      "behaviour": "pipeline normalises the whole document once (no chunking), so every span stays a provable source-exact span (sha256 + raw round-trip) regardless of size. Verified on a ~1.2MB doc; the property is size-independent."
+    }
+  ]
+}

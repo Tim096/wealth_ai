@@ -11,7 +11,7 @@
 | `eval_design/` | 評測體系的設計決策:eval set、對抗式稽核、外部 benchmark、mutation harness、多引擎投票 |
 | `failure_triage/` | 真實失敗的診斷紀錄:根因鏈、修復、重驗(不信任表面 pass) |
 | `rejected_prompts/` | 被拒絕的設計:為什麼拒、拒了之後走哪條路、事後看對不對 |
-| `transcripts/` | 原始 AI 協作對話逐字摘錄(脫敏):重建決策紀錄的證據軸,補面試官指出的「缺原始對話」gap |
+| `transcripts/` | 原始 AI 協作對話逐字摘錄(脫敏):重建決策紀錄的證據軸,補面試官指出的「缺原始對話」gap;與重建紀錄重疊的摘錄已整併進對應紀錄(見該目錄 README),留存原始性最高的 2 份 |
 
 > `sec_extractor/` 的 boundary/adjudicator 決策目前併在 `eval_design/` 與 `failure_triage/`(SEC 尚未觸發 LLM adjudicator);待 adjudicator 實際啟用再獨立成目錄。
 
@@ -52,6 +52,7 @@
 | `2026-07-10-jpm-cross-ref-stub.md` | JPM Item 11 51 字元標 pass 的誤判診斷 → incorporated_by_reference 分類誕生 |
 | `2026-07-10-browser-decoy-and-modal.md` | decoy button + cookie modal 導致修復選錯元素的 triage |
 | `2026-07-10-second-judge-live-abstain-chain.md` | second judge live 18/18 abstain 的兩層根因(HOLE A 接線+證據餓死、gateway wrapper)與定向重驗 |
+| `2026-07-11-official300-resume-abort-deadlock.md` | 官方全量 300 題死鎖:resume 不計 n_attempted 使 3 個死站永觸 abort;chunk agent 依鐵律 escalate、修 harness 不修題 |
 
 ### rejected_prompts/
 

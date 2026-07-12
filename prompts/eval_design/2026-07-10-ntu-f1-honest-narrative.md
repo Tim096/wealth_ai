@@ -20,7 +20,7 @@ AI 自我指令(adversarial interpreter pass,總指揮授權範圍內):
 
 三段終判(全記於 `docs/research/giants_task2.md`):
 
-1. **18:05**:end-boundary fix(`a72ec43`)上線但 rescan cut 在 30-slice 上觸發 0 次,per-item delta 全 0——修法落地但量測無效,照錄。raw 輸 EC 0.0368。當時判 furniture-fp「對雙方對稱、公平」。
+1. **18:05**:end-boundary fix(`3ba717b`)上線但 rescan cut 在 30-slice 上觸發 0 次,per-item delta 全 0——修法落地但量測無效,照錄。raw 輸 EC 0.0368。當時判 furniture-fp「對雙方對稱、公平」。
 2. **18:40 錯誤更正**:per-item probe 拆帳證明 18:05 的「對稱」判斷**錯誤**——`Table of Contents` 導覽 backlink 一類是非對稱的(EC 會 strip、我們留著),但高-fp item 多數是真 boundary bleed 非 scorer artifact。合法 TOC-strip 投影 0.6244:追平 datamule(非贏)、仍輸 EC 0.0088。broad「duplicated=furniture」全 strip 判**非法**不採(見 `prompts/rejected_prompts/2026-07-10-broad-furniture-strip-for-f1.md`)。**F1 line: CLOSED**,不再 tune。
 3. **landed**:TOC-backlink strip 落成產品雙層輸出(`normalize.py::clean_slice` delivery 層 + provenance 層 offsets/sha256 不動),`head_to_head.py` 重跑實測 **0.6245**(vs 投影 0.6244,差異來自錨點閘門更保守,如實記錄)——**仍輸 EC 0.0087、追平 datamule**。
 
@@ -41,5 +41,5 @@ PM 鐵律「誠實優先:數字不粉飾,輸的照寫」+ 既定總目標(外部
 - `docs/research/giants_task2.md` 終判三節(18:05 / 18:40 / landed)+ 錯誤更正記帳
 - `packages/sec_core/normalize.py` `clean_slice` / `_is_toc_backlink_line`、`pipeline.py` `clean_text_of`(雙層輸出)
 - `tests/test_toc_backlink_strip.py`(7 tests);mutation harness recall 全六類維持 1.0
-- Commits:`a72ec43`(end-boundary fix)、`e6db247`(fresh artifact)、`7b46be5`(honest verdict)、`5bb103f`(final F1 verdict + 對稱錯誤更正)、`eed20b6`(TOC-strip 落地)
+- Commits:`3ba717b`(end-boundary fix)、`6de5912`(fresh artifact)、`9ff78b9`(honest verdict)、`df954c8`(final F1 verdict + 對稱錯誤更正)、`3c6ef01`(TOC-strip 落地)
 - Artifact:`data/sec_eval/scoring/head_to_head.json`(30 filings、4 engines,cache-first 可重跑)

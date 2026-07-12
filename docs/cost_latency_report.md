@@ -159,7 +159,7 @@ wall/throughput/冷啟/utilization 是實測;speedup 的分母 `serial_estimate`
 | Trajectory metrics | `.venv/Scripts/python tools/trajectory_metrics.py` |
 | pass@k / flakiness | `.venv/Scripts/python tools/browser_eval.py --repeat 3 --agentic` |
 | Degradation curve | `.venv/Scripts/python tools/degradation_curve.py` |
-| False-success detector | `.venv/Scripts/python -m tools.false_success_detector`(script 形式亦可,`2fc9f06`)|
+| False-success detector | `.venv/Scripts/python -m tools.false_success_detector`(script 形式亦可,`470b8b9`)|
 | 三引擎 triangulation | `SEC_EDGAR_USER_AGENT=<contact> .venv/Scripts/python tools/triangulate.py` |
 | char-offset F1 | `.venv/Scripts/python tools/score_offsets.py data/sec_eval/records/sweep3` |
 | CYD Item 1C oracle | `SEC_EDGAR_USER_AGENT=<contact> .venv/Scripts/python tools/certify_cyd.py` |

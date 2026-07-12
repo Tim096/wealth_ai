@@ -52,7 +52,7 @@ pipeline 產生的**確切字串值**(非概念):
 
 ### 已知限制(誠實揭露)
 
-- **跨檔 cross-reference-index 的正文尚未還原**(Intel/Citi class,指向另外裝訂的 annual-report exhibit):目前誠實標為指標,還沒「跟著指標進 annual-report exhibit 把正文接回來」(`insights_and_directions.md` §2),刻意不出貨脆弱的猜測版——**錯的正文比誠實的指標更糟**。**同檔附綁 wrapper(JPM/XOM)已還原**:`cross_ref.reassemble_wrapper_bodies`(commit 64de3ef),JPM Item 1C CYD coverage 0%→100%、兩家 Item 8 重組 span 獲 XBRL 3/3 認證,見 `failure_gallery.md` FG-SEC-007/008。
+- **跨檔 cross-reference-index 的正文尚未還原**(Intel/Citi class,指向另外裝訂的 annual-report exhibit):目前誠實標為指標,還沒「跟著指標進 annual-report exhibit 把正文接回來」(`insights_and_directions.md` §2),刻意不出貨脆弱的猜測版——**錯的正文比誠實的指標更糟**。**同檔附綁 wrapper(JPM/XOM)已還原**:`cross_ref.reassemble_wrapper_bodies`(commit 84ecea7),JPM Item 1C CYD coverage 0%→100%、兩家 Item 8 重組 span 獲 XBRL 3/3 認證,見 `failure_gallery.md` FG-SEC-007/008。
 - **掃描 PDF 老 filing**:標 `unsupported`;正確作法是 OCR path(非 LLM),見 insights §3。
 - **pre-2001 純文字 SGML**:Unsupported(見上方 format-era 表與 FG-SEC-009);修法是 text-mode normalizer,非本波範圍。
 - **boundary 精度已量化(2026-07-10)**:char-offset F1(建構性 gold,regression baseline;敏感度注入鎖在 `tests/test_scoring.py::test_sensitivity_injection_on_real_sweep3_aapl`,AAPL F1 1.0→0.9267)+ CYD 官方 iXBRL oracle(9/9 pass segment coverage 100%)。人工 token-level 標註(絕對正確率)仍列 backlog。見 `eval_report.md`「Eval 升級」段。
@@ -66,7 +66,7 @@ pipeline 產生的**確切字串值**(非概念):
 | 任務類型 | 行為 | verdict | 依據 |
 |---|---|---|---|
 | 有可機讀成功/禁止條件(搜尋、導航、下載、擷取)| preflight 導出條件 → verifier 對照 evidence | `pass` / `fail` | 主路徑 |
-| **開放式 / 不可驗證任務**(如「隨便逛逛看有什麼有趣的」、成功條件無法事先機讀)| **支援執行**、照錄完整 trace + screenshots,verifier 因無可機讀證據回 unknown + 明講交人工審 trace | **`unknown`**(絕不 vacuous pass、絕不 crash)| FG-BROWSER-006(commit 2fec949);artifact `data/browser_eval/open_ended/open_ended_results.json`(3/3 honest_unknown,crashes 0)|
+| **開放式 / 不可驗證任務**(如「隨便逛逛看有什麼有趣的」、成功條件無法事先機讀)| **支援執行**、照錄完整 trace + screenshots,verifier 因無可機讀證據回 unknown + 明講交人工審 trace | **`unknown`**(絕不 vacuous pass、絕不 crash)| FG-BROWSER-006(commit f535c93);artifact `data/browser_eval/open_ended/open_ended_results.json`(3/3 honest_unknown,crashes 0)|
 | 責任邊界(登入/購買/正式表單/付費)| capability guard code-enforced 攔截 | `refused` | `packages/browser_agent/capability.py` |
 
 > 三態鐵律的落地:缺可機讀證據 → `unknown`(交人工),結構上不能升級成 pass。開放式任務「執行得了但無法自動判成功」是誠實 unknown,不是失敗、也不是不支援執行。

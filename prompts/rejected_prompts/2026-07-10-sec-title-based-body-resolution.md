@@ -37,4 +37,4 @@ SPEC 1.1「正確性驗證」與「誠實邊界」優先於「完成度看起來
 
 ## 事後看(2026-07-10)
 
-拒絕正確,且當年留的 roadmap 路線如期兌現:page-anchor resolution(跟頁碼進 annual-report exhibit)已實作於 `cross_ref.py` L237-252(`resolved_from_page_anchor`,Intel class),wrapper 正文重組(JPM/XOM class)於 P0-10 落地(commit `64de3ef`)。正文最終**確實被還原了**,但走的是可驗證的頁錨定位,不是當年會「對時錯」的 title 猜測——先誠實標記、再用對的機制補完,順序沒有錯。反例佐證:NTU head-to-head 顯示 boundary bleed(抓錯範圍的自信輸出)正是 F1 主要失分桶——如果當年出貨 title-based 猜測,這類錯誤只會更早、更多、且無標記。
+拒絕正確,且當年留的 roadmap 路線如期兌現:page-anchor resolution(跟頁碼進 annual-report exhibit)已實作於 `cross_ref.py` L237-252(`resolved_from_page_anchor`,Intel class),wrapper 正文重組(JPM/XOM class)於 P0-10 落地(commit `84ecea7`)。正文最終**確實被還原了**,但走的是可驗證的頁錨定位,不是當年會「對時錯」的 title 猜測——先誠實標記、再用對的機制補完,順序沒有錯。反例佐證:NTU head-to-head 顯示 boundary bleed(抓錯範圍的自信輸出)正是 F1 主要失分桶——如果當年出貨 title-based 猜測,這類錯誤只會更早、更多、且無標記。

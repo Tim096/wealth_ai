@@ -139,17 +139,17 @@ T1-1 → T2-1 → T2-2 → T1-2 → T2-3 → T1-3,其餘穿插。(實際執行:u
 
 | 項目 | Commit |
 |---|---|
-| T1-1 | `3e9034a` feat(eval): calibrate the judge itself — verifier confusion matrix + Rogan-Gladen corrected success rate |
-| T1-3 | `12ccf34` feat(eval): T1-3 impossible-task set + silent-failure rate artifact |
-| T2-1 | `4209c87` feat(sec): edgartools third-engine triangulation (T2-1) |
-| T1-4 | `fcce900` feat(agent): T1-4 trajectory metrics — repetitiveness + side-effect diff |
-| T1-5 | `79c1399` feat(eval): pass@k + flakiness via browser_eval --repeat N (T1-5) |
-| T2-2 | `6e5f506` feat(sec): T2-2 scoring upgrade — char-offset F1 + present/null/MISSING tri-state |
-| T2-3 | `99c9274` feat(sec): CYD iXBRL block-tags as the official Item 1C span oracle |
-| T1-2 | `1bef360` feat(eval): mutation-site matrix (3 axes x 3 intensities) + degradation curve (T1-2) |
-| T2-4 | `54bc872` feat(sec): T2-4 stratified sampling by format source (era x filing agent) |
-| T1-6 | `ed9d64e` feat(agent): T1-6 lightweight heuristic false-success detector (opt-in triage) |
-| T2-5 | `14f2ae4` test(sec): T2-5 landmine catalogue as executable eval cases |
+| T1-1 | `67eb56f` feat(eval): calibrate the judge itself — verifier confusion matrix + Rogan-Gladen corrected success rate |
+| T1-3 | `a79f3c7` feat(eval): T1-3 impossible-task set + silent-failure rate artifact |
+| T2-1 | `ea9f782` feat(sec): edgartools third-engine triangulation (T2-1) |
+| T1-4 | `6db9696` feat(agent): T1-4 trajectory metrics — repetitiveness + side-effect diff |
+| T1-5 | `9191558` feat(eval): pass@k + flakiness via browser_eval --repeat N (T1-5) |
+| T2-2 | `8beb0fc` feat(sec): T2-2 scoring upgrade — char-offset F1 + present/null/MISSING tri-state |
+| T2-3 | `f55c650` feat(sec): CYD iXBRL block-tags as the official Item 1C span oracle |
+| T1-2 | `a51361e` feat(eval): mutation-site matrix (3 axes x 3 intensities) + degradation curve (T1-2) |
+| T2-4 | `a55d773` feat(sec): T2-4 stratified sampling by format source (era x filing agent) |
+| T1-6 | `1aa06cf` feat(agent): T1-6 lightweight heuristic false-success detector (opt-in triage) |
+| T2-5 | `bcf185f` test(sec): T2-5 landmine catalogue as executable eval cases |
 
 ### Artifacts(全部 committed,可重跑指令見 docs/cost_latency_report.md)
 
@@ -167,10 +167,10 @@ T1-1 → T2-1 → T2-2 → T1-2 → T2-3 → T1-3,其餘穿插。(實際執行:u
 
 ### 驗證員 minor issues(如實記錄,非 blocker)
 
-- T1-6:`tools/false_success_detector.py` 只能 `-m tools.false_success_detector` 執行(缺 sys.path bootstrap)。→ 已修 `2fc9f06`,兩種形式皆可。
+- T1-6:`tools/false_success_detector.py` 只能 `-m tools.false_success_detector` 執行(缺 sys.path bootstrap)。→ 已修 `470b8b9`,兩種形式皆可。
 - T1-2:`degradation_curve.json` 內嵌 per-probe latency_ms,重跑非 byte-stable(metric 欄位確定)。
 - T1-5:`tools/browser_eval.py` 會 append committed `data/browser_eval/evidence/*.jsonl`(既有副作用)。
-- T2-5:`landmines.json` header total_tests=16 為 off-by-one(實 15;body test 名單正確)。→ 已修 `2fc9f06`。
-- T2-2:`tools/score_offsets.py` 輸出路徑寫死,對非正式目錄評分會覆寫 committed `offset_f1.json`。→ `--out` 於 `6e5f506` 已存在(驗證員看到 in-progress 版);`2fc9f06` 另補 records_dir 相對路徑正規化。
+- T2-5:`landmines.json` header total_tests=16 為 off-by-one(實 15;body test 名單正確)。→ 已修 `470b8b9`。
+- T2-2:`tools/score_offsets.py` 輸出路徑寫死,對非正式目錄評分會覆寫 committed `offset_f1.json`。→ `--out` 於 `8beb0fc` 已存在(驗證員看到 in-progress 版);`470b8b9` 另補 records_dir 相對路徑正規化。
 
 測試總數 89 → 285(本波完成當下);dashboard render 測試 +6、敏感度注入鎖定測試 +1 後現為 292(`.venv/Scripts/python -m pytest tests -q` → 292 passed,零紅燈,2026-07-10 最終驗收複核)。

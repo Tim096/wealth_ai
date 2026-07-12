@@ -75,7 +75,7 @@
 
 ### Status 可信度:XBRL 獨立 oracle(回答「如何確保 status 可信」)
 
-Item 8 對照 SEC companyfacts 的營收/淨利/總資產(非 LLM,免費、可重現)。11 家 sweep,P0-10 wrapper 重組(`cross_ref.reassemble_wrapper_bodies`,commit 64de3ef)前→後對照:
+Item 8 對照 SEC companyfacts 的營收/淨利/總資產(非 LLM,免費、可重現)。11 家 sweep,P0-10 wrapper 重組(`cross_ref.reassemble_wrapper_bodies`,commit 84ecea7)前→後對照:
 
 | 判定 | P0-10 前(歷史 baseline) | P0-10 後(現行,artifact 2026-07-11 重生) |
 |---|---|---|
@@ -136,7 +136,7 @@ SEC 對 FY ≥ 2024-12-15 強制 Item 1C 的 CYD taxonomy iXBRL block-tag——*
    - **GS 類(intra-document pointer)**:1C stub 是本檔內跨 item 指標(指向 Item 7 span 內部的 MD&A section);既有 `reassemble_wrapper_bodies` 只處理最後 item 之後的 appended region,stub 永遠停在 honest pointer。新 pass `resolve_intra_document_pointers` 把 quoted path 末段當 page-top heading 在被引 item span 內精確匹配,終點 = 下一個 page-top section;外加 item-topic guard(anchored heading 須與該 item canonical title 語彙相關)擋母章節引用——**wrong body 比 honest pointer 更糟**。結果:GS 1C = partial `resolved_from_section_anchor` 8,650 chars,coverage **100%**、containment **85.6%**(before:stub 247 chars、coverage/containment 0%)。
    - **JPM 類(page-window 過寬)**:`_snap_window_to_item_section` 在 page-anchored 窗內找 canonical-title 匹配(SequenceMatcher ≥0.75)的 page-top section 並收斂 span。結果:JPM 1C = 9,745 chars,containment 33.3%→**70.5%**,span 終點 771903 與官方 CYD 終點完全一致,起點 762158 即「Cybersecurity risk」section heading(官方起點 762318 在其後)。
 
-   其餘 9 家(AAPL/MSFT/NVDA/WMT/CAT/XOM/NEM/MRNA/KO)coverage/containment/chars/verdict 數字逐位不變;artifact diff 中 MSFT/MRNA 的 `needs_review_after` false→true 為 length-prior(commit bf7e5fa)所致——上次 regen 基線在 64de3ef,較舊;kill-switch 驗證與 section-anchor 無關。kill-switch 實檔驗證 `SEC_WRAPPER_SECTION_ANCHOR=0` 完整還原 before 數字(GS 0%/247、JPM 33.3%/20,610)。通用結構規則,無 ticker 特例。
+   其餘 9 家(AAPL/MSFT/NVDA/WMT/CAT/XOM/NEM/MRNA/KO)coverage/containment/chars/verdict 數字逐位不變;artifact diff 中 MSFT/MRNA 的 `needs_review_after` false→true 為 length-prior(commit 34d31b9)所致——上次 regen 基線在 84ecea7,較舊;kill-switch 驗證與 section-anchor 無關。kill-switch 實檔驗證 `SEC_WRAPPER_SECTION_ANCHOR=0` 完整還原 before 數字(GS 0%/247、JPM 33.3%/20,610)。通用結構規則,無 ticker 特例。
 
 **連帶效應誠實記錄**:GS 7A 曾被首版解析到「Risk Management」章節總覽(13k chars,wrong-body 風險),已由 item-topic guard 擋回 honest pointer;JPM 7/7A/8 page-anchor span 逐位不變。**F1 side-effect = 零**:head-to-head 30-slice 前景重跑,四引擎 macro-F1 逐位不變(ours 0.6245 / edgar_crawler 0.6332 / datamule 0.6244 / edgartools 0.4386;`verifier_false_pass_items` 68 不變;json diff 僅 fetch_ms 計時雜訊)——NTU slice 為 2001–2019 年檔,無 CYD 時代 wrapper 1C stub,無交集符合預期。Calibration 重生:AUROC/ECE/false-pass 全部逐位不變(ntu_human_labeled 0.6621/0.1133/0.2048;**該波時點值**——其後 topic prior(margin+IBR)波現行為 0.6667/0.1235/0.1358,見下方 NTU 校準 bullet),diff 僅 generated_at。守門:pytest `-m "not integration"` **772 passed**(before 763;+9 = `tests/test_section_anchor.py`;topic prior 波後現行 **788 passed**,+16 = `tests/test_topic_prior.py`)、mutation harness 六類 recall 全 1.0、clean false-alarm 0.0000/0.0056 不變。
 
@@ -155,7 +155,7 @@ baseline 11 家全是 iXBRL(10 Workiva + 1 DFIN)——覆蓋缺口用分層抽�
 10 條官方/社群 landmine(Item 6 廢除後三態、Item 9C/16 optional、"Items 7 and 7A" 合併、wrapper/Glossy ARS、EDGAR formTypes exact-match、TOC 先排除、edgartools #454 Part I/II 編號碰撞、>50MB offset 一致性…)逐條先探針驗證 pipeline 實際行為、再寫成 **15 個 pytest case,全過**、零 source 修改——價值是 regression baseline:任何改動重新引入 landmine 立即被抓。測試 bar 是「絕不 fake pass」:正確結果是誠實 status(reserved/missing/IBR/partial+needs_review)。
 
 - 重跑:`.venv/Scripts/python -m pytest tests/test_landmines.py -q`
-- Artifact:`data/sec_eval/landmines/landmines.json`(header 曾有 total_tests=16 off-by-one,已修正為 15,commit `2fc9f06`;10 條 landmine 全數覆蓋)
+- Artifact:`data/sec_eval/landmines/landmines.json`(header 曾有 total_tests=16 off-by-one,已修正為 15,commit `470b8b9`;10 條 landmine 全數覆蓋)
 
 #### 外部 human-labeled benchmark:NTU itemseg 30-slice head-to-head(2026-07-10,誠實揭露輸)
 
@@ -221,7 +221,7 @@ Eval set(`data/browser_eval/tasks.json`,5 tasks:4 solvable + 1 expected-fail,分
 |---|---|
 | sensitivity | **1.000** |
 | specificity | **1.0**（修復前 0.9583）|
-| FP rate | **0.0**（修復前 0.0417；唯一 FP filename-needle bypass 已於 c4ac7cd 修掉,FG-BROWSER-002）|
+| FP rate | **0.0**（修復前 0.0417；唯一 FP filename-needle bypass 已於 bcdc9cf 修掉,FG-BROWSER-002）|
 | FN rate | 0.000 |
 | corrupted unknown rate | 0.115385(unknown 單獨列,不併入 fail)|
 
@@ -232,7 +232,7 @@ Rogan-Gladen 校正後成功率 = **0.8**(apparent 0.8,分母 1.0,status=ok;修�
 
 #### Impossible-task set:silent-failure rate(T1-3)
 
-12 cases(10 impossible + 2 refused;product_absent / feature_absent / false_premise / unobservable / refused),真 headless chromium end-to-end。**2026-07-10 修復後**:**silent_failure_rate = 0.0**(修復前 0.1／1-of-10)、honest_outcome_rate = **1.0**(8 fail + 2 unknown;修復前 0.9)、expect_status_accuracy = **1.0**(修復前 0.9167)、refused 2/2 正確擋下(0 leaked to action)。原本那個真實 silent failure(query-echo teleporter → FG-BROWSER-003)在 c4ac7cd 由 text_visible 空結果回顯遮罩修掉,teleporter 從 pass 翻成正確的 fail——measure(0.1)→ fix → remeasure(0.0)的完整閉環,不是一開始就 cook 出的 0.0。
+12 cases(10 impossible + 2 refused;product_absent / feature_absent / false_premise / unobservable / refused),真 headless chromium end-to-end。**2026-07-10 修復後**:**silent_failure_rate = 0.0**(修復前 0.1／1-of-10)、honest_outcome_rate = **1.0**(8 fail + 2 unknown;修復前 0.9)、expect_status_accuracy = **1.0**(修復前 0.9167)、refused 2/2 正確擋下(0 leaked to action)。原本那個真實 silent failure(query-echo teleporter → FG-BROWSER-003)在 bcdc9cf 由 text_visible 空結果回顯遮罩修掉,teleporter 從 pass 翻成正確的 fail——measure(0.1)→ fix → remeasure(0.0)的完整閉環,不是一開始就 cook 出的 0.0。
 
 - 重跑:`.venv/Scripts/python tools/impossible_tasks.py`
 - Artifact:`data/browser_eval/impossible/impossible_results.json`
@@ -253,7 +253,7 @@ RUN 級觀測(不改 agent 行為,AgentRewardBench 三維度):5 tasks mean_repet
 
 #### 三軸擾動 + degradation curve(T1-2)
 
-mutation-site 矩陣(StressWeb 路線):clean + 3 軸(perception / action / execution)× 3 強度 = 10 cells × 3 queries = 30 probes,全部 deterministic(無 Math.random,test 鎖;generator 與 committed HTML 有 drift-lock test)。三軸 curve 皆 **monotone non-increasing**。avg_repairs 呈現「成功但有成本」中間態(light/medium 2.0/1.0 vs clean 0.0)。矩陣原本抓出 2 個真實 repair 弱點(FG-BROWSER-004/005),measure-first 先量測、**2026-07-10 由 commit 3f0b1e9 修復並重跑**:
+mutation-site 矩陣(StressWeb 路線):clean + 3 軸(perception / action / execution)× 3 強度 = 10 cells × 3 queries = 30 probes,全部 deterministic(無 Math.random,test 鎖;generator 與 committed HTML 有 drift-lock test)。三軸 curve 皆 **monotone non-increasing**。avg_repairs 呈現「成功但有成本」中間態(light/medium 2.0/1.0 vs clean 0.0)。矩陣原本抓出 2 個真實 repair 弱點(FG-BROWSER-004/005),measure-first 先量測、**2026-07-10 由 commit d5481eb 修復並重跑**:
 
 - **perception 軸(FG-BROWSER-005,bait-field tie-break)**:form-context tie-break 讓真搜尋框勝出誘餌 Promo 欄位。perception curve 1.0→1.0→1.0→**0.0** 變 1.0→1.0→1.0→**1.0**;perception-heavy success 0.0→**1.0**、checkpoint 0.0→**1.0**、recovery 0.0→**1.0**。
 - **action 軸(FG-BROWSER-004,repair fallback 到不可行元素)**:可行性 gate 讓 repair 對 `<span onclick>` submit(不進 a11y 枚舉)回「no viable candidate」而非 silent wrong click。action-heavy success **仍 0.0**(submit 真的不存在),但 fail 得**更誠實**:3/3 run honest_refusals=1;curve 1.0→1.0→1.0→0.0 不變、checkpoint 1.0 不變。artifact 新增 `honest_refusals` 欄位把「誠實 fail vs silent wrong click」寫進 committed 數字。
@@ -265,14 +265,14 @@ checkpoint 解離訊號仍定位失敗位置:action/execution-heavy ckpt=1.0(失
 
 #### 輕量 false-success detector(T1-6,heuristic 路線)
 
-labeled full trajectory <60(論文 2606.09863 的 train 門檻)→ 誠實走 heuristic 前哨,不硬 train。**2026-07-10 修復後**:兩個 ground-truth false success(teleporter query-echo、filename-bypass)在 verifier 上游(c4ac7cd)被消滅,detector 已無假 pass 可抓——applicable claimed-pass 24→**22**、confusion {tp1/fp0/fn1/tn22}→**{tp0/fp0/fn0/tn22}**、flag_rate 0.0417→**0.0**、precision 1.0→**null**、recall 0.5→**null**(P2 answer-channel 擴充 corpus 後重跑:corpus 62、applicable **24**、{tp0/fp0/fn0/tn**24**},結論不變)(分母歸零,已在 artifact `known_limitations` 寫明:代價是此 corpus 上 recall 暫不可量測——上游把 false success 修光是好事,但也讓下游 detector 在此 corpus 失去可量測樣本)。表面 proxy(closing 語氣、序列長度)刻意單獨不足以 flag——直接對應論文警告「judge 過度倚賴表面訊號」。TF-IDF+XGBoost 版寫進 artifact 的 roadmap(前置條件:≥60 labeled trajectory + trajectory log 補存 agent 自述)。detector 是 opt-in triage hint,**絕不改判定**(verdict_unchanged invariant 有 test 鎖)。
+labeled full trajectory <60(論文 2606.09863 的 train 門檻)→ 誠實走 heuristic 前哨,不硬 train。**2026-07-10 修復後**:兩個 ground-truth false success(teleporter query-echo、filename-bypass)在 verifier 上游(bcdc9cf)被消滅,detector 已無假 pass 可抓——applicable claimed-pass 24→**22**、confusion {tp1/fp0/fn1/tn22}→**{tp0/fp0/fn0/tn22}**、flag_rate 0.0417→**0.0**、precision 1.0→**null**、recall 0.5→**null**(P2 answer-channel 擴充 corpus 後重跑:corpus 62、applicable **24**、{tp0/fp0/fn0/tn**24**},結論不變)(分母歸零,已在 artifact `known_limitations` 寫明:代價是此 corpus 上 recall 暫不可量測——上游把 false success 修光是好事,但也讓下游 detector 在此 corpus 失去可量測樣本)。表面 proxy(closing 語氣、序列長度)刻意單獨不足以 flag——直接對應論文警告「judge 過度倚賴表面訊號」。TF-IDF+XGBoost 版寫進 artifact 的 roadmap(前置條件:≥60 labeled trajectory + trajectory log 補存 agent 自述)。detector 是 opt-in triage hint,**絕不改判定**(verdict_unchanged invariant 有 test 鎖)。
 
-- 重跑:`.venv/Scripts/python -m tools.false_success_detector`(script 形式亦可,sys.path bootstrap 已補,commit `2fc9f06`)
+- 重跑:`.venv/Scripts/python -m tools.false_success_detector`(script 形式亦可,sys.path bootstrap 已補,commit `470b8b9`)
 - Artifact:`data/browser_eval/false_success/detector_results.json`
 
 #### 開放式(不可驗證)任務:誠實 unknown 而非 crash / vacuous pass(2026-07-10,FIX-1)
 
-無可機讀驗證條件的任務(如「隨便逛逛看有什麼有趣的」)過去會讓 run crash(contract `success_conditions` min_length=1 → ValidationError → status=ERROR),或在繞過後 vacuous pass(什麼都沒證明卻回 pass)。修復(commit 2fec949)讓這類任務:contract 允許空條件、verifier 空 success 時先跑 forbidden、否則短路回 **unknown** + 明講需人工審 trace、agent 照常執行並錄 trace。3 個開放式 case 實測:status 全 unknown、**crashes 0 / vacuous_passes 0 / honest_unknown_rate 1.0**、traces_recorded 3(每 case trace steps 2/3/2 > 0)。這是三態鐵律在「開放式任務」上的落地:缺可驗證證據 → unknown,絕不 vacuous pass、絕不 crash 掉誠實輸入。
+無可機讀驗證條件的任務(如「隨便逛逛看有什麼有趣的」)過去會讓 run crash(contract `success_conditions` min_length=1 → ValidationError → status=ERROR),或在繞過後 vacuous pass(什麼都沒證明卻回 pass)。修復(commit f535c93)讓這類任務:contract 允許空條件、verifier 空 success 時先跑 forbidden、否則短路回 **unknown** + 明講需人工審 trace、agent 照常執行並錄 trace。3 個開放式 case 實測:status 全 unknown、**crashes 0 / vacuous_passes 0 / honest_unknown_rate 1.0**、traces_recorded 3(每 case trace steps 2/3/2 > 0)。這是三態鐵律在「開放式任務」上的落地:缺可驗證證據 → unknown,絕不 vacuous pass、絕不 crash 掉誠實輸入。
 
 - 重跑:`.venv/Scripts/python tools/open_ended_tasks.py`
 - Artifact:`data/browser_eval/open_ended/open_ended_results.json`
@@ -283,16 +283,16 @@ labeled full trajectory <60(論文 2606.09863 的 train 門檻)→ 誠實走 heu
 
 | 指標 / case | 修復前 | 修復後 | commit | artifact |
 |---|---|---|---|---|
-| 校準 specificity | 0.9583 | **1.0** | c4ac7cd | `calibration/calibration_results.json` |
-| 校準 FP rate | 0.0417 | **0.0** | c4ac7cd | 同上 |
-| 校準 Rogan-Gladen corrected | 0.7913 | **0.8** | c4ac7cd | 同上 |
-| corrupted 三態 | pass1/fail20/unknown3 | **pass0/fail21/unknown3** | c4ac7cd | 同上 |
-| impossible silent_failure_rate | 0.1 | **0.0** | c4ac7cd | `impossible/impossible_results.json` |
-| impossible honest_outcome_rate | 0.9 | **1.0** | c4ac7cd | 同上 |
-| degradation perception curve | 1.0→1.0→1.0→0.0 | **1.0→1.0→1.0→1.0** | 3f0b1e9 | `artifacts/degradation_curve.json` |
-| degradation action-heavy | fail(silent wrong click)| **fail(honest_refusals=1)** | 3f0b1e9 | 同上 |
-| detector confusion | tp1/fp0/fn1/tn22 | **tp0/fp0/fn0/tn24**(recall 0.5→null;P2 corpus 擴充後 tn22→24)| c4ac7cd | `false_success/detector_results.json` |
-| 開放式任務 | crash / vacuous-pass 風險 | **honest_unknown_rate 1.0,crashes 0** | 2fec949 | `open_ended/open_ended_results.json` |
+| 校準 specificity | 0.9583 | **1.0** | bcdc9cf | `calibration/calibration_results.json` |
+| 校準 FP rate | 0.0417 | **0.0** | bcdc9cf | 同上 |
+| 校準 Rogan-Gladen corrected | 0.7913 | **0.8** | bcdc9cf | 同上 |
+| corrupted 三態 | pass1/fail20/unknown3 | **pass0/fail21/unknown3** | bcdc9cf | 同上 |
+| impossible silent_failure_rate | 0.1 | **0.0** | bcdc9cf | `impossible/impossible_results.json` |
+| impossible honest_outcome_rate | 0.9 | **1.0** | bcdc9cf | 同上 |
+| degradation perception curve | 1.0→1.0→1.0→0.0 | **1.0→1.0→1.0→1.0** | d5481eb | `artifacts/degradation_curve.json` |
+| degradation action-heavy | fail(silent wrong click)| **fail(honest_refusals=1)** | d5481eb | 同上 |
+| detector confusion | tp1/fp0/fn1/tn22 | **tp0/fp0/fn0/tn24**(recall 0.5→null;P2 corpus 擴充後 tn22→24)| bcdc9cf | `false_success/detector_results.json` |
+| 開放式任務 | crash / vacuous-pass 風險 | **honest_unknown_rate 1.0,crashes 0** | f535c93 | `open_ended/open_ended_results.json` |
 
 FG-BROWSER-002~006 的逐條 Repair 說明見 `docs/failure_gallery.md`。
 
@@ -300,7 +300,7 @@ FG-BROWSER-002~006 的逐條 Repair 說明見 `docs/failure_gallery.md`。
 
 上一波修的是「量測抓到的 verifier/repair 弱點」。這一波修的是**一個真實使用者親測的 false pass** —— 任務「找到 intc 10-k 的財報 找到裡面的最新的營收數字給我」被判 PASS conf 高,但答案從沒交到使用者手上。事後拆出三個獨立根因(見 FG-BROWSER-007),各以結構性防禦修復(非個案打補丁),前後行為對照如下。
 
-#### 根因 1:premature landmark —— 條件是任務句自帶 token(P1,commit f59c65d)
+#### 根因 1:premature landmark —— 條件是任務句自帶 token(P1,commit 8437826)
 
 preflight 產出的 success 條件 `text_visible:intc` 是任務句本身的字串,任何開著 EDGAR 搜尋頁的狀態都為真 → 尚未開始做事就 PASS。**結構性修復是 baseline-subtraction**:verifier 在 t0(agent 動作前)先用空 extracted 跑一次 `_check_success`,任何在 t0 就成立的條件是「landmark 而非 deliverable」,從有效 contract 中剔除;全剔除後空條件流進既有 open-ended gate → 誠實 **unknown**(絕不 vacuous pass)。`download_exists` 在 t0 是 unknown 不會被誤剔。planner 端另加 `_task_echo` guard:text_visible value 正規化後若是任務句子字串且 ≤3 詞則不採用。
 
@@ -311,7 +311,7 @@ preflight 產出的 success 條件 `text_visible:intc` 是任務句本身的字�
 
 - 重跑:`.venv/Scripts/python -m pytest tests/test_premature_landmark.py -q`
 
-#### 根因 2:答案型任務無交付通道(P2,commit 711f336)
+#### 根因 2:答案型任務無交付通道(P2,commit 3431335)
 
 `extract_text` 的結果被丟棄(`run_agentic` 的 `extracted` 只放 `__download__`),即使 agent 抓到營收數字也不進 verifier、不回 UI —— 「做到了但沒交到人手上」在 pass rate 上完美、使用者價值為零。**修復是把答案接成第一級 deliverable**:extract_text 成功結果 append 進 `extracted['answer']`(存 `TaskRun.answer`、UI「📋 擷取內容」區塊),verifier 新增條件型別 **answer_matches**(有 answer 且 regex match → pass;不 match → fail;**沒 answer → fail**,不吃自述;regex 不可編譯 → unknown)。baseline-subtraction 不會誤剔 answer_matches(t0 無 answer 是 fail 非 pass)。
 
@@ -329,7 +329,7 @@ answer channel 也擴充了 verifier 校準集:新 corruption class **answer_wro
 - 重跑:`.venv/Scripts/python tools/answer_channel_eval.py`、`.venv/Scripts/python tools/calibrate_verifier.py`
 - Artifacts:`data/browser_eval/answer_channel/answer_channel_results.json`、`data/browser_eval/calibration/calibration_results.json`
 
-#### 根因 3:卡住時無視覺升級 + 首屏盲區 + 新分頁追丟(P3,commit 06eb46b)
+#### 根因 3:卡住時無視覺升級 + 首屏盲區 + 新分頁追丟(P3,commit 1c8f103)
 
 原本 agent 卡住只能重試到 give_up、目標在視窗外或內容開在新分頁時會失敗且自述與事實不符。三項自主性升級:
 
@@ -345,13 +345,13 @@ answer channel 也擴充了 verifier 校準集:新 corruption class **answer_wro
 
 | 指標 / case | 修復前 | 修復後 | commit | artifact / test |
 |---|---|---|---|---|
-| INTC 營收任務 verdict | PASS(landmark false pass)| **unknown**(誠實,無交付則不偽 pass)| f59c65d | `tests/test_premature_landmark.py`(9 passed)|
-| 答案交付通道 | extract_text 結果被丟棄 | **answer → extracted['answer'] + UI + answer_matches verdict** | 711f336 | `answer_channel/answer_channel_results.json`(3/3、silent 0)|
-| answer 型任務 silent failure | 結構性盲區(pass 但零價值)| **0**(沒抓到 → 誠實 fail)| 711f336 | 同上 |
-| verifier 校準集 | 46(4 class)| **50(5 class,+answer_wrong)** | 711f336 | `calibration/calibration_results.json`(sens/spec 1.0)|
-| 卡住恢復 | 重試到 give_up | **auto 視覺升級(未設 AGENT_VISION=auto)** | 06eb46b | `tests/test_auto_vision_and_tabs.py` |
-| off-screen 目標 | 只看首屏 | **PageDown/End 捲動後重讀** | 06eb46b | 同上(prompt)|
-| 新分頁內容 | 追丟 + 自述背離 | **executor 跟隨最新分頁 + observer 同步** | 06eb46b | 同上 |
+| INTC 營收任務 verdict | PASS(landmark false pass)| **unknown**(誠實,無交付則不偽 pass)| 8437826 | `tests/test_premature_landmark.py`(9 passed)|
+| 答案交付通道 | extract_text 結果被丟棄 | **answer → extracted['answer'] + UI + answer_matches verdict** | 3431335 | `answer_channel/answer_channel_results.json`(3/3、silent 0)|
+| answer 型任務 silent failure | 結構性盲區(pass 但零價值)| **0**(沒抓到 → 誠實 fail)| 3431335 | 同上 |
+| verifier 校準集 | 46(4 class)| **50(5 class,+answer_wrong)** | 3431335 | `calibration/calibration_results.json`(sens/spec 1.0)|
+| 卡住恢復 | 重試到 give_up | **auto 視覺升級(未設 AGENT_VISION=auto)** | 1c8f103 | `tests/test_auto_vision_and_tabs.py` |
+| off-screen 目標 | 只看首屏 | **PageDown/End 捲動後重讀** | 1c8f103 | 同上(prompt)|
+| 新分頁內容 | 追丟 + 自述背離 | **executor 跟隨最新分頁 + observer 同步** | 1c8f103 | 同上 |
 
 逐條事故報告見 `docs/failure_gallery.md` FG-BROWSER-007。
 
@@ -368,7 +368,7 @@ mock sites 仍是主軸(可控 UI 漂移,offline 可重現、零 flakiness)。�
 
 - naive baseline 對照(同子集):4/20 = **20%**(`tools/naive_baseline.py`;tracked 快照 `data/browser_eval/external_runs/naive_baseline/results.json`)——機制有加值,但**不宣稱超越 SOTA**(bu-max live 97.0%)。
 - **與官方 benchmark 的可比性(明確聲明)**:這是**自建 20 題 live 子集**、成功條件多為單一 landmark、61.1% 是**跨兩次 launch 的合成估計**——**不可與官方 Online-Mind2Web leaderboard(300 題、WebJudge 評審、Browser Use ~97%)直接比較**。我們量的軸是 verifier 誠實性(abstain / unknown 行為與 false-pass 防禦),不是 leaderboard 分數。
-- second judge(advisory)abstain rate:**6/6 → 1/6**(殘餘 1 題 ign 為證據不足的誠實棄權,非缺陷);根因修復 commit `49bcc6e`(unwrap codex-gateway action-schema wrapper)+ `3258b73`(open-ended scorer verdict-time 武裝 + groundable final-page evidence),量測基建 `b561e37`。judge 與 verifier 2/6 分歧(nfl、gov.uk),advisory-only 不改判——**verifier 仍唯一裁判**。
+- second judge(advisory)abstain rate:**6/6 → 1/6**(殘餘 1 題 ign 為證據不足的誠實棄權,非缺陷);根因修復 commit `6dbe095`(unwrap codex-gateway action-schema wrapper)+ `9a40ae2`(open-ended scorer verdict-time 武裝 + groundable final-page evidence),量測基建 `e53c324`。judge 與 verifier 2/6 分歧(nfl、gov.uk),advisory-only 不改判——**verifier 仍唯一裁判**。
 - 誠實 caveat:n 小、live variance 未控制,61.1% 是方向指標非穩定增益;這批題的 success condition 多為單一 landmark,verifier 對其是弱 proxy。逐題明細與 caveat a–d 見 `docs/research/giants_task1.md`「外部量測 abstain-fix 2026-07-10」節。
 
 ### Browser held-out 凍結子集(2026-07-11,單跑,反 overfitting 證據)
@@ -401,7 +401,7 @@ mock sites 仍是主軸(可控 UI 漂移,offline 可重現、零 flakiness)。�
 - **兩軸分層分歧(值得注意)**:hard 的 verifier SR(45.21%)反高於 easy(37.33%),而 WebJudge hard SR 最低(2.74%)且 abstain 最高(34.25%)——兩軸在難題上分歧最大。artifact:`final_summary.per_difficulty_two_axes`。
 - **不可比性(強制聲明)**:judge model = codex gateway ChatGPT-account default(gpt-5.5-class),**非論文 o4-mini/WebJudge-7B** → **不可與官方 leaderboard 比較**(Browser Use ~97% 是官方 WebJudge+o4-mini 跑滿 300 題);其餘偏差(單圖證據限制、JSON envelope unwrap、顯式 abstain、action history 由 harness step log 重建並排除 verdict record 防 verifier 洩漏)逐條列於 results JSON `deviations_from_official` 與 `tools/webjudge.py`。judge 名目成本 $0.4714(283 題,client 計價;實際 $0,ChatGPT OAuth)。
 - **License**:Online-Mind2Web repo 程式碼 = MIT(2026-07-11 讀 GitHub LICENSE 驗證)、dataset = CC-BY-4.0(已署名);prompts 逐字重用、僅 response-format 段改 JSON;登記於 `docs/ATTRIBUTION.md`。
-- **過程事件(measure-fix-remeasure,如實記錄)**:run 初期在 46/300 時卡進 abort-loop 死鎖——任務檔序 idx 5/18/26 三題(carmax ×2、united)為持久性 `site_unreachable`(本機 curl 皆 timeout,非暫時性);`--resume` 復用 done 題但不計 n_attempted → 每次 launch 前 3 個 attempted 必為這 3 題 → `should_abort(3,3)` 觸發(ERROR_ABORT_MIN=3、RATE=0.30)。**根因修復 commit `0613aac`**(resume 把先前 done 計入 attempts,解除 abort-guard 死鎖)後補完至 300/300。當時的 partial 快照(done 46)曾如實記錄為誠實 partial;本節為最終 rollup。
+- **過程事件(measure-fix-remeasure,如實記錄)**:run 初期在 46/300 時卡進 abort-loop 死鎖——任務檔序 idx 5/18/26 三題(carmax ×2、united)為持久性 `site_unreachable`(本機 curl 皆 timeout,非暫時性);`--resume` 復用 done 題但不計 n_attempted → 每次 launch 前 3 個 attempted 必為這 3 題 → `should_abort(3,3)` 觸發(ERROR_ABORT_MIN=3、RATE=0.30)。**根因修復 commit `548bd6d`**(resume 把先前 done 計入 attempts,解除 abort-guard 死鎖)後補完至 300/300。當時的 partial 快照(done 46)曾如實記錄為誠實 partial;本節為最終 rollup。
 
 - Artifacts:`runs/browser_eval/m2w_full300_20260711/results.json`(最終 rollup)與 `<task>/summary.json`(per-task,權威)、`runs/browser_eval/m2w_full300_20260711/webjudge/webjudge_results.json`(run_snapshot + final_summary 雙軸/混淆/分層)、`runs/browser_eval/m2w_full300_20260711/webjudge/per_task/*.json`(283 份)、`runs/browser_eval/m2w_full300_20260711/webjudge/judge_full_run.log`、`tools/webjudge.py`(未改動);runs/ 為 gitignored,關鍵 artifact 快照至 `data/browser_eval/external_runs/m2w_full300_20260711/`。逐段敘事見 `docs/research/giants_task1.md`「外部量測 300 題官方全量」節。
 
@@ -446,6 +446,6 @@ mock sites 仍是主軸(可控 UI 漂移,offline 可重現、零 flakiness)。�
 
 ### 已知殘留(誠實邊界)
 
-1. **同檔附綁 wrapper 已還原;跨檔 cross-reference-index 尚未。** JPM/XOM 指向本檔附綁年報區塊的 stub 已由 `cross_ref.reassemble_wrapper_bodies`(commit 64de3ef)以 page-anchor / section-anchor 還原(JPM Item 1C CYD coverage 0%→100%;兩家 Item 8 重組 span 均獲 XBRL 3/3 認證,見 `failure_gallery.md` FG-SEC-007/008)。2026-07-11 page-top section anchoring 收尾:GS 1C(本檔內跨 item 指標)還原 + JPM 1C 頁窗收斂到子 section,CYD oracle 現為 **11 agree / 0 disagree**(見上方 T2-3「wrapper 1C 還原」段;kill-switch `SEC_WRAPPER_SECTION_ANCHOR=0`)。Intel/Citi 指向**另外裝訂年報 exhibit** 的 cross-reference-index 正文仍未還原——刻意不出貨脆弱的 title-based 猜測(Intel 正文無 emphasis 標記、標題重複當頁首,會出錯),**錯的正文比誠實的指標更糟**,見 `insights_and_directions.md` §2。
+1. **同檔附綁 wrapper 已還原;跨檔 cross-reference-index 尚未。** JPM/XOM 指向本檔附綁年報區塊的 stub 已由 `cross_ref.reassemble_wrapper_bodies`(commit 84ecea7)以 page-anchor / section-anchor 還原(JPM Item 1C CYD coverage 0%→100%;兩家 Item 8 重組 span 均獲 XBRL 3/3 認證,見 `failure_gallery.md` FG-SEC-007/008)。2026-07-11 page-top section anchoring 收尾:GS 1C(本檔內跨 item 指標)還原 + JPM 1C 頁窗收斂到子 section,CYD oracle 現為 **11 agree / 0 disagree**(見上方 T2-3「wrapper 1C 還原」段;kill-switch `SEC_WRAPPER_SECTION_ANCHOR=0`)。Intel/Citi 指向**另外裝訂年報 exhibit** 的 cross-reference-index 正文仍未還原——刻意不出貨脆弱的 title-based 猜測(Intel 正文無 emphasis 標記、標題重複當頁首,會出錯),**錯的正文比誠實的指標更糟**,見 `insights_and_directions.md` §2。
 2. **boundary 精度已量化(2026-07-10)**:char-offset F1(建構性 gold,regression baseline,敏感度注入鎖在 `tests/test_scoring.py`:AAPL F1 1.0→0.9267)+ CYD 官方 iXBRL oracle(9/9 pass segment coverage 100%,首個外部 span 錨點)。人工 token-level 標註(絕對正確率)仍列 backlog。
 3. **`data/sec_eval/records/sweep1` 是刻意保留的修復前 baseline**,其 Item 8 仍顯示舊的(錯誤)pass——用於 before/after 對照(見上方 metrics 表)。當前正確結果在 `sweep3`(sweep2 降為歷史 baseline,漂移見「Eval 升級」段)。

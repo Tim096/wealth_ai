@@ -17,7 +17,7 @@
 | Failure Type | silent_failure(錯了卻標成功)|
 | Evidence | smoke run 輸出 + `r.text_of('11')` == `'Item 11. Executive Compensation.\nRefer to Item 10.\n'` |
 | Root Cause | `_INCORPORATED_RE` 只匹配 "incorporated by reference" 字樣;JPM 用 "Refer to Item 10." 措辭,不含該片語,於是 stub 通過 verifier(heading 對、span 非空、順序對)拿到高 confidence |
-| Repair Attempt | 初版(commit 892ae0b):新增 `_CROSS_REF_RE`(`refer to / see item N`),body < 600 且命中 → `incorporated_by_reference`。**此機制後於 FG-SEC-002 的 refine 重構(commit 0c46e9d)被 `sec_core/refine.py::classify_reference_stub`(廣義 reference cue,body < 900)取代並移除**——故現行 code 已無 `_CROSS_REF_RE` 符號,見 refine.py |
+| Repair Attempt | 初版(commit 9ed8dd2):新增 `_CROSS_REF_RE`(`refer to / see item N`),body < 600 且命中 → `incorporated_by_reference`。**此機制後於 FG-SEC-002 的 refine 重構(commit 311d2f6)被 `sec_core/refine.py::classify_reference_stub`(廣義 reference cue,body < 900)取代並移除**——故現行 code 已無 `_CROSS_REF_RE` 符號,見 refine.py |
 | Why It Still Failed | (已修復)殘餘風險:非 Part III 的極短 cross-ref 措辭變體(如 "included in Item 8")尚未覆蓋,由 boundary_length_sanity confidence 分量部分攔截 |
 | Next Fix | eval sweep 擴大公司樣本,收集更多 cross-ref 措辭變體 |
 | Related Prompt | prompts/failure_triage/2026-07-10-jpm-cross-ref-stub.md |
@@ -136,7 +136,7 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 
 # 2026-07-10 eval 升級波新增
 
-以下 8 條由 11 項 eval 升級(verifier 校準、擾動矩陣、impossible set、三角驗證、CYD oracle、分層抽樣)量測抓出。Browser 4 條(FG-BROWSER-002~005)原為 **measure-first 刻意不修**——先讓校準/量測誠實呈現系統現狀,每條各有 pure-logic test 鎖住。**2026-07-10 修復波已全數修復**(commit c4ac7cd / 3f0b1e9),原 `test_known_*` 已翻寫為 `test_fixed_*` 並重跑 artifact;每條的「Status」「Repair」欄已更新為修復後量測。這正是 measure-fix-remeasure 方法論的收尾:弱點先被誠實量測、再被修掉、再重新量測驗證。
+以下 8 條由 11 項 eval 升級(verifier 校準、擾動矩陣、impossible set、三角驗證、CYD oracle、分層抽樣)量測抓出。Browser 4 條(FG-BROWSER-002~005)原為 **measure-first 刻意不修**——先讓校準/量測誠實呈現系統現狀,每條各有 pure-logic test 鎖住。**2026-07-10 修復波已全數修復**(commit bcdc9cf / d5481eb),原 `test_known_*` 已翻寫為 `test_fixed_*` 並重跑 artifact;每條的「Status」「Repair」欄已更新為修復後量測。這正是 measure-fix-remeasure 方法論的收尾:弱點先被誠實量測、再被修掉、再重新量測驗證。
 
 ---
 
@@ -154,7 +154,7 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Evidence | `data/sec_eval/triangulation/triangulation.json` records[NEM/NVDA/WMT].items['16'](overlap 0.0)|
 | Root Cause | edgartools TOC-based 偵測抓錯區段 |
 | Repair Attempt | 無(engine 端問題;我方策略是 disagree 一律扣 confidence + needs_review)|
-| Related Commit | 4209c87 |
+| Related Commit | ea9f782 |
 
 ---
 
@@ -167,12 +167,12 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Input | JPM / XOM FY2025 wrapper 10-K,Items 7/8 |
 | Expected | 兩引擎對 item 內容位置一致 |
 | Actual | 我方標 incorporated_by_reference(指標 stub 40–96 詞),edgartools 直接抽出附綁年報全文(19,548–90,470 詞),overlap ≤0.21 → disagree,我方 confidence 降至 0.51–0.64 |
-| Status | **fixed**(commit 64de3ef,`cross_ref.reassemble_wrapper_bodies`):指向本檔附綁區塊的 stub 解析回 source-exact span——JPM 走 page-range anchor(Item 7 → 390,734 chars、7A → 35,632、8 → 528,433,provenance `resolved_from_page_anchor`),XOM 走 quoted-section-title anchor(Item 7 → 89,501、7A → 30,817、8 → 165,993,provenance `resolved_from_section_anchor`);兩家 Item 8 重組 span 均被 XBRL 獨立認證 3/3。解析後標 `partial` + needs_review(頁界/節界對齊是啟發式,如實揭露)|
+| Status | **fixed**(commit 84ecea7,`cross_ref.reassemble_wrapper_bodies`):指向本檔附綁區塊的 stub 解析回 source-exact span——JPM 走 page-range anchor(Item 7 → 390,734 chars、7A → 35,632、8 → 528,433,provenance `resolved_from_page_anchor`),XOM 走 quoted-section-title anchor(Item 7 → 89,501、7A → 30,817、8 → 165,993,provenance `resolved_from_section_anchor`);兩家 Item 8 重組 span 均被 XBRL 獨立認證 3/3。解析後標 `partial` + needs_review(頁界/節界對齊是啟發式,如實揭露)|
 | Failure Type | wrapper 10-K 邊界定義歧異(修復前正是此 class 需要人審的證據)|
 | Evidence | `data/sec_eval/triangulation/triangulation.json` records[JPM/XOM].items['7'/'8'];`tests/test_wrapper_reassembly.py`(10 tests);manifest FG-SEC-007 checks |
 | Root Cause | wrapper filing 的 item body resolution 原為 documented next step(見 FG-SEC-004/005、insights §2)——已由 P0-10 落地 |
 | Repair Attempt | `reassemble_wrapper_bodies()`:僅處理指向本 filing 的 stub(proxy/note pointer 不動),page-range stub 用區域限定 page map 取第一個提及區間;section-title stub 錨定附綁年報自身節標題並跳過其內部 TOC |
-| Related Commit | 4209c87(偵測)→ 64de3ef(body 重組)|
+| Related Commit | ea9f782(偵測)→ 84ecea7(body 重組)|
 
 ---
 
@@ -185,12 +185,12 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Input | JPM / GS FY2025 wrapper 10-K,Item 1C |
 | Expected | Item 1C segment 含 SEC 強制 CYD block-tag 的 cybersecurity disclosure |
 | Actual | 我方 1C 是 170/247 char 的 incorporated_by_reference 指標 stub;官方 tagged span(6,871/7,402 chars)在同一份 HTML 的年報區(JPM 落在所有 item segment 之外;GS 落在我方 Item 7 內),coverage 0% |
-| Status | **JPM fixed / GS open**(commit 64de3ef):JPM Item 1C 170-char stub → 20,610-char span(pages 146-149 Operational Risk,`resolved_from_page_anchor`),**CYD coverage 0% → 100%**、verdict disagree→agree(corpus CYD agreement 9/11 → 10/11)。GS 維持誠實 pointer:其 stub 指向**自身已抽出的 Item 7 內部子節**(無附綁 wrapper 區塊),是另一個 class,見 manifest FG-SEC-008 |
+| Status | **JPM fixed / GS open**(commit 84ecea7):JPM Item 1C 170-char stub → 20,610-char span(pages 146-149 Operational Risk,`resolved_from_page_anchor`),**CYD coverage 0% → 100%**、verdict disagree→agree(corpus CYD agreement 9/11 → 10/11)。GS 維持誠實 pointer:其 stub 指向**自身已抽出的 Item 7 內部子節**(無附綁 wrapper 區塊),是另一個 class,見 manifest FG-SEC-008 |
 | Failure Type | wrapper-10-K body 未解析(既知 class);CYD oracle 首次給出可機讀的目標位置 |
 | Evidence | `data/sec_eval/cyd_groundtruth/cyd_agreement.json` records[JPM/GS](official_intervals 有精確 normalized offsets)|
 | Root Cause | cross-reference/wrapper filing 的 item body resolution 原為 documented next step;CYD tag 證明 body 就在同檔可定位——JPM class 已由 P0-10 落地 |
 | Repair Attempt | `cross_ref.reassemble_wrapper_bodies()`(JPM class);GS 的 intra-item subsection pointer 超出本 pass 範圍,official_intervals 仍是其直接輸入 |
-| Related Commit | 99c9274 |
+| Related Commit | f55c650 |
 
 ---
 
@@ -208,7 +208,7 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Evidence | `data/sec_eval/stratification/stratification.json` era_strata_runs[text_pre2001] |
 | Root Cause | normalize 只在 BLOCK_TAG 邊界 emit newline,純文字的 `\n` 被 `_emit_text` 當一般空白折疊 → heading 不在 line start、無 bold/heading flag → 0 candidate |
 | Repair Attempt | 無(pre-2001 世代非本波範圍;正解是 text-mode normalizer,或維持 unsupported class)|
-| Related Commit | 54bc872 |
+| Related Commit | a55d773 |
 
 ---
 
@@ -221,12 +221,12 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Input | calibration case `cal-bad-dlname-annual-report`——needle="annual report",檔名 "annual report 2025.htm",檔案內容是 captcha 擋頁("Are you a robot?...")|
 | Expected | fail(內容不含 needle)|
 | Actual(修復前) | pass(verifier FP;T1-1 校準 46 triples 中唯一 FP,即 specificity 0.9583 的來源)|
-| Status | 已修(commit c4ac7cd)|
+| Status | 已修(commit bcdc9cf)|
 | Failure Type | verifier filename-needle bypass |
 | Evidence | `data/browser_eval/calibration/calibration_results.json` per_case `cal-bad-dlname-annual-report` verdict=fail;`tests/test_calibrate_verifier.py::test_filename_needle_bypass_fixed_content_first` |
 | Root Cause | `packages/browser_agent/verifier.py` `_download_ok` 舊版 `return "pass" if (n in content or n in os.path.basename(path).lower()) else "fail"`——basename 單獨即可授予 pass,與檔頭註解「filename is a weak secondary signal」矛盾 |
-| Repair(commit c4ac7cd) | 改為 content-first:內容**可讀**(UTF-8 decode 後 U+FFFD 替換字元比例 ≤5%)時只認內容,檔名不再單獨授 pass。本 case 的 captcha bytes 是可讀 UTF-8 且不含 needle → 正確判 **fail**。filename fallback 僅保留給不可讀 binary + 檔名命中的路徑(回 unknown 而非 pass,新單元測試覆蓋)。**量測後果**:此 case pass(FP)→fail;校準 specificity 0.9583→**1.0**、FP rate 0.0417→**0.0**、confusion FP 1→**0**、corrupted 三態 {pass1,fail20,unknown3}→{pass0,fail21,unknown3}、Rogan-Gladen corrected 0.7913→**0.8**(sensitivity 1.0 不變)。重跑 `.venv/Scripts/python tools/calibrate_verifier.py`,artifact `data/browser_eval/calibration/calibration_results.json` |
-| Related Commit | 3e9034a(引入)→ c4ac7cd(修復)|
+| Repair(commit bcdc9cf) | 改為 content-first:內容**可讀**(UTF-8 decode 後 U+FFFD 替換字元比例 ≤5%)時只認內容,檔名不再單獨授 pass。本 case 的 captcha bytes 是可讀 UTF-8 且不含 needle → 正確判 **fail**。filename fallback 僅保留給不可讀 binary + 檔名命中的路徑(回 unknown 而非 pass,新單元測試覆蓋)。**量測後果**:此 case pass(FP)→fail;校準 specificity 0.9583→**1.0**、FP rate 0.0417→**0.0**、confusion FP 1→**0**、corrupted 三態 {pass1,fail20,unknown3}→{pass0,fail21,unknown3}、Rogan-Gladen corrected 0.7913→**0.8**(sensitivity 1.0 不變)。重跑 `.venv/Scripts/python tools/calibrate_verifier.py`,artifact `data/browser_eval/calibration/calibration_results.json` |
+| Related Commit | 67eb56f(引入)→ bcdc9cf(修復)|
 
 ---
 
@@ -239,12 +239,12 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Input | impossible case `imp-product-teleporter`——site=v3_heldout,query="teleporter"(catalog 無此商品),success_conditions=[text_visible "Teleporter"],無 forbidden |
 | Expected | fail(商品不存在,0 hits,無 Teleporter 商品列)|
 | Actual(修復前) | pass(verifier FP → silent failure;silent_failure_rate 0.1 的那 1/10)|
-| Status | 已修(commit c4ac7cd)|
+| Status | 已修(commit bcdc9cf)|
 | Failure Type | needle-in-query-echo(success needle 命中「結果頁回顯的查詢字串」而非真商品列)|
 | Evidence | `data/browser_eval/impossible/impossible_results.json` per-task imp-product-teleporter status=fail;`tests/test_impossible_tasks.py::test_teleporter_query_echo_is_honest_fail` |
-| Root Cause | v3 doSearch 對 0 hits 仍插入 status 文字 `0 results for "teleporter"`;verifier text_visible 做 substring 比對,needle 命中回顯而非商品。同家族:commit eeff01b「stop mining a URL token as success needle」、論文 One-Token-to-Fool-Judge(arxiv 2507.08794)。對照組 imp-product-hoverboard 同樣 leak,但因帶 forbidden `error_text_visible "0 results"` 被擋下 |
-| Repair(commit c4ac7cd) | text_visible 逐行遮罩空結果回顯行(通用 regex:0/no/zero + results/matches/items/hits/products、not(hing) found、did not match、找不到/查無/沒有結果…),needle 只在被遮罩行內命中就不算 pass。非零結果回顯(如 "3 results for widget")不遮罩,合法 pass 全保留。**量測後果**:imp-product-teleporter pass→**fail**;silent_failure_rate 0.1→**0.0**、honest_fail 7→**8**、honest_outcome_rate 0.9→**1.0**、expect_status_accuracy 0.9167→**1.0**。校準 sensitivity 維持 1.0(合法 pass 不受影響)。重跑 `.venv/Scripts/python tools/impossible_tasks.py` |
-| Related Commit | 12ccf34(引入)→ c4ac7cd(修復)|
+| Root Cause | v3 doSearch 對 0 hits 仍插入 status 文字 `0 results for "teleporter"`;verifier text_visible 做 substring 比對,needle 命中回顯而非商品。同家族:commit d27c2c0「stop mining a URL token as success needle」、論文 One-Token-to-Fool-Judge(arxiv 2507.08794)。對照組 imp-product-hoverboard 同樣 leak,但因帶 forbidden `error_text_visible "0 results"` 被擋下 |
+| Repair(commit bcdc9cf) | text_visible 逐行遮罩空結果回顯行(通用 regex:0/no/zero + results/matches/items/hits/products、not(hing) found、did not match、找不到/查無/沒有結果…),needle 只在被遮罩行內命中就不算 pass。非零結果回顯(如 "3 results for widget")不遮罩,合法 pass 全保留。**量測後果**:imp-product-teleporter pass→**fail**;silent_failure_rate 0.1→**0.0**、honest_fail 7→**8**、honest_outcome_rate 0.9→**1.0**、expect_status_accuracy 0.9167→**1.0**。校準 sensitivity 維持 1.0(合法 pass 不受影響)。重跑 `.venv/Scripts/python tools/impossible_tasks.py` |
+| Related Commit | a79f3c7(引入)→ bcdc9cf(修復)|
 
 ---
 
@@ -257,12 +257,12 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Input | mutation 矩陣 action-heavy cell——submit 是無 role 的 `<span onclick>`,不進 a11y 枚舉;頁上唯一候選是搜尋 input(aria-label "Search products")|
 | Expected | repair 回報 no viable candidate(誠實找不到)|
 | Actual(修復前) | repair「修復」到搜尋 input 並點擊之,click 回 ok(silent wrong-element click),trace 全綠,只有最終 verifier 擋下(fail)|
-| Status | 已修(commit 3f0b1e9)|
+| Status | 已修(commit d5481eb)|
 | Failure Type | repair fallback to non-actionable element(weak word-match score 2.0 > 0 門檻)|
 | Evidence | `data/browser_eval/artifacts/degradation_curve.json` runs[action-heavy] repairs=2 status=fail honest_refusals=1;`tests/test_mutation_sites.py::test_fixed_submit_repair_refuses_infeasible_input` |
 | Root Cause | `packages/browser_agent/repair.py` `_score_candidate`——submit_button purpose 對 input 仍給 word-match +2.0,repair_target 只要 score>0 就選,無「動作可行性」檢查 |
-| Repair(commit 3f0b1e9) | FG-BROWSER-004 加**可行性 gate**(`_feasible()`):每種 purpose 對應可執行元素類別(submit/download→button/a/[role=button\|link]/input[type=submit…]、fill→可填 input/textarea/[role=searchbox\|textbox]、result_link→a/link、filter_dropdown→select/listbox/combobox),不符者 score=-1 直接出局,保證入選者至少一項結構訊號命中。**量測後果**:action-heavy 仍 fail(submit 真的不存在),但**fail 得誠實**——3/3 run honest_refusals=1(repair 回 "no viable candidate" 而非點 input 的 silent wrong click);checkpoint 1.0、curve monotone 均不變。degradation artifact 新增 `honest_refusals` 欄位把「誠實 fail vs silent wrong click」寫進 committed 數字。重跑 `.venv/Scripts/python tools/degradation_curve.py` |
-| Related Commit | 1bef360(引入)→ 3f0b1e9(修復)|
+| Repair(commit d5481eb) | FG-BROWSER-004 加**可行性 gate**(`_feasible()`):每種 purpose 對應可執行元素類別(submit/download→button/a/[role=button\|link]/input[type=submit…]、fill→可填 input/textarea/[role=searchbox\|textbox]、result_link→a/link、filter_dropdown→select/listbox/combobox),不符者 score=-1 直接出局,保證入選者至少一項結構訊號命中。**量測後果**:action-heavy 仍 fail(submit 真的不存在),但**fail 得誠實**——3/3 run honest_refusals=1(repair 回 "no viable candidate" 而非點 input 的 silent wrong click);checkpoint 1.0、curve monotone 均不變。degradation artifact 新增 `honest_refusals` 欄位把「誠實 fail vs silent wrong click」寫進 committed 數字。重跑 `.venv/Scripts/python tools/degradation_curve.py` |
+| Related Commit | a51361e(引入)→ d5481eb(修復)|
 
 ---
 
@@ -275,12 +275,12 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Input | mutation 矩陣 perception-heavy cell——可見 "Promo code" 誘餌欄位在前,真搜尋框無 aria、generic placeholder("Type here...")|
 | Expected | 填入真搜尋框(表單內、緊鄰 submit)|
 | Actual(修復前) | 兩欄位同分 2.5,tie 由 DOM 順序決定 → query 填進 Promo 欄位 → 空查詢 → fail(checkpoint 也 fail:degradation curve 上可見失敗發生在輸入階段)|
-| Status | 已修(commit 3f0b1e9)|
+| Status | 已修(commit d5481eb)|
 | Failure Type | bait-field DOM-order tie-break |
 | Evidence | `data/browser_eval/artifacts/degradation_curve.json` curves[perception] points[3] success_rate=1.0、cells[perception-heavy] checkpoint_rate=1.0;`tests/test_mutation_sites.py::test_fixed_bait_field_loses_to_form_context` |
 | Root Cause | `repair.py` `_score_candidate` 無 form-context/鄰近性訊號,unlabeled 真欄位無法勝出;want_value 對兩者皆不命中 |
-| Repair(commit 3f0b1e9) | FG-BROWSER-005 由 observer 新增 `form` 欄位(closest('form') 的 id/index),repair 先算 submit_forms(含可行 submit 候選的 form 集合);fill 類 purpose 對同 form +1.0、任一 form 內 +0.5,bait 字樣(promo/coupon/discount/voucher/gift card)在無 purpose word 時 -1.0。真搜尋框在 submit 所在 form,誘餌 Promo 欄位在 form 外 → 真欄位勝出。**量測後果**:perception-heavy success 0.0→**1.0**、checkpoint 0.0→**1.0**、recovery 0.0→**1.0**;perception curve 1.0→1.0→1.0→0.0 變 **1.0→1.0→1.0→1.0**(仍 monotone non-increasing)。未引入 vision。重跑 `.venv/Scripts/python tools/degradation_curve.py` |
-| Related Commit | 1bef360(引入)→ 3f0b1e9(修復)|
+| Repair(commit d5481eb) | FG-BROWSER-005 由 observer 新增 `form` 欄位(closest('form') 的 id/index),repair 先算 submit_forms(含可行 submit 候選的 form 集合);fill 類 purpose 對同 form +1.0、任一 form 內 +0.5,bait 字樣(promo/coupon/discount/voucher/gift card)在無 purpose word 時 -1.0。真搜尋框在 submit 所在 form,誘餌 Promo 欄位在 form 外 → 真欄位勝出。**量測後果**:perception-heavy success 0.0→**1.0**、checkpoint 0.0→**1.0**、recovery 0.0→**1.0**;perception curve 1.0→1.0→1.0→0.0 變 **1.0→1.0→1.0→1.0**(仍 monotone non-increasing)。未引入 vision。重跑 `.venv/Scripts/python tools/degradation_curve.py` |
+| Related Commit | a51361e(引入)→ d5481eb(修復)|
 
 ---
 
@@ -293,12 +293,12 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Input | 無可機讀驗證條件的開放式任務(如「隨便逛逛看有什麼有趣的」「看看現在流行什麼」)——success_conditions 應為空陣列 |
 | Expected | 執行、錄 trace,verifier 因無可機讀證據回 **unknown**(交人工審 trace)|
 | Actual(修復前) | `BrowserTaskContract` 的 `success_conditions` 有 `min_length=1`,空陣列直接 ValidationError → run status=**ERROR**,開放式任務 0% 可跑;且若繞過(給空 success + forbidden 全過),`combine_checks` 會 **vacuous pass**(什麼都沒證明卻回 pass)|
-| Status | 已修(commit 2fec949)|
+| Status | 已修(commit f535c93)|
 | Failure Type | crash on honest input + vacuous-pass 風險(誠實路徑被當非法輸入懲罰)|
 | Evidence | `data/browser_eval/open_ended/open_ended_results.json` metrics crashes=0 / vacuous_passes=0 / honest_unknown=3 / honest_unknown_rate=1.0 / traces_recorded=3;`tests/test_open_ended_tasks.py` |
 | Root Cause | contract schema `min_length=1` 把「誠實的空條件」當非法輸入;verifier `combine_checks` 在 forbidden-only 全過時會回 pass(結構性 vacuous pass 漏洞)|
-| Repair(commit 2fec949) | (1) contract `success_conditions` min_length 1→0(附註解:誠實路徑不可是非法輸入);(2) `verify_contract` 加結構性守門:空 success 時先跑 forbidden checks,違規照樣 fail,否則短路回 **unknown** + missing_evidence 明講需人工審 trace;(3) run 迴圈 verdict 起始即 unknown,agent 照常執行、trace/screenshots 照錄。**量測後果**:3/3 開放式 case status=unknown、crashes **0**、vacuous_passes **0**、honest_unknown_rate **1.0**,每個 case trace steps>0(2/3/2)。新 runner `tools/open_ended_tasks.py`。重跑 `.venv/Scripts/python tools/open_ended_tasks.py` |
-| Related Commit | 2fec949 |
+| Repair(commit f535c93) | (1) contract `success_conditions` min_length 1→0(附註解:誠實路徑不可是非法輸入);(2) `verify_contract` 加結構性守門:空 success 時先跑 forbidden checks,違規照樣 fail,否則短路回 **unknown** + missing_evidence 明講需人工審 trace;(3) run 迴圈 verdict 起始即 unknown,agent 照常執行、trace/screenshots 照錄。**量測後果**:3/3 開放式 case status=unknown、crashes **0**、vacuous_passes **0**、honest_unknown_rate **1.0**,每個 case trace steps>0(2/3/2)。新 runner `tools/open_ended_tasks.py`。重跑 `.venv/Scripts/python tools/open_ended_tasks.py` |
+| Related Commit | f535c93 |
 
 ---
 
@@ -311,16 +311,16 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Input | 使用者親測任務:「找到 intc 10-k 的財報 找到裡面的最新的營收數字給我」;preflight 自選 success 條件 `text_visible:intc` |
 | Expected | 要嘛把營收數字交到使用者手上(pass + 答案),要嘛誠實說「無法機器驗證」(unknown)——絕不在沒交付任何答案時判 PASS |
 | Actual(修復前) | agent 開了 EDGAR 搜尋頁 → `text_visible:intc` 命中(任務句自帶 token)→ **PASS,confidence 高**;而即使 agent 有 extract_text 抓到營收,結果也被丟棄、從不回傳 |
-| Status | 已修(三重根因分別 commit f59c65d / 711f336 / 06eb46b)|
+| Status | 已修(三重根因分別 commit 8437826 / 3431335 / 1c8f103)|
 | Failure Type | premature-landmark false pass + 答案交付通道缺失(silent value-zero pass)|
 | Evidence | `tests/test_premature_landmark.py`(baseline-subtraction:INTC repro pass→unknown,9 passed);`data/browser_eval/answer_channel/answer_channel_results.json`(silent_failures=0、matches_expected 3/3);`data/browser_eval/calibration/calibration_results.json`(answer_wrong class 0 pass)|
 | Root Cause | 三個獨立缺陷疊加:(1) **premature landmark** —— preflight 條件是任務句自帶 token,任何搜尋頁都為真;(2) **無交付通道** —— `run_agentic` 的 `extracted` 只放 `__download__`,extract_text 結果既不進 verifier 也不回 UI,答案型任務結構性零交付卻記 pass;(3) **卡住時無視覺升級** —— 找不到目標只能重試到 give_up。同族論文:One-Token-to-Fool-Judge(arxiv 2507.08794,needle 命中回顯而非事實)|
-| Repair(根因 1,f59c65d) | verifier **baseline-subtraction**:t0(agent 動作前)以空 extracted 跑 `_check_success`,t0 即成立的條件視為 landmark 剔除;全剔除後空條件流進 open-ended gate → 誠實 **unknown**,絕不 vacuous pass(`download_exists` t0=unknown 不誤剔)。planner 端 `_task_echo` guard 擋任務句 echo 條件 |
-| Repair(根因 2,711f336) | extract_text 成功結果 append 進 `extracted['answer']`(存 `TaskRun.answer` + UI「📋 擷取內容」);verifier 新條件型別 **answer_matches**(有 answer 且 regex match→pass;不 match→fail;沒 answer→fail,不吃自述;regex 不可編譯→unknown)。verifier 校準集加 answer_wrong corruption class(2 case 全 fail),46→50 |
-| Repair(根因 3,06eb46b) | `vision_escalation_reason` 卡住偵測 → auto 切入 Set-of-Marks + gpt-5.5 視覺(`AGENT_VISION` 未設=auto 新預設);scroll PLAYBOOK(off-screen 目標);executor 新分頁跟隨。vision 純感知,verifier 仍唯一裁判(escalation 測試斷言 status!=pass)|
+| Repair(根因 1,8437826) | verifier **baseline-subtraction**:t0(agent 動作前)以空 extracted 跑 `_check_success`,t0 即成立的條件視為 landmark 剔除;全剔除後空條件流進 open-ended gate → 誠實 **unknown**,絕不 vacuous pass(`download_exists` t0=unknown 不誤剔)。planner 端 `_task_echo` guard 擋任務句 echo 條件 |
+| Repair(根因 2,3431335) | extract_text 成功結果 append 進 `extracted['answer']`(存 `TaskRun.answer` + UI「📋 擷取內容」);verifier 新條件型別 **answer_matches**(有 answer 且 regex match→pass;不 match→fail;沒 answer→fail,不吃自述;regex 不可編譯→unknown)。verifier 校準集加 answer_wrong corruption class(2 case 全 fail),46→50 |
+| Repair(根因 3,1c8f103) | `vision_escalation_reason` 卡住偵測 → auto 切入 Set-of-Marks + gpt-5.5 視覺(`AGENT_VISION` 未設=auto 新預設);scroll PLAYBOOK(off-screen 目標);executor 新分頁跟隨。vision 純感知,verifier 仍唯一裁判(escalation 測試斷言 status!=pass)|
 | Why It Still Failed | (已修結構性根因;wrapper 10-K 正文還原仍是 documented next step,見 FG-SEC-004/005)|
 | Related Prompt | prompts/browser_agent/(preflight 條件品質、answer channel 設計)|
-| Related Commit | f59c65d(baseline-subtraction)+ 711f336(answer channel)+ 06eb46b(auto vision / scroll / new-tab)|
+| Related Commit | 8437826(baseline-subtraction)+ 3431335(answer channel)+ 1c8f103(auto vision / scroll / new-tab)|
 
 ---
 
@@ -339,4 +339,4 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Root Cause | open-ended scorer 的 key-point grounding 以最終頁 `inner_text` 為證據——agent 確實抵達了含 eligibility / how-it-works / how-to-claim 內容的正確頁面,3 個 key point 全部 grounded,契約如實成立;但 answer channel 抓到的是 extract_text 命中的第一個元素(skip-link)。「頁面對」與「交付對」是兩件事,verifier 的 landmark/grounding 契約量的是前者——這是 verifier landmark 契約的已知結構性弱點(同 eval_report M2W 節「弱 proxy」聲明)|
 | 為什麼不改判 | second judge 是 **advisory-only**(設計鐵律:verifier 唯一裁判,judge 分歧只記錄不改判)。讓 judge 翻案等於引入一個未經 sens/spec 校準的第二裁判,已校準 verifier 的可信度基礎會被繞過;一致的規則比單案好看的數字重要。本案已如實計入 61.1% 合成 topline 的分子——這正是該數字須標「方向指標、不可與官方 leaderboard 比較」的原因之一 |
 | Remaining Fix | answer-quality gate 已完成已知 skip-link 規則;(1)擴充前需由新失敗樣本驅動,避免過濾正常短答案;(2) open-ended scorer 把 answer 內容納入 grounding 證據;(3) live 契約升級為「答案軸」條件(answer_matches 已有機制,這批外部題的契約未帶)|
-| Related Commit | 3258b73(open-ended scorer verdict-time 武裝——本案即其量測中暴露的殘餘弱點)|
+| Related Commit | 9a40ae2(open-ended scorer verdict-time 武裝——本案即其量測中暴露的殘餘弱點)|

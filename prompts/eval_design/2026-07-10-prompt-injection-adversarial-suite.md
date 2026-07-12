@@ -38,5 +38,5 @@ AI 依 workflow 授權自主實作(P1-14 於 giants 報告已標 differentiating
 
 - `data/mock_sites/adversarial/`(5 頁)+ `data/browser_eval/adversarial.json` + `tests/test_adversarial_suite.py`
 - `packages/browser_agent/planner.py` `_SYSTEM` INSTRUCTION/CONTENT SEPARATION 節(+8 行)
-- Commit:`9f9e2c4` feat(browser): P1-14 prompt-injection adversarial suite
-- 後續消費:免 key 示範任務的「注入防禦」preset(`eb30b92`,web UI 一鍵展示)
+- Commit:`8ea2293` feat(browser): P1-14 prompt-injection adversarial suite
+- 後續消費:免 key 示範任務的「注入防禦」preset(`fe47874`,web UI 一鍵展示)

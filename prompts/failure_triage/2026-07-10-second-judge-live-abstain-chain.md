@@ -20,9 +20,9 @@ AI 自我指令(triage pass):
 
 根因是**兩層疊加**,單修任何一層都不夠:
 
-1. **HOLE A(評分未接線 + 證據被餓死)**:`run_agentic` 的最終 `verify_contract` 沒帶 `open_ended_extractor`——零條件契約直接判 blanket unknown,開放式評分只到 verifier 參數層、未到 agent loop。且證據被截在 ~4-5K 字(obs cap 5K / prompt cap 4K),引文根本無處可 quote,grounding demotion 一律降級 abstain。修復(`3258b73`):verdict-time 用 planner 自己的 LLM client 武裝 extractor(offline/mock → None,行為不變);證據面改餵最終頁 `inner_text` 12K + P0-5 逐步摘錄(bounded:last 10 / 2.5K)——引文必須真出現於證據才 grounded-satisfied,否則 abstain → honest unknown,永不幻覺 pass。
-2. **Gateway wrapper(修完 HOLE A 仍全 abstain 的真兇)**:本機 codex gateway 以 `--output-schema` 把**每個** completion 硬套 planner action schema,judge/extractor 回包全變 `{"action":"done","value":"<real JSON>"}` → key-point extraction 與 micro-judgment 全數 "malformed" → abstain。修復(`49bcc6e`):`_unwrap_gateway_action` 精確還原該形狀;unwrap 後 grounding demotion 照常裁決(wrapped 幻覺引文仍降級 abstain;真 planner action 的非 JSON value 維持 malformed-abstain)。+6 tests。
-3. 同場發現姊妹洞 **HOLE B**(`b561e37`):productized runner 共用單一 page,一次 ERR_HTTP2 污染後續全部任務——改每題 fresh context+page。
+1. **HOLE A(評分未接線 + 證據被餓死)**:`run_agentic` 的最終 `verify_contract` 沒帶 `open_ended_extractor`——零條件契約直接判 blanket unknown,開放式評分只到 verifier 參數層、未到 agent loop。且證據被截在 ~4-5K 字(obs cap 5K / prompt cap 4K),引文根本無處可 quote,grounding demotion 一律降級 abstain。修復(`9a40ae2`):verdict-time 用 planner 自己的 LLM client 武裝 extractor(offline/mock → None,行為不變);證據面改餵最終頁 `inner_text` 12K + P0-5 逐步摘錄(bounded:last 10 / 2.5K)——引文必須真出現於證據才 grounded-satisfied,否則 abstain → honest unknown,永不幻覺 pass。
+2. **Gateway wrapper(修完 HOLE A 仍全 abstain 的真兇)**:本機 codex gateway 以 `--output-schema` 把**每個** completion 硬套 planner action schema,judge/extractor 回包全變 `{"action":"done","value":"<real JSON>"}` → key-point extraction 與 micro-judgment 全數 "malformed" → abstain。修復(`6dbe095`):`_unwrap_gateway_action` 精確還原該形狀;unwrap 後 grounding demotion 照常裁決(wrapped 幻覺引文仍降級 abstain;真 planner action 的非 JSON value 維持 malformed-abstain)。+6 tests。
+3. 同場發現姊妹洞 **HOLE B**(`e53c324`):productized runner 共用單一 page,一次 ERR_HTTP2 污染後續全部任務——改每題 fresh context+page。
 
 **定向重驗**(只重跑上一輪 6 個 unknown,artifact `runs/browser_eval/m2w_abstain_fix2_20260710/`):3 pass / 2 fail / 1 abstain-unknown。TSLA 收盤價題 grounded pass(證據含 `Mar 17, 2023 … Close 180.13`,**人工抽查非幻覺**);證據不足者誠實 fail/abstain,零假 pass。合成後 11/18 = 61.1%(誠實標明:組成數字非單次全集跑,n 小屬方向指標)。
 
@@ -39,5 +39,5 @@ AI 自主 triage 與修復(總指揮授權);「composed 61% 必須標明組成�
 ## Resulting Change
 
 - `packages/browser_agent/second_judge.py` `_unwrap_gateway_action`;`agent.py` verdict-time extractor 武裝 + 12K final-page evidence;`tools/run_external_eval.py` per-task fresh context
-- Commits:`3258b73`(HOLE A)、`49bcc6e`(wrapper unwrap)、`b561e37`(HOLE B)、`f4d15e7`(6-unknown 重跑記錄)
+- Commits:`9a40ae2`(HOLE A)、`6dbe095`(wrapper unwrap)、`e53c324`(HOLE B)、`0eebeef`(6-unknown 重跑記錄)
 - Artifacts:`runs/browser_eval/m2w_abstain_fix2_20260710/`、`docs/research/giants_task1.md`「追補:abstain-gap 修復後」節

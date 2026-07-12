@@ -49,7 +49,7 @@ Core pipelines are **Python 3.12 in a repo-local `.venv`** (PM directive, 2026-0
 |---|---|
 | Lack of evidence never upgrades to success | `eval_core.combine_checks`: any unobserved condition → `unknown`, never `pass`; empty check list → `unknown` |
 | LLM cannot emit arbitrary browser code | `browser_core.BrowserAction` discriminated union rejects unknown action types at validation |
-| Open-ended tasks are honest, not illegal input | `BrowserTaskContract.success_conditions` allows an empty list (was min_length=1; relaxed in commit 2fec949): empty success → forbidden checks still run, then verdict short-circuits to `unknown` (human review), structurally blocking both crash-on-honest-input and vacuous pass |
+| Open-ended tasks are honest, not illegal input | `BrowserTaskContract.success_conditions` allows an empty list (was min_length=1; relaxed in commit f535c93): empty success → forbidden checks still run, then verdict short-circuits to `unknown` (human review), structurally blocking both crash-on-honest-input and vacuous pass |
 | Repair is diagnosis-driven | `FAILURE_TAXONOMY` maps each failure type to a specific strategy; `silent_failure_risk` is explicitly non-repairable → `unknown` |
 | LLM never generates filing text | `ItemSegment` addresses text only by `start_offset`/`end_offset`/`text_sha256`; `AdjudicatorDecision` validator rejects confident decisions without an exact source quote |
 | Confidence is explainable | `ConfidenceBreakdown` is a sum of named, reasoned components — no free-floating score |

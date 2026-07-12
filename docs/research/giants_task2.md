@@ -228,8 +228,8 @@
 
 ### 數字表(before = pre-wave 實測;after = post overshoot-guard rerun 實測)
 
-Rerun 於 2026-07-10 17:22–17:23 完成(overshoot guard `7940dbe` 之後),artifacts committed
-`8589577`:head_to_head.json 為 4-engine schema、30 filings;calibration.json generated_at
+Rerun 於 2026-07-10 17:22–17:23 完成(overshoot guard `60fe10f` 之後),artifacts committed
+`4d3b3a5`:head_to_head.json 為 4-engine schema、30 filings;calibration.json generated_at
 17:23,讀的是同分鐘的新 h2h。Adversarial 重算(獨立腳本,非引用 tool 輸出):macro-F1 由
 30 筆 per-filing 逐筆平均重算全數吻合;ECE 由 10-bin reliability bins 重算 = 0.1762(exact);
 conf≥0.9 錯誤 = 369×(1−0.7751) = 83.0;攔截拆帳 141−100(false pass)−12(conf<0.6 bins
@@ -299,7 +299,7 @@ anchor 的距離,或 per-item gold-free 長度先驗(相對於 filing 總長的�
 - **流程修正**:calibration 重跑前必須驗 head_to_head.json 的 engine schema(4-engine)與 mtime
   晚於 pipeline wave 完成時間,否則就是這次的「數字全同」假象重演。
 
-### 終判 2026-07-10 18:05(end-boundary fix `a72ec43` 之後,fresh foreground rerun)
+### 終判 2026-07-10 18:05(end-boundary fix `3ba717b` 之後,fresh foreground rerun)
 
 **結論先講:raw 單引擎 macro-F1 我們沒有贏。** ours 0.5964 < edgar_crawler 0.6332(差 0.0368)
 < 也輸 datamule 0.6244(差 0.0280)。end-boundary fix(scoped next-item rescan + terminal
@@ -533,7 +533,7 @@ item」的訊號(topic_check 的更強版本),不是更多尺寸先驗。
 |---|---|---|
 | GS 1C | incorporated_by_reference stub 247 chars(485610–485857),coverage 0.0% / containment 0.0% | partial `resolved_from_section_anchor` 8,650 chars(779931–788581),coverage **100%** / containment **85.6%** |
 | JPM 1C | partial `resolved_from_page_anchor` 20,610 chars(751329–771939),coverage 100% / containment **33.3%**(官方 6,871 chars 只佔我方 span 三分之一),needs_review_after=true | partial 9,745 chars(762158–771903),coverage 100% / containment **70.5%**——span 終點 771903 與官方 CYD 終點完全一致,起點 762158 = "Cybersecurity risk" section heading(官方起點 762318 在其後) |
-| 其餘 9 家 | AAPL/MSFT/NVDA/WMT/CAT/XOM/NEM/MRNA/KO 數字逐位不變 | 同(artifact diff 中 MSFT/MRNA 的 `needs_review_after` false→true 為 length-prior commit bf7e5fa 所致——上次 regen 基線在 64de3ef;kill-switch 驗證與 section-anchor 無關) |
+| 其餘 9 家 | AAPL/MSFT/NVDA/WMT/CAT/XOM/NEM/MRNA/KO 數字逐位不變 | 同(artifact diff 中 MSFT/MRNA 的 `needs_review_after` false→true 為 length-prior commit 34d31b9 所致——上次 regen 基線在 84ecea7;kill-switch 驗證與 section-anchor 無關) |
 
 kill-switch 實檔驗證:`SEC_WRAPPER_SECTION_ANCHOR=0` 完整還原 before 數字(GS 0%/247、JPM 33.3%/20,610)。
 

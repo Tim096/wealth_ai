@@ -37,5 +37,5 @@ workflow 派工指令(基於 P0-7 條目):
 
 - `packages/sec_core/engines/edgar_crawler_vote.py`、`engines/datamule_vote.py`;`apply_triangulation` 2-of-N 擴充
 - `tools/arbitrate_secapi.py` + `data/sec_eval/arbitration/`
-- Commit:`bed477d` feat(sec): P0-7 fourth-fifth-arbitration-votes
-- 後續消費:4-engine head-to-head(`84fe518` adapters;見 `2026-07-10-ntu-f1-honest-narrative.md`)
+- Commit:`4a59c13` feat(sec): P0-7 fourth-fifth-arbitration-votes
+- 後續消費:4-engine head-to-head(`7aff8e2` adapters;見 `2026-07-10-ntu-f1-honest-narrative.md`)

@@ -36,5 +36,5 @@ NTU head-to-head 終判(18:40 對抗裁決)期間,AI 評估的一個方案:既�
 
 ## Resulting Change
 
-- 採用:`packages/sec_core/normalize.py::clean_slice` + `pipeline.py::clean_text_of`(commit `eed20b6`);**不做** broad duplicated-strip
+- 採用:`packages/sec_core/normalize.py::clean_slice` + `pipeline.py::clean_text_of`(commit `3c6ef01`);**不做** broad duplicated-strip
 - 裁決記錄:`docs/research/giants_task2.md` 終判 18:40 / landed 兩節;artifact `data/sec_eval/scoring/head_to_head.json`

@@ -36,5 +36,5 @@ AI 依 workflow 授權自主實作;門檻數字直接採批判 pass 提出的 0.
 ## Resulting Change
 
 - `tests/test_verifier_mutations.py`(quantified gates)+ `data/sec_eval/mutations/` fixtures
-- Commit:`dd86303` feat(sec): P0-4 runtime verifier mutation harness with quantified gates
-- 後續消費:TOC-strip 落地時以「mutation recall 全六類維持 1.0」作為不破壞驗證層的證據(`eed20b6`);head-to-head 誠實敘事的可審計配套之一
+- Commit:`034b0dc` feat(sec): P0-4 runtime verifier mutation harness with quantified gates
+- 後續消費:TOC-strip 落地時以「mutation recall 全六類維持 1.0」作為不破壞驗證層的證據(`3c6ef01`);head-to-head 誠實敘事的可審計配套之一

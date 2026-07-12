@@ -90,7 +90,9 @@ def test_to_subset_entry_fields_and_contract_roundtrip():
     assert "arXiv:2504.01382" in e["attribution"]
     assert e["difficulty"] == "medium"          # feeds resolve_max_steps (P1-15)
     assert e["status"] == "active" and e["replaced_by"] is None and e["update_history"] == []
-    assert e["success_conditions"], "a Latin proper noun must derive a condition"
+    assert e["success_conditions"] == []
+    assert e["advisory_landmarks"], "task-text landmarks remain diagnostic only"
+    assert e["evaluation_policy"] == "independent_webjudge_or_human"
     BrowserTaskContract(task_id=e["task_id"], natural_language_task=e["natural_language_task"],
                         expected_outcome=e["expected_outcome"],
                         success_conditions=[SuccessCondition(**c)
@@ -100,6 +102,7 @@ def test_to_subset_entry_fields_and_contract_roundtrip():
 def test_to_subset_entry_open_ended_zero_conditions_is_legal():
     e = im.to_subset_entry(im.normalize(raw(task="逛逛看有什麼")), added="2026-07-10")
     assert e["success_conditions"] == []        # honest unknown at eval time, not a crash
+    assert e["advisory_landmarks"] == []
 
 
 def test_build_subset_provenance_and_unique_ids():

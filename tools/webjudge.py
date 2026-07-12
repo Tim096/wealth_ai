@@ -131,8 +131,11 @@ Examples of Failure Cases:
 6: If the retrieved information is invalid or empty(e.g., No match was found), but the agent has correctly performed the required action, it should still be considered successful.
 7: If the current page already displays all available items, then applying a filter is not necessary. As long as the agent selects items that meet the requirements (e.g., the cheapest or lowest price), the task is still considered successful.
 
-**Respond with a JSON object only**:
-{"thoughts": "<your reasoning based on double-checking each key point and the evaluation criteria>", "status": "success" or "failure"}"""
+**Respond with a JSON object only**. Use exactly one binary status value.
+Success example:
+{"thoughts": "<brief evidence-based reasoning>", "status": "success"}
+Failure example:
+{"thoughts": "<brief evidence-based reasoning>", "status": "failure"}"""
 
 
 # ---------------------------------------------------------------------------
@@ -164,7 +167,8 @@ def _envelope_note(example: str) -> str:
     return ("\n\nIMPORTANT: You are an EVALUATOR reviewing a finished trajectory, "
             "not a browser-driving agent. Do NOT choose a next browser action. "
             "If your output must fit an action schema, use action \"done\" and put "
-            "your ENTIRE response as a JSON string in the \"value\" field, e.g. "
+            "your ENTIRE response as a JSON string in the \"value\" field. "
+            "Never copy placeholder alternatives such as success|failure; choose one. e.g. "
             '{"action":"done","value":"' + example + '"}')
 
 
@@ -271,7 +275,9 @@ def final_judgment(client: OpenAIClient, task: str, key_points: list[str],
         best_image = str(task_dir / top["image"])
         user += (f"\n\nThe single highest-scored snapshot ({top['image']}) is "
                  "attached as the image.")
-    user += _envelope_note('{\\"thoughts\\": \\"...\\", \\"status\\": \\"success|failure\\"}')
+    user += _envelope_note(
+        '{\\"thoughts\\": \\"The visible evidence satisfies every key point.\\", '
+        '\\"status\\": \\"success\\"}')
     parsed, cost = _call_json(client, FINAL_JUDGE_SYSTEM, user,
                               {"status", "thoughts"}, image_path=best_image)
     if parsed is None:

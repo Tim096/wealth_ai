@@ -21,6 +21,11 @@ gateway is bypassed via `AGENT_LLM_MODE=direct`.
 | GET | `/api/tasks/{id}/artifacts` | list per-run files (shots / evidence / downloads / run.json) |
 | GET | `/api/tasks/{id}/artifacts/{path}` | fetch one artifact |
 
+`GET /api/tasks/{id}` also returns a write-once `contract` object. Once
+`contract.frozen` is `true`, `start_url`, `verification_conditions`, and their
+`*_source` fields are the exact read-only inputs used by the verifier; the UI
+locks task inputs while that run is active.
+
 `url` accepts `mock:v1` / `mock:v2` / `mock:v3` for the bundled offline demo
 sites (`data/mock_sites`, served via `file://`). Blank `url`/`success` → the
 LLM preflight plans the start URL + verifiable success conditions; open-ended

@@ -10,11 +10,19 @@ trajectories and screenshots are never committed. The dataset is HF-gated
 the importer fall back to an ungated CC-BY mirror (recorded in
 `source.fetched_from`).
 
+New imports intentionally leave `success_conditions` empty. Task-text-derived
+strings are stored only as `advisory_landmarks`; a site name or generic verb is
+not completion gold. The runner records the full trajectory and reports
+`unknown` at the runtime-contract layer, while an independent WebJudge or human
+review decides task completion. Existing dated subsets/runs retain their frozen
+historical contracts so their provenance is not rewritten; their verifier pass
+rates are landmark-hit diagnostics, not task-success rates.
+
 Difficulty comes from the paper's rule (reference_length ≤5 easy / 6–10 medium
 / ≥11 hard) and plugs into the P1-15 step budget via the `difficulty` field.
-`tools/naive_baseline.py` runs a no-repair/no-vision shortcut agent on the same
-file, judged by the same verifier — its trivial-pass rate is the floor any real
-mechanism must beat.
+`tools/naive_baseline.py` records the historical no-repair/no-vision shortcut
+comparison. For newly imported independent-judge tasks, do not report a
+verifier pass-rate baseline from `advisory_landmarks`.
 
 ## Live-task maintenance protocol
 

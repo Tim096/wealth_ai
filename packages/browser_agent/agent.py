@@ -35,6 +35,19 @@ from browser_agent.verifier import check_conditions, subtract_baseline, verify_c
 from observability_core import EvidenceRecord, EvidenceStore, VerifierResult, sha256_text
 
 
+_NAVIGATION_ONLY_ANSWERS = {
+    "skip contents",
+    "skip to content",
+    "skip to main content",
+}
+
+
+def is_meaningful_answer(text: str) -> bool:
+    """Reject known navigation residue from the user-facing answer channel."""
+    normalized = " ".join(text.casefold().split()).strip(" .:;-_")
+    return bool(normalized) and normalized not in _NAVIGATION_ONLY_ANSWERS
+
+
 # Popups appear on ANY site with ANY class name, so we detect a blocking
 # overlay by GEOMETRY/BEHAVIOUR, not a class allow-list: a positioned, visible
 # layer with a high stacking order that covers the viewport centre. The same
@@ -910,7 +923,8 @@ class BrowserAgent:
                         self.page = self.executor.page
                         self.observer.page = self.page
                     history.append(f"{r_action.type}:ok")
-                    if r_action.type == "extract_text" and r_out.extracted_text:
+                    if (r_action.type == "extract_text" and r_out.extracted_text
+                            and is_meaningful_answer(r_out.extracted_text)):
                         answers.append(r_out.extracted_text.strip())
                     recorded.append(rs)
                     trace.append(_stamp_obs(StepTrace(
@@ -1059,7 +1073,8 @@ class BrowserAgent:
             detail = decision.reason
             if action.type == "download" and out.ok:
                 detail = f"下載完成 → {self.executor.last_download_path}"
-            if action.type == "extract_text" and out.ok and out.extracted_text:
+            if (action.type == "extract_text" and out.ok and out.extracted_text
+                    and is_meaningful_answer(out.extracted_text)):
                 # append semantics: a task may need several extractions; all of
                 # them together are the delivered answer
                 answers.append(out.extracted_text.strip())

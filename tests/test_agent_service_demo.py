@@ -56,6 +56,49 @@ def test_submit_demo_forces_mock_planner():
     assert worker.submit_demo("nope") is None
 
 
+def test_task_contract_snapshot_is_write_once_and_copied():
+    rec = worker.submit("Find the result", "https://example.com",
+                        ["text_visible:Result"])
+    worker._JOBS.get_nowait()
+    assert rec["contract"] == {
+        "frozen": False,
+        "start_url": "https://example.com",
+        "start_url_source": "user",
+        "verification_conditions": ["text_visible:Result"],
+        "conditions_source": "user",
+    }
+
+    conditions = ["text_visible:Final"]
+    worker._freeze_contract(rec, "https://final.example", conditions, "llm", "llm")
+    conditions.append("text_visible:must-not-leak")
+    worker._freeze_contract(rec, "https://overwrite.example", [], "fallback", "fallback")
+    assert rec["contract"] == {
+        "frozen": True,
+        "start_url": "https://final.example",
+        "start_url_source": "llm",
+        "verification_conditions": ["text_visible:Final"],
+        "conditions_source": "llm",
+    }
+
+    public = worker.get(rec["task_id"])
+    public["contract"]["verification_conditions"].append("client mutation")
+    assert worker.get(rec["task_id"])["contract"]["verification_conditions"] == [
+        "text_visible:Final"]
+
+
+def test_agent_ui_renders_and_locks_frozen_contract():
+    html = (SVC / "static" / "index.html").read_text(encoding="utf-8")
+    assert 'id="aContract"' in html
+    assert "renderContract(s.contract)" in html
+    assert "Frozen task contract" in html
+    assert "user-supplied" in html and "LLM-derived" in html
+    assert "lockInputs(true)" in html and "lockInputs(false)" in html
+    for label in ("Task / 任務", "Start URL / 起始 URL",
+                  "Success condition / 成功條件", "Run / 派工",
+                  "Demo tasks / 示範任務", "Execution status / 執行過程"):
+        assert label in html
+
+
 def test_demo_endpoints():
     from fastapi.testclient import TestClient
     import main

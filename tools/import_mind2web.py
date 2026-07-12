@@ -34,7 +34,7 @@ import re
 import urllib.request
 from pathlib import Path
 
-from browser_core import BrowserTaskContract, SuccessCondition
+from browser_core import BrowserTaskContract
 from browser_agent.nl import derive_success
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -143,15 +143,18 @@ def stratified_sample(tasks: list[dict], counts: dict[str, int],
 
 
 def to_subset_entry(t: dict, added: str) -> dict:
-    """One committed subset row. Success conditions are derived with the same
-    CJK-aware helper the live runner uses; zero derivable conditions is LEGAL
-    (open-ended -> the verifier reports an honest unknown, never a vacuous
-    pass). The entry round-trips through BrowserTaskContract so a schema break
-    fails at import time, not at eval time."""
-    conds = []
+    """One committed subset row.
+
+    Task-text landmarks are retained for diagnostics, but never become the
+    authoritative verifier contract: a site name or generic verb does not prove
+    task completion. Online-Mind2Web is scored from the frozen trajectory by an
+    independent WebJudge/human reviewer. The empty runtime contract therefore
+    reports honest UNKNOWN instead of manufacturing a pass.
+    """
+    landmarks = []
     for c in derive_success(t["confirmed_task"]):
         ctype, _, cval = c.partition(":")
-        conds.append({"type": ctype, "value": cval})
+        landmarks.append({"type": ctype, "value": cval})
     entry = {
         "task_id": f"m2w-{t['source_task_id'][:12]}",
         "layer": "external_live_tasks",
@@ -163,8 +166,10 @@ def to_subset_entry(t: dict, added: str) -> dict:
         "reference_length": t["reference_length"],
         "website": t["website"],
         "natural_language_task": t["confirmed_task"],
-        "expected_outcome": "The task's derived success conditions hold on the live site",
-        "success_conditions": conds,
+        "expected_outcome": "Independent trajectory review confirms every task requirement",
+        "success_conditions": [],
+        "advisory_landmarks": landmarks,
+        "evaluation_policy": "independent_webjudge_or_human",
         "expect_status": "pass",
         "added": added,
         "status": "active",
@@ -175,7 +180,7 @@ def to_subset_entry(t: dict, added: str) -> dict:
         task_id=entry["task_id"],
         natural_language_task=entry["natural_language_task"],
         expected_outcome=entry["expected_outcome"],
-        success_conditions=[SuccessCondition(**c) for c in conds])
+        success_conditions=[])
     return entry
 
 

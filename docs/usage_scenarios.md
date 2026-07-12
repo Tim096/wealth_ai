@@ -3,6 +3,8 @@
 > 這份文件是 evaluation discipline 的一部分:pass rate / F1 / triangulation 之外,把「具體的人、具體的輸入、具體的期待」攤開,對照程式碼現況找落差。每個「現況」欄標注 **已驗**(讀 code 驗證過,附檔案:行號)或 **推理**(從程式結構推斷,未實跑)。嚴重度分三級:**breaks_trust**(結論與人眼背離、或宣稱與實作矛盾)> **friction**(能用但體驗斷裂)> **polish**(細節)。
 >
 > 讀者:評分者與面試官。這份文件本身就是主張——量化指標捕捉不到「信任如何建立、如何一次歸零」,所以要用情境補上。
+>
+> **文件定位:**這是開發期間的 scenario audit 與修復 ledger,保留當時發現、已修與未修案例,不是目前功能清單。最終 metrics 以 [`eval_report.md`](eval_report.md) 為準;目前支援邊界以 [`supported_and_unsupported.md`](supported_and_unsupported.md) 為準。
 
 ---
 
@@ -48,9 +50,9 @@
 
 本系統的架構(三態 verdict、capability guard、evidence chain)是為左欄設計的,但四個實作縫隙(#1 誤殺、#2 中文穿透、#5 條件品質、#6 error 裸奔)會讓它在評分者面前掉到右欄。**修的不是能力,是自述與事實的一致性。**
 
-### Cheap fixes(依信任槓桿排序)
+### Historical cheap-fix ledger(依信任槓桿排序)
 
-> 平行 workflow 註記:本日另一 workflow 正在修 browser 程式碼——**開放式任務 crash 修復(處理中)**、**4 個 verifier/repair 弱點(處理中)**。下列與 verifier 條件品質相關的項目(F3、F5)與其範圍部分重疊,實作前先與該 workflow 同步,勿重工。
+> 狀態是本文件建立時的歷史快照;已落地的最終修復與重測數字請以 `eval_report.md` / `failure_gallery.md` 為準。
 
 | # | 修什麼 | 作法 | 工時 | 狀態 |
 |---|---|---|---|---|

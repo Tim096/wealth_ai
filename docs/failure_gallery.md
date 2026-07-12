@@ -333,10 +333,10 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Input | Online-Mind2Web live 題 `m2w-6ca20f1da01e`(gov.uk,medium):「Find the Eligibility to get the child benefit and How it works and how to claim」(abstain-fix 定向重跑批次)|
 | Expected | pass 應伴隨對使用者有價值的交付內容 |
 | Actual | verifier 判 **pass**(open-ended scorer:3/3 key points grounded-satisfied,confidence 1.0),但 `answer` 欄位內容是「Skip contents」——gov.uk 頁面導航 skip-link 的殘渣,對使用者零價值。second judge(advisory)判 **no** |
-| Status | **open**(已記錄,維持 pass 不改判——理由見下)|
+| Status | **fixed locally**(2026-07-12:answer channel 拒絕已知 skip-link 導航殘渣;新增 regression test)|
 | Failure Type | user-value false success(landmark/grounding 契約成立,交付內容無價值)|
 | Evidence | `runs/browser_eval/m2w_abstain_fix2_20260710/results.json` task `m2w-6ca20f1da01e`(gitignored 原始 run);tracked 快照 `data/browser_eval/external_runs/m2w_abstain_fix2_20260710/results.json`(同 task id)|
 | Root Cause | open-ended scorer 的 key-point grounding 以最終頁 `inner_text` 為證據——agent 確實抵達了含 eligibility / how-it-works / how-to-claim 內容的正確頁面,3 個 key point 全部 grounded,契約如實成立;但 answer channel 抓到的是 extract_text 命中的第一個元素(skip-link)。「頁面對」與「交付對」是兩件事,verifier 的 landmark/grounding 契約量的是前者——這是 verifier landmark 契約的已知結構性弱點(同 eval_report M2W 節「弱 proxy」聲明)|
 | 為什麼不改判 | second judge 是 **advisory-only**(設計鐵律:verifier 唯一裁判,judge 分歧只記錄不改判)。讓 judge 翻案等於引入一個未經 sens/spec 校準的第二裁判,已校準 verifier 的可信度基礎會被繞過;一致的規則比單案好看的數字重要。本案已如實計入 61.1% 合成 topline 的分子——這正是該數字須標「方向指標、不可與官方 leaderboard 比較」的原因之一 |
-| Next Fix | (1) answer-quality gate:純導航文字(skip-link、breadcrumb、cookie 條)不得作為 answer 交付,無實質 answer 時降 unknown;(2) open-ended scorer 把 answer 內容納入 grounding 證據(不只最終頁全文);(3) live 契約升級為「答案軸」條件(answer_matches 已有機制,這批外部題的契約未帶)|
+| Remaining Fix | answer-quality gate 已完成已知 skip-link 規則;(1)擴充前需由新失敗樣本驅動,避免過濾正常短答案;(2) open-ended scorer 把 answer 內容納入 grounding 證據;(3) live 契約升級為「答案軸」條件(answer_matches 已有機制,這批外部題的契約未帶)|
 | Related Commit | 3258b73(open-ended scorer verdict-time 武裝——本案即其量測中暴露的殘餘弱點)|

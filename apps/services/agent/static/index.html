@@ -54,6 +54,11 @@
     background:var(--panel2)}
   .verdict:empty{display:none}
   .verdict .sub{color:var(--muted);word-break:break-word}
+  .contract{margin-top:.8rem;padding:.65rem .75rem;border:1px solid var(--line);
+    border-radius:8px;background:var(--panel2);font-size:.8rem}
+  .contract .title{display:flex;gap:.5rem;align-items:center;color:var(--ink);font-weight:700}
+  .contract .line{margin-top:.35rem;word-break:break-word}
+  .contract ul{margin:.25rem 0 0;padding-left:1.25rem}
   .mono{font-family:var(--mono)}
   .hint{font-size:.78rem;color:var(--muted);margin-top:.5rem}
   .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);
@@ -93,14 +98,14 @@
   <header>
     <div>
       <div class="eyebrow">AI Coding Test 2026 · Task 1</div>
-      <h1>Browser Agent — 自然語言網頁任務</h1>
+      <h1>Browser Agent — Natural-language web tasks / 自然語言網頁任務</h1>
       <div class="sub">結果由 verifier(程式)判定 pass / fail / unknown,不是 AI 自述;每一步含截圖與修復軌跡,失敗可完整檢視。</div>
     </div>
     <span class="chip">planner:<b id="plannerName">連線中…</b></span>
     <nav class="switch" aria-label="任務切換">
-      <span class="sw cur">任務一:瀏覽器代理</span>
-      <a class="sw" id="navSec" href="https://wealth-sec-ncku.zeabur.app/">任務二:SEC 10-K 抽取</a>
-      <a class="sw" id="navDash" href="https://wealth-sec-ncku.zeabur.app/dashboard" target="_blank">📊 評測</a>
+      <span class="sw cur">Task 1 / 任務一:Browser Agent</span>
+      <a class="sw" id="navSec" href="https://wealth-sec-ncku.zeabur.app/">Task 2 / 任務二:SEC 10-K Extractor</a>
+      <a class="sw" id="navDash" href="https://wealth-sec-ncku.zeabur.app/dashboard" target="_blank">📊 Evaluation / 評測</a>
     </nav>
   </header>
   <script>
@@ -116,7 +121,7 @@
   <!-- ===== demo section (示範任務) BEGIN — owned by demo agent ===== -->
   <div id="modeBanner" class="banner" style="display:none"></div>
   <section class="panel demo" id="demoPanel" style="display:none">
-    <div class="demo-head">示範任務 · 免 API key,一鍵跑內建網站</div>
+    <div class="demo-head">Demo tasks / 示範任務 · 免 API key,一鍵跑內建網站</div>
     <div class="demo-btns" id="demoBtns"></div>
   </section>
   <!-- ===== demo section END ===== -->
@@ -124,15 +129,15 @@
   <section class="panel">
     <div class="grid2">
       <div>
-        <label>任務(自然語言,中英皆可)</label>
+        <label>Task / 任務(自然語言,中英皆可)</label>
         <textarea id="aTask" placeholder="例:Search Wikipedia for &quot;Reliability engineering&quot; and open the article;或:找 INTC 最新 10-K 並下載"></textarea>
         <div class="row">
           <div class="grow">
-            <label>起始 URL(可留空 → LLM 自行規畫;mock:v1 / mock:v2 / mock:v3 / mock:adv 用內建示範站)</label>
+            <label>Start URL / 起始 URL(可留空 → LLM 自行規畫;mock:v1 / mock:v2 / mock:v3 / mock:adv 用內建示範站)</label>
             <input type="text" id="aUrl" placeholder="留空自動規畫">
           </div>
           <div class="grow">
-            <label>成功條件(可留空 → 自動推斷;看到什麼文字算成功)</label>
+            <label>Success condition / 成功條件(可留空 → 自動推斷;看到什麼文字算成功)</label>
             <input type="text" id="aSucc" placeholder="留空自動推斷">
           </div>
         </div>
@@ -144,13 +149,14 @@
         </div>
         <div class="hint">💡 只輸入任務即可。開場由 LLM 規劃「起點網址 + 可驗證成功條件」;遇彈窗先關、遇 CAPTCHA / 登入 / 購買類任務由 capability guard 誠實拒絕(REFUSED)。無可驗證條件的開放式任務照跑,結果誠實標示 UNKNOWN。</div>
         <div style="margin-top:.9rem;display:flex;gap:.7rem;align-items:center">
-          <button class="btn" id="aRun">派工 ▶</button>
+          <button class="btn" id="aRun">Run / 派工 ▶</button>
           <span class="hint">任務進入單一 worker 佇列,依序執行(headless Chromium)。</span>
         </div>
+        <div class="contract" id="aContract" style="display:none"></div>
         <div class="verdict" id="aVerdict"></div>
         <div class="shots" id="aShots"></div>
         <details id="aTraceBox" style="display:none">
-          <summary>完整步驟軌跡(mode / diagnosis / repair / selector / screenshot)</summary>
+          <summary>Full trace / 完整步驟軌跡(mode / diagnosis / repair / selector / screenshot)</summary>
           <div class="tbwrap"><table id="aTrace">
             <thead><tr><th>#</th><th>step</th><th>action</th><th>ok</th><th>mode</th><th>detail / diagnosis</th><th>shot</th></tr></thead>
             <tbody></tbody>
@@ -159,8 +165,8 @@
         </details>
       </div>
       <div>
-        <label>執行過程(每一步:思考 → 動作 → 驗證)</label>
-        <div class="feed" id="aFeed"><div class="sys">待命。輸入任務後按「派工」。</div></div>
+        <label>Execution status / 執行過程(每一步:思考 → 動作 → 驗證)</label>
+        <div class="feed" id="aFeed"><div class="sys">Ready / 待命。輸入任務後按「Run / 派工」。</div></div>
         <div class="hint">拒絕範例:任務含登入 / 購買 / 送出個資會被 capability guard 直接 REFUSED —— 責任邊界由程式強制,非模型自律。</div>
       </div>
     </div>
@@ -193,6 +199,29 @@ let pollTimer=null;
 function feed(kind,text){const d=document.createElement('div');d.className=kind;d.textContent=text;
   const f=$('#aFeed');f.appendChild(d);f.scrollTop=f.scrollHeight;}
 
+const SRC={user:'使用者提供 · user-supplied',llm:'LLM 產生 · LLM-derived',
+  preset:'固定示範 · preset',heuristic:'程式推斷 · heuristic',fallback:'系統預設 · fallback',
+  pending:'等待規畫 · pending'};
+function renderContract(c){
+  const box=$('#aContract');box.style.display='';
+  if(!c||!c.frozen){
+    box.innerHTML='<div class="title">🔒 驗證契約 · Task contract</div>'
+      +'<div class="line sub">等待 preflight 完成;執行前將凍結實際起點與驗證條件。</div>';
+    return;
+  }
+  const conds=c.verification_conditions||[];
+  box.innerHTML='<div class="title">🔒 已凍結 · Frozen task contract</div>'
+    +`<div class="line"><span class="sub">起始 URL (${esc(SRC[c.start_url_source]||c.start_url_source||'?')}):</span> `
+    +`<span class="mono">${esc(c.start_url||'')}</span></div>`
+    +`<div class="line"><span class="sub">Verifier conditions (${esc(SRC[c.conditions_source]||c.conditions_source||'?')}):</span>`
+    +(conds.length?`<ul>${conds.map(x=>`<li class="mono">${esc(x)}</li>`).join('')}</ul>`
+      :'<div class="mono">(none → UNKNOWN unless refused)</div>')+'</div>';
+}
+function lockInputs(locked){
+  ['#aTask','#aUrl','#aSucc','#aTok'].forEach(s=>{$(s).disabled=locked;});
+  document.querySelectorAll('.demo-btn').forEach(b=>{b.disabled=locked;});
+}
+
 function renderTrace(id,trace){
   if(!trace||!trace.steps||!trace.steps.length)return;
   $('#aTraceBox').style.display='';
@@ -216,28 +245,30 @@ function renderTrace(id,trace){
 
 function resetRun(label){
   if(pollTimer)clearInterval(pollTimer);
-  $('#aRun').disabled=true;$('#aFeed').innerHTML='';$('#aShots').innerHTML='';
+  $('#aRun').disabled=true;lockInputs(true);$('#aFeed').innerHTML='';$('#aShots').innerHTML='';
   $('#aTraceBox').style.display='none';
   $('#aVerdict').innerHTML='<span class="spin"></span>';
+  renderContract(null);
   feed('sys','你 › '+label);
 }
-function runFailed(msg){feed('bad',msg);$('#aRun').disabled=false;$('#aVerdict').innerHTML='';}
+function runFailed(msg){feed('bad',msg);$('#aRun').disabled=false;lockInputs(false);$('#aVerdict').innerHTML='';}
 function watch(id){
   feed('sys','task_id='+id+' — 已排入佇列');
   let seen=0;
   pollTimer=setInterval(async()=>{
     let s;
     try{s=await(await fetch(withTok('/api/tasks/'+id))).json();}catch(e){return;}
+    renderContract(s.contract);
     (s.steps||[]).slice(seen).forEach(t=>feed('',t)); seen=(s.steps||[]).length;
     if(!['queued','running'].includes(s.status)){
-      clearInterval(pollTimer);$('#aRun').disabled=false;
+      clearInterval(pollTimer);$('#aRun').disabled=false;lockInputs(false);
       const ok=s.status==='pass';
       $('#aVerdict').innerHTML=pill(s.status)
         +(s.confidence!=null?` <span class="mono">confidence ${s.confidence.toFixed(2)}</span>`:'')
         +` <span class="sub">${esc(s.verifier||'')}</span>`
         +(s.answer?`<div style="margin-top:.3rem;white-space:pre-wrap;word-break:break-word">📋 擷取內容:${esc(s.answer.slice(0,1200))}${s.answer.length>1200?'…':''}</div>`:'')
         +(s.download?`<div class="mono" style="margin-top:.3rem">📁 <a href="${withTok('/api/tasks/'+id+'/artifacts/'+s.download)}" target="_blank">${esc(s.download)}</a></div>`:'');
-      feed(ok?'ok':'bad','結果:'+s.status.toUpperCase()+' — '+(s.verifier||''));
+      feed(ok?'ok':'bad','Result / 結果:'+s.status.toUpperCase()+' — '+(s.verifier||''));
       renderTrace(id,s.trace);
     }
   },800);

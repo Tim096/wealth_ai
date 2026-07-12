@@ -22,6 +22,7 @@ from browser_core import BrowserTaskContract, SuccessCondition
 from browser_agent.observer import Observation
 from browser_agent.planner import LLMPlanner
 from browser_agent.verifier import subtract_baseline, verify_contract
+from browser_agent.agent import is_meaningful_answer
 
 ANSWER_RE = r"[\$][0-9][0-9,\.]+\s*(billion|million)?"
 
@@ -75,6 +76,12 @@ def test_answer_matches_survives_baseline_subtraction():
     c = contract()
     filtered, dropped = subtract_baseline(c, obs("Total revenue: $53.1 billion everywhere"))
     assert dropped == [] and filtered is c
+
+
+def test_navigation_residue_is_not_a_meaningful_answer():
+    assert not is_meaningful_answer("Skip contents")
+    assert not is_meaningful_answer("  SKIP TO MAIN CONTENT  ")
+    assert is_meaningful_answer("Total revenue: $53.1 billion")
 
 
 # ---------- (3) preflight: answer_matches 源頭 ----------

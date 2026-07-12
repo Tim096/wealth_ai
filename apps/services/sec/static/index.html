@@ -88,12 +88,12 @@
     <div>
       <div class="eyebrow">AI Coding Test 2026 · Task 2</div>
       <h1>SEC 10-K Item-Level Extractor</h1>
-      <div class="sub">每個 item 帶 status / confidence / provenance / needs_review;三態誠實判定 + topic oracle + Item 8 XBRL 認證,非 AI 自述。</div>
+      <div class="sub">Each Item includes status / confidence / provenance / needs_review · 三態判定 + topic oracle + Item 8 XBRL 認證。</div>
     </div>
     <nav class="switch" aria-label="任務切換">
-      <a class="sw" id="navAgent" href="https://wealth-agent-ncku.zeabur.app/">任務一:瀏覽器代理</a>
-      <span class="sw cur">任務二:SEC 10-K 抽取</span>
-      <a class="sw" href="/dashboard" target="_blank">📊 評測</a>
+      <a class="sw" id="navAgent" href="https://wealth-agent-ncku.zeabur.app/">Task 1 · 瀏覽器代理</a>
+      <span class="sw cur">Task 2 · SEC 10-K 抽取</span>
+      <a class="sw" href="/dashboard" target="_blank">📊 Evaluation · 評測</a>
     </nav>
   </header>
   <script>
@@ -107,17 +107,17 @@
   <section class="panel">
     <div class="row">
       <div class="grow">
-        <label>Ticker / CIK(例:INTC · AAPL · XOM · JPM · C;TSM 會示範誠實拒絕)</label>
+        <label>Ticker / CIK (try INTC · AAPL · XOM · JPM · C; TSM demonstrates an honest rejection)</label>
         <input type="text" id="sQuery" value="INTC">
       </div>
       <div>
-        <label>年度(預設最新)</label>
+        <label>Filing year / 年度 (latest by default)</label>
         <select id="sYear" style="min-width:150px"><option value="">最新</option></select>
       </div>
-      <button class="btn" id="sGo">抽取 ▶</button>
-      <button class="btn ghost" id="sUpBtn" title="上傳本機 10-K HTML,離線抽取(不連 EDGAR)">上傳 HTML ⬆</button>
+      <button class="btn" id="sGo">Extract / 開始抽取 ▶</button>
+      <button class="btn ghost" id="sUpBtn" title="Upload a local 10-K HTML file for offline extraction">Upload HTML / 上傳 ⬆</button>
       <input type="file" id="sUpFile" accept=".htm,.html,.txt" style="display:none">
-      <button class="btn ghost" id="sDlBtn" disabled title="下載目前分析中的 10-K 原始檔(byte-for-byte)">下載原始檔 ⬇</button>
+      <button class="btn ghost" id="sDlBtn" disabled title="Download the current raw 10-K byte-for-byte">Raw filing / 原始檔 ⬇</button>
       <span id="sBusy"></span>
     </div>
     <div class="hint">建議代號:
@@ -147,7 +147,7 @@
         <div class="tbwrap scroll">
           <table id="sTable">
             <thead><tr><th>Item</th><th>Status</th><th>Conf</th><th>XBRL</th><th>Topic</th><th>字數</th></tr></thead>
-            <tbody><tr><td colspan="6" class="sub" style="padding:1rem">尚未抽取。輸入代號按「抽取」,或上傳本機 10-K HTML。</td></tr></tbody>
+            <tbody><tr><td colspan="6" class="sub" style="padding:1rem">Enter a ticker and click Extract, or upload a local 10-K HTML file. / 輸入代號按「開始抽取」,或上傳本機 10-K HTML。</td></tr></tbody>
           </table>
         </div>
         <div class="hint">⚠ = needs_review(失敗/可疑案例,點進去看 warnings)。未分類 gap 與獨立 exhibit 也列出 —— 完整優先於分類,整份 filing 無一處不可達。</div>

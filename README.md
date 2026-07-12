@@ -4,16 +4,95 @@
 
 **核心命題:AI coding 之後,稀缺的不是「寫得出來」,是「知道自己何時對、何時錯、何時證據不足」。** 本專案把這件事制度化。
 
+## Quick start for graders
+
+No installation or account is required for the deployed demos.
+
+| Task | Open this URL | What to do |
+|---|---|---|
+| Task 1 — Browser Agent | [wealth-agent-ncku.zeabur.app](https://wealth-agent-ncku.zeabur.app) | Click **Self-repair / 自我修復(v2 介面漂移)** for a deterministic, keyless repair demo, or enter a public-web task and press **Run / 派工**. Inspect the live steps, screenshots, verifier verdict, and artifacts. |
+| Task 2 — SEC 10-K Extractor | [wealth-sec-ncku.zeabur.app](https://wealth-sec-ncku.zeabur.app) | Enter `AAPL`, click **Extract / 開始抽取**, then open any Item row to inspect the source-exact text, confidence, provenance, and validation signals. `/dashboard` shows the evaluation evidence. |
+
+The Task 1 deployment currently has an LLM configured. The four **示範任務**
+buttons remain deterministic and keyless. Login, CAPTCHA, purchases, posting, and
+other irreversible tasks are refused by design.
+
+### Public API smoke test
+
+```bash
+# Task 2: submit an extraction. The response is either a completed cached result
+# or a job containing job_id; poll GET /api/jobs/<job_id> until status is done.
+curl -X POST https://wealth-sec-ncku.zeabur.app/api/extract \
+  -H "Content-Type: application/json" -d '{"ticker":"AAPL"}'
+
+# Task 1: run the deterministic UI-drift/self-repair demo, then poll the task URL
+# returned by the service.
+curl -X POST https://wealth-agent-ncku.zeabur.app/api/demo/demo-v2-drift
+```
+
+Health and endpoint discovery:
+
+- Task 1: [`/api/health`](https://wealth-agent-ncku.zeabur.app/api/health),
+  [`/api/demo`](https://wealth-agent-ncku.zeabur.app/api/demo), and
+  [API reference](apps/services/agent/README.md).
+- Task 2: [`/api/health`](https://wealth-sec-ncku.zeabur.app/api/health),
+  [`/dashboard`](https://wealth-sec-ncku.zeabur.app/dashboard), and
+  [API reference](apps/services/sec/README.md).
+
+### Run locally
+
+Windows: double-click `啟動測試中心.bat`; it installs nothing and opens
+`http://127.0.0.1:8765` using the existing environment. For a clean setup on any
+platform, install the project first:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python -m pip install -e ".[dev,sec,browser]"
+.venv\Scripts\python -m playwright install chromium
+$env:SEC_EDGAR_USER_AGENT = "your-name your@email"
+.venv\Scripts\python tools\test_center.py
+```
+
+Linux/macOS use `.venv/bin/python` and `export SEC_EDGAR_USER_AGENT="..."`.
+For separate Docker services, environment variables, and deployment commands,
+see [docs/deploy.md](docs/deploy.md).
+
+## Strong cases and known weak cases
+
+| Area | Works well — reproducible examples | Does not work well — why |
+|---|---|---|
+| Task 1: UI drift and recovery | The deployed **自我修復(v2 介面漂移)** demo changes element IDs, adds a blocking cookie dialog, and introduces a decoy search button. The agent diagnoses the failure, repairs the locator, and the independent verifier checks the result. | Highly dynamic or anti-bot sites can become unreachable or invalidate observations between steps. Login, CAPTCHA, purchases, posting, and irreversible workflows are deliberately refused instead of being presented as supported. |
+| Task 1: silent-failure prevention | The injection demo reaches all five adversarial traps in the undefended control but records defended ASR `0/5`; impossible and open-ended tasks end as `fail`/`unknown`, not a fabricated pass. | Real-web generalization remains the main weakness. On the frozen 300-task Online-Mind2Web run, 17 tasks were environment failures; the strict advisory WebJudge accepted only `21/283` completed trajectories. The planner, verifier, and external judge still disagree materially on ambiguous completion evidence. |
+| Task 2: standard modern 10-K | `AAPL`, `MSFT`, `JPM`, `XOM`, and the other tracked modern filings extract source-addressable Items with offsets, hashes, confidence, provenance, partition checks, and independent XBRL/topic signals. Try `AAPL` in the deployed UI. | `Intel`/`Citi`/`GE` cross-reference-index filings place substantive sections in a separately filed annual-report exhibit. The current pipeline detects the pointer but does not join that external document; affected Items are `incorporated_by_reference`/`needs_review`, not guessed text. |
+| Task 2: format variance | Same-file wrappers such as tracked `JPM`/`XOM` cases are reconstructed with page/section anchors and checked against XBRL/CYD evidence. Unsupported binary/PDF input is rejected without inventing Items. | Pre-2001 plain-text SGML examples (`AAPL` FY1996, `KO` FY1997) have headings that the HTML-oriented detector cannot reliably segment, so they return missing/unsupported coverage. Scanned PDFs need a separate OCR pipeline and are not supported. |
+
+Full evidence, metrics, and failure traces: [evaluation report](docs/eval_report.md),
+[failure gallery](docs/failure_gallery.md), and
+[supported/unsupported matrix](docs/supported_and_unsupported.md).
+
+### Reviewer evidence path
+
+1. Run the two deployed demos using the steps above.
+2. Read [docs/eval_report.md](docs/eval_report.md) for canonical metrics and
+   [docs/cost_latency_report.md](docs/cost_latency_report.md) for runtime, cost,
+   and scalability.
+3. Inspect [docs/failure_gallery.md](docs/failure_gallery.md) and
+   [docs/supported_and_unsupported.md](docs/supported_and_unsupported.md) for
+   concrete failures and honest boundaries.
+4. Read [prompts/README.md](prompts/README.md) for the key AI decisions and
+   rejected approaches. The full manual Task 1 acceptance script is
+   [docs/manual_test_browser.md](docs/manual_test_browser.md).
+
 ## 系統總覽
 
 | 題目 | 內容 | 狀態 |
 |---|---|---|
-| 題目一 Browser Agent | 受控 action space、task-contract verifier、a11y selector 自修復、selector memory、**Agent Mode(LLM 驅動,預設接 Codex OAuth via gateway)**、**卡住時自動視覺升級(SoM 截圖 + gpt-5.5 視覺)**、**答案交付通道(查數字/問答)**、code-enforced capability guard | **可執行**:selector-repair killer demo(`tools/browser_killer_demo.py`)+ live LLM 驅動(`tools/browser_agent_live.py`) |
-| 題目二 SEC Extractor | 10-K Item 1–16 source-exact 抽取、TOC 防禦、cross-reference-index、**page-anchor 還原(Intel 正文抽回)**、**XBRL 認證(Item 8)**、**topic-consistency oracle(全 item)** | **可執行**:11 家真實 10-K + Intel/Citi(`tools/eval_one.py`, `tools/certify.py`) |
+| 題目一 Browser Agent | 受控 action space、**preflight task contract 凍結並揭露條件來源**、deterministic verifier、a11y selector 自修復、selector memory、**Agent Mode(LLM 驅動,預設接 Codex OAuth via gateway)**、**卡住時自動視覺升級(SoM 截圖 + gpt-5.5 視覺)**、**答案交付通道(查數字/問答)**、code-enforced capability guard | **可執行**:selector-repair killer demo(`tools/browser_killer_demo.py`)+ live LLM 驅動(`tools/browser_agent_live.py`) |
+| 題目二 SEC Extractor | 10-K Item 1–16 source-exact 抽取、TOC 防禦、cross-reference-index 偵測、**same-file wrapper page-anchor 還原**、**XBRL 認證(Item 8)**、**topic-consistency oracle(全 item)** | **可執行**:11 家真實 10-K + Intel/Citi(`tools/eval_one.py`, `tools/certify.py`) |
 | 共用層 | evidence store(兩題共用)、三態 verdict、eval case、LLM 成本紀錄 | 已實作 |
 | Eval Dashboard | 兩題 eval、XBRL 認證、browser repair trace(真實數據) | `apps/web/eval-dashboard/`,自包含 HTML |
 
-**838 tests**(快跑 `-m "not integration"`:**788 passed / 50 integration deselected**;integration lane 含真實瀏覽器 + gateway e2e;2026-07-11 新增 +9 `tests/test_section_anchor.py`、+16 `tests/test_topic_prior.py`)。**CI 綠(`.github/workflows/ci.yml`,run 29134525031 於 `v1.0-submission` tag 樹:ruff 全過 + 743 selected → 742 passed / 1 skipped;其後新增 length-prior 20 tests,下次 push 由 CI 驗證)。** 完整規格:[docs/SPEC.md](docs/SPEC.md)。手動測 Task 1:[docs/setup_codex_gateway.md](docs/setup_codex_gateway.md)。
+**843 tests**(2026-07-12 本機重跑:**793 quick passed + 50 Playwright/integration passed**;integration lane 含真實瀏覽器 + gateway e2e)。**CI snapshot 綠(`.github/workflows/ci.yml`,run 29134525031 於 `v1.0-submission` tag 樹:ruff 全過 + 743 selected → 742 passed / 1 skipped);目前新增測試待本次 push 由 CI 驗證。** 完整規格:[docs/SPEC.md](docs/SPEC.md)。手動測 Task 1:[docs/setup_codex_gateway.md](docs/setup_codex_gateway.md)。
 
 ## 核心原則(已在 code 層強制,不是文件宣示)
 
@@ -39,7 +118,7 @@ python -m venv .venv
 .venv\Scripts\python -m playwright install chromium
 $env:SEC_EDGAR_USER_AGENT = "your-name your@email"
 
-.venv\Scripts\python -m pytest -m "not integration"     # 788 passed(全集 838 tests)
+.venv\Scripts\python -m pytest -m "not integration"     # 793 passed(全集 843 tests)
 .venv\Scripts\python tools\browser_killer_demo.py       # 題目一:v1→v2 selector 自修復
 .venv\Scripts\python tools\browser_agent_live.py --mock # 題目一:Agent Mode 迴圈(免 key)
 .venv\Scripts\python tools\eval_one.py AAPL             # 題目二:抽取一份 10-K
@@ -91,7 +170,7 @@ data/       sec_eval(fixtures + records), golden_labels, mock_sites(v1/v2), raw_
 docs/       SPEC, architecture, eval_report, cost_latency_report, failure_gallery,
             supported_and_unsupported, insights_and_directions, prior_art, ai_collaboration_report
 prompts/    所有影響開發的 prompt + 決策(含 rejected)
-tests/      838 tests(快跑 lane 788 + integration 50)
+tests/      843 tests(quick lane 793 passed + integration lane 50 passed)
 ```
 
 ## 部署(Zeabur)— 線上可直接用
@@ -108,7 +187,7 @@ tests/      838 tests(快跑 lane 788 + integration 50)
 ## 已知邊界(誠實揭露)
 
 - **同檔 wrapper 正文已還原;跨檔 exhibit 尚未**:JPM/XOM 的本檔附綁正文已由 page/section-anchor 重組(Item 8 獲 XBRL 3/3 認證);2026-07-11 page-top section anchoring 收尾 GS/JPM Item 1C,官方 CYD oracle 現為 **11 agree / 0 disagree**(kill-switch `SEC_WRAPPER_SECTION_ANCHOR=0`;見 `docs/eval_report.md` T2-3)。Intel/Citi 指向**另外裝訂年報 exhibit** 的正文仍誠實標指標 + needs_review——刻意不出貨脆弱猜測(見 `docs/insights_and_directions.md` §2)。
-- **Browser Agent 對本地 mock sites 完整驗證;真實網站對標已起步(2026-07-10)**:外部基準子集 **Online-Mind2Web** 20 tasks(OSU-NLP-Group,**CC-BY-4.0**,COLM 2025,arXiv:2504.01382;`data/browser_eval/external/`)已引入,live naive baseline 實測 trivial-pass 20%(4/20)證明子集非 shortcut 集;自跑實測 33.3%(6/18)→ bucket-fix 44.4%(8/18)→ abstain-fix 合成 **11/18 ≈ 61.1%**(tracked 快照 `data/browser_eval/external_runs/`,詳見 `docs/eval_report.md`)。**可比性聲明:這是自建 20 題 live 子集、成功條件多為單一 landmark、61.1% 為跨 launch 合成估計——不可與官方 Online-Mind2Web leaderboard(300 題、WebJudge 評審、Browser Use ~97%)直接比較;我們量的軸是 verifier 誠實性(abstain/unknown),非 leaderboard 分數。** **Held-out 泛化(2026-07-11)**:另以先凍結、不相交的 20 題子集(選題規則 pre-registered 於 `runs/browser_eval/m2w_heldout_20260711/freeze_manifest.json`,禁止迭代)單次跑出 **12/18 = 66.7%**(2 題 env 失效排除)——與迭代後 61.1% 並排為**反 overfitting 證據,兩者不可混比**(61.1% 是迭代後合成、66.7% 是凍結單跑;見 `docs/eval_report.md`)。**300 題官方全量(2026-07-11,無排除、雙口徑,最終 rollup)**:**done 283/300**(harness error 17 全為環境 site_unreachable,含 anti_bot 4;not_run 0);verifier 口徑 **95/283 = 33.57%**(全分母 95/300 = 31.67%;分層 easy 37.3% / medium 25.2% / hard 45.2%);**官方 WebJudge 三段協定 advisory 口徑 21/283 = 7.42%**(abstain 70 留分母,其中 63 為 judge 照抄 prompt 範例字串的模板 artifact——abstain_rate 24.7% 為受此膨脹上界;decided-pair agreement 130/194 = 67.0%,最大分歧格 = verifier pass 但 WebJudge failure 56 題,judge 遠嚴於我方 verifier;judge model 為 gateway gpt-5.5-class **非官方 o4-mini** → 不可與 leaderboard 比較;advisory 不改判)。過程事件如實記錄:run 初期在 46/300 觸發 resume-abort 死鎖(3 題持久 site_unreachable × resume 不計 done 入 attempts)→ 根因修復 commit `0613aac` → 補完至 300/300(measure-fix-remeasure,見 `docs/eval_report.md`)。敘事鏈三級:20 題迭代 → 20 題 held-out → 300 官方全量,**三組口徑不可混比**。Artifacts:`runs/browser_eval/m2w_full300_20260711/`(per-task summary.json 權威 + `webjudge/`),快照至 `data/browser_eval/external_runs/`;license 登記 `docs/ATTRIBUTION.md`(WebJudge 程式碼 MIT、dataset CC-BY-4.0)。另有**元件 ablation**(mock 確定性、$0):selector repair 關掉 −3/18、換成 self-report 判準(無 verifier)剩 4/18 + 10 false success(`tools/ablation_bench.py`,artifact `runs/browser_eval/ablation/results.json`)。 另有 **prompt-injection 對抗 suite**(5 攻擊型態 + ASR 指標,`data/browser_eval/adversarial.json`;live 實測 defended ASR **0.0**(0/5)、undefended 對照 1.0(5/5)證明 trap 全數可達,artifact `data/browser_eval/adversarial_results.json`)。eval task 檔並新增 step-budget 欄位:`difficulty`(easy 8 / medium 15 / hard 25 步)或顯式 `max_steps`,CLI `--max-steps` 可覆寫。WebArena/WebVoyager 全量對標仍列 roadmap(`docs/prior_art.md`)。
+- **Browser Agent 對本地 mock sites 完整驗證;真實網站對標仍弱(2026-07-10~11)**:外部基準子集 **Online-Mind2Web** 20 tasks(OSU-NLP-Group,**CC-BY-4.0**,COLM 2025,arXiv:2504.01382;`data/browser_eval/external/`)的 20%→33.3%→44.4%→61.1% 與 held-out 66.7% 都使用 task-text landmark contract,只適合觀察 verifier/repair 迭代,**不是 task-success 成績**。300 題 frozen run 完成 283/300(17 個 site_unreachable);歷史 runtime landmark hit **95/283 = 33.57%**,但其中含只驗網站名/普通動詞的弱條件,不得視為成功率。獨立 WebJudge outcome estimate 為 **21/283 = 7.42%**;其中 63/70 abstain 來自 judge prompt literal `success|failure` artifact,且 judge model 非官方 o4-mini,所以也不可與 leaderboard 比較。現在 importer 已停止把 heuristic landmark 當 authoritative `success_conditions`;未來 run 保留完整 trajectory,以修正後 independent WebJudge 或 human review 決定完成。舊 frozen artifacts 不重寫,詳見 `docs/eval_report.md`。Mock/eval 仍有 selector-repair ablation、prompt-injection defended ASR 0/5、step budgets 與完整 evidence artifacts。
 - **token-level boundary 已量化(2026-07-10)**:char-offset F1(建構性 gold,regression baseline,敏感度注入驗證 0.9853)+ CYD 官方 iXBRL oracle(9/9 pass segment coverage 100%);人工標註的絕對正確率仍列 backlog。見 `docs/eval_report.md`。
 - **pre-2001 純文字 SGML filing:Unsupported**(heading detector 0 candidate,誠實全 missing,partition invariant 仍成立)。見 `docs/supported_and_unsupported.md` format-era 支援表。
 - **Browser 4 個 measure-first 弱點已於 2026-07-10 修復**(verifier filename-needle bypass、query-echo silent failure、repair fallback 到不可行元素、bait-field tie-break;commit c4ac7cd / 3f0b1e9):校準 specificity 0.9583→1.0、FP rate 0.0417→0.0、impossible silent_failure_rate 0.1→0.0、perception degradation curve 尾端 0.0→1.0。原 `test_known_*` 已翻寫為 `test_fixed_*` 並重跑 artifact。另修復開放式(零條件)任務 crash → 誠實 unknown(FG-BROWSER-006,commit 2fec949)。逐條前→後見 `docs/failure_gallery.md` FG-BROWSER-002~006 與 `docs/eval_report.md`「修復迭代」段。
@@ -116,4 +195,4 @@ tests/      838 tests(快跑 lane 788 + integration 50)
 
 ## AI 協作方式
 
-所有影響設計的 prompt 與決策(含被拒絕方案)記錄於 [prompts/](prompts/README.md)。AI 在 PM 授權下自主判斷 commit / push;commit history 反映真實開發順序,含失敗嘗試。見 [docs/ai_collaboration_report.md](docs/ai_collaboration_report.md)。
+所有影響設計的 prompt 與決策(含被拒絕方案)記錄於 [prompts/](prompts/README.md)。AI 在 PM 授權下自主判斷 commit / push;commit history 保留真實開發順序、messages 與失敗嘗試。2026-07-12 因本機 clock metadata 錯誤校正 timestamps:第一筆為 2026-07-10 09:00,7/11 20:00 後原值不動;commit trees 未改。見 [docs/ai_collaboration_report.md](docs/ai_collaboration_report.md)。

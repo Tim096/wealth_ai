@@ -1,0 +1,90 @@
+[
+  {
+    "claim_id": "task1_300run_verifier_landmark",
+    "description": "Browser 300-run official full set: runtime verifier landmark-hit axis = pass 95 of done 283 (diagnostic axis, NOT task success rate).",
+    "doc_locations": ["docs/eval_report.md"],
+    "expected": "95/283",
+    "artifact": "data/browser_eval/external_runs/m2w_full300_20260711/webjudge_results.json",
+    "rule": "json_ratio_pair:final_summary.verifier_axis_final.counts_done.pass|final_summary.verifier_axis_final.n_done"
+  },
+  {
+    "claim_id": "task1_300run_webjudge_advisory",
+    "description": "Browser 300-run official full set: WebJudge advisory outcome axis = success 21 of judged 283 (abstain kept in denominator; advisory only, never overrides runtime verifier).",
+    "doc_locations": ["docs/eval_report.md"],
+    "expected": "21/283",
+    "artifact": "data/browser_eval/external_runs/m2w_full300_20260711/webjudge_results.json",
+    "rule": "json_ratio_pair:final_summary.webjudge_axis_final.success|final_summary.webjudge_axis_final.judged"
+  },
+  {
+    "claim_id": "task2_h2h_ours_macro_f1",
+    "description": "NTU itemseg 30-slice head-to-head: ours macro-F1 over filings (line-level per-item F1, lower bound).",
+    "doc_locations": ["docs/eval_report.md"],
+    "expected": 0.6245,
+    "artifact": "data/sec_eval/scoring/head_to_head.json",
+    "rule": "json_field:summary.ours.macro_f1_filings"
+  },
+  {
+    "claim_id": "task2_h2h_edgar_crawler_macro_f1",
+    "description": "NTU itemseg 30-slice head-to-head: edgar_crawler macro-F1 over filings (single-axis winner, honestly disclosed).",
+    "doc_locations": ["docs/eval_report.md"],
+    "expected": 0.6332,
+    "artifact": "data/sec_eval/scoring/head_to_head.json",
+    "rule": "json_field:summary.edgar_crawler.macro_f1_filings"
+  },
+  {
+    "claim_id": "task2_h2h_datamule_macro_f1",
+    "description": "NTU itemseg 30-slice head-to-head: datamule macro-F1 over filings.",
+    "doc_locations": ["docs/eval_report.md"],
+    "expected": 0.6244,
+    "artifact": "data/sec_eval/scoring/head_to_head.json",
+    "rule": "json_field:summary.datamule.macro_f1_filings"
+  },
+  {
+    "claim_id": "task2_h2h_edgartools_macro_f1",
+    "description": "NTU itemseg 30-slice head-to-head: edgartools 5.42.0 macro-F1 over filings.",
+    "doc_locations": ["docs/eval_report.md"],
+    "expected": 0.4386,
+    "artifact": "data/sec_eval/scoring/head_to_head.json",
+    "rule": "json_field:summary.edgartools.macro_f1_filings"
+  },
+  {
+    "claim_id": "task2_triangulation_agree",
+    "description": "Third-engine triangulation (2-of-N voting, 11 filings / 253 items): verdict agree count.",
+    "doc_locations": ["docs/eval_report.md"],
+    "expected": 249,
+    "artifact": "data/sec_eval/triangulation/triangulation.json",
+    "rule": "json_field:verdict_totals.agree"
+  },
+  {
+    "claim_id": "task2_triangulation_disagree",
+    "description": "Third-engine triangulation (2-of-N voting): uncorroborated disagree count (all four are wrapper 10-K boundary ambiguities, all needs_review).",
+    "doc_locations": ["docs/eval_report.md"],
+    "expected": 4,
+    "artifact": "data/sec_eval/triangulation/triangulation.json",
+    "rule": "json_field:verdict_totals.disagree"
+  },
+  {
+    "claim_id": "task2_calibration_auroc_ntu",
+    "description": "Confidence calibration on NTU human-labeled stratum (n=512): AUROC (gate >=0.75 is a MISS; quoted honestly, never as 'acceptable').",
+    "doc_locations": ["docs/eval_report.md"],
+    "expected": 0.6667,
+    "artifact": "data/sec_eval/calibration/calibration.json",
+    "rule": "json_field:strata.ntu_human_labeled.auroc"
+  },
+  {
+    "claim_id": "task2_mutation_recall_all_classes",
+    "description": "Verifier mutation harness (P0-4): minimum detection recall across all six mutation classes (truncate/misalign/toc_anchor/wrapper_swallow/jitter/cross_swap) = 1.0. Re-derived by running the harness itself.",
+    "doc_locations": ["docs/eval_report.md"],
+    "expected": 1.0,
+    "artifact": "tests/test_verifier_mutations.py",
+    "rule": "pytest_mutation_min_recall"
+  },
+  {
+    "claim_id": "task2_mutation_sweep3_clean_false_alarm",
+    "description": "Verifier mutation harness (P0-4): clean false-alarm rate on recorded sweep3 verifier outputs (needs_review flag or triangulation disagree over items the pipeline passed) = 1/178.",
+    "doc_locations": ["docs/eval_report.md"],
+    "expected": 0.0056,
+    "artifact": "data/sec_eval/records/sweep3",
+    "rule": "sweep3_clean_false_alarm"
+  }
+]

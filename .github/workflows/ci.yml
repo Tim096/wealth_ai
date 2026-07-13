@@ -62,6 +62,14 @@ jobs:
         # Locally verified: 743 passed, 50 deselected (2026-07-11).
         run: pytest -m "not integration"
 
+      - name: Verify headline claims against tracked artifacts
+        # Anti-drift gate: re-derives every headline number registered in
+        # data/claims_registry.json from its tracked artifact (json_field /
+        # ratio extraction, sweep3 false-alarm recompute, mutation-harness
+        # rerun) and exits 1 on any drift — docs can never silently diverge
+        # from their evidence.
+        run: python tools/verify_claims.py
+
   integration:
     name: integration tests (Playwright, advisory)
     runs-on: ubuntu-latest

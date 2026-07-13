@@ -1,14 +1,12 @@
-# TODO — Score Improvement Roadmap
+# Roadmap — Known Limitations & Next Experiments
 
-目標不是增加功能數量，而是把目前最容易被扣分的主張換成可獨立重驗的證據。
+目標不是增加功能數量，而是把目前最容易被質疑的主張換成可獨立重驗的證據。完成與否不改變本文件對現狀弱點的誠實陳述。
 
-- 保守獨立基準：`85/100`，Strong Hire。
-- 目標：以新的 held-out evidence 達到可辯護的 `92+ / A`；完成項目不自行換算分數，必須再交由獨立 reviewer 評分。
 - 原則：先 freeze protocol，再跑 evaluation；歷史 artifacts 不覆寫；runtime verifier、LLM judge、human label 三者不得混成同一口徑。
 
-## P0 — 直接修補主要扣分
+## P0 — 主要已知弱點的直接補強
 
-| 項目 | 成本 | 預期評分槓桿 | 交付物與驗收門檻 |
+| 項目 | 成本 | 對應弱點 | 交付物與驗收門檻 |
 |---|---:|---|---|
 | 用修正版 WebJudge 重判 frozen 283 trajectories | M，1–2 天 | Task 1 evaluation credibility | 沿用原 trajectory，不重跑 agent；`283/283` 有 binary outcome；template-artifact 為 `0`；公布 success/failure、abstain、difficulty strata、verifier × judge confusion；隨機抽 30 題 blind human audit 並列 agreement。 |
 | 建立新的 unseen real-site set | L，3–5 天 | Task 1 real-world generalization | 先提交 freeze manifest，再跑至少 50 題、10 個 domains、5 類 task；成功條件由獨立 reviewer 建立，不從 task text heuristic 衍生；報 task-success、environment failure、silent-failure、p50/p95 latency、cost/success 與 bootstrap CI。 |
@@ -69,7 +67,7 @@
 - [ ] Task 2 至少一組未參與調參的人工 span gold 與 confidence calibration。
 - [ ] 每項 LLM 使用都有 deterministic control、增益、latency、tokens、USD 與 stop rule。
 - [ ] CI、README、eval report、public frontend 顯示同一 revision 與同一組數字。
-- [ ] 獨立 reviewer 給出 `92+`；若未達標，扣分必須能映射回下一個可驗證 experiment。
+- [ ] 獨立 review 的每一項扣分都能映射回一個可驗證的 experiment。
 
 ## 不做
 

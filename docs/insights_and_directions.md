@@ -6,7 +6,7 @@
 
 **AI coding 把「寫出來」變便宜了,所以稀缺的不是產出,是驗證。** 這個專案的主體不是兩個 demo,是一套能證明自己何時對、何時錯、何時證據不足的 reliability 基礎設施。Browser Agent 與 SEC Extractor 只是拿來壓力測試它的兩個高難度負載。
 
-這在本次開發中不是口號:我的 SEC pipeline 通過 3 家 smoke test 後自報 75.9% pass;接著我用 56 個 agent 的**對抗式稽核**(內部審計過程,per-agent 輸出未完整留存為 artifact;方法與結果摘要見 `prompts/eval_design/2026-07-10-adversarial-audit-workflow.md`)跑 11 家真實 10-K,證明其中 15 個 pass 是 silent failure(reference stub 被當成內容、末項吞掉整本財報)。**稽核抓到了我自己的系統在說謊,然後我才修。** 這就是「demo 不可信,所以要做 eval」的實際演出。
+這在本次開發中不是口號:我的 SEC pipeline 通過 3 家 smoke test 後自報 75.9% pass;接著我用 56 個 agent 的**對抗式稽核**(內部審計過程,per-agent 輸出未完整留存為 artifact;方法與結果摘要見 `prompts/eval_design/2026-07-10-adversarial-audit-workflow.md`)跑 11 家真實 10-K,證明其中 15 個 pass 是 silent failure(reference stub 被當成內容、末項吞掉整本財報)。**稽核抓到了我自己的系統在說謊,然後我才修。** 這就是「demo 不可信,所以要做 eval」的實例。
 
 ## 1. 如果直接把這兩題丟給 autonomous coding agent(OpenClaw / Hermes 類)會怎樣?
 

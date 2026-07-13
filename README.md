@@ -83,7 +83,7 @@ Full evidence, metrics, and failure traces: [evaluation report](docs/eval_report
    rejected approaches. The full manual Task 1 acceptance script is
    [docs/manual_test_browser.md](docs/manual_test_browser.md).
 
-Future score-improvement plan: [TODO.md](TODO.md).
+Known limitations and planned experiments: [TODO.md](TODO.md).
 
 ## 系統總覽
 

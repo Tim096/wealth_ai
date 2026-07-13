@@ -80,6 +80,31 @@
     padding:.25rem .6rem;cursor:pointer;background:var(--panel2);color:var(--muted)}
   .job.cur{border-color:var(--accent);color:var(--ink)}
   .job.err{border-color:var(--fail);color:var(--fail)}
+  /* ===== reviewer tour (5 分鐘審閱導覽) — static strip, collapsible + dismissible; owned by tour agent ===== */
+  .tour{border:1px solid var(--accent);border-radius:12px;background:var(--panel);
+    padding:.7rem .9rem;margin-top:.9rem}
+  .tour[hidden]{display:none}
+  .tour-bar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+  .tour-title{font-family:var(--mono);font-size:.74rem;letter-spacing:.04em;color:var(--accent);font-weight:700}
+  .tour-title .tour-sub{font-family:var(--sans);letter-spacing:0;color:var(--muted);font-weight:400;margin-left:.5rem;font-size:.76rem}
+  .tour-actions{margin-left:auto;display:flex;gap:.4rem}
+  .tour-x{background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:999px;
+    font-family:var(--mono);font-size:.72rem;padding:.18rem .7rem;cursor:pointer}
+  .tour-x:hover{color:var(--ink);border-color:var(--accent)}
+  .tour-stations{display:grid;gap:.6rem;margin-top:.7rem}
+  @media(min-width:760px){.tour-stations{grid-template-columns:repeat(4,1fr)}}
+  .tour.collapsed .tour-stations{display:none}
+  .tour-station{text-align:left;background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+    border-radius:10px;padding:.55rem .7rem;cursor:pointer;font:inherit;display:flex;gap:.55rem;align-items:flex-start}
+  .tour-station:hover{border-color:var(--accent)}
+  .tour-n{flex:none;width:1.4rem;height:1.4rem;border-radius:50%;background:var(--accent);color:var(--accent-ink);
+    font-family:var(--mono);font-weight:700;font-size:.8rem;display:flex;align-items:center;justify-content:center;margin-top:.1rem}
+  .tour-body{display:flex;flex-direction:column;gap:.18rem;min-width:0}
+  .tour-step{font-size:.76rem;line-height:1.4;word-break:break-word}
+  .tour-step b{font-family:var(--mono);font-size:.64rem;color:var(--muted);letter-spacing:.04em;margin-right:.35rem}
+  .tour-proof{color:var(--pass);font-size:.74rem}
+  .tour-note{font-size:.68rem;color:var(--warn);line-height:1.35}
+  .tour-flash{outline:2px solid var(--accent)!important;outline-offset:2px;border-color:var(--accent)!important}
 </style>
 </head>
 <body>
@@ -103,6 +128,54 @@
     };
     document.getElementById("navAgent").href = WEALTH_LINKS.agent;
   </script>
+
+  <!-- ===== reviewer tour (5 分鐘審閱導覽) BEGIN — owned by tour agent ===== -->
+  <section class="tour" id="reviewerTour" hidden>
+    <div class="tour-bar">
+      <div class="tour-title">🧭 5 分鐘審閱導覽 · Reviewer tour
+        <span class="tour-sub">四站,每站「按這顆 → 看這裡 → 這證明了什麼」;前三站在 Task 1、點了會跳過去,第四站在本頁。皆為真實動作,非預錄結果。</span></div>
+      <div class="tour-actions">
+        <button class="tour-x" id="tourToggle" type="button">收合 ▾</button>
+        <button class="tour-x" id="tourDismiss" type="button" title="不再顯示 / dismiss">✕ 關閉</button>
+      </div>
+    </div>
+    <div class="tour-stations">
+      <button class="tour-station" type="button" data-nav="agent" data-hash="tour=demo-v2-drift">
+        <span class="tour-n">1</span>
+        <span class="tour-body">
+          <span class="tour-step"><b>按這顆</b>Task 1 · 🔧 自我修復 demo(v2 介面漂移)</span>
+          <span class="tour-step"><b>看這裡</b>「完整步驟軌跡」的 diagnosis → repair 欄</span>
+          <span class="tour-step tour-proof">✓ 自我維護是真的機制,不是話術 · self-maintenance is a real mechanism</span>
+          <span class="tour-note">單一 worker 佇列、依序執行 — 送出後請稍候它跑完,排隊不等於卡住。 · single worker, give it a moment</span>
+        </span>
+      </button>
+      <button class="tour-station" type="button" data-nav="agent" data-hash="tour=demo-open-unknown">
+        <span class="tour-n">2</span>
+        <span class="tour-body">
+          <span class="tour-step"><b>按這顆</b>Task 1 · ❓ 誠實 UNKNOWN demo(開放式任務)</span>
+          <span class="tour-step"><b>看這裡</b>verdict 判定區 — 結果是 UNKNOWN,不是 PASS</span>
+          <span class="tour-step tour-proof">✓ 三態(pass / fail / unknown)是結構性紀律 · three-state discipline is structural</span>
+        </span>
+      </button>
+      <button class="tour-station" type="button" data-nav="agent" data-hash="tour=demo-refused">
+        <span class="tour-n">3</span>
+        <span class="tour-body">
+          <span class="tour-step"><b>按這顆</b>Task 1 · 🚫 能力邊界 demo(登入 + 購買)</span>
+          <span class="tour-step"><b>看這裡</b>verdict 判定區顯示 REFUSED</span>
+          <span class="tour-step tour-proof">✓ 責任邊界由程式強制,非模型自律 · capability guard boundary</span>
+        </span>
+      </button>
+      <button class="tour-station" type="button" data-target='.chip[data-q="AAPL"]'>
+        <span class="tour-n">4</span>
+        <span class="tour-body">
+          <span class="tour-step"><b>按這顆</b>AAPL 建議代號 → 再按「開始抽取」</span>
+          <span class="tour-step"><b>看這裡</b>抽完後 Item 8 那列的 XBRL 與 Risk band / 風險欄</span>
+          <span class="tour-step tour-proof">✓ offset / sha256 出處 + XBRL oracle + 實測 risk band · provenance you can re-derive</span>
+        </span>
+      </button>
+    </div>
+  </section>
+  <!-- ===== reviewer tour END ===== -->
 
   <section class="panel">
     <div class="row">
@@ -146,11 +219,12 @@
       <div>
         <div class="tbwrap scroll">
           <table id="sTable">
-            <thead><tr><th>Item</th><th>Status</th><th>Conf</th><th>XBRL</th><th>Topic</th><th>字數</th></tr></thead>
+            <thead><tr><th>Item</th><th>Status</th><th title="校準未達 gate,顯示實測 risk band 而非機率">Risk band / 風險</th><th>XBRL</th><th>Topic</th><th>字數</th></tr></thead>
             <tbody><tr><td colspan="6" class="sub" style="padding:1rem">Enter a ticker and click Extract, or upload a local 10-K HTML file. / 輸入代號按「開始抽取」,或上傳本機 10-K HTML。</td></tr></tbody>
           </table>
         </div>
         <div class="hint">⚠ = needs_review(失敗/可疑案例,點進去看 warnings)。未分類 gap 與獨立 exhibit 也列出 —— 完整優先於分類,整份 filing 無一處不可達。</div>
+        <div class="hint">校準 AUROC 0.6667 未達 gate(≥0.75),故 Risk band 欄顯示各信心區間在 NTU 人工 gold 上的<b>實測 false-pass rate</b>(低風險 15.4% / 中風險 24.2% / 需人工 40.0%),<b>不宣稱 probability</b>;raw confidence 降為次要顯示。依據見 <a href="https://github.com/Tim096/wealth/blob/main/docs/eval_report.md" target="_blank">docs/eval_report.md</a>。</div>
       </div>
       <div>
         <div class="doc" id="sDoc"><span style="color:var(--muted)">點左側任一 Item,這裡顯示 source-exact 抽取原文(offset + sha256 定址,非 AI 生成)。錯誤的 job 會在此顯示原因與 traceback。</span></div>
@@ -170,6 +244,18 @@ const PILL={pass:'p-pass',partial:'p-warn',incorporated_by_reference:'p-warn',am
   unclassified:'p-grey',exhibit:'p-warn'};
 const pill=t=>`<span class="pill ${PILL[t]||'p-grey'}">${t}</span>`;
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Risk band chip (TODO.md L15): calibration AUROC 0.6667 < 0.75 gate → show the
+// MEASURED false-pass rate of the item's confidence band on NTU human gold, not
+// a probability. Numbers come from packages/sec_core/risk_band.py per item.
+const BAND_PILL={low:'p-pass',medium:'p-warn',review:'p-fail'};
+function bandChip(rb){
+  if(!rb)return '<span class="sub">–</span>';
+  const cls=BAND_PILL[rb.band]||'p-grey';
+  const fp=(rb.false_pass_rate*100).toFixed(1);
+  const range=rb.band==='low'?`conf ≥ ${rb.lo}`:(rb.band==='review'?`conf < ${rb.hi}`:`${rb.lo} ≤ conf < ${rb.hi}`);
+  const tip=`${range} · 該信心區間實測 false-pass ${fp}%(NTU 人工 gold,n=${rb.n})。校準 AUROC 0.6667<0.75 未達 gate,故為實測 risk band 而非機率。`;
+  return `<span class="pill ${cls}" title="${esc(tip)}">${esc(rb.label)}</span>`;
+}
 
 let CUR_JOB='';            // job whose result is on screen
 let SEC_ITEMS=[];          // extracted item list (code/title/…) for find
@@ -198,7 +284,8 @@ function renderSec(d){
     const tr=document.createElement('tr');
     tr.dataset.code=it.code;
     tr.innerHTML=`<td class="mono">Item ${it.code}${it.needs_review?' ⚠':''}</td>
-      <td>${pill(it.status)}</td><td class="mono">${it.confidence.toFixed(2)}</td>
+      <td>${pill(it.status)}</td>
+      <td>${bandChip(it.risk_band)}<span class="sub mono" style="margin-left:.4rem;font-size:.72rem" title="raw confidence(已降為次要顯示,非機率)">${it.confidence.toFixed(2)}</span></td>
       <td>${it.xbrl?pill(it.xbrl):'<span class="sub">–</span>'}</td>
       <td>${it.topic?pill(it.topic):'<span class="sub">–</span>'}</td>
       <td class="mono">${it.chars.toLocaleString()}</td>`;
@@ -433,6 +520,46 @@ $('#sDlBtn').onclick=()=>{ if(!$('#sDlBtn').disabled&&CUR_JOB) window.location.h
 
 refreshJobs();setInterval(refreshJobs,5000);
 loadYears();
+
+/* ===== reviewer tour (5 分鐘審閱導覽) JS — owned by tour agent ===== */
+(function(){
+  const LS='wealth_tour', sec=document.getElementById('reviewerTour');
+  if(!sec)return;
+  const state=localStorage.getItem(LS);
+  if(state==='dismissed')return;                 // gone for repeat visitors
+  sec.hidden=false;
+  if(state==='collapsed')sec.classList.add('collapsed');
+  const toggle=document.getElementById('tourToggle');
+  const syncToggle=()=>{toggle.textContent=sec.classList.contains('collapsed')?'展開 ▸':'收合 ▾';};
+  syncToggle();
+  toggle.onclick=()=>{
+    sec.classList.toggle('collapsed');
+    localStorage.setItem(LS,sec.classList.contains('collapsed')?'collapsed':'open');
+    syncToggle();
+  };
+  document.getElementById('tourDismiss').onclick=()=>{localStorage.setItem(LS,'dismissed');sec.hidden=true;};
+  const flash=(selector,tries)=>{
+    const el=document.querySelector(selector);
+    if(!el){if((tries||0)<30)setTimeout(()=>flash(selector,(tries||0)+1),100);return;}
+    el.scrollIntoView({block:'center',behavior:'smooth'});
+    el.classList.add('tour-flash');
+    setTimeout(()=>el.classList.remove('tour-flash'),1900);
+  };
+  const MAP={'aapl':'.chip[data-q="AAPL"]'};
+  sec.querySelectorAll('.tour-station').forEach(btn=>{
+    btn.onclick=()=>{
+      const t=btn.getAttribute('data-target');
+      if(t){flash(t,0);return;}
+      const nav=btn.getAttribute('data-nav');
+      if(nav&&window.WEALTH_LINKS&&WEALTH_LINKS[nav]){
+        const hash=btn.getAttribute('data-hash');
+        window.location.href=WEALTH_LINKS[nav]+(hash?'#'+hash:'');
+      }
+    };
+  });
+  const m=(location.hash||'').match(/tour=([\w-]+)/);   // arrival from the sibling service
+  if(m&&MAP[m[1]])flash(MAP[m[1]],0);
+})();
 </script>
 </body>
 </html>

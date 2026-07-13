@@ -34,6 +34,7 @@ from sec_core.main_doc import pick_main_document
 from sec_core.normalize import normalize_html
 from sec_core.pipeline import extract_from_html
 from sec_core.resolver import FilingResolver
+from sec_core.risk_band import band_payload
 from sec_core.xbrl import certify_item8
 
 from apps.services.sec.jobs import Job, JobStore
@@ -104,7 +105,8 @@ def _items_payload(result, meta: dict, exhibits: list[dict]) -> dict:
     for s in result.segments:
         items.append({
             "code": s.item_code, "title": s.canonical_title, "status": s.status,
-            "confidence": round(s.confidence, 2), "provenance": s.provenance,
+            "confidence": round(s.confidence, 2), "risk_band": band_payload(s.confidence),
+            "provenance": s.provenance,
             "needs_review": s.needs_review, "chars": max(0, s.end_offset - s.start_offset),
             "xbrl": (s.xbrl_check.split(":")[0] if s.xbrl_check else ""),
             "topic": (s.topic_check.split(":")[0] if s.topic_check else ""),
@@ -213,7 +215,8 @@ def _item_text(state: dict, code: str) -> dict:
     full_chars = len(body)
     text, truncated = _slice_body(body, full_chars)
     return {"ok": True, "code": code, "title": seg.canonical_title, "status": seg.status,
-            "confidence": round(seg.confidence, 2), "provenance": seg.provenance,
+            "confidence": round(seg.confidence, 2), "risk_band": band_payload(seg.confidence),
+            "provenance": seg.provenance,
             "needs_review": seg.needs_review, "sha256": seg.text_sha256[:16],
             "offsets": [seg.start_offset, seg.end_offset],
             "full_chars": full_chars, "truncated": truncated,

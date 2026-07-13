@@ -16,7 +16,7 @@
 ### 1.2 Self-verification without ground truth(無標註自我驗證)
 | 巨人 | 對方做法 | 本 repo 現況 | 評等 |
 |---|---|---|---|
-| edgartools | 54-filing fixture corpus CI 重測;flag 後照常回傳、caller 不看 warning | partition invariants(coverage.py)、7 值 typed ItemStatus、needs_review 一級欄位、3-engine triangulation(240 agree / 12 disagree)、8 組 named confidence components | 優 |
+| edgartools | 54-filing fixture corpus CI 重測;flag 後照常回傳、caller 不看 warning | partition invariants(coverage.py)、7 值 typed ItemStatus、needs_review 一級欄位、3-engine 2-of-N triangulation(249 agree / 4 disagree)、8 組 named confidence components | 優 |
 | sec-parser | per-element ProcessingLog 審計鏈 | BoundaryEvidence + ConfidenceComponent + toc_reasons 機器可讀;缺純分數落選候選 disposition(P1-7) | 平偏優 |
 | sec-api.io | 'processing' 空字串反模式(issue #34:partial text + HTTP 200) | typed absent/failed 區分是 design center(scoring.py tri-state、IBR typed status) | 優 |
 | NTU itemseg | 3,737 份人工標註 benchmark(無公開 leaderboard,§4 小節) | 自家 gold 僅 5 份 self-frozen(F1 1.0 無誤差訊號可校準)→ P0-2/P0-3 | 劣(P0) |
@@ -24,13 +24,13 @@
 | 巨人 | 對方做法 | 本 repo 現況 | 評等 |
 |---|---|---|---|
 | edgar-crawler | issue #35 combined items 兩邊皆空、#37 'Item No. 1' 未修 | 'Items 1 and 2' 顯式 combined 端到端建模(覆蓋 #35 案例);缺 singular-header 隱含合併推斷(P0-9)、'Item No. 1'/roman(P1-1) | 優(2 缺口在 backlog) |
-| edgartools | items 10-16 rescue path bug(_ITEM_TITLE_PATTERNS 止於 9C;**pinned @ 5.42.0**,升版需重驗)、terminal EOF-runoff | SIGNATURES body-scan 終界 + detect_appended_section_cut(XOM 311,785→33 字);12 disagree 中 8 個是 item 16 → P0-5 down-weight | 優 |
+| edgartools | items 10-16 rescue path bug(_ITEM_TITLE_PATTERNS 止於 9C;**pinned @ 5.42.0**,升版需重驗)、terminal EOF-runoff | SIGNATURES body-scan 終界 + detect_appended_section_cut(XOM 311,785→33 字);2-of-N 下 edgartools item 16 票 5/11 filings 遭 outvote(另 item 11 ×1),殘餘 disagree 4 → P0-5 down-weight | 優 |
 | sec-api.io | 自承 STRATS/CorTS trust(MD&A 合法缺席)為難例 | 語彙支援 9C/16/1C;corpus 無 trust 10-K、無 legitimately-absent 測試(P0-6) | 平(P0 fixture) |
 | NTU 論文 | 錯標 heading(9A 標成 14)、<100 行 stub、7A 巢狀於 7 | landmine L1-L10 + 15 tests;上述三類無 fixture(P0-6) | 平(P0 fixture) |
 ### 1.4 Cost discipline(成本紀律)
 | 巨人 | 對方做法 | 本 repo 現況 | 評等 |
 |---|---|---|---|
-| doc2dict/datamule 路線 | deterministic style-aware parser first、LLM 僅 invariant failure | 同構且已文件化;LLM tier 未 wired/量測($/filing 是估計)→ P0-12 | 平(P0-12 補量測) |
+| doc2dict/datamule 路線 | deterministic style-aware parser first、LLM 僅 invariant failure | 同構且已文件化;LLM adjudicator 已 wired(pipeline.py:330,`SEC_LLM_ADJUDICATE=1` opt-in、預設 off、evidence-only),$/裁決與 per-filing 成本欄已實測(P0-12) | 平(P0-12 已補量測) |
 | sec-api.io | $49-599/mo 商業 API | 全免費;其 free tier(100 lifetime calls)可當外部仲裁票(P0-7b) | 優 |
 | EDGAR-CORPUS | 一次性離線 corpus,零邊際成本 | join 當 weak-label 額外一票,批次成本近零(P0-1) | 平 |
 ### 1.5 第二波巨人(2026-07-10 調研,誠實判定)
@@ -50,14 +50,14 @@
 | P0-2 | NTU itemseg 外部 benchmark(3,737 份標註 10-K,arXiv 2502.08875)+ 交付物 A(head-to-head per-item F1 對照表)+ 交付物 B(verifier false-pass rate on external benchmark) | 已落地:tools/fetch_ntu_itemseg.py、tools/head_to_head.py;無公開 leaderboard(§4 NTU 小節);30-slice 數字見終判各節與 docs/eval_report.md |
 | P0-3 | Verifier calibration curve:per-item confidence vs 正確性 AUROC/ECE/risk-coverage;human-labeled subset 為主曲線、pseudo-gold 僅輔助;顯式標 verifier false-pass rate | 已落地:tools/calibrate_sec_confidence.py + data/sec_eval/calibration/calibration.json;gate 進度見 Gate rerun 各節 |
 | P0-4 | Runtime verifier mutation harness:注入截斷/錯位/TOC-anchored/wrapper-swallow + 開放類 mutation;硬門檻 per-mutation-class detection recall ≥0.95、clean false-alarm ≤0.05 | 已落地:tests/test_verifier_mutations.py;recall 六類全 1.0、clean false-alarm ≤0.0056 |
-| P0-5 | Triangulation engine-blind-class down-weighting:item 10-16 disagree 輸出 engine_suspect 而非扣分(12 disagree 中 8 個實為 edgartools 5.42.0 rescue bug,FG-SEC-006 已歸因) | 開放;third_engine.py:98-158 / :181-193 |
+| P0-5 | Triangulation engine-blind-class down-weighting:item 10-16 disagree 輸出 engine_suspect 而非扣分(edgartools 5.42.0 rescue-bug 票於 2-of-N 遭 outvote:item 16 ×5 filings + item 11 ×1,FG-SEC-006 已歸因;triangulation.json 現行 249 agree / 4 disagree、engine_suspect 0) | 開放;third_engine.py:98-158 / :181-193 |
 | P0-6 | Adversarial fixture suite L11+:trust 10-K(MD&A 合法缺席期望)、'Item No. 1'、錯標 heading(至少 needs_review)、<100 行 stub、7A-in-7 | 開放;tests/test_landmines.py + data/sec_eval/fixtures/ |
-| P0-7 | 第四/五仲裁票 + 2-of-N 投票:(a) vendor edgar-crawler regex core;(b) sec-api.io free-tier 仲裁協定(100 lifetime calls,回應立即 cache);(c) datamule(`122fc54`)第五票;明確排除 SRAF(§1.5) | 部分落地:edgar_crawler/datamule 已為 head-to-head 參賽 engine;triangulation 2-of-N 開放 |
+| P0-7 | 第四/五仲裁票 + 2-of-N 投票:(a) vendor edgar-crawler regex core;(b) sec-api.io free-tier 仲裁協定(100 lifetime calls,回應立即 cache);(c) datamule(`122fc54`)第五票;明確排除 SRAF(§1.5) | 部分落地:edgar_crawler/datamule 已為 head-to-head 參賽 engine;triangulation 2-of-N 已落地(tools/triangulate.py → data/sec_eval/triangulation/triangulation.json:11 filings × 3 engines,249 agree / 4 disagree) |
 | P0-8 | CI golden-drift harness + typed known-bad manifest:raw HTML 凍結 fixtures、FG-SEC-001..009 machine-readable、pytest 對凍結 gold 重測 | 部分落地:data/sec_eval/fixtures/manifest.json |
 | P0-9 | Combined-item 推斷 fallback:singular header 含缺項 canonical title → 標 combined 而非靜默 missing | 部分落地(status partial,見 tests/test_overshoot_guard.py);boundary.py resolve_items |
 | P0-10 | Wrapper body reassembly(JPM/XOM class)+ cross_ref.py stale docstring 修正 | ✅ 2026-07-11 收尾:CYD 11 agree / 0 disagree(見「Wrapper section-anchor 收尾」節) |
 | P0-11 | Per-(form,item) 經驗 size band 硬性 guardrail + SRAF sum-of-items 全檔上界不變式(SRAF 為 whole-filing 粒度,不能供 per-item band) | 部分落地:sec_core/size_bands.py(見 §外部量測 rerun);SRAF 不變式開放 |
-| P0-12 | Cost discipline 落地量測:LLM adjudicator wire 一次 + 實測 $/裁決 + per-filing 成本欄(sweep_metrics.py 現只聚合 latency_ms;cost_latency_report.md:42 自承估計無量測) | 開放(自 P2-6 升級,§5.2) |
+| P0-12 | Cost discipline 落地量測:LLM adjudicator wire 一次 + 實測 $/裁決 + per-filing 成本欄 | 已落地(自 P2-6 升級,§5.2):packages/sec_core/pipeline.py:330 於 extract_from_html wire `adjudicate_ambiguous`,`SEC_LLM_ADJUDICATE=1` opt-in、預設 off、evidence-only(span/offsets 不動,決策僅記 BoundaryEvidence + needs_review;schema + verbatim evidence-quote 雙閘);守門 tests/test_adjudicator_wiring.py;$/裁決實測 mean $0.0058(cost_latency_report.md「LLM 成本」節)、sweep_metrics.py 聚合 per-filing llm calls/usd 欄 |
 ### 2.1 P0-1 附屬規格:form-type→item-schema 對映(2026-07-10 實測 EDGAR full-index 1993–2009 + 真實樣本 filings 驗證)
 **EDGAR-CORPUS 實際組成(決定性證據)**:建置 config(edgar-crawler commit [`058a121a41`](https://raw.githubusercontent.com/nlpaueb/edgar-crawler/058a121a41/config.json))`filing_types = ["10-K","10-K405","10-KT"]`,下載端精確匹配(`edgar_crawler.py` @`5823367ae1` L45/L295)→ corpus = 10-K ∪ 10-K405 ∪ 10-KT,**永遠不含 KSB 家族與任何 /A**(1997 算術驗證吻合:corpus 10,106 ≈ 6,698+3,201+18)。
 
@@ -96,11 +96,11 @@
 ### 3.1 Format-variance robustness
 對照基準:sec-parser 的 style-fingerprint heading 偵測 + edgartools 的 multi-strategy fallback。本 repo:streaming char-flag normalizer 使 mid-word `<span>` 拆字 by construction 不存在(架構論證;直接測試佐證尚缺,與 P1-10 同綁,fixture 落地前此句不得單獨外引);4-detector body-scan 主路徑;Intel/Citi/GE cross-reference-index typed 修復 + 真實 accession fixture(Citi Item 7 / GE Item 1 為 sec-api 官方文件自承 failure)。缺口:P1-1/P1-2/P1-3;P0-10 已收尾。
 ### 3.2 Self-verification without ground truth
-對照基準:edgartools 54-fixture CI 重測(但 flag 後照常回傳、caller 不看 warning)。本 repo:multi-oracle triangulation(240 agree / 12 disagree 全路由 needs_review)、capture-first coverage(每 char 屬於恰一 block,「先全抓再分類」)、offset+sha256 source-exact span(LLM 永不生成 filing 文字,AdjudicatorDecision 無 evidence quote 即拒絕)、7 值 typed status(absent≠failed,對照 sec-api issue #34)、honest failure gallery(FG-SEC-001..009)。配套:P0-3 calibration、P0-4 mutation harness、P0-5/P0-7/P0-11——在逐項驗證過的十個公開實作/資料源中,無一同時校準並 mutation-test 驗證器本身(範圍限定於已驗證清單)。
+對照基準:edgartools 54-fixture CI 重測(但 flag 後照常回傳、caller 不看 warning)。本 repo:multi-oracle triangulation(2-of-N,249 agree / 4 disagree 全路由 needs_review)、capture-first coverage(每 char 屬於恰一 block,「先全抓再分類」)、offset+sha256 source-exact span(LLM 永不生成 filing 文字,AdjudicatorDecision 無 evidence quote 即拒絕)、7 值 typed status(absent≠failed,對照 sec-api issue #34)、honest failure gallery(FG-SEC-001..009)。配套:P0-3 calibration、P0-4 mutation harness、P0-5/P0-7/P0-11——在逐項驗證過的十個公開實作/資料源中,無一同時校準並 mutation-test 驗證器本身(範圍限定於已驗證清單)。
 ### 3.3 Edge cases
 對照基準:sec-api 自承難例清單 + NTU 論文錯誤分類法(知道坑在哪,多數沒修)。本 repo:landmine L1-L10 + 15 tests;combined 'Items 1 and 2' 端到端建模(覆蓋 edgar-crawler #35);IBR typed status + Item 8 stub 指路;SIGNATURES body-scan + appended-section cut(XOM Item 16 從 311,785 字修到 33 字);TOC 5-signal 加權拒絕。缺口:P0-6、P0-9、P1-10。
 ### 3.4 Cost discipline
-對照基準:doc2dict 路線的 deterministic-first 分層。本 repo:主管線 deterministic $0,LLM adjudicator schema-gated 且從未需要啟動(誠實記於 cost_latency_report.md);eval 用 era×agent 分層抽樣。缺口:P0-12(實測 $/裁決 + per-filing 成本欄)、P0-7b(sec-api 免費仲裁票)、P0-1(corpus join 近零邊際成本)。
+對照基準:doc2dict 路線的 deterministic-first 分層。本 repo:主管線 deterministic $0;LLM adjudicator 已 wired 且 opt-in(pipeline.py:330 `adjudicate_ambiguous`,`SEC_LLM_ADJUDICATE=1`、預設 off)、schema-gated 且 evidence-only(span 不動;tests/test_adjudicator_wiring.py),$/裁決與 per-filing 成本欄已實測入帳(cost_latency_report.md「LLM 成本」節、sweep_metrics.py);eval 用 era×agent 分層抽樣。缺口:P0-7b(sec-api 免費仲裁票)、P0-1(corpus join 近零邊際成本)。
 
 ## 4. 引用來源與使用限制
 | 來源 | 用途 | 限制 / attribution |

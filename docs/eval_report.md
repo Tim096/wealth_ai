@@ -94,15 +94,15 @@ Item 8 對照 SEC companyfacts 的營收/淨利/總資產(非 LLM,免費、可�
 
 #### 三引擎 triangulation(T2-1)
 
-edgartools 5.42.0 作第三獨立引擎,對「同一份 raw HTML」離線解析,與我方 span 以 alphanumeric 正規化 + 8-word shingle containment 比對。11 家 253 items:
+外部引擎(edgartools 5.42.0 / edgar_crawler / datamule)對「同一份 raw HTML」離線解析,與我方 span 以 alphanumeric 正規化 + 8-word shingle containment 比對,2-of-N 投票(P0-7):任一引擎 corroborate 即 agree,只有無 corroboration 的 disagree 才扣分。11 家 253 items(artifact `verdict_totals`):
 
 | verdict | 數量 | 說明 |
 |---|---|---|
-| agree | 240 | **94.9%** |
-| disagree | 12 | 4.7%;全數逐條人工驗證為真歧異,扣 confidence + needs_review(例 JPM item 7 → 0.515)|
-| engine_unavailable | 1 | JPM 1C(引擎缺項不算我方失敗)|
+| agree | 249 | **98.4%** |
+| disagree | 4 | 1.6%;扣 confidence + needs_review(4/4 needs_review,conf_after 0.58–0.909)|
+| engine_unavailable | 0 | 2-of-N 下引擎缺項只作廢該引擎的票(如 JPM 1C 的 edgartools/datamule 缺項),不再單獨成類 |
 
-12 個 disagree 的兩大 class:edgartools 端 section misattribution(NEM/NVDA/WMT item 16 → FG-SEC-006)與 wrapper 10-K 邊界定義歧異(JPM/XOM items 7/8 → FG-SEC-007)。三角驗證無仲裁者:即使證據指向錯在對方,也一律 needs_review,不單方判自己贏。
+4 個 disagree 全為 wrapper 10-K 邊界/還原定義歧異(JPM 1C/7A、XOM 7A/16 → FG-SEC-007);原 FG-SEC-006 class(單引擎 section misattribution,如 NVDA/WMT item 16)在 2-of-N 下被其他引擎 corroborate 而 outvote,逐筆留在 artifact `outvoted` 欄位。三角驗證無仲裁者:即使證據指向錯在對方,也一律 needs_review,不單方判自己贏。
 
 - 重跑:`SEC_EDGAR_USER_AGENT=<contact> .venv/Scripts/python tools/triangulate.py`(cache-first,重跑離線)
 - Artifact:`data/sec_eval/triangulation/triangulation.json`
@@ -111,7 +111,7 @@ edgartools 5.42.0 作第三獨立引擎,對「同一份 raw HTML」離線解析,
 
 record 現在 emit `start_offset`/`end_offset`/`text_sha256`/`toc_listed`。5 家(80 個 offset-gold items)macro-F1 over items = **1.0**、over filings = **1.0**;confusion:matched 82 / correct_null 33 / omission 0 / hallucination 0 / false_missing_alarm 0。
 
-**誠實標明:F1=1.0 是建構性結果**——gold 由 pipeline 當前 offsets 半自動凍結(條件:pass/partial + needs_review=false + triangulation agree,協定寫死在 `tools/freeze_offset_gold.py`,凍結後人工 spot-check 7 個 span 頭尾),價值是 **regression baseline** 而非絕對正確率宣稱。敏感度已鎖成可重跑測試(`tests/test_scoring.py::test_sensitivity_injection_on_real_sweep3_aapl`):對真實 AAPL sweep3 record 注入 3 類 regression(1A 邊界截短 2 萬字、Item 3 pass→missing、Item 6 幻覺 pass)後 AAPL 單票 P/R/F1 = **0.9375/0.9191/0.9267**,omission/hallucination 各 1 全被抓到、boundary_moved 被 sha 區分。絕對正確率的獨立訊號是 triangulation(240/12)與 XBRL/CYD oracle。
+**誠實標明:F1=1.0 是建構性結果**——gold 由 pipeline 當前 offsets 半自動凍結(條件:pass/partial + needs_review=false + triangulation agree,協定寫死在 `tools/freeze_offset_gold.py`,凍結後人工 spot-check 7 個 span 頭尾),價值是 **regression baseline** 而非絕對正確率宣稱。敏感度已鎖成可重跑測試(`tests/test_scoring.py::test_sensitivity_injection_on_real_sweep3_aapl`):對真實 AAPL sweep3 record 注入 3 類 regression(1A 邊界截短 2 萬字、Item 3 pass→missing、Item 6 幻覺 pass)後 AAPL 單票 P/R/F1 = **0.9375/0.9191/0.9267**,omission/hallucination 各 1 全被抓到、boundary_moved 被 sha 區分。絕對正確率的獨立訊號是 triangulation(249/4)與 XBRL/CYD oracle。
 
 11 家 sweep3 tri-state:**present 178(70.4%)/ null 75(29.6%)/ MISSING 0**(GS/JPM 缺 Item 16 皆 optional 且 TOC 未列 → 正確映 null,分離 omission 與 hallucination)。
 
@@ -393,7 +393,7 @@ mock sites 仍是主軸(可控 UI 漂移,offline 可重現、零 flakiness)。�
 2. **20 題 held-out(凍結單跑)**:66.7%——反 overfitting 證據。
 3. **300 題官方全量(本節)**:無排除、雙口徑(runtime verifier + 官方 WebJudge 協定 advisory)——官方全量對標,**最終 rollup**。
 
-**Run 最終狀態**:300 官方任務 → **done 283 / harness error 17 / not_run 0**(error 全為環境:site_unreachable 17,含 anti_bot 4;非 agent 失敗)。wall 134 分鐘(含 ~25 分鐘中途停滯與重啟:第一次啟動在 282/300 時被 harness 背景任務機制 kill,console 無 traceback、非 eval 腳本 abort;以 Start-Process 完全脫離方式 resume(PID 36872)跑完剩餘 18 題並正常收尾,exit 0)。gateway 8791 全程正常。
+**Run 最終狀態**:300 官方任務 → **done 283 / harness error 17 / not_run 0**(error 全為環境:site_unreachable 17;非 agent 失敗)。另如實揭露:results.json 快照的 `env_errors.anti_bot = 4` 是 regex 誤分類——4 題 capability guard `refused` 的 verifier_reason 樣板字含「login/CAPTCHA」,被 `tools/run_external_eval.py` 的 anti_bot pattern 命中,實為誠實 refused 而非被牆擋。headline 一律用零排除分母(95/283,refused 留在分母),故此誤分類僅影響該快照 metrics 顯示欄(env_blocked 4、success_rate 0.341 = 95/279),不影響本節任何 headline 數字。wall 134 分鐘(含 ~25 分鐘中途停滯與重啟:第一次啟動在 282/300 時被 harness 背景任務機制 kill,console 無 traceback、非 eval 腳本 abort;以 Start-Process 完全脫離方式 resume(PID 36872)跑完剩餘 18 題並正常收尾,exit 0)。gateway 8791 全程正常。
 
 - **歷史 runtime landmark 口徑(不是 task success)**:done-283 = pass 95 / fail 158 / unknown 26 / refused 4 / env_blocked 0 → landmark hit **95/283 = 33.57%**;全分母 **95/300 = 31.67%**。多數 contract 由 task text heuristic 產生,包含只驗網站名或普通動詞的弱條件,因此這個數字只能診斷 runtime verifier 行為,**不可當作完成任務的成功率**。分層:easy 28/75 = 37.33%、medium 34/135 = 25.19%、hard 33/73 = 45.21%。artifact:`runs/browser_eval/m2w_full300_20260711/webjudge/webjudge_results.json → final_summary.verifier_axis_final`(逐 summary.json 重數;'refused' 獨立列出、留在分母)。未來 `tools/import_mind2web.py` 已停止把 heuristic landmarks 寫入 authoritative `success_conditions`,改由獨立 trajectory judge / human review。
 - **WebJudge outcome 口徑(本次唯一 task-level estimate,仍非官方可比成績)**:官方三段協定:key-point 抽取 → 逐截圖 1–5 評分(門檻 3)→ trajectory 判定。judged 283/283 done 全評完 → success 21 / failure 192 / abstain 70 → estimate = **21/283 = 7.42%**(abstain 留分母、不計成功;全分母 21/300 = 7.0%);abstain_rate 70/283 = 24.73%。分層 SR/abstain:easy 0.12/0.20、medium 0.0741/0.2222、hard 0.0274/0.3425。**誠實揭露**:63/70 abstain 是 judge 照抄 envelope 範例的字面字串 'success|failure'(prompt 模板 artifact,非真實不確定)→ abstain_rate 為受此膨脹的上界;7/70 為零證據軌跡。prompt 已修成單一 binary example,但舊 artifact 不重寫;需對 frozen trajectories 重判或做人審後才有新成績。已寫入 `final_summary.webjudge_axis_final.abstain_reasons`。

@@ -48,6 +48,8 @@ Item 8 對 companyfacts 交叉驗證:每家多 1 次 `companyfacts` fetch(cache 
 | 邊際現金成本(ChatGPT OAuth 訂閱)| $0 |
 | schema gate | 3/3 通過(decision=candidate_b 正確、evidence_quote 皆 verbatim)|
 
+**誠實註記(artifact 缺口):** 本量測(3-rep)的逐筆 per-call log 未保留為 tracked artifact,上表數字無法釘回原始 JSON;重生方式:`codex login` 後啟動 `.venv\Scripts\python tools\codex_gateway.py --port 8791`,另一 shell 設 `SEC_LLM_ADJUDICATE=1`、`OPENAI_BASE_URL=http://127.0.0.1:8791/v1`、`OPENAI_API_KEY=x`(任意非空值即可,codex backend 不驗 key),對 `tests/test_adjudicator_wiring.py` 的 `AMBIG_HTML` fixture 跑 `sec_core.pipeline.extract_from_html`(重複 3 次),每筆 tokens / cost_usd / latency_ms / schema_valid 落在 `ExtractionResult.llm_call_records`,dump 該欄即為 per-call log。
+
 舊估計「<$0.005/裁決」對照:codex 通道實測 $0.0058(harness 開銷墊高),直連 API 等效 ~$0.0015(低於估計)。**per-filing 成本欄已入帳**:`ExtractionResult` 帶 `llm_calls / llm_input_tokens / llm_output_tokens / llm_cost_usd / llm_call_records`(deterministic 路徑恆為 0,by construction);`tools/sweep_metrics.py` 聚合並輸出 per-filing `llm calls / llm usd` 欄(舊 records 無此欄=純確定性 run,計 0 是精確值非估計)。
 
 ### 擴充性

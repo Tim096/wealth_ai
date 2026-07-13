@@ -66,10 +66,10 @@ pipeline 產生的**確切字串值**(非概念):
 | 任務類型 | 行為 | verdict | 依據 |
 |---|---|---|---|
 | 有可機讀成功/禁止條件(搜尋、導航、下載、擷取)| preflight 導出條件 → verifier 對照 evidence | `pass` / `fail` | 主路徑 |
-| **開放式 / 不可驗證任務**(如「隨便逛逛看有什麼有趣的」、成功條件無法事先機讀)| **支援執行**、照錄完整 trace + screenshots,verifier 因無可機讀證據回 unknown + 明講交人工審 trace | **`unknown`**(絕不 vacuous pass、絕不 crash)| FG-BROWSER-006(commit f535c93);artifact `data/browser_eval/open_ended/open_ended_results.json`(3/3 honest_unknown,crashes 0)|
+| **開放式 / 不可驗證任務**(如「隨便逛逛看有什麼有趣的」、成功條件無法事先機讀)| **支援執行**、照錄完整 trace + screenshots;verdict 時若 planner 有 live LLM client(`run_agentic` 以同一 client 掛上 `open_ended_extractor`,無第二條 credential 路徑),走 evidence-grounded 開放式評分(`second_judge.score_open_ended`):引文必須逐字存在於 evidence,否則 demote 成 abstain → 誠實 unknown 交人工審 trace;離線/mock planner 不掛評分,直接 unknown | **`pass` / `fail`**(LLM 評分且引文 grounded)或 **`unknown`**(abstain / 離線);絕不 vacuous pass、絕不捏造 pass、絕不 crash | FG-BROWSER-006(commit f535c93);`packages/browser_agent/verifier.py` 零條件 gate;artifact `data/browser_eval/open_ended/open_ended_results.json`(離線路徑 3/3 honest_unknown,crashes 0)|
 | 責任邊界(登入/購買/正式表單/付費)| capability guard code-enforced 攔截 | `refused` | `packages/browser_agent/capability.py` |
 
-> 三態鐵律的落地:缺可機讀證據 → `unknown`(交人工),結構上不能升級成 pass。開放式任務「執行得了但無法自動判成功」是誠實 unknown,不是失敗、也不是不支援執行。
+> 三態鐵律的落地:缺 grounded 證據 → `unknown`(交人工),結構上不能升級成 pass。開放式任務的 LLM 評分只有逐字引文 ground 得住才給 pass/fail;ground 不了就 abstain 回 unknown——是誠實 unknown,不是失敗、也不是不支援執行,更不可能捏造 pass。
 
 ### Browser eval 軸(2026-07-10 擴充)
 

@@ -129,7 +129,7 @@ $env:SEC_EDGAR_USER_AGENT = "your-name your@email"
 # 2026-07-10 eval 升級波(全部離線 deterministic、零 LLM 成本;數字見 docs/eval_report.md)
 .venv\Scripts\python tools\calibrate_verifier.py        # 題目一:校準裁判本身(sens 1.0 / spec 1.0 + Rogan-Gladen 0.8,2026-07-10 修復後)
 .venv\Scripts\python tools\degradation_curve.py         # 題目一:三軸擾動 degradation curve(monotone 遞減 + checkpoint 失敗定位)
-.venv\Scripts\python tools\triangulate.py               # 題目二:edgartools 第三引擎三角驗證(240 agree / 12 disagree)
+.venv\Scripts\python tools\triangulate.py               # 題目二:外部引擎三角驗證(edgartools/edgar_crawler/datamule,2-of-N 投票;249 agree / 4 disagree)
 .venv\Scripts\python tools\certify_cyd.py               # 題目二:Item 1C 官方 CYD iXBRL span oracle(11 agree / 0 disagree,wrapper 1C 還原後)
 .venv\Scripts\python tools\score_offsets.py data\sec_eval\records\sweep3   # 題目二:char-offset F1 + tri-state
 .venv\Scripts\python tools\stratified_sample.py         # 題目二:format-era × filing-agent 分層抽樣

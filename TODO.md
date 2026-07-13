@@ -45,7 +45,7 @@
 | 區域 | 決策 | 理由與 gate |
 |---|---|---|
 | Task 1 planner | 使用 LLM | 自然語言分解與跨站 adaptation 確實需要；action 必須通過 capability screen，最終結果由獨立 verifier 決定。 |
-| Task 1 verifier | 不使用 LLM 作唯一裁判 | deterministic conditions、artifact checks 與 human-audited judge 並列；LLM judge 只能作離線 measurement，未校準前不得改 runtime verdict。 |
+| Task 1 verifier | 不使用 LLM 作唯一裁判 | 有機讀條件時 deterministic verifier 唯一裁決，LLM 不介入；零條件（開放式）任務在 verdict 時走 evidence-grounded LLM 評分（`second_judge.score_open_ended`，引文必須逐字存在於 evidence，ground 不了 → abstain → `unknown`，離線/無 key 維持 `unknown`，絕不捏造 pass）；LLM judge 對有條件任務仍只作離線 measurement，不改 runtime verdict。 |
 | Task 1 vision escalation | 條件式使用 LLM | 僅在 DOM/a11y repair 卡住時啟用；必須量化增益、額外 latency、tokens 與 cost/success。 |
 | Task 2 primary extraction | 不使用 LLM | 邊界、offset、hash、XBRL 與 filing metadata 可用 deterministic pipeline 重驗，成本與 reproducibility 更佳。 |
 | Task 2 review fallback | 實驗後再決定 | 只針對 `needs_review` strata 做 A/B；必須在 untouched human gold 上降低 false-pass，且輸出 source span。未同時改善 risk 與 coverage就不採用。 |

@@ -49,7 +49,7 @@ Core pipelines are **Python 3.12 in a repo-local `.venv`** (PM directive, 2026-0
 |---|---|
 | Lack of evidence never upgrades to success | `eval_core.combine_checks`: any unobserved condition → `unknown`, never `pass`; empty check list → `unknown` |
 | LLM cannot emit arbitrary browser code | `browser_core.BrowserAction` discriminated union rejects unknown action types at validation |
-| Open-ended tasks are honest, not illegal input | `BrowserTaskContract.success_conditions` allows an empty list (was min_length=1; relaxed in commit f535c93): empty success → forbidden checks still run, then verdict short-circuits to `unknown` (human review), structurally blocking both crash-on-honest-input and vacuous pass |
+| Open-ended tasks are honest, not illegal input | `BrowserTaskContract.success_conditions` allows an empty list (was min_length=1; relaxed in commit f535c93): empty success → forbidden checks still run (a violation still fails); when the planner has a live LLM client, the verdict then routes through evidence-grounded open-ended scoring (`verifier._score_open_ended` → `second_judge.score_open_ended`, armed in `run_agentic` with the planner's own client — no second credential path): a grounded yes/no becomes a real `pass`/`fail`, and any judgment whose quoted span is not verbatim in the evidence demotes to abstain → honest `unknown` (human review); offline/mock planners keep the unchanged `unknown`. Structurally blocks crash-on-honest-input, vacuous pass, and fabricated pass |
 | Repair is diagnosis-driven | `FAILURE_TAXONOMY` maps each failure type to a specific strategy; `silent_failure_risk` is explicitly non-repairable → `unknown` |
 | LLM never generates filing text | `ItemSegment` addresses text only by `start_offset`/`end_offset`/`text_sha256`; `AdjudicatorDecision` validator rejects confident decisions without an exact source quote |
 | Confidence is explainable | `ConfidenceBreakdown` is a sum of named, reasoned components — no free-floating score |
@@ -58,6 +58,8 @@ Core pipelines are **Python 3.12 in a repo-local `.venv`** (PM directive, 2026-0
 ## Execution-mode economics (Browser Agent)
 
 Script Mode (known site + known task, no LLM) → Agent Mode (unknown, LLM plans within the controlled action space) → Repair Mode (diagnosed failure, deterministic a11y-tree candidates verified in small steps). LLM spend is an escalation, not a default; vision (SoM screenshot) is a further stuck-only escalation (`AGENT_VISION` unset = auto).
+
+Per-mode honesty note — which repair rungs run where: the full diagnose → repair cascade (`agent._resolve_and_run`: `diagnose_failure` → per-failure-type strategy → hash rebind → a11y purpose scoring, counted in `TaskRun.repairs`) runs only in Script Mode `run()`. `run_agentic` — the deployed/eval Agent-Mode path — never enters that ladder: its recovery rungs are per-step overlay dismissal (`_dismiss_overlay`), replay-cache steps rebound by the same `rebind_by_hash` (`replay_cache.action_from_step`; a step that no longer resolves invalidates the cache entry), stagnation nudges, and vision escalation; any other failed action is handed back to the planner as history, and its `TaskRun.repairs` is always 0.
 
 ## SEC pipeline determinism
 

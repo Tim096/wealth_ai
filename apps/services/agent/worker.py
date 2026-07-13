@@ -64,6 +64,12 @@ DEMO_TASKS = [
      "desc": "登入 + 購買類任務由 capability guard 直接 REFUSED — 責任邊界由程式強制,非模型自律。",
      "task": "Log in to MockShop and buy the Widget Pro 3000",
      "url": "mock:v1", "success": []},
+    {"id": "demo-open-unknown", "icon": "❓", "title": "誠實 UNKNOWN / 開放式任務(mock-shop v1)",
+     "desc": "開放式、主觀任務,沒有可機器驗證的成功條件 — 這顆的重點是「結果不是 PASS」:agent 照跑並留完整 trace,verifier 走開放式閘門誠實判 UNKNOWN,絕不假裝成功。",
+     # allowed by the capability guard (not login/buy), but zero verifiable
+     # conditions → open-ended gate → honest unknown (never a vacuous pass)
+     "task": 'Explore MockShop, look at the "widget" listings and judge which product seems best',
+     "url": "mock:v1", "success": []},
 ]
 
 MAX_QUEUE = int(os.environ.get("AGENT_QUEUE_LIMIT", "10"))
@@ -108,6 +114,11 @@ def submit(task: str, url: str = "", success: list[str] | None = None,
         },
         "steps": [], "verifier": "", "confidence": None,
         "answer": "", "download": "", "trace": None,
+        # verdict-area telemetry (filled once the run completes; kept here so the
+        # task record has a stable schema even while queued/running). Numbers are
+        # copied straight from the TaskRun — deterministic demos stay at 0 / $0.
+        "observed_evidence": [], "missing_evidence": [],
+        "llm_cost_usd": 0.0, "llm_tokens": 0, "llm_calls": 0, "latency_ms": 0.0,
         "created": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
     try:
@@ -153,6 +164,8 @@ def get(task_id: str) -> dict | None:
     out["contract"] = dict(rec["contract"])
     out["contract"]["verification_conditions"] = list(
         rec["contract"]["verification_conditions"])
+    out["observed_evidence"] = list(rec["observed_evidence"])
+    out["missing_evidence"] = list(rec["missing_evidence"])
     out["queue_depth"] = queue_depth()
     return out
 
@@ -213,6 +226,28 @@ def _relativize(rec: dict, run_dict: dict, base: Path) -> dict:
     return run_dict
 
 
+class _CountingPlanner:
+    """Transparent proxy that counts LLM-backed planner decisions so the task
+    record can report a real call count next to the token/cost totals. A call
+    is only counted when the returned decision carries `.llm` — exactly the
+    decisions whose tokens land in TaskRun.llm_tokens — so calls and tokens stay
+    consistent. MockPlanner never sets `.llm`, so keyless demos report 0 calls.
+    All other attributes (client / available / plan_preflight) delegate through."""
+
+    def __init__(self, inner) -> None:
+        self._inner = inner
+        self.llm_calls = 0
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+    def next_action(self, *args, **kwargs):
+        decision = self._inner.next_action(*args, **kwargs)
+        if getattr(decision, "llm", None) is not None:
+            self.llm_calls += 1
+        return decision
+
+
 def _worker() -> None:
     from playwright.sync_api import sync_playwright
 
@@ -251,7 +286,8 @@ def _worker() -> None:
             ctx = None
             try:
                 use_llm = llm_ok and planner_mode != "mock"
-                planner = LLMPlanner(client) if use_llm else MockPlanner(_mock_query(task))
+                planner = _CountingPlanner(
+                    LLMPlanner(client) if use_llm else MockPlanner(_mock_query(task)))
                 start_url_source = ("preset" if planner_mode == "mock" and url
                                     else "user" if url else "pending")
                 conditions_source = ("preset" if planner_mode == "mock" and conds is not None
@@ -329,7 +365,11 @@ def _worker() -> None:
                     json.dumps(run_dict, ensure_ascii=False, indent=2), encoding="utf-8")
                 rec.update(status=run.status, confidence=run.confidence,
                            verifier=run.verifier.reason, answer=run.answer,
-                           trace=run_dict)
+                           trace=run_dict,
+                           observed_evidence=list(run.verifier.observed_evidence),
+                           missing_evidence=list(run.verifier.missing_evidence),
+                           llm_cost_usd=run.llm_cost_usd, llm_tokens=run.llm_tokens,
+                           llm_calls=planner.llm_calls, latency_ms=run.total_latency_ms)
             except Exception as e:  # noqa: BLE001 — a bad task must not kill the worker
                 rec.update(status="error", verifier=f"{type(e).__name__}: {e}")
                 base.mkdir(parents=True, exist_ok=True)

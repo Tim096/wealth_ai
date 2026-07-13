@@ -17,7 +17,7 @@ gateway is bypassed via `AGENT_LLM_MODE=direct`.
 | GET | `/api/health` | liveness + planner/queue info (never token-gated) |
 | POST | `/api/tasks` | `{"task": "...", "url"?: "", "success"?: ["text_visible:..."], "max_steps"?: 18}` → 202 `{task_id}`; 429 when the queue (10) is full |
 | GET | `/api/tasks` | recent tasks |
-| GET | `/api/tasks/{id}` | status (`queued/running/pass/fail/unknown/refused/error`), live steps, verifier reason, confidence, answer, full structured trace |
+| GET | `/api/tasks/{id}` | status (`queued/running/pass/fail/unknown/refused/error`), live steps, verifier reason, confidence, answer, verdict telemetry (`observed_evidence`, `missing_evidence`, `llm_cost_usd`, `llm_tokens`, `llm_calls`, `latency_ms`), full structured trace |
 | GET | `/api/tasks/{id}/artifacts` | list per-run files (shots / evidence / downloads / run.json) |
 | GET | `/api/tasks/{id}/artifacts/{path}` | fetch one artifact |
 
@@ -25,6 +25,13 @@ gateway is bypassed via `AGENT_LLM_MODE=direct`.
 `contract.frozen` is `true`, `start_url`, `verification_conditions`, and their
 `*_source` fields are the exact read-only inputs used by the verifier; the UI
 locks task inputs while that run is active.
+
+Once a run completes the record also carries verdict telemetry copied straight
+from the `TaskRun` (defaults `[]` / `0` while queued/running): `observed_evidence`
+and `missing_evidence` (verifier condition keys, drive the per-condition
+checklist), plus `llm_cost_usd`, `llm_tokens`, `llm_calls`, and `latency_ms` for
+the cost chip. Deterministic demos (`MockPlanner`) make no LLM calls, so those
+four stay `0` / `$0.0000` with only `latency_ms` non-zero.
 
 `url` accepts `mock:v1` / `mock:v2` / `mock:v3` for the bundled offline demo
 sites (`data/mock_sites`, served via `file://`). Blank `url`/`success` → the

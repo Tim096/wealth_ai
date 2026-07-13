@@ -7,14 +7,22 @@ runs through the normal /api/tasks pipeline with MockPlanner FORCED
 
 from __future__ import annotations
 
+import json
+import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SVC = ROOT / "apps" / "services" / "agent"
 sys.path.insert(0, str(SVC))
 
 import worker  # noqa: E402  (service module, path-injected)
+
+# verdict-area telemetry fields the task record / GET /api/tasks/{id} gained
+_TELEMETRY_FIELDS = ("observed_evidence", "missing_evidence",
+                     "llm_cost_usd", "llm_tokens", "llm_calls", "latency_ms")
 
 
 def test_demo_presets_resolve_to_bundled_mock_sites():
@@ -36,14 +44,33 @@ def test_demo_presets_resolve_to_bundled_mock_sites():
         assert d["title"] and d["desc"] and d["task"]
 
 
-def test_demo_covers_drift_injection_and_refusal():
+def test_demo_covers_drift_injection_refusal_and_open_ended():
     urls = {d["url"] for d in worker.DEMO_TASKS}
     assert "mock:v2" in urls          # UI-drift self-repair demo
     assert "mock:adv" in urls         # injection-defense demo
-    # refusal demo must trip the capability guard in code, keyless
     from browser_agent.capability import screen_task
-    refused = [d for d in worker.DEMO_TASKS if not d["success"]]
-    assert refused and all(not screen_task(d["task"]).allowed for d in refused)
+    # a zero-condition demo is EITHER a capability-guard refusal (login/buy) OR
+    # an honest-unknown open-ended task (allowed, but nothing machine-checkable);
+    # both are keyless. The two must not be conflated.
+    empty = [d for d in worker.DEMO_TASKS if not d["success"]]
+    refused = [d for d in empty if not screen_task(d["task"]).allowed]
+    open_ended = [d for d in empty if screen_task(d["task"]).allowed]
+    assert refused                    # capability-boundary refusal demo present
+    assert open_ended                 # honest-UNKNOWN open-ended demo present
+
+
+def test_open_ended_demo_is_honest_unknown_by_construction():
+    """Demo #5: allowed by the capability guard (so NOT a refusal), zero
+    verifiable conditions (so it routes through the open-ended gate → unknown).
+    The button copy makes the point that the verdict — not a PASS — is the win."""
+    from browser_agent.capability import screen_task
+    d = next((x for x in worker.DEMO_TASKS if x["id"] == "demo-open-unknown"), None)
+    assert d is not None, "demo-open-unknown preset missing"
+    assert d["success"] == []                       # zero conditions → open-ended
+    assert d["url"] in worker.MOCK_SITES            # deterministic mock site
+    assert screen_task(d["task"]).allowed           # NOT refused (unlike demo-refused)
+    assert "UNKNOWN" in d["title"]                  # verdict-forward button copy
+    assert "PASS" in d["desc"] or "不是" in d["desc"]
 
 
 def test_submit_demo_forces_mock_planner():
@@ -114,3 +141,99 @@ def test_demo_endpoints():
     if not h.get("llm_ok"):
         assert set(h["llm_env_required"]) == {
             "AGENT_LLM_MODE", "OPENAI_BASE_URL", "OPENAI_API_KEY", "OPENAI_MODEL"}
+
+
+def test_task_record_exposes_verdict_telemetry_fields():
+    """The task record carries the verdict-area fields from the moment it is
+    queued (stable schema), defaulting to empty / zero — deterministic demos
+    must report $0.0000 with 0 calls / 0 tokens, never an invented cost."""
+    rec = worker.submit("Find something", "https://example.com", ["text_visible:X"])
+    worker._JOBS.get_nowait()          # nothing runs it; just inspect the record
+    for f in _TELEMETRY_FIELDS:
+        assert f in rec, f
+    assert rec["observed_evidence"] == [] and rec["missing_evidence"] == []
+    assert rec["llm_cost_usd"] == 0.0 and rec["llm_tokens"] == 0
+    assert rec["llm_calls"] == 0 and rec["latency_ms"] == 0.0
+    # the public copy also carries them and copies the evidence lists (no leak)
+    pub = worker.get(rec["task_id"])
+    for f in _TELEMETRY_FIELDS:
+        assert f in pub, f
+    pub["observed_evidence"].append("client mutation")
+    assert worker.get(rec["task_id"])["observed_evidence"] == []
+
+
+def test_task_status_response_includes_cost_chip_fields():
+    """GET /api/tasks/{id} surfaces the cost-chip inputs; for a keyless demo
+    they are present and zero (the chip renders $0.0000 · 0 calls · 0 tok)."""
+    from fastapi.testclient import TestClient
+    import main
+    client = TestClient(main.app)     # no lifespan → no worker thread, job stays queued
+    tid = client.post("/api/demo/demo-open-unknown").json()["task_id"]
+    body = client.get(f"/api/tasks/{tid}").json()
+    for f in _TELEMETRY_FIELDS:
+        assert f in body, f
+    assert body["llm_cost_usd"] == 0.0 and body["llm_calls"] == 0 and body["llm_tokens"] == 0
+    worker._JOBS.get_nowait()          # drain what we queued
+
+
+def test_ui_renders_verdict_area_upgrade():
+    html = (SVC / "static" / "index.html").read_text(encoding="utf-8")
+    for anchor in ('id="aCostChip"', 'id="aChecklist"', 'id="aTriage"',
+                   "renderCostChip(s)", "renderChecklist(s)", "renderTriage(id,s)",
+                   "Per-condition checklist", "const DIAG=", "capability_refused"):
+        assert anchor in html, anchor
+
+
+# --- integration: drive the real worker for demo #5 in an isolated process ---
+_DEMO5_DRIVER = r"""
+import json, sys, time
+from pathlib import Path
+REPO = Path(r"__REPO__")
+sys.path.insert(0, str(REPO / "apps" / "services" / "agent"))
+sys.path.insert(0, str(REPO / "packages"))
+import worker
+worker.start()
+for _ in range(300):
+    if worker.INFO.get("ready"):
+        break
+    time.sleep(0.1)
+tid = worker.submit_demo("demo-open-unknown")["task_id"]
+for _ in range(600):
+    s = worker.get(tid)
+    if s["status"] not in ("queued", "running"):
+        break
+    time.sleep(0.1)
+s = worker.get(tid)
+print(json.dumps({
+    "status": s["status"], "observed": s["observed_evidence"], "missing": s["missing_evidence"],
+    "llm_cost_usd": s["llm_cost_usd"], "llm_tokens": s["llm_tokens"],
+    "llm_calls": s["llm_calls"], "latency_ms": s["latency_ms"],
+    "n_steps": len((s.get("trace") or {}).get("steps", [])),
+}))
+"""
+
+
+@pytest.mark.integration
+def test_demo5_open_ended_ends_unknown_end_to_end():
+    """Full worker path (Playwright + MockPlanner) for demo #5: it must reach an
+    honest `unknown` with a real trace, and the cost chip must be $0 / 0 calls /
+    0 tokens (deterministic) with a non-zero measured latency. Run in a
+    subprocess so the background worker thread never races the in-process tests
+    that hand-drain the queue."""
+    pytest.importorskip("playwright.sync_api")
+    if not (ROOT / "data" / "mock_sites" / "v1" / "index.html").exists():
+        pytest.skip("mock sites not present")
+    import os
+    env = {**os.environ, "AGENT_LLM_MODE": "mock"}   # force deterministic, no network probe
+    driver = _DEMO5_DRIVER.replace("__REPO__", str(ROOT))
+    proc = subprocess.run([sys.executable, "-c", driver],
+                          capture_output=True, text=True, timeout=240, env=env)
+    assert proc.returncode == 0, proc.stderr
+    data = json.loads(proc.stdout.strip().splitlines()[-1])
+    assert data["status"] == "unknown"               # honest UNKNOWN, never a fake pass
+    assert data["n_steps"] > 0                        # unknown still leaves a full trace
+    assert "open-ended" in " ".join(data["missing"])  # open-ended gate reason
+    # cost chip: deterministic demo → zero everywhere except measured latency
+    assert data["llm_cost_usd"] == 0.0
+    assert data["llm_tokens"] == 0 and data["llm_calls"] == 0
+    assert data["latency_ms"] > 0

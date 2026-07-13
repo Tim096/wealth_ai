@@ -76,6 +76,29 @@
   details{margin-top:.8rem} summary{cursor:pointer;color:var(--accent);font-size:.85rem}
   .row{display:flex;gap:.8rem;align-items:end;flex-wrap:wrap}
   .row>.grow{flex:1 1 220px}
+  /* ===== verdict-area upgrade — cost chip / per-condition checklist / triage (additive) ===== */
+  .costchip{display:inline-flex;gap:.45rem;align-items:center;margin-top:.6rem;
+    font-family:var(--mono);font-size:.72rem;color:var(--muted);
+    border:1px solid var(--line);border-radius:999px;padding:.2rem .7rem;background:var(--panel2)}
+  .costchip b{color:var(--accent);font-weight:600}
+  .checklist{margin-top:.7rem;padding:.65rem .75rem;border:1px solid var(--line);
+    border-radius:8px;background:var(--panel2);font-size:.82rem}
+  .checklist .title{font-weight:700;margin-bottom:.3rem}
+  .checklist .legend{color:var(--muted);font-size:.72rem;margin-bottom:.4rem}
+  .checklist ul{list-style:none;margin:0;padding:0}
+  .checklist li{display:flex;gap:.5rem;align-items:baseline;margin:.22rem 0;word-break:break-word}
+  .checklist .ic{font-family:var(--mono);width:1.1rem;flex:none;text-align:center;font-weight:700}
+  .ic-ok{color:var(--pass)} .ic-miss{color:var(--fail)} .ic-na{color:var(--grey)}
+  .triage{margin-top:.7rem;padding:.7rem .8rem;border:1px solid var(--warn);
+    border-radius:8px;background:var(--warn-bg);font-size:.82rem}
+  .triage.fail{border-color:var(--fail);background:var(--fail-bg)}
+  .triage .title{font-weight:700;margin-bottom:.35rem;color:var(--ink)}
+  .triage ul{margin:.3rem 0 0;padding-left:1.15rem}
+  .triage li{margin:.15rem 0;word-break:break-word}
+  .triage code{font-family:var(--mono);color:var(--warn)}
+  .triage.fail code{color:var(--fail)}
+  .triage .tshot{margin-top:.55rem}
+  .triage .tshot img{height:96px;border:1px solid var(--line);border-radius:6px;display:block}
   /* ===== demo section (示範任務) — owned by demo agent ===== */
   .banner{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn);
     border-radius:10px;padding:.6rem .9rem;font-size:.85rem;margin-bottom:1rem}
@@ -84,13 +107,38 @@
   .demo-head{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;
     text-transform:uppercase;color:var(--accent);margin-bottom:.6rem}
   .demo-btns{display:grid;gap:.6rem}
-  @media(min-width:900px){.demo-btns{grid-template-columns:repeat(4,1fr)}}
+  @media(min-width:900px){.demo-btns{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}}
   .demo-btn{text-align:left;background:var(--panel2);border:1px solid var(--line);
     color:var(--ink);border-radius:10px;padding:.6rem .75rem;cursor:pointer;font:inherit}
   .demo-btn:hover{border-color:var(--accent)}
   .demo-btn:disabled{opacity:.45;cursor:default}
   .demo-btn b{display:block;font-size:.85rem;margin-bottom:.15rem}
   .demo-btn span{font-size:.74rem;color:var(--muted);line-height:1.4;display:block}
+  /* ===== reviewer tour (5 分鐘審閱導覽) — static strip, collapsible + dismissible; owned by tour agent ===== */
+  .tour{border:1px solid var(--accent);border-radius:12px;background:var(--panel);
+    padding:.7rem .9rem;margin-bottom:1rem}
+  .tour[hidden]{display:none}
+  .tour-bar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+  .tour-title{font-family:var(--mono);font-size:.74rem;letter-spacing:.04em;color:var(--accent);font-weight:700}
+  .tour-title .tour-sub{font-family:var(--sans);letter-spacing:0;color:var(--muted);font-weight:400;margin-left:.5rem;font-size:.76rem}
+  .tour-actions{margin-left:auto;display:flex;gap:.4rem}
+  .tour-x{background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:999px;
+    font-family:var(--mono);font-size:.72rem;padding:.18rem .7rem;cursor:pointer}
+  .tour-x:hover{color:var(--ink);border-color:var(--accent)}
+  .tour-stations{display:grid;gap:.6rem;margin-top:.7rem}
+  @media(min-width:760px){.tour-stations{grid-template-columns:repeat(4,1fr)}}
+  .tour.collapsed .tour-stations{display:none}
+  .tour-station{text-align:left;background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+    border-radius:10px;padding:.55rem .7rem;cursor:pointer;font:inherit;display:flex;gap:.55rem;align-items:flex-start}
+  .tour-station:hover{border-color:var(--accent)}
+  .tour-n{flex:none;width:1.4rem;height:1.4rem;border-radius:50%;background:var(--accent);color:var(--accent-ink);
+    font-family:var(--mono);font-weight:700;font-size:.8rem;display:flex;align-items:center;justify-content:center;margin-top:.1rem}
+  .tour-body{display:flex;flex-direction:column;gap:.18rem;min-width:0}
+  .tour-step{font-size:.76rem;line-height:1.4;word-break:break-word}
+  .tour-step b{font-family:var(--mono);font-size:.64rem;color:var(--muted);letter-spacing:.04em;margin-right:.35rem}
+  .tour-proof{color:var(--pass);font-size:.74rem}
+  .tour-note{font-size:.68rem;color:var(--warn);line-height:1.35}
+  .tour-flash{outline:2px solid var(--accent)!important;outline-offset:2px;border-color:var(--accent)!important}
 </style>
 </head>
 <body>
@@ -117,6 +165,54 @@
     document.getElementById("navSec").href = WEALTH_LINKS.sec;
     document.getElementById("navDash").href = WEALTH_LINKS.dashboard;
   </script>
+
+  <!-- ===== reviewer tour (5 分鐘審閱導覽) BEGIN — owned by tour agent ===== -->
+  <section class="tour" id="reviewerTour" hidden>
+    <div class="tour-bar">
+      <div class="tour-title">🧭 5 分鐘審閱導覽 · Reviewer tour
+        <span class="tour-sub">四站,每站「按這顆 → 看這裡 → 這證明了什麼」;點站名會捲到並圈出目標,再按那顆跑真實任務(非預錄結果)。</span></div>
+      <div class="tour-actions">
+        <button class="tour-x" id="tourToggle" type="button">收合 ▾</button>
+        <button class="tour-x" id="tourDismiss" type="button" title="不再顯示 / dismiss">✕ 關閉</button>
+      </div>
+    </div>
+    <div class="tour-stations">
+      <button class="tour-station" type="button" data-target="#demo-v2-drift">
+        <span class="tour-n">1</span>
+        <span class="tour-body">
+          <span class="tour-step"><b>按這顆</b>🔧 自我修復 demo(v2 介面漂移)</span>
+          <span class="tour-step"><b>看這裡</b>下方「完整步驟軌跡」的 diagnosis → repair 欄</span>
+          <span class="tour-step tour-proof">✓ 自我維護是真的機制,不是話術 · self-maintenance is a real mechanism</span>
+          <span class="tour-note">單一 worker 佇列、依序執行 — 送出後請稍候它跑完再看軌跡,排隊不等於卡住。 · single worker, give it a moment</span>
+        </span>
+      </button>
+      <button class="tour-station" type="button" data-target="#demo-open-unknown">
+        <span class="tour-n">2</span>
+        <span class="tour-body">
+          <span class="tour-step"><b>按這顆</b>❓ 誠實 UNKNOWN demo(開放式任務)</span>
+          <span class="tour-step"><b>看這裡</b>Run 下方 verdict 判定區 — 結果是 UNKNOWN,不是 PASS</span>
+          <span class="tour-step tour-proof">✓ 三態(pass / fail / unknown)是結構性紀律 · three-state discipline is structural</span>
+        </span>
+      </button>
+      <button class="tour-station" type="button" data-target="#demo-refused">
+        <span class="tour-n">3</span>
+        <span class="tour-body">
+          <span class="tour-step"><b>按這顆</b>🚫 能力邊界 demo(登入 + 購買)</span>
+          <span class="tour-step"><b>看這裡</b>verdict 判定區顯示 REFUSED</span>
+          <span class="tour-step tour-proof">✓ 責任邊界由程式強制,非模型自律 · capability guard boundary</span>
+        </span>
+      </button>
+      <button class="tour-station" type="button" data-nav="sec" data-hash="tour=aapl">
+        <span class="tour-n">4</span>
+        <span class="tour-body">
+          <span class="tour-step"><b>按這顆</b>前往 Task 2 · 抽 AAPL 10-K</span>
+          <span class="tour-step"><b>看這裡</b>Item 8 那列的 XBRL 與 Risk band / 風險欄</span>
+          <span class="tour-step tour-proof">✓ offset / sha256 出處 + XBRL oracle + 實測 risk band · provenance you can re-derive</span>
+        </span>
+      </button>
+    </div>
+  </section>
+  <!-- ===== reviewer tour END ===== -->
 
   <!-- ===== demo section (示範任務) BEGIN — owned by demo agent ===== -->
   <div id="modeBanner" class="banner" style="display:none"></div>
@@ -154,6 +250,9 @@
         </div>
         <div class="contract" id="aContract" style="display:none"></div>
         <div class="verdict" id="aVerdict"></div>
+        <div class="costchip" id="aCostChip" style="display:none"></div>
+        <div class="checklist" id="aChecklist" style="display:none"></div>
+        <div class="triage" id="aTriage" style="display:none"></div>
         <div class="shots" id="aShots"></div>
         <details id="aTraceBox" style="display:none">
           <summary>Full trace / 完整步驟軌跡(mode / diagnosis / repair / selector / screenshot)</summary>
@@ -243,10 +342,73 @@ function renderTrace(id,trace){
     return `<a href="${u}" target="_blank" title="${esc(s.step)}"><img src="${u}" loading="lazy"></a>`;}).join('');
 }
 
+/* known diagnosis codes → plain-language zh-TW. Unknown codes fall back to the
+   raw code (never guessed). Sources: browser_core FAILURE_TAXONOMY +
+   agent-emitted codes (cache_divergence / capability_refused / silent_*). */
+const DIAG={
+  selector_not_found:'選擇器找不到對應元素(介面可能改版)— 改用語意 / 無障礙樹重新定位',
+  multiple_candidates:'選擇器命中多個元素(含誘餌鈕)— 需以用途消歧',
+  click_no_effect:'點擊成功但網址 / DOM 沒變化 — 疑似無效點擊',
+  modal_blocking:'彈窗 / cookie 橫幅攔截了互動 — 需先關閉',
+  wrong_page:'落在非預期頁面(網址不含預期片段)',
+  timeout:'操作逾時',
+  form_validation_error:'表單驗證錯誤',
+  empty_result:'結果容器存在但回報 0 筆',
+  download_missing:'預期的下載檔未出現',
+  silent_failure_risk:'證據不足以分類 — 拒絕在無證據下宣稱成功(沉默失敗防線)',
+  silent_failure_suspected:'疑似沉默失敗 — 動作看似成功但缺成立證據',
+  cache_divergence:'重播快取與當前頁面分歧 — 已放棄快取、改即時規畫',
+  capability_refused:'任務落在能力邊界外(登入 / 購買 / 送出個資等)— capability guard 依規拒絕',
+};
+const fmtLatency=ms=>(ms>=1000)?(ms/1000).toFixed(2)+'s':Math.round(ms||0)+'ms';
+function renderCostChip(s){
+  const c=$('#aCostChip');c.style.display='';
+  c.innerHTML='⏱ <b>'+esc(fmtLatency(s.latency_ms||0))+'</b> · <b>'+(s.llm_calls||0)+'</b> calls · <b>'
+    +(s.llm_tokens||0)+'</b> tok · <b>$'+Number(s.llm_cost_usd||0).toFixed(4)+'</b>';
+}
+function renderChecklist(s){
+  const conds=(s.contract&&s.contract.verification_conditions)||[];
+  const box=$('#aChecklist');
+  if(!conds.length){box.style.display='none';box.innerHTML='';return;}
+  const obs=new Set(s.observed_evidence||[]),miss=new Set(s.missing_evidence||[]);
+  box.style.display='';
+  box.innerHTML='<div class="title">🔎 逐條驗證 · Per-condition checklist</div>'
+    +'<div class="legend">✓ 已觀察 · ✗ 未觀察到(證據不足)· – 未列入判定</div>'
+    +'<ul>'+conds.map(c=>{
+      let ic='–',cls='ic-na';
+      if(obs.has(c)){ic='✓';cls='ic-ok';}
+      else if(miss.has(c)){ic='✗';cls='ic-miss';}
+      const forb=c.indexOf('forbidden:')===0;
+      return '<li><span class="ic '+cls+'">'+ic+'</span><span class="mono">'+esc(c)+'</span>'
+        +(forb?' <span class="sub">(禁止項)</span>':'')+'</li>';
+    }).join('')+'</ul>';
+}
+function renderTriage(id,s){
+  const box=$('#aTriage');
+  if(!['unknown','fail','refused','error'].includes(s.status)){box.style.display='none';box.innerHTML='';return;}
+  box.style.display='';box.className='triage'+(s.status==='fail'?' fail':'');
+  const steps=(s.trace&&s.trace.steps)||[];
+  const codes=[...new Set(steps.map(x=>x.diagnosis).filter(Boolean))];
+  const miss=s.missing_evidence||[];
+  let html='<div class="title">🩺 診斷 / triage — 為何不是 PASS</div>';
+  if(codes.length)
+    html+='<ul>'+codes.map(c=>'<li><code>'+esc(c)+'</code> — '+esc(DIAG[c]||c)+'</li>').join('')+'</ul>';
+  if(miss.length)
+    html+='<ul>'+miss.map(m=>'<li>'+esc(m)+'</li>').join('')+'</ul>';
+  if(!codes.length&&!miss.length)
+    html+='<div class="sub">'+esc(s.verifier||'無額外診斷')+'</div>';
+  const shot=steps.filter(x=>x.screenshot).slice(-1)[0];
+  if(shot){const u=withTok('/api/tasks/'+id+'/artifacts/'+shot.screenshot);
+    html+='<div class="tshot"><a href="'+u+'" target="_blank" title="最後畫面 · last screenshot">'
+      +'<img src="'+u+'" loading="lazy"></a><div class="sub">最後畫面 · last screenshot</div></div>';}
+  box.innerHTML=html;
+}
+
 function resetRun(label){
   if(pollTimer)clearInterval(pollTimer);
   $('#aRun').disabled=true;lockInputs(true);$('#aFeed').innerHTML='';$('#aShots').innerHTML='';
   $('#aTraceBox').style.display='none';
+  ['#aCostChip','#aChecklist','#aTriage'].forEach(x=>{$(x).style.display='none';$(x).innerHTML='';});
   $('#aVerdict').innerHTML='<span class="spin"></span>';
   renderContract(null);
   feed('sys','你 › '+label);
@@ -269,6 +431,7 @@ function watch(id){
         +(s.answer?`<div style="margin-top:.3rem;white-space:pre-wrap;word-break:break-word">📋 擷取內容:${esc(s.answer.slice(0,1200))}${s.answer.length>1200?'…':''}</div>`:'')
         +(s.download?`<div class="mono" style="margin-top:.3rem">📁 <a href="${withTok('/api/tasks/'+id+'/artifacts/'+s.download)}" target="_blank">${esc(s.download)}</a></div>`:'');
       feed(ok?'ok':'bad','Result / 結果:'+s.status.toUpperCase()+' — '+(s.verifier||''));
+      renderCostChip(s);renderChecklist(s);renderTriage(id,s);
       renderTrace(id,s.trace);
     }
   },800);
@@ -315,12 +478,52 @@ fetch('/api/demo').then(r=>r.json()).then(d=>{
   $('#demoPanel').style.display='';
   const box=$('#demoBtns');
   ts.forEach(t=>{
-    const b=document.createElement('button');b.className='demo-btn';
+    const b=document.createElement('button');b.className='demo-btn';b.id=t.id;
     b.innerHTML=`<b>${esc(t.icon||'▶')} ${esc(t.title)}</b><span>${esc(t.desc)}</span>`;
     b.onclick=()=>runDemo(t);
     box.appendChild(b);
   });
 }).catch(()=>{});
+
+/* ===== reviewer tour (5 分鐘審閱導覽) JS — owned by tour agent ===== */
+(function(){
+  const LS='wealth_tour', sec=document.getElementById('reviewerTour');
+  if(!sec)return;
+  const state=localStorage.getItem(LS);
+  if(state==='dismissed')return;                 // gone for repeat visitors
+  sec.hidden=false;
+  if(state==='collapsed')sec.classList.add('collapsed');
+  const toggle=document.getElementById('tourToggle');
+  const syncToggle=()=>{toggle.textContent=sec.classList.contains('collapsed')?'展開 ▸':'收合 ▾';};
+  syncToggle();
+  toggle.onclick=()=>{
+    sec.classList.toggle('collapsed');
+    localStorage.setItem(LS,sec.classList.contains('collapsed')?'collapsed':'open');
+    syncToggle();
+  };
+  document.getElementById('tourDismiss').onclick=()=>{localStorage.setItem(LS,'dismissed');sec.hidden=true;};
+  const flash=(selector,tries)=>{                // demo buttons load async → retry briefly
+    const el=document.querySelector(selector);
+    if(!el){if((tries||0)<30)setTimeout(()=>flash(selector,(tries||0)+1),100);return;}
+    el.scrollIntoView({block:'center',behavior:'smooth'});
+    el.classList.add('tour-flash');
+    setTimeout(()=>el.classList.remove('tour-flash'),1900);
+  };
+  const MAP={'demo-v2-drift':'#demo-v2-drift','demo-open-unknown':'#demo-open-unknown','demo-refused':'#demo-refused'};
+  sec.querySelectorAll('.tour-station').forEach(btn=>{
+    btn.onclick=()=>{
+      const t=btn.getAttribute('data-target');
+      if(t){flash(t,0);return;}
+      const nav=btn.getAttribute('data-nav');
+      if(nav&&window.WEALTH_LINKS&&WEALTH_LINKS[nav]){
+        const hash=btn.getAttribute('data-hash');
+        window.location.href=WEALTH_LINKS[nav]+(hash?'#'+hash:'');
+      }
+    };
+  });
+  const m=(location.hash||'').match(/tour=([\w-]+)/);   // arrival from the sibling service
+  if(m&&MAP[m[1]])flash(MAP[m[1]],0);
+})();
 </script>
 </body>
 </html>

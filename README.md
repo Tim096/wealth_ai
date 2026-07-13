@@ -82,6 +82,7 @@ Full evidence, metrics, and failure traces: [evaluation report](docs/eval_report
 4. Read [prompts/README.md](prompts/README.md) for the key AI decisions and
    rejected approaches. The full manual Task 1 acceptance script is
    [docs/manual_test_browser.md](docs/manual_test_browser.md).
+5. 確認「裁判本身可不可信」:[docs/verifier_trust_card.md](docs/verifier_trust_card.md)(由 `tools/verifier_trust_card.py` 從 artifact 生成的計分卡,含 AUROC MISS 的誠實揭露)。
 
 Known limitations and planned experiments: [TODO.md](TODO.md).
 

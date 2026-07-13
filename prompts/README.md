@@ -23,6 +23,7 @@
 |---|---|
 | `2026-07-10-spec-ingestion-and-foundation.md` | SPEC 導入後第一階段建什麼、用什麼 stack 的奠基決策 |
 | `2026-07-10-commit-granularity-directive.md` | PM 指令:每次錯誤/嘗試/階段都獨立 commit,history 反映真實開發過程 |
+| `2026-07-13-submission-doc-cleanup.md` | 交件前 curation:transcripts 整併、giants 濃縮、TODO 去自評分數、40 個失效 hash 校正——刪減全留痕 |
 
 ### browser_agent/
 

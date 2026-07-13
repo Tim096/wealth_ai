@@ -12,7 +12,7 @@ Metric (line-level per-item F1, shape comparable to tools/score_offsets.py):
   item not found, fp = other-item / outside lines found in it. This adapter is
   engine-agnostic and normalization-robust, but is a LOWER BOUND: NTU lines
   come from inscriptis rendering, engines render HTML differently (documented
-  in docs/research/external_benchmark_spike.md). The NTU paper's own numbers
+  in docs/research/giants_task2.md section 4). The NTU paper's own numbers
   are per-line BIO classification F1 — related but not identical; do not paste
   the two into one column without that caveat.
 

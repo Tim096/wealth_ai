@@ -2,7 +2,7 @@
 
 Offline only — no network, no dataset download; format facts (columns
 `label,Content`, BIO labels like B1A/I15) verified against the real archive
-(sha256 769bc7da...) on 2026-07-10, see docs/research/external_benchmark_spike.md.
+(sha256 769bc7da...) on 2026-07-10, see docs/research/giants_task2.md section 4.
 """
 
 from __future__ import annotations

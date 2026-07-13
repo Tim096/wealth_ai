@@ -28,6 +28,7 @@
 | 來源 | 授權 | 使用方式 | 落地位置 |
 |---|---|---|---|
 | [osunlp/Online-Mind2Web](https://huggingface.co/datasets/osunlp/Online-Mind2Web)(OSU-NLP-Group,COLM 2025,arXiv:2504.01382) | **CC-BY-4.0**(2026-07-10 驗證:HF dataset card `license:cc-by-4.0` + GitHub README "Licensing Information";HF gate = auto click-through,無 CC-BY 以外附加條款)→ tier 1 署名即可 | `tools/import_mind2web.py` 分層抽 ~20 題(easy/medium/hard,排除 login/paywall/CAPTCHA 站),**只 commit 任務文字+metadata 子集**,每筆帶 attribution 與 `source_task_id`;完整資料集、軌跡、截圖一律不 commit。無 HF_TOKEN 時 fallback 到 ungated CC-BY mirror(hud-evals/Online-Mind2Web,來源記入 `source.fetched_from`)。live 任務失效維護協議見 `data/browser_eval/external/README.md` | `data/browser_eval/external/mind2web_subset.json`;shortcut 對照 `tools/naive_baseline.py` |
+| [hsinmin/itemseg](https://github.com/hsinmin/itemseg)(NTU itemseg,arXiv:2502.08875)| repo README 明載 **CC BY-NC 4.0**;dataset 壓縮檔無 LICENSE、期刊版寫 "upon request" → 訊號矛盾取最嚴格解讀,**tier「unclear/research-only」** | Task 2 外部 benchmark 弱老師(一票,絕不當 gold):`tools/fetch_ntu_itemseg.py` fetch-on-demand(sha256 凍結 `769bc7da…`,重跑必驗)至 gitignored `data/raw_filings/external/ntu_itemseg/`;**不 vendor、不節錄 fixture**(逐行內容即標註資產本體);引用其論文。授權判定全文與 adapter 度量見 `docs/research/giants_task2.md` §4 | `tools/fetch_ntu_itemseg.py`、`tools/head_to_head.py`;artifact `data/sec_eval/scoring/head_to_head.json`(僅 verdict/計數,無原文)|
 
 ## WebJudge 官方自動評審(advisory 第二口徑)
 

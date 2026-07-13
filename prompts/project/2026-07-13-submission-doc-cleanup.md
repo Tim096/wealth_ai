@@ -18,7 +18,7 @@ PM 指令(節錄大意):把整份 repo 的 prompt 與文件驗證一輪——對
 
 1. **transcripts 整併(5→2)**:與重建紀錄重疊的 3 份摘錄,獨有內容併入對應紀錄後移除(對應表見 `prompts/transcripts/README.md`「整併紀錄」節);保留原始性最高的 verifier-paradox(哲學起點)與 heldout-freeze-protocol(凍結協議佐證)。原文全數留在 git history。
 2. **giants 研究筆記原地濃縮**(task1 480→263 行、task2 631→269 行):去跑分 log 敘事與自我優越語氣,保留全部量測表、backlog ID、引用義務與被外部引用的節錨點(凍結 artifacts 以節名引用,錨點是硬契約);`external_benchmark_spike.md` 的授權判定與 adapter 度量併入 giants_task2 §4 後刪除。
-3. **TODO 重定位**:自評分數(85/100、92+ 目標)全移除,改為 known-limitations/experiments roadmap;LLM 決策表與「不做」清單原樣保留。
+3. **TODO 重定位**:自評分數與目標分數全移除,改為 known-limitations/experiments roadmap;LLM 決策表與「不做」清單原樣保留。
 4. **計畫外修復**:(a) 40 個失效 commit hash 依 commit message 1:1 映射至校正後現行值(上游專案 pin、session id 不動;verbatim 摘錄凍結不改,README 揭露);(b) 補 NTU itemseg 的 ATTRIBUTION 列項;(c) transcripts README 移除部署密碼字面前綴,重跑脫敏複掃(0 hits)。
 
 ## Human / PM Decision

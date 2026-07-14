@@ -36,6 +36,15 @@
     "rule": "json_ratio_pair:summary.passed|summary.total"
   },
   {
+    "claim_id": "task1_deployment_build_attested",
+    "description": "Public health build SHA matched runner HEAD before the dedicated live smoke submitted tasks.",
+    "doc_locations": ["README.md", "docs/eval_report.md"],
+    "doc_evidence": ["deployment-attested **true**", "deployment-attested **true**"],
+    "expected": true,
+    "artifact": "data/browser_eval/live_attested_smoke/results.json",
+    "rule": "json_field:deployment_attested"
+  },
+  {
     "claim_id": "task1_300run_verifier_landmark",
     "description": "Browser 300-run official full set: runtime verifier landmark-hit axis = pass 95 of done 283 (diagnostic axis, NOT task success rate).",
     "doc_locations": ["docs/eval_report.md"],

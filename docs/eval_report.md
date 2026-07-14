@@ -415,6 +415,13 @@ Agent Mode failure analysis 暴露一個通用 feedback 缺口：planner history
 - 重現：`.venv\Scripts\python tools\live_information_retrieval_eval.py --tasks data/browser_eval/live_mixed_interaction/tasks.json --output data/browser_eval/live_mixed_interaction/results.json`
 - Artifacts：`data/browser_eval/live_mixed_interaction/tasks.json`、`data/browser_eval/live_mixed_interaction/results.json`
 
+### Deployed source attestation（2026-07-14）
+
+`wealth-agent /api/health` 公開回傳 `build_sha`；`tools/live_information_retrieval_eval.py --require-build-sha` 在任何 task submission 前強制它與 runner 的 `git rev-parse HEAD` 完全相同，不相等立即 exit non-zero。deployment `6a55e10b3c393b66819c9e67` 的 health 與 runner 均為 `d062c0ed9d2091be0d3589bbbde3a33f6a696494`，專用兩題 smoke artifact 記錄 deployment-attested **true**、pass `2/2`、taskset bytes SHA 一致。這個 smoke 只證明 deployed source provenance 與基本 live chain，不當作泛化成績。
+
+- 重現：`.venv\Scripts\python tools\live_information_retrieval_eval.py --tasks data/browser_eval/live_attested_smoke/tasks.json --output data/browser_eval/live_attested_smoke/results.json --require-build-sha`
+- Artifacts：`data/browser_eval/live_attested_smoke/tasks.json`、`data/browser_eval/live_attested_smoke/results.json`
+
 ### Browser 300 題官方全量(2026-07-11,無排除、雙口徑;**最終 rollup:done 283/300**)
 
 外部量測敘事鏈至此三級,**三組口徑不可混比、各自作用明標**:

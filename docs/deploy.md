@@ -36,6 +36,7 @@ Zeabur project(單一 project,兩個 service)
 | `OPENAI_BASE_URL` | 是(direct) | 本地未設(走 gateway `http://127.0.0.1:8791/v1`);Zeabur 上填實際 OpenAI-compatible endpoint | |
 | `OPENAI_API_KEY` | 是(direct) | 本地不存在(codex OAuth 免 key);Zeabur 上填你的 key,**只存 Zeabur variables** | |
 | `OPENAI_MODEL` | 是(direct) | config/agent.toml 預設 `gpt-5.3-codex`(僅適用 gateway);Zeabur 上填 endpoint 支援的 model | |
+| `DEPLOY_COMMIT_SHA` | 是(attested eval) | 每次 deploy 前取 `git rev-parse HEAD` | `/api/health.build_sha`;runner 在送題前強制比對 |
 | `ACCESS_TOKEN` | 否 | 同 wealth-sec | |
 | `AGENT_QUEUE_LIMIT` | 否 | — | 任務佇列上限,預設 10 |
 
@@ -111,7 +112,7 @@ npx zeabur@latest deploy --project-id <project-id> --service-id <agent-service-i
 
 | 檢查 | URL / 動作 | 預期 |
 |---|---|---|
-| health | `GET /api/health` | 200,planner 顯示 LLM (direct) 且 `ready: true` |
+| health | `GET /api/health` | 200,planner 顯示 LLM (direct)、`ready: true`、`build_sha` 等於 deployed source HEAD |
 | UI | `GET /` | 200 |
 | mock task | 提交 `mock:v2` 任務 | status=pass,confidence=1.0,有 trace + screenshots |
 | 真實網站 | 提交 Wikipedia 查詢任務 | pass,證明容器 egress + LLM 鏈路 |

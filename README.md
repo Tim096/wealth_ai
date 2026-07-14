@@ -45,6 +45,13 @@ and [runner](tools/live_information_retrieval_eval.py).
 Neither suite replaces the historical frozen Online-Mind2Web result: the strict
 advisory WebJudge figure remains `21/283`.
 
+Deployment provenance is public and machine-checked: [`/api/health`](https://wealth-agent-ncku.zeabur.app/api/health)
+returns the deployed 40-character `build_sha`. The live runner aborts before
+submitting any task unless that value exactly equals local `git HEAD`. A separate
+two-domain smoke recorded deployment-attested **true** and `2/2` pass; see its
+[task set](data/browser_eval/live_attested_smoke/tasks.json) and
+[result](data/browser_eval/live_attested_smoke/results.json).
+
 ### Public API smoke test
 
 ```bash
@@ -114,6 +121,7 @@ Full evidence, metrics, and failure traces: [evaluation report](docs/eval_report
 6. 重跑 Task 1 action-history 泛化機制 probe：`.venv\Scripts\python tools\action_history_cross_site_eval.py`。
 7. 重跑 deployed 10-domain information-retrieval suite：`.venv\Scripts\python tools\live_information_retrieval_eval.py`。
 8. 重跑 deployed mixed-operation suite：`.venv\Scripts\python tools\live_information_retrieval_eval.py --tasks data/browser_eval/live_mixed_interaction/tasks.json --output data/browser_eval/live_mixed_interaction/results.json`。
+9. 驗證 deployed build SHA 並跑 smoke：`.venv\Scripts\python tools\live_information_retrieval_eval.py --tasks data/browser_eval/live_attested_smoke/tasks.json --output data/browser_eval/live_attested_smoke/results.json --require-build-sha`。
 
 Known limitations and planned experiments: [TODO.md](TODO.md).
 

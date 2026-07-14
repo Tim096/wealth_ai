@@ -14,7 +14,7 @@ gateway is bypassed via `AGENT_LLM_MODE=direct`.
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/` | UI (task in → live trace, verdict, screenshots) |
-| GET | `/api/health` | liveness + planner/queue info (never token-gated) |
+| GET | `/api/health` | liveness + planner/queue info + deployed `build_sha` (never token-gated) |
 | POST | `/api/tasks` | `{"task": "...", "url"?: "", "success"?: ["text_visible:..."], "max_steps"?: 18}` → 202 `{task_id}`; 429 when the queue (10) is full |
 | GET | `/api/tasks` | recent tasks |
 | GET | `/api/tasks/{id}` | status (`queued/running/pass/fail/unknown/refused/error`), live steps, verifier reason, confidence, answer, verdict telemetry (`observed_evidence`, `missing_evidence`, `llm_cost_usd`, `llm_tokens`, `llm_calls`, `latency_ms`), full structured trace |
@@ -46,6 +46,7 @@ tasks run anyway and report an honest `unknown`.
 | `AGENT_LLM_MODE` | yes | set `direct` (config default is the local `gateway`) |
 | `OPENAI_BASE_URL` | yes | e.g. `https://api.openai.com/v1` (config default is the local gateway) |
 | `OPENAI_MODEL` | no | set explicitly for direct mode (config default is OAuth-specific) |
+| `DEPLOY_COMMIT_SHA` | for attested eval | exact 40-character `git rev-parse HEAD`; the live eval runner rejects a mismatch before task submission |
 | `AGENT_VISION` | no | leave unset → auto-escalate on stuck |
 | `SEC_EDGAR_USER_AGENT` | no | agent tasks may hit EDGAR |
 | `PORT` | no | injected by Zeabur (8080) |

@@ -38,9 +38,13 @@ def test_task2_case_cards_are_explicit_and_scoped():
     assert "AAPL · Item 8 source span" in template
     assert "目前做得好 · 限定" in template
     assert "It is not whole-filing accuracy" in template
-    assert "INTC / Citi · cross-file body join" in template
-    assert "目前沒做好 · needs review" in template
-    assert "never fabricate the absent body" in template
+    # cross-reference body is now resolved via page anchors (partial + needs_review)
+    assert "INTC / Citi · cross-reference body via page anchors" in template
+    assert "partial · needs_review" in template
+    assert "never a fabricated body" in template
+    # the genuine remaining work + the self-audited status false-pass fix
+    assert "Still needs work" in template
+    assert "positive-evidence" in template
 
 
 def test_render_roundtrip_and_script_safety():

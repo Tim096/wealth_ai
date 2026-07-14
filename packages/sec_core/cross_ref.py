@@ -165,8 +165,14 @@ def detect_cross_reference_index(
     )
 
 
+# title cap must clear the LONGEST canonical 10-K item title (Item 5 = 108
+# chars, Item 12 = 94, Item 7 MD&A = 85); a 70-char cap silently dropped
+# Citi's MD&A row ("7. Management's Discussion ... Results of Operations 8-36")
+# so Item 7 came back `missing` even though its page anchor resolves. The
+# full-line anchor + digit-only pageref + canonical-title similarity>=0.5 gate
+# in scan_bare_index keep the wider cap from matching prose.
 _BARE_INDEX_RE = re.compile(
-    r"^\s*(\d{1,2}[A-C]?)\.\s*([A-Za-z][A-Za-z '&,./()-]{3,70}?)\s*(\d[\d\s,\-–]*)?$"
+    r"^\s*(\d{1,2}[A-C]?)\.\s*([A-Za-z][A-Za-z '&,./()-]{3,110}?)\s*(\d[\d\s,\-–]*)?$"
 )
 
 
@@ -231,6 +237,11 @@ def build_cross_reference_segments(
     page_map = build_page_map(doc)
     segments: list[ItemSegment] = []
     breakdowns: dict[str, ConfidenceBreakdown] = {}
+    # spans already resolved for earlier items — a later item that would resolve
+    # to a byte-identical span (INTC Item 15 -> Item 8's financials, Item 9B ->
+    # Item 1C's page 54) is steered to its own alternative range or, failing
+    # that, left an honest pointer, so no two items share the same body span.
+    claimed_spans: set[tuple[int, int]] = set()
     for code in VALID_CODES:
         canonical = CANONICAL_ITEM_TITLES[code]
         heading = f"Item {code}. {canonical}"
@@ -240,8 +251,9 @@ def build_cross_reference_segments(
             ref = index.page_refs[code]
             # try to RESOLVE the pointer to a real source-exact span via the
             # printed page-number footers (robust: printed data, not a guess)
-            span = resolve_page_ref(page_map, ref)
+            span = resolve_page_ref(page_map, ref, avoid=claimed_spans)
             if span is not None and span[1] - span[0] > 400:
+                claimed_spans.add(span)
                 start, end = span
                 text = doc.slice(start, end)
                 bd = ConfidenceBreakdown(components=[
@@ -260,7 +272,10 @@ def build_cross_reference_segments(
                         f"cross-reference-index 10-K: Item body resolved from the annual-report "
                         f"page range {ref} via printed page-number anchors (source-exact span). "
                         "Marked partial + needs_review because page-boundary alignment is "
-                        "heuristic — verify start/end against the filing."],
+                        "heuristic — verify start/end against the filing. The index may "
+                        "over-claim page ranges (e.g. Item 1 '4-36' vs MD&A '8-36'), so a "
+                        "resolved span can overlap an adjacent item; identical spans are "
+                        "de-duplicated but nesting is possible."],
                 ))
                 continue
             # could not resolve — honest pointer

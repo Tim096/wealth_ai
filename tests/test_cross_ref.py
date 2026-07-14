@@ -6,7 +6,9 @@ when the main document is only a pointer index into a bound annual report.
 from sec_core.cross_ref import detect_cross_reference_index, scan_bare_index
 from sec_core.headings import detect_candidates
 from sec_core.normalize import normalize_html
+from sec_core.page_map import PageMap, resolve_page_ref
 from sec_core.pipeline import extract_from_html
+from sec_core.refine import classify_reference_stub
 
 # a cross-reference index: every item heading followed by a page range, no bodies
 XREF_INDEX = "<html><body><div>Cross-Reference Index</div>" + "".join(
@@ -89,3 +91,85 @@ def test_needs_review_flag_defaults_false_for_clean_pass():
             / "alpha_10k.html").read_text(encoding="utf-8")
     result = extract_from_html(html, "alpha")
     assert result.segment("1").needs_review is False
+
+
+# --- regression: self-audited corner cases (2026-07-14 audit) -------------
+
+def test_hole_b_long_incorporation_block_is_not_a_false_pass():
+    """A verbose (>900 char) 'incorporated by reference to the proxy statement'
+    block must classify as a pointer, not a substantive `pass`. Real XOM Item
+    10/12 (1474 / 2013 chars) were shipped as `pass` before this fix."""
+    caps = ["Election of Directors", "Corporate Governance", "Executive Compensation",
+            "Compensation Discussion and Analysis", "Security Ownership of Beneficial "
+            "Owners", "Related Person Transactions", "Audit Committee Report",
+            "Ratification of Independent Auditors", "Director Independence"]
+    long_ibr = ("The information required by this Item is incorporated herein by "
+                "reference to the registrant's definitive Proxy Statement under the "
+                "captions " + "; ".join(f"'{c}'" for c in caps * 3) + ".")
+    assert len(long_ibr) > 900
+    assert classify_reference_stub(long_ibr) is not None  # was None (-> pass) before
+    # a hybrid item that ALSO prints a real data table (Item 12 equity-comp) is
+    # NOT a pure pointer — its numeric density keeps it a substantive pass
+    hybrid = ("Equity Compensation Plan Information. The following table sets forth "
+              "the number of securities to be issued upon exercise of outstanding "
+              "options, warrants and rights: "
+              + " ".join(f"{n:,}" for n in range(4000, 4140))
+              + ". Security ownership is incorporated by reference to the Proxy Statement.")
+    assert len(hybrid) > 900  # strong tier, but numeric density keeps it a pass
+    assert classify_reference_stub(hybrid) is None
+    # and ordinary substantive prose stays a pass (no over-reach)
+    prose = "The Company designs and sells consumer electronics. " * 40
+    assert classify_reference_stub(prose) is None
+
+
+def test_bare_index_detects_long_mdna_title():
+    """Citi lists MD&A with its full 85-char canonical title; a 70-char cap
+    silently dropped Item 7, leaving MD&A `missing` while its page anchor
+    resolved fine. The bare index must now capture code 7 with its page ref."""
+    rows = [
+        ("1", "Business", "1-7"), ("1A", "Risk Factors", "49-62"),
+        ("1B", "Unresolved Staff Comments", "None"), ("2", "Properties", "8"),
+        ("3", "Legal Proceedings", "129"), ("4", "Mine Safety Disclosures", "None"),
+        ("5", "Market for Common Equity", "63"),
+        ("7", "Management's Discussion and Analysis of Financial Condition and "
+              "Results of Operations", "8-36, 64-120"),
+        ("7A", "Quantitative and Qualitative Disclosures About Market Risk", "64-120"),
+        ("8", "Financial Statements and Supplementary Data", "134-298"),
+    ]
+    html = "<html><body><div>Item NumberPage</div>" + "".join(
+        f"<div>{c}. {t} {p}</div>" for c, t, p in rows) + "</body></html>"
+    idx = scan_bare_index(normalize_html(html))
+    assert idx.detected
+    assert "7" in idx.page_refs and idx.page_refs["7"].startswith("8-36")
+
+
+def test_resolve_page_ref_prefers_earliest_start_not_widest():
+    """Multi-range refs must resolve to the EARLIEST-start range (the item's own
+    body), not the widest — else Citi MD&A ('8-36, 64-120') and Item 7A
+    ('64-120, ...') collapse onto the same 64-120 span (a boundary collision)."""
+    pm = PageMap(marker_start={p: p * 1000 for p in range(1, 130)},
+                 marker_end={p: p * 1000 + 50 for p in range(1, 130)},
+                 lo_page=1, hi_page=129)
+    md_a = resolve_page_ref(pm, "8-36, 64-120")    # MD&A: earliest = 8-36
+    m_risk = resolve_page_ref(pm, "64-120")         # 7A: 64-120
+    assert md_a is not None and m_risk is not None
+    assert md_a != m_risk                            # distinct spans (no collision)
+    assert md_a[0] < m_risk[0]                        # MD&A body starts earlier
+
+
+def test_resolve_page_ref_avoids_claimed_spans_no_collision():
+    """No two distinct items may resolve to a byte-identical span. INTC lists
+    Item 15 as '56-108, 110-115' (56-108 is Item 8's financials it references,
+    110-115 is its own exhibit index) and Items 1C/9B both as 'Page 54'.
+    Steering past claimed spans lands Item 15 on 110-115 and leaves the
+    duplicate-only 9B unresolvable (-> honest pointer), never a shared body."""
+    pm = PageMap(marker_start={p: p * 1000 for p in range(1, 130)},
+                 marker_end={p: p * 1000 + 50 for p in range(1, 130)},
+                 lo_page=1, hi_page=129)
+    s8 = resolve_page_ref(pm, "56-108")                       # Item 8 claims financials
+    s15 = resolve_page_ref(pm, "56-108, 110-115", avoid={s8})  # Item 15 -> own range
+    assert s8 is not None and s15 is not None
+    assert s8 != s15 and s15[0] > s8[0]                        # 15 steered to page 110+
+    s1c = resolve_page_ref(pm, "54")                           # 1C claims page 54
+    s9b = resolve_page_ref(pm, "54", avoid={s1c})              # 9B: no free range
+    assert s1c is not None and s9b is None                     # -> caller uses pointer

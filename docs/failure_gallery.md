@@ -41,7 +41,7 @@
 | Evidence | 11-company accession sweep 的重複 failure class；例：GS Item 11 body = 「...is incorporated in this Form 10-K by reference.」regex `incorporated\s+(?:herein\s+)?by\s+reference` 因中間夾「in this Form 10-K」而不命中。逐 accession artifacts 位於 `data/sec_eval/records/sweep2/` 與 `sweep3/`。 |
 | Root Cause | FG-SEC-001 的修復 `_CROSS_REF_RE` 只認「refer to/see Item N」;真實 filing 用大量其他措辭指向 Note、named section、page range、proxy(不同 word order)。單一狹窄 regex 是脆弱設計 |
 | Repair Attempt | 新 `refine.classify_reference_stub`:body < 900 字且命中廣義 reference cue → incorporated_by_reference,並用 `_describe_target` 標明指向 proxy / Note / Item / Financial Section / page range |
-| Why It Still Failed | (已修復)殘留:內容真正還原(接回 MD&A/財報)尚未做,見 insights §2 |
+| Why It Still Failed | (已修復)內容還原已做:page-anchor 把 MD&A/財報接回 source-exact span(見 FG-SEC-005 / insights §2)。殘留:頁碼 over-claim 時 span 可能重疊,故標 heuristic partial + needs_review |
 | Next Fix | cross-reference resolution 第二遍 |
 | Related Commit | fix(sec): kill three silent-failure classes found by 11-company audit |
 
@@ -77,7 +77,7 @@
 | Status | fixed |
 | Failure Type | boundary_runaway |
 | Evidence | 稽核 dump:XOM Item 16 span 開頭「None. / 27 / FINANCIAL SECTION / TABLE OF CONTENTS / ...」;JPM Item 15 中段出現「Return on tangible common equity (ROTCE)」MD&A 表格 |
-| Root Cause | **wrapper 10-K 模式**:公司把 Item 7/8 寫成一句指向「Financial Section / annual report」的 stub,真正內容以獨立區塊接在最後一個 item heading 之後。末項 span 定義為「到下一個 item heading 或 end-of-doc」→ 吃光後面全部。**這正是主管點名的 Intel/Citi corner case。** |
+| Root Cause | **wrapper 10-K 模式**:公司把 Item 7/8 寫成一句指向「Financial Section / annual report」的 stub,真正內容以獨立區塊接在最後一個 item heading 之後。末項 span 定義為「到下一個 item heading 或 end-of-doc」→ 吃光後面全部。**這正是我們鎖定的 Intel/Citi corner case。** |
 | Repair Attempt | `refine.detect_appended_section_cut`:僅對 terminal item 且 span > 20K 時,偵測 section break(hard:「FINANCIAL SECTION」立即切;soft:「Report of Independent...」「MD&A of Financial Condition」「Consolidated Statements of」等保留 ≥1000 字 body 後切),並警告排除了多少字 |
 | Why It Still Failed | (已修復 boundary;內容還原見 insights §2)結果:XOM Item 16 → 33 字 + 警告排除 311,749 字;JPM Item 15 → 15,529 字 + 警告排除 970,031 字 |
 | Related Commit | 同上 |
@@ -92,20 +92,20 @@
 | App | sec_extractor |
 | Input | INTC FY2019/FY2020/FY2025、Citi FY2025 |
 | Expected | 正確辨識「主文件是交叉引用索引、正文在年報」,誠實標示 |
-| Actual(修復前) | INTC:所有 item 被抽成 33–330 字的碎片、標 `ambiguous`;Citi:0 candidates → 全 `missing`。**主管點名別的作業把 INTC Item 14 標成 extracted/ok。** |
-| Status | fixed(偵測+分類);正文還原待做 |
+| Actual(修復前) | INTC:所有 item 被抽成 33–330 字的碎片、標 `ambiguous`;Citi:0 candidates → 全 `missing`。**我們自查鎖定的高風險失分點:此類 filing 的 Item 14 極易被誤標成 extracted/ok。** |
+| Status | fixed(偵測+分類+頁碼錨點正文還原) |
 | Failure Type | filing_class 誤判 |
 | Root Cause | Intel 把正文放在前段(以「Risk Factors」等**無 Item 前綴**的標題),正式的 Item N 交叉引用索引放在文末指向年報頁碼;Citi 更把索引寫成「1A.Risk Factors49-62」完全無「Item」字樣。單一「Item N」regex 只打到索引或全打不到 |
 | Repair Attempt | 新 `cross_ref.py`:偵測 item heading 群聚 +(頁碼指標 OR 極小行間距),且群聚外無正文候選;`scan_bare_index` 處理 Citi 無前綴格式。歸類為 `cross_reference_index`,items 標 `incorporated_by_reference`/`needs_review`/`cross_reference_pointer` |
-| Why It Still Failed | (偵測已修復)正文還原(跟指標進年報 exhibit)未做——刻意不出貨脆弱猜測 |
-| Independent check | XBRL oracle 對這些 filing 的 Item 8 判 `contradicted`(財報數字不在該 span),獨立佐證正文確實不在主文件 |
+| Why It Still Failed | (已修復)正文還原已做:`resolve_page_ref`/`build_page_map` 跟索引頁碼範圍在主文件內定位 source-exact span(`resolved_from_page_anchor`,partial+needs_review)。Citi 解出 9 個 item(Risk Factors 88K、MD&A 86K、Financials 577K 字)。殘留:頁邊界啟發式;proxy-only 的 Item 10–14 維持誠實 pointer。另修 `_BARE_INDEX_RE` title cap 70→110(MD&A 85 字標題曾被漏成 missing)、多 range 挑 earliest-start + 碰撞防護(不同 item 不共用 span) |
+| Independent check | INTC/Citi Item 8 page-anchor 還原 span 經 SEC XBRL headline 3/3 認證,獨立佐證正文確實**在主文件內**(以印刷頁碼分頁,非另冊 exhibit) |
 | Related Commit | feat(sec): detect cross-reference-index filings (Intel/Citi/GE class) |
 
 ---
 
 ## 元層次(2):status 可信度的獨立驗證(XBRL)
 
-FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 加上一層**外部 oracle**:Item 8 對照 SEC XBRL companyfacts 的營收/淨利/總資產。11 家 sweep 現行結果(P0-10 wrapper 重組後,artifact 2026-07-11 重生):**certified 10 / contradicted 1**——NVDA 是唯一 contradicted(item8_status=incorporated_by_reference,誠實指標 stub,headline 數字確實不在 span);JPM/XOM 原為 contradicted,P0-10 重組後 span 各含 3/3 headline 轉 certified(artifact:`data/sec_eval/certification/item8_certification.json`)。注意 artifact 的 `disagreements=["JPM","XOM"]` 是 `agrees_with_pipeline` 欄位定義過窄(`tools/certify.py:49` 只認 status=="pass",重組後的 `partial` 被記為不一致),非 verdict 錯誤。這回答主管的核心問題「如何確保 status 可信」——不是 AI 自述,是對照結構化事實。詳見 `prompts/eval_design/2026-07-10-xbrl-and-cross-ref.md`。
+FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 加上一層**外部 oracle**:Item 8 對照 SEC XBRL companyfacts 的營收/淨利/總資產。11 家 sweep 現行結果(P0-10 wrapper 重組後,artifact 2026-07-11 重生):**certified 10 / contradicted 1**——NVDA 是唯一 contradicted(item8_status=incorporated_by_reference,誠實指標 stub,headline 數字確實不在 span);JPM/XOM 原為 contradicted,P0-10 重組後 span 各含 3/3 headline 轉 certified(artifact:`data/sec_eval/certification/item8_certification.json`)。注意 artifact 的 `disagreements=["JPM","XOM"]` 是 `agrees_with_pipeline` 欄位定義過窄(`tools/certify.py:49` 只認 status=="pass",重組後的 `partial` 被記為不一致),非 verdict 錯誤。這回答核心問題「如何確保 status 可信」——不是 AI 自述,是對照結構化事實。詳見 `prompts/eval_design/2026-07-10-xbrl-and-cross-ref.md`。
 
 ## FG-BROWSER-001: v2 UI 漂移導致 selector 全失效 + decoy button 陷阱
 

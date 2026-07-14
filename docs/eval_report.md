@@ -57,18 +57,18 @@ multi-agent workflow 把 audit 與 adversarial verification 分成獨立角色�
 
 兩群完全分離,confidence 首次能作為「這是不是真內容」的信號。
 
-### Intel / Citi(主管點名的 corner case)
+### Intel / Citi(我們鎖定的高風險 corner case)
 
-實測 4 份 wrapper/index filing,全部正確歸類為 `cross_reference_index`,Item 14 從「碎片/ambiguous」變成誠實的 `needs_review` 指標:
+實測 4 份 wrapper/index filing,全部正確歸類為 `cross_reference_index`,且用**印刷頁碼錨點**把正文還原成 source-exact span(`resolved_from_page_anchor`,partial+needs_review),Item 14 等 proxy-only item 維持誠實指標:
 
 | Filing | 修復前 | 修復後 |
 |---|---|---|
-| INTC FY2019 | 全 item ambiguous 碎片(33–330 字)| `cross_reference_index`;Item 14 = incorporated_by_reference / needs_review / cross_reference_pointer |
+| INTC FY2019 | 全 item ambiguous 碎片(33–330 字)| `cross_reference_index`;Item 14 = incorporated_by_reference / needs_review |
 | INTC FY2020 | 同上 | 同上 |
-| INTC FY2025 | 同上 | 同上 |
-| Citi FY2025 | 0 candidates → 全 missing | `cross_reference_index`(bare index 偵測);1A/8 指標,needs_review |
+| INTC FY2025 | 同上 | 正文還原:Item 7=44,850、Item 8=204,301 字(XBRL 3/3 認證);Item 14 = incorporated_by_reference |
+| Citi FY2025 | 0 candidates → 全 missing | 正文還原:**9 個 item**(Risk Factors 88K、MD&A 86K、Market Risk 207K、Financials 577K 字);Item 14 = missing/needs_review |
 
-**沒有任何 item 被偽裝成 extracted/ok**——這正是主管點名別的作業犯的錯。
+**沒有任何 item 被偽裝成 extracted/ok**——這正是同類作業最容易犯、我們特別防範的失分點。2026-07-14 自查另修三處(見 `failure_gallery.md` FG-SEC-005):(1) `_BARE_INDEX_RE` title cap 70→110——MD&A 的 85 字 canonical title 曾令 Citi Item 7 漏成 missing;(2) 多 range 改挑 earliest-start + 碰撞防護,不同 item 不共用 span(INTC Item 15 導向自己的 exhibit index 而非 Item 8 財報);(3) **status false-pass**:>900 字的純 incorporation 段落(XOM Item 10, 1474 字)曾被誤標 `pass`,改為 positive-evidence 判定(數字密度區分真表格 vs 純指標),真表格 item(NEM/XOM Item 12)維持 pass。
 
 ### Status 可信度:XBRL 獨立 oracle(回答「如何確保 status 可信」)
 
@@ -483,6 +483,6 @@ Agent Mode failure analysis 暴露一個通用 feedback 缺口：planner history
 
 ### 已知殘留(誠實邊界)
 
-1. **同檔附綁 wrapper 已還原;跨檔 cross-reference-index 尚未。** JPM/XOM 指向本檔附綁年報區塊的 stub 已由 `cross_ref.reassemble_wrapper_bodies`(commit 84ecea7)以 page-anchor / section-anchor 還原(JPM Item 1C CYD coverage 0%→100%;兩家 Item 8 重組 span 均獲 XBRL 3/3 認證,見 `failure_gallery.md` FG-SEC-007/008)。2026-07-11 page-top section anchoring 收尾:GS 1C(本檔內跨 item 指標)還原 + JPM 1C 頁窗收斂到子 section,CYD oracle 現為 **11 agree / 0 disagree**(見上方 T2-3「wrapper 1C 還原」段;kill-switch `SEC_WRAPPER_SECTION_ANCHOR=0`)。Intel/Citi 指向**另外裝訂年報 exhibit** 的 cross-reference-index 正文仍未還原——刻意不出貨脆弱的 title-based 猜測(Intel 正文無 emphasis 標記、標題重複當頁首,會出錯),**錯的正文比誠實的指標更糟**,見 `insights_and_directions.md` §2。
+1. **同檔附綁 wrapper 已還原;跨檔 cross-reference-index 尚未。** JPM/XOM 指向本檔附綁年報區塊的 stub 已由 `cross_ref.reassemble_wrapper_bodies`(commit 84ecea7)以 page-anchor / section-anchor 還原(JPM Item 1C CYD coverage 0%→100%;兩家 Item 8 重組 span 均獲 XBRL 3/3 認證,見 `failure_gallery.md` FG-SEC-007/008)。2026-07-11 page-top section anchoring 收尾:GS 1C(本檔內跨 item 指標)還原 + JPM 1C 頁窗收斂到子 section,CYD oracle 現為 **11 agree / 0 disagree**(見上方 T2-3「wrapper 1C 還原」段;kill-switch `SEC_WRAPPER_SECTION_ANCHOR=0`)。Intel/Citi 的 cross-reference-index 正文也已用**印刷頁碼錨點**還原(`resolve_page_ref`/`build_page_map`,非脆弱的 title 猜測):正文其實在主文件內以印刷頁碼分頁,跟索引頁碼範圍定位到 source-exact span。Citi 解出 **9 個 item**(Risk Factors 88K、MD&A 86K、Financials 577K 字)、INTC **12 個 item**(Item 8 span 經 XBRL 3/3 認證),全標 `partial` + needs_review。**已知限制**:索引頁碼範圍常 over-claim(如 Citi Item 1「4-36」與 Item 7「8-36」重疊),resolved span 之間可能重疊/巢狀,故一律標 heuristic partial + needs_review,不宣稱逐字精確;identical-span 碰撞已由 claimed-span 防護消除。見 `insights_and_directions.md` §2。
 2. **boundary 精度已量化(2026-07-10)**:char-offset F1(建構性 gold,regression baseline,敏感度注入鎖在 `tests/test_scoring.py`:AAPL F1 1.0→0.9267)+ CYD 官方 iXBRL oracle(9/9 pass segment coverage 100%,首個外部 span 錨點)。人工 token-level 標註(絕對正確率)仍列 backlog。
 3. **`data/sec_eval/records/sweep1` 是刻意保留的修復前 baseline**,其 Item 8 仍顯示舊的(錯誤)pass——用於 before/after 對照(見上方 metrics 表)。當前正確結果在 `sweep3`(sweep2 降為歷史 baseline,漂移見「Eval 升級」段)。

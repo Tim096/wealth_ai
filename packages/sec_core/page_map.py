@@ -86,12 +86,25 @@ def build_page_map(doc: NormalizedDocument, start: int = 0, end: int | None = No
     return pm
 
 
-def resolve_page_ref(pm: PageMap, page_ref: str) -> tuple[int, int] | None:
+def resolve_page_ref(pm: PageMap, page_ref: str,
+                     avoid: object = ()) -> tuple[int, int] | None:
     """Map a page reference string to a (start_offset, end_offset) span. The
     string may list several ranges/pages ("Pages 3-5, 18; Pages 3-24, 33"); we
-    resolve the LARGEST contiguous range as the item's primary span (the bulk
-    of its content), which the caller marks partial + needs_review because the
-    remaining scattered references are not included."""
+    try them EARLIEST-start first (an item's body begins at its first page;
+    later ranges are continuation or supplementary), and the caller marks the
+    result partial + needs_review because the remaining scattered references
+    are not included. Earliest-start beats widest-range: Citi lists MD&A as
+    "8-36, 64-120" and Item 7A as "64-120, ..." — widest gave BOTH the same
+    64-120 span; earliest keeps MD&A at 8-36.
+
+    `avoid` is a set of (start,end) spans already claimed by earlier items; a
+    range whose span collides with a claimed one is skipped so two distinct
+    items never resolve to a byte-identical span. INTC Item 15 lists
+    "56-108, 110-115" where 56-108 is Item 8's financials it merely references
+    and 110-115 is its OWN exhibit index — skipping the claimed 56-108 lands
+    Item 15 on its real 110-115 body; a single-page duplicate with no free
+    alternative (INTC 1C and 9B both "Page 54") returns None so the caller
+    falls back to an honest pointer instead of a duplicate body."""
     if not pm.ok:
         return None
     # candidate (start_page, end_page) pairs: explicit ranges, then bare pages
@@ -99,15 +112,20 @@ def resolve_page_ref(pm: PageMap, page_ref: str) -> tuple[int, int] | None:
     if not ranges:
         nums = [int(x) for x in _BARE_NUM.findall(page_ref)]
         ranges = [(n, n) for n in nums]
-    # keep only ranges that fall inside the recovered pagination, pick the widest
+    # keep only ranges that fall inside the recovered pagination
     valid = [(a, min(b, pm.hi_page)) for a, b in ranges if pm.lo_page <= a <= pm.hi_page]
     if not valid:
         return None
-    a, b = max(valid, key=lambda r: r[1] - r[0])
-    # content of page A begins just after the page-(A-1) footer (or at the run
-    # start); content of page B ends at the page-B footer marker.
-    start = pm.marker_end.get(a - 1) or pm.marker_start.get(a)
-    end = pm.marker_start.get(b) or pm.marker_end.get(b)
-    if start is None or end is None or end <= start:
-        return None
-    return start, end
+    claimed = set(avoid)
+    # earliest-start first, wider as tiebreak; take the first whose span is free
+    for a, b in sorted(valid, key=lambda r: (r[0], -(r[1] - r[0]))):
+        # content of page A begins just after the page-(A-1) footer (or run
+        # start); content of page B ends at the page-B footer marker.
+        start = pm.marker_end.get(a - 1) or pm.marker_start.get(a)
+        end = pm.marker_start.get(b) or pm.marker_end.get(b)
+        if start is None or end is None or end <= start:
+            continue
+        if (start, end) in claimed:
+            continue
+        return start, end
+    return None

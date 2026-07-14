@@ -22,7 +22,7 @@ OpenClaw / Hermes 這類「LLM 自主驅動瀏覽器」的核心迴圈就是:看
 | 失敗 | 靜默重試 | diagnosis-driven repair + selector memory |
 | 可稽核 | 難 | 每步 EvidenceRecord + 截圖 + trace |
 
-**同樣「LLM 會亂點」的擔憂,我用「限制輸出空間 + guard + verifier + evidence」把它馴服。** 不是不用 LLM,而是**用 LLM 但不相信 LLM 自評**——這正是主管說的「AI 之後最稀缺的是驗證」。
+**同樣「LLM 會亂點」的擔憂,我用「限制輸出空間 + guard + verifier + evidence」把它馴服。** 不是不用 LLM,而是**用 LLM 但不相信 LLM 自評**——「AI 生成能力愈強,愈稀缺的是可重驗的驗證」,這正是我把整條 pipeline 圍繞驗證軸設計的原因。
 
 - **SEC 若丟給 autonomous agent**:它會 regex 切 Item、跑 AAPL/MSFT 很漂亮就宣稱完成;不會自己去跑 JPM/XOM/Intel 這種 wrapper 10-K,更不會發現 Item 16 吞了 31 萬字還標 confidence 1.0——因為沒有動機**反駁自己**。這就是「SEC 跑出來不完整但 AI 自報完成度很高」的結構性原因。我的對策:multi-agent 對抗式稽核找 failure classes + XBRL/topic 雙獨立 oracle + page-anchor 還原可驗證的 same-file wrapper 正文。
 - **一句話**:差異不在會不會寫,而在**會不會不相信自己**。我把「不相信自己」制度化。
@@ -31,7 +31,7 @@ OpenClaw / Hermes 這類「LLM 自主驅動瀏覽器」的核心迴圈就是:看
 
 **現狀(已完成)**:Intel/Citi 這類 cross-reference-index 10-K,主文件是索引,正文在另外裝訂的 annual report。`sec_core/page_map.py` 用**正文印出的頁碼 footer**(normalize 後的 bare-number 行)以 LIS 重建 page→offset 對應,再把索引的「Item 1A → Pages 37-51」解析成**真實 source-exact span**。
 
-**實測(Intel FY2025)**:7 個 item 從 page anchor 抽回真實正文——Item 1A = 96,213 字 Risk Factors、**Item 8 = 202,858 字財報**。而且解出來的 Item 8 **被 XBRL 獨立認證**(營收/淨利/總資產全中)——page-anchor 與 XBRL 兩個獨立方法互相佐證。標 `partial` + provenance `resolved_from_page_anchor` + needs_review(頁界對齊是啟發式,如實揭露)。
+**實測(Intel FY2025)**:12 個 item 從 page anchor 抽回真實正文——Item 1A = 96,213 字 Risk Factors、**Item 8 = 204,301 字財報**。而且解出來的 Item 8 **被 XBRL 獨立認證**(營收/淨利/總資產全中)——page-anchor 與 XBRL 兩個獨立方法互相佐證。標 `partial` + provenance `resolved_from_page_anchor` + needs_review(頁界對齊是啟發式,如實揭露)。Citi FY2025 同法解出 9 個 item(Risk Factors 88K、MD&A 86K、Financials 577K 字)。
 
 **為何用頁碼而非標題**:我原本拒絕 title-based 抽取(Intel 標題無 emphasis、重複當頁首,會出錯)。頁碼是**印出來的資料**,不是猜的——這是「站得住腳的 robust 版」與「脆弱猜測」的差別。
 
@@ -41,7 +41,7 @@ OpenClaw / Hermes 這類「LLM 自主驅動瀏覽器」的核心迴圈就是:看
 
 ## 3. 驗證的正確基材:不是 LLM-as-judge,是結構化 ground truth
 
-**主管的觀點我完全同意並想往前推一步:用 LLM 判斷財報對不對是壞主意(貴、不可重現、會 hallucinate)。** 我的 pipeline 已經不讓 LLM 產生或判斷 item 內容——它只做 offset-exact span 抽取,LLM 只在 ambiguous boundary 當裁判。但驗證還能更硬:
+**我的立場並想往前推一步:用 LLM 判斷財報對不對是壞主意(貴、不可重現、會 hallucinate)。** 我的 pipeline 已經不讓 LLM 產生或判斷 item 內容——它只做 offset-exact span 抽取,LLM 只在 ambiguous boundary 當裁判。但驗證還能更硬:
 
 **SEC filing 自帶結構化 ground truth,大多數作業沒用到——這一條我已經實作了(`sec_core/xbrl.py`):**
 
@@ -77,7 +77,7 @@ OpenClaw / Hermes 這類「LLM 自主驅動瀏覽器」的核心迴圈就是:看
 
 **下一個前沿**:把 XBRL cross-check(§3)接進對抗式稽核,讓 verifier 不只靠 LLM 判斷,而有一條結構化事實線——**AI 驗證 + 結構化 ground truth 的混合**,比純 LLM-judge 或純規則都強。
 
-## 6. 實務應用場景與適配(主管問:更多應用 / 會遇到什麼場景 / 如何優化)
+## 6. 實務應用場景與適配(更多應用 / 會遇到什麼場景 / 如何優化)
 
 ### SEC Extractor 的真實應用
 
@@ -133,7 +133,7 @@ OpenClaw / Hermes 這類「LLM 自主驅動瀏覽器」的核心迴圈就是:看
 
 - 我沒有向你們要 API key(資安考量);SEC 走公開 EDGAR,Browser 的 Codex 由**你自己的 OAuth** 經 gateway 驅動,key 從不進 repo。
 - 我沒有相信自己的 pass rate；我用 sweep1/sweep2 artifacts、accession fixtures 與 regression tests 驗證 status reclassification。
-- **Intel/Citi 我不只誠實標示,還用 page-anchor 把正文真的抽回來了**(Item 1A 96K 字、Item 8 202K 字且 XBRL 認證)。
+- **Intel/Citi 我不只誠實標示,還用 page-anchor 把正文真的抽回來了**(INTC Item 1A 96K 字、Item 8 204K 字且 XBRL 認證;Citi 9 個 item 含 MD&A 86K、Financials 577K 字)。
 - status 可信不只靠 Item 8 XBRL——每個 item 都有獨立的 topic-consistency oracle。
 - 「丟給 OpenClaw/Hermes 會怎樣」我直接做了(Agent Mode),證明差異在**用 LLM 但不信 LLM 自評**。
 - 這套東西的真正產品可能不是兩個 demo,是底下那套「能證偽 AI 產出」的 harness。

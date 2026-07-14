@@ -104,12 +104,55 @@ _REF_CUE = re.compile(
 )
 
 _STUB_MAX_BODY = 900  # substantive Item 1A/7 run tens of thousands of chars
+_STUB_MAX_BODY_STRONG = 3000  # a verbose-but-pure incorporation block (enumerated proxy captions)
+
+# An UNAMBIGUOUS incorporation statement into an external / bound document
+# (proxy statement, annual report, financial section) — stronger than the
+# generic "see / refer to" cues. A body dominated by this is a pointer no
+# matter how many proxy captions it enumerates, so companies that push the
+# stub past 900 chars (Item 10-14 listing several proxy headings) must not
+# fall through to a substantive "pass". This is the Hole-B guard.
+_STRONG_REF_CUE = re.compile(
+    r"incorporat\w*\b[\w,'&\-.\s]{0,40}?\bby\s+reference\b"
+    r"[\w,'&\-.\s\"“”()]{0,160}?"
+    r"\b(?:definitive\s+)?(?:proxy|information)\s+statement"
+    r"|incorporat\w*\b[\w,'&\-.\s]{0,40}?\bby\s+reference\b"
+    r"[\w,'&\-.\s\"“”()]{0,160}?\b(?:annual\s+report|financial\s+section)",
+    re.IGNORECASE,
+)
+
+
+# A pure pointer carries almost no numeric data of its own; an item that
+# incorporates part by reference BUT still prints a real in-document table
+# (Item 12's Equity Compensation Plan table: NEM 26 numeric tokens, XOM 23)
+# is not a pointer and must stay `pass`. A proxy-caption incorporation block
+# (XOM Item 10: 5 tokens) sits well below this line.
+_NUM_TOKEN_RE = re.compile(r"\b\d[\d,]*\b")
+_REF_DOMINATED_MAX_NUMS = 12
+
+
+def _is_reference_dominated(body: str) -> bool:
+    return len(_NUM_TOKEN_RE.findall(body)) < _REF_DOMINATED_MAX_NUMS
 
 
 def classify_reference_stub(body: str) -> str | None:
-    """If `body` (text after the heading, stripped) is a short pointer rather
-    than real content, return a description of its target; else None."""
-    if not body or len(body) > _STUB_MAX_BODY:
+    """If `body` (text after the heading, stripped) is a pointer rather than
+    real content, return a description of its target; else None.
+
+    Two tiers. A short body (<=900) needs only a generic reference cue. A
+    longer body (<=3000) is still a pointer ONLY when it carries an explicit
+    "incorporated by reference to the proxy statement / annual report" clause
+    AND has no substantive in-document data of its own (see
+    _is_reference_dominated) — this closes the silent false-pass where a
+    verbose incorporation block (over 900 chars) was mis-read as substantive
+    `pass` content, without demoting a hybrid item that prints a real table."""
+    if not body:
+        return None
+    n = len(body)
+    if n > _STUB_MAX_BODY:
+        if (n <= _STUB_MAX_BODY_STRONG and _STRONG_REF_CUE.search(body)
+                and _is_reference_dominated(body)):
+            return _describe_target(body)
         return None
     if not _REF_CUE.search(body):
         return None

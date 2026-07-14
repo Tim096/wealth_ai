@@ -74,13 +74,18 @@ def test_sec_frontend_shows_scoped_strong_and_unresolved_cases():
     html = _sec()
     assert 'id="task2Cases"' in html
     assert 'id="task2StrongCase"' in html
+    assert 'id="task2BodyCase"' in html          # cross-reference body now resolved
     assert 'id="task2WeakCase"' in html
     assert "目前做得好（限定範圍）" in html
     assert "AAPL · Item 8 source span" in html
     assert "不代表整份 filing 全部正確" in html
+    # cross-reference body is now a scoped positive (page-anchor resolution)
+    assert "INTC / C · Cross-reference body via page anchors" in html
+    assert "9 個 Item" in html
+    # the genuine still-not-done case + the self-audited status fix
     assert "目前沒做好 / needs review" in html
-    assert "INTC / C · Cross-file body join" in html
-    assert "目前不宣稱抽取成功" in html
+    assert "維持誠實 pointer" in html
+    assert "positive-evidence" in html            # the >900-char false-pass fix
     assert 'id="sQuery" value="AAPL"' in html
     assert "20-F" in html and "failure handling" in html
 

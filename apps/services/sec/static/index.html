@@ -206,11 +206,21 @@
         <p class="case-limit"><b>限制：</b>只證明此 Item 的來源定位與獨立數字佐證；不代表整份 filing 全部正確，也不是校準後的正確率。</p>
         <div class="case-actions"><button class="chip" data-q="AAPL"><b>Run</b> AAPL</button></div>
       </article>
+      <article class="case-card good" id="task2BodyCase">
+        <div class="case-label">✓ 目前做得好（cross-reference 正文）</div>
+        <h3>INTC / C · Cross-reference body via page anchors</h3>
+        <p>辨識 <span class="mono">cross_reference_index</span> 後，用印刷頁碼錨點把另冊 annual report 正文解成 source-exact span：Citi 解出 <b>9 個 Item</b>（Risk Factors 88K、MD&amp;A 86K、Market Risk 207K、Financials 577K 字），INTC Item 8 經 SEC XBRL <b>3/3</b> 認證。每個 item 標 <span class="mono">partial</span> + needs_review，且不同 item 不共用 span（碰撞防護）。</p>
+        <p class="case-limit"><b>限制：</b>頁邊界對齊為啟發式，故標 partial / needs_review，非宣稱逐字精確。</p>
+        <div class="case-actions">
+          <button class="chip" data-q="INTC"><b>Run</b> INTC</button>
+          <button class="chip" data-q="C"><b>Run</b> C</button>
+        </div>
+      </article>
       <article class="case-card weak" id="task2WeakCase">
         <div class="case-label">⚠ 目前沒做好 / needs review</div>
-        <h3>INTC / C · Cross-file body join</h3>
-        <p>系統能辨識 <span class="mono">cross_reference_index</span> 並保留 pointer，但尚未把另冊 annual report 正文 join 成 source-addressable Item span。這些 filings 仍有大量 Items needs_review，目前不宣稱抽取成功。</p>
-        <p class="case-limit"><b>目前正確行為：</b>保留 partial / missing / pointer 與 warnings，不捏造不存在的正文。</p>
+        <h3>Proxy-incorporated items &amp; 狀態校準</h3>
+        <p>指向另外申報 proxy statement 的 item（多為 Item 11/13/14）維持誠實 pointer 或 missing，不 join、不捏造；索引有頁碼者（如 INTC Item 10）才解為 partial。所有 resolved span 尚無未參與調參的人工 span gold 與 confidence 校準（見 TODO），頁邊界為啟發式。</p>
+        <p class="case-limit"><b>自查已修：</b>&gt;900 字的純 incorporation 段落曾被誤標 <span class="mono">pass</span>（XOM Item 10 real filing 命中），已改為 positive-evidence 判定（數字密度區分真表格與純指標）。</p>
         <div class="case-actions">
           <button class="chip" data-q="INTC"><b>Review</b> INTC</button>
           <button class="chip" data-q="C"><b>Review</b> C</button>

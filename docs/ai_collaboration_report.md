@@ -23,7 +23,7 @@ verbatim body hash，讓摘錄正文可自動核對。
 
 ## AI 沒有被允許做的事(硬邊界)
 
-- **不向使用者/主管索取 API key**(資安)。SEC 走公開 EDGAR;LLM 主路徑 $0。
+- **不向使用者索取 API key**(資安)。SEC 走公開 EDGAR;LLM 主路徑 $0。
 - **LLM 不產生 filing text**:所有 item text 是 offset-exact source span;LLM 只在 ambiguous boundary 當裁判,且高信心裁決必須附 exact quote(schema validator 強制)。
 - **LLM 不輸出任意 browser code**:只輸出 schema 驗證過的 action JSON。
 - **缺證據不得標 success**:三態 verdict 結構上讓 unknown 不能升級成 pass。

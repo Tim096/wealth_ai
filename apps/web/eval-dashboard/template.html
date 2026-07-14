@@ -138,7 +138,8 @@
   <section>
     <div class="runhead"><div><h2>Task 2 · SEC 10-K item extraction</h2>
       <p class="sub" id="sec-sub"></p></div></div>
-    <div class="grid two">
+    <div class="grid two" id="secCases" style="margin-top:1rem"></div>
+    <div class="grid two" style="margin-top:1rem">
       <div class="panel">
         <h2 style="font-size:1rem">Item status across the sweep</h2>
         <p class="sub">Lower pass-rate here is <em>higher</em> honesty: stubs that point elsewhere
@@ -215,7 +216,7 @@
       <div class="panel">
         <h2 style="font-size:1rem">CYD iXBRL oracle · Item 1C span vs SEC&rsquo;s own tags</h2>
         <p class="sub">Coverage = share of the officially tagged span our segment covers.
-          The two disagreements are wrapper 10-Ks whose 1C is an honest reference stub.</p>
+          Wrapper/reference-only outputs remain needs_review; oracle agreement is scoped to Item 1C, not whole-filing accuracy.</p>
         <div class="scroll" style="margin-top:.5rem"><table id="cydTable"></table></div>
         <div class="arterr" id="cydErr"></div>
       </div>
@@ -266,7 +267,37 @@ const tiles=[
 ];
 tiles.forEach(t=>{const d=el('div','tile');d.append(el('span','n',t.n),el('div','k',t.k),el('div','note',t.note));$('#tiles').append(d);});
 
-$('#sec-sub').textContent=`${s.filings} filings · ${s.total_items} items · deterministic pipeline, $0 LLM on the main path`;
+$('#sec-sub').textContent=`${s.filings} filings · ${s.total_items} items · deterministic pipeline, $0 LLM on the main path · scoped evidence, not a whole-system success claim`;
+
+// Task 2 reviewer cases: explicit scoped success beside unresolved work
+const secCases=$('#secCases'), aapl=s.tickers.find(t=>t.ticker==='AAPL');
+if(aapl){
+  const p=el('article','panel');
+  const head=el('div','runhead');
+  head.append(el('div',null,'<h2 style="font-size:.98rem">AAPL · Item 8 source span</h2>'),
+    el('div',null,'<span class="pill p-pass">目前做得好 · 限定</span>'));
+  p.append(head,el('p','sub','Committed evaluation supports this tracked Item 8 source span; it does not certify the whole filing.'));
+  const proof=el('div','step ok');
+  proof.append(el('div','h','<span class="name">Independent evidence</span><span class="mode">SEC XBRL</span>'),
+    el('div','why',`Item 8 status <code>${aapl.item8_status}</code> · oracle <code>${aapl.item8_xbrl}</code> · source-bound extraction, not generated prose.`));
+  const limit=el('div','step repair');
+  limit.append(el('div','h','<span class="name">Claim boundary</span><span class="mode">do not overread</span>'),
+    el('div','why','Only this Item is the showcase. It is not whole-filing accuracy and not a calibrated probability.'));
+  p.append(proof,limit);secCases.append(p);
+}
+const weak=el('article','panel');
+const weakHead=el('div','runhead');
+weakHead.append(el('div',null,'<h2 style="font-size:.98rem">INTC / Citi · cross-file body join</h2>'),
+  el('div',null,'<span class="pill p-warn">目前沒做好 · needs review</span>'));
+weak.append(weakHead,el('p','sub','The pointer index is detected, but the separately filed annual-report body is not yet joined into source-addressable Item spans.'));
+s.wrappers.forEach(w=>{
+  const d=el('div','step repair');
+  d.append(el('div','h',`<span class="name">${w.ticker}</span><span class="mode">${w.filing_class}</span>`),
+    el('div','why',`<code>${w.needs_review_count} items needs_review</code> · Item 14 <code>${w.item14_status||'—'}</code> / <code>${w.item14_provenance||'—'}</code>`));
+  weak.append(d);
+});
+weak.append(el('div','sub','Current correct behavior: keep partial / missing / pointer plus warnings; never fabricate the absent body.'));
+secCases.append(weak);
 
 // status bar
 const bar=$('#statusBar'), leg=$('#statusLegend');

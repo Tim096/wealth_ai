@@ -24,6 +24,25 @@ def test_index_embeds_current_data_json():
         "index.html DATA is stale — rerun tools/render_dashboard.py")
 
 
+def test_committed_index_matches_template_and_data():
+    template = (DASH / "template.html").read_text(encoding="utf-8")
+    expected = render(template, _data())
+    actual = (DASH / "index.html").read_text(encoding="utf-8")
+    assert actual == expected, (
+        "index.html markup is stale — rerun tools/render_dashboard.py")
+
+
+def test_task2_case_cards_are_explicit_and_scoped():
+    template = (DASH / "template.html").read_text(encoding="utf-8")
+    assert 'id="secCases"' in template
+    assert "AAPL · Item 8 source span" in template
+    assert "目前做得好 · 限定" in template
+    assert "It is not whole-filing accuracy" in template
+    assert "INTC / Citi · cross-file body join" in template
+    assert "目前沒做好 · needs review" in template
+    assert "never fabricate the absent body" in template
+
+
 def test_render_roundtrip_and_script_safety():
     template = (DASH / "template.html").read_text(encoding="utf-8")
     data = {"x": "</script><b>evil</b>", "n": 1.5, "u": "中文"}

@@ -26,6 +26,7 @@
 
 ### Task 2
 
+- [ ] 建立並以獨立證據與可重跑 artifact 驗證真正具代表性的 Task 2 strong cases；前端優先明列目前做得好與目前沒做好的案例及證據，README 同步，通過前只稱限定案例或候選，不宣稱整體 strong case。
 - [ ] 實作 cross-file exhibit join：只接受 accession、filing manifest、document type 與 source link 可驗證的正文；Intel/Citi 必須由既有 `incorporated_by_reference` 轉為 source-addressable span，否則維持 review。
 - [ ] 修正 normalized text 的可重現鏈：提供 normalization version、raw SHA、normalized SHA 與一行驗證指令。
 - [ ] 移除全域 filing state 的併發串台風險；所有 item request 必須攜帶 accession，mismatch 明確失敗。

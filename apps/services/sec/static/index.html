@@ -46,6 +46,20 @@
   .row>.grow{flex:1 1 220px}
   .grid2{display:grid;gap:1rem}
   @media(min-width:900px){.grid2{grid-template-columns:5fr 7fr}}
+  .case-showcase{margin-top:.9rem}
+  .case-head{display:flex;justify-content:space-between;gap:1rem;align-items:baseline;flex-wrap:wrap;margin-bottom:.65rem}
+  .case-head h2{font-size:1.05rem;margin:0}
+  .case-grid{display:grid;gap:.8rem}
+  @media(min-width:760px){.case-grid{grid-template-columns:1fr 1fr}}
+  .case-card{background:var(--panel);border:1px solid var(--line);border-left-width:4px;border-radius:12px;padding:1rem}
+  .case-card.good{border-left-color:var(--pass)} .case-card.weak{border-left-color:var(--warn)}
+  .case-label{font-family:var(--mono);font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+  .case-card.good .case-label{color:var(--pass)} .case-card.weak .case-label{color:var(--warn)}
+  .case-card h3{font-size:1rem;margin:.3rem 0}
+  .case-card p{font-size:.82rem;margin:.35rem 0;color:var(--muted)}
+  .case-limit{border-top:1px dashed var(--line);padding-top:.45rem!important;margin-top:.55rem!important}
+  .case-actions{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.65rem}
+  .case-boundary{font-size:.76rem;color:var(--muted);margin-top:.65rem}
   .pill{display:inline-block;padding:.1rem .55rem;border-radius:999px;font-size:.72rem;
     font-weight:700;font-family:var(--mono);white-space:nowrap}
   .p-pass{background:var(--pass-bg);color:var(--pass)} .p-warn{background:var(--warn-bg);color:var(--warn)}
@@ -168,20 +182,49 @@
       <button class="tour-station" type="button" data-target='.chip[data-q="AAPL"]'>
         <span class="tour-n">4</span>
         <span class="tour-body">
-          <span class="tour-step"><b>按這顆</b>AAPL 建議代號 → 再按「開始抽取」</span>
-          <span class="tour-step"><b>看這裡</b>抽完後 Item 8 那列的 XBRL 與 Risk band / 風險欄</span>
-          <span class="tour-step tour-proof">✓ offset / sha256 出處 + XBRL oracle + 實測 risk band · provenance you can re-derive</span>
+          <span class="tour-step"><b>按這顆</b>AAPL 限定正面案例 → 再按「開始抽取」</span>
+          <span class="tour-step"><b>看這裡</b>抽完後 Item 8 的 offsets / sha256 prefix、XBRL 與 Risk band / 風險欄</span>
+          <span class="tour-step tour-proof">✓ tracked Item 8 source span + SEC XBRL 3/3 headline figures · 不延伸成整份 filing 正確</span>
         </span>
       </button>
     </div>
   </section>
   <!-- ===== reviewer tour END ===== -->
 
+  <section class="case-showcase" id="task2Cases" aria-labelledby="task2CasesTitle">
+    <div class="case-head">
+      <div>
+        <h2 id="task2CasesTitle">Task 2 實際案例 · What works / what still needs work</h2>
+        <div class="sub">只展示目前證據真正支持的範圍；候選案例不包裝成整體成功。</div>
+      </div>
+    </div>
+    <div class="case-grid">
+      <article class="case-card good" id="task2StrongCase">
+        <div class="case-label">✓ 目前做得好（限定範圍）</div>
+        <h3>AAPL · Item 8 source span</h3>
+        <p>目前 committed evaluation 支持 tracked AAPL filing 的 Item 8：來源 span 為 <span class="mono">pass</span>，SEC XBRL oracle 在該 span 找到 <b>3/3 headline figures</b>。進入 live extraction 後可檢查 offsets、sha256 prefix、XBRL 與 needs_review。</p>
+        <p class="case-limit"><b>限制：</b>只證明此 Item 的來源定位與獨立數字佐證；不代表整份 filing 全部正確，也不是校準後的正確率。</p>
+        <div class="case-actions"><button class="chip" data-q="AAPL"><b>Run</b> AAPL</button></div>
+      </article>
+      <article class="case-card weak" id="task2WeakCase">
+        <div class="case-label">⚠ 目前沒做好 / needs review</div>
+        <h3>INTC / C · Cross-file body join</h3>
+        <p>系統能辨識 <span class="mono">cross_reference_index</span> 並保留 pointer，但尚未把另冊 annual report 正文 join 成 source-addressable Item span。這些 filings 仍有大量 Items needs_review，目前不宣稱抽取成功。</p>
+        <p class="case-limit"><b>目前正確行為：</b>保留 partial / missing / pointer 與 warnings，不捏造不存在的正文。</p>
+        <div class="case-actions">
+          <button class="chip" data-q="INTC"><b>Review</b> INTC</button>
+          <button class="chip" data-q="C"><b>Review</b> C</button>
+        </div>
+      </article>
+    </div>
+    <div class="case-boundary">能力邊界：<button class="chip" data-q="TSM">TSM · 20-F</button> 會明確拒絕；這是做得好的 failure handling，不是 extraction strong case。</div>
+  </section>
+
   <section class="panel">
     <div class="row">
       <div class="grow">
-        <label>Ticker / CIK (try INTC · AAPL · XOM · JPM · C; TSM demonstrates an honest rejection)</label>
-        <input type="text" id="sQuery" value="INTC">
+        <label>Ticker / CIK (AAPL is the scoped positive case; INTC / C are needs-review cases; TSM demonstrates an honest rejection)</label>
+        <input type="text" id="sQuery" value="AAPL">
       </div>
       <div>
         <label>Filing year / 年度 (latest by default)</label>

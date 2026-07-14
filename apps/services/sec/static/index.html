@@ -326,11 +326,16 @@ function renderSec(d){
   SEC_ITEMS=(d.items||[]).concat(d.gaps||[]).concat(d.exhibits||[]);
   $('#sFind').classList.remove('hidden');
   const m=d.meta;
-  const cov=m.coverage!=null?`<span>本文覆蓋 <b class="mono">${(m.coverage*100).toFixed(1)}%</b>${(d.gaps||[]).length?` · 未分類 ${d.gaps.length} 段`:''}${(d.exhibits||[]).length?` · 附件 ${d.exhibits.length} 份`:''}</span>`:'';
+  // Honest boundary: an unsupported / 0-item filing has coverage=1.0 over an empty
+  // body — never render that as a 100% success. Gate coverage% on m.supported and
+  // show an explicit 未支援 banner instead.
+  const supported=m.supported!==false;
+  const cov=(supported&&m.coverage!=null)?`<span>本文覆蓋 <b class="mono">${(m.coverage*100).toFixed(1)}%</b>${(d.gaps||[]).length?` · 未分類 ${d.gaps.length} 段`:''}${(d.exhibits||[]).length?` · 附件 ${d.exhibits.length} 份`:''}</span>`:'';
+  const bound=supported?'':`<span class="pill p-fail">未支援</span><span class="sub">未抽取任何可定址 Item — 這是誠實邊界,非 100% 完成(見 filing_class)</span>`;
   $('#sMeta').innerHTML=`<span><b>${esc(m.source)}</b> · ${esc(m.form)} ${esc(m.report_date)}</span>
-    <span>filing_class <b class="mono">${esc(m.filing_class)}</b></span>
+    <span>filing_class ${supported?`<b class="mono">${esc(m.filing_class)}</b>`:`<span class="pill p-fail">${esc(m.filing_class)}</span>`}</span>
     ${m.xbrl_item8?`<span>Item 8 XBRL ${pill(m.xbrl_item8)}</span>`:''}
-    ${cov}
+    ${cov}${bound}
     <span>parse <b>${m.latency_ms} ms</b></span>
     ${(m.pipeline_warnings||[]).length?`<span class="pill p-warn" title="${esc((m.pipeline_warnings||[]).join(' | '))}">pipeline warnings ${(m.pipeline_warnings||[]).length}</span>`:''}`;
   const tb=$('#sTable tbody');tb.innerHTML='';
@@ -375,6 +380,8 @@ function renderSec(d){
     tr.onclick=()=>{selectRow(e.code);showItem(e.code);};
     tb.appendChild(tr);
   });
+  if(!tb.children.length)   // 0-item/unsupported: never leave the table silently blank
+    tb.innerHTML=`<tr><td colspan="6" class="sub" style="padding:1rem">未抽取任何可定址 Item(filing_class <b class="mono">${esc(m.filing_class)}</b> — 誠實邊界,非 100% 完成)。</td></tr>`;
 }
 
 let SEC_ITEM_LOADING=false;

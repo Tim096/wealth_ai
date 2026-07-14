@@ -318,7 +318,7 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 | Repair(根因 1,8437826) | verifier **baseline-subtraction**:t0(agent 動作前)以空 extracted 跑 `_check_success`,t0 即成立的條件視為 landmark 剔除;全剔除後空條件流進 open-ended gate → 誠實 **unknown**,絕不 vacuous pass(`download_exists` t0=unknown 不誤剔)。planner 端 `_task_echo` guard 擋任務句 echo 條件 |
 | Repair(根因 2,3431335) | extract_text 成功結果 append 進 `extracted['answer']`(存 `TaskRun.answer` + UI「📋 擷取內容」);verifier 新條件型別 **answer_matches**(有 answer 且 regex match→pass;不 match→fail;沒 answer→fail,不吃自述;regex 不可編譯→unknown)。verifier 校準集加 answer_wrong corruption class(2 case 全 fail),46→50 |
 | Repair(根因 3,1c8f103) | `vision_escalation_reason` 卡住偵測 → auto 切入 Set-of-Marks + gpt-5.5 視覺(`AGENT_VISION` 未設=auto 新預設);scroll PLAYBOOK(off-screen 目標);executor 新分頁跟隨。vision 純感知,verifier 仍唯一裁判(escalation 測試斷言 status!=pass)|
-| Why It Still Failed | (已修結構性根因;wrapper 10-K 正文還原仍是 documented next step,見 FG-SEC-004/005)|
+| Why It Still Failed | (三重結構性根因均已修;附註:wrapper / cross-reference-index 10-K 正文還原此後亦已落地,見 FG-SEC-007/008)|
 | Related Prompt | prompts/browser_agent/(preflight 條件品質、answer channel 設計)|
 | Related Commit | 8437826(baseline-subtraction)+ 3431335(answer channel)+ 1c8f103(auto vision / scroll / new-tab)|
 

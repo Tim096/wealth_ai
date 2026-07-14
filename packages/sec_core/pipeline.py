@@ -324,8 +324,9 @@ def extract_from_html(
     )
     if xref.detected:
         result.warnings.append(
-            f"cross-reference-index 10-K detected: {xref.reason}. Items are pointers into the "
-            f"annual report (needs_review); body resolution is a documented next step."
+            f"cross-reference-index 10-K detected: {xref.reason}. Page-anchored Item bodies are "
+            f"reassembled from the annual report as source-exact spans (partial, needs_review); "
+            f"Items pointing to a separately filed proxy statement stay incorporated_by_reference."
         )
     if not candidates:
         result.warnings.append("no item heading candidates found — unsupported or non-10-K document")

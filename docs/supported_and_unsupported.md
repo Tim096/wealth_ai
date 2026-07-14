@@ -11,12 +11,12 @@ pipeline 產生的**確切字串值**(非概念):
 | Filing class(`ExtractionResult.filing_class`)| 說明 | item status(`ItemSegment.status`)| 可信度 |
 |---|---|---|---|
 | **standard** | 正文含可定址 Item N 章節(AAPL/MSFT/WMT/CAT/KO/NEM/MRNA/NVDA…) | `pass`/`incorporated_by_reference`/`reserved`/`missing`/`ambiguous`/`partial` | 高;Item 8 另經 XBRL 認證 |
-| **cross_reference_index**(Intel/Citi/GE) | 主文件是交叉引用索引,正文以印刷頁碼分頁 | `partial`(resolved_from_page_anchor, needs_review)供有頁碼指標的 item;proxy-only 的 10–14 為 `incorporated_by_reference`;`missing`/`reserved` | 頁碼錨點還原 source-exact span;proxy 指標誠實標記,**不偽裝成內容** |
+| **cross_reference_index**(Intel/Citi/GE) | 主文件是交叉引用索引,正文以印刷頁碼分頁 | `partial`(resolved_from_page_anchor, needs_review)供有頁碼指標的 item;proxy-only 的 10–14 為 `incorporated_by_reference`;XBRL 矛盾或污染頁碼圖降為 `unsupported`;`missing`/`reserved` | 頁碼錨點還原 source-exact span(多段 body 以 `source_ranges[]` 串接);proxy 指標誠實標記,**不偽裝成內容**;無法可信解析者降 `unsupported` |
 | **non_10k** | 找不到任何 item heading(結構不符) | 全部 `missing` + 警告 | 誠實標為不支援 |
 | **unsupported_scanned_or_binary** | 掃描 PDF / 非 HTML / binary(**code-enforced**:`%PDF` 開頭、含 NUL、或無 HTML tag) | 空(無 segments)+ 警告 | 明確拒絕,建議 OCR path |
 | **non_10k_filer**(resolver 層,20-F/40-F 外國私人發行人:TSM/SONY/BABA)| 公司 EDGAR 紀錄中**零筆** 10-K/10-K/A → 不進 pipeline,`NotA10KFilerError`(`sec_core/resolver.py`)| —(未抽取,typed exception)| **明確拒絕 + 指出實際 form**:訊息列出該公司真正申報的 form 分布(如 TSM:20-F×26、6-K×1320)並明講「僅支援 10-K item 抽取」;live evidence:`data/sec_eval/rejection/foreign_filer_rejection.json` |
 
-> `ItemStatus` enum 亦定義 `unsupported`,但目前程式以 `filing_class` + `missing` 表達不支援,尚未在單一 item 上 emit `unsupported`——如實揭露此 doc/code 命名細節。
+> `ItemStatus` 的 `unsupported` **現在會在單一 item 上 emit**:`certify_item8` 在 SEC XBRL 三項數字與 Item 8 span 矛盾時,把該 item 由 `pass`/`partial` 降為 `unsupported`(如 INTC FY2019 Item 8);污染頁碼圖(每頁字數低於守衛)解析出的 span 也降為 `unsupported`。**filing 級**不支援仍以 `filing_class`(unsupported_scanned_or_binary / non_10k)+ `missing` 表達——item 級與 filing 級並存,如實揭露。
 
 ## Format-era 支援表(2026-07-10 分層抽樣實測,T2-4)
 

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import os
 import threading
+import types
 
 os.environ["PREWARM_TICKERS"] = ""  # before app import: no EDGAR at startup
 
@@ -149,3 +150,36 @@ def test_large_json_is_gzipped(monkeypatch):
     job.payload["items"] = job.payload["items"] * 500   # >minimum_size body
     r = client.get(f"/api/jobs/{jid}", headers={"Accept-Encoding": "gzip"})
     assert r.headers.get("content-encoding") == "gzip"
+
+
+# ------------------------------------------------- honest display boundary flag
+def _seg(**kw):
+    base = dict(item_code="1", canonical_title="Business", status="pass",
+                confidence=0.9, provenance="offset_exact_span", needs_review=False,
+                source_ranges=[], start_offset=0, end_offset=50,
+                text_sha256="0" * 64, xbrl_check="", topic_check="", warnings=[])
+    base.update(kw)
+    return types.SimpleNamespace(**base)
+
+
+def _result(filing_class, segments, text):
+    return types.SimpleNamespace(filing_class=filing_class, segments=segments,
+                                 doc=types.SimpleNamespace(text=text), warnings=[])
+
+
+def test_items_payload_flags_unsupported_filing_not_supported():
+    """Fake-PDF path: 0 items over an empty body makes coverage_ratio == 1.0. The
+    honest boundary must expose meta.supported=False so the UI never renders that
+    empty result as a 100%-complete success."""
+    payload = sec_main._items_payload(
+        _result("unsupported_scanned_or_binary", [], ""), {"source": "f.pdf"}, [])
+    assert payload["items"] == []
+    assert payload["meta"]["supported"] is False     # explicit machine-readable gate
+    assert payload["meta"]["coverage"] is None       # vacuous 1.0 dropped from payload
+
+
+def test_items_payload_flags_standard_filing_supported():
+    payload = sec_main._items_payload(
+        _result("standard", [_seg()], "x" * 100), {"source": "AAPL"}, [])
+    assert payload["items"]
+    assert payload["meta"]["supported"] is True

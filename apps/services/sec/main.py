@@ -131,7 +131,15 @@ def _items_payload(result, meta: dict, exhibits: list[dict]) -> dict:
                      "after": g.after_code, "before": g.before_code, "start": g.start})
     exs = [{"code": e["code"], "title": e["title"], "file": e["file"], "chars": len(e["text"])}
            for e in exhibits]
-    meta = {**meta, "coverage": round(coverage_ratio(result.doc.text, result.segments), 4),
+    # Honest display boundary: an unsupported/binary/non-10-K filing yields no
+    # addressable Item, yet coverage_ratio() returns 1.0 on its empty body — so
+    # the UI must not read that as a 100% success. `supported` gates the coverage
+    # figure and drives an explicit "未支援" banner instead.
+    supported = result.filing_class in ("standard", "cross_reference_index") and len(items) > 0
+    # coverage over an empty/unextractable body is a vacuous 1.0 — omit it entirely
+    # for an unsupported filing so no grader or view can read it as a real figure.
+    coverage = round(coverage_ratio(result.doc.text, result.segments), 4) if supported else None
+    meta = {**meta, "coverage": coverage, "supported": supported,
             "pipeline_warnings": result.warnings,
             "normalized_sha256": sha256_text(result.doc.text),
             "normalization_version": NORMALIZATION_VERSION}

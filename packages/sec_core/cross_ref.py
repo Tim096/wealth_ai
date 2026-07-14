@@ -35,7 +35,7 @@ from sec_core.confidence import ConfidenceComponent as CC
 from sec_core.headings import VALID_CODES, HeadingCandidate
 from sec_core.items import CANONICAL_ITEM_TITLES, ItemSegment
 from sec_core.normalize import NormalizedDocument
-from sec_core.page_map import build_page_map, resolve_page_ref
+from sec_core.page_map import build_page_map, resolve_page_ranges, resolve_page_ref
 
 # a page reference right after a heading: "Pages 37-51", "49-62", "4-36, 121-127"
 _PAGE_REF_RE = re.compile(
@@ -48,6 +48,17 @@ _MIN_CLUSTERED_ITEMS = 8      # need most of the 10-K's items in one block
 _CLUSTER_SPAN = 8_000        # ...all within this many normalized chars
 _MIN_PAGE_REF_RATIO = 0.25   # ...and a meaningful fraction point to page ranges
 _MAX_INDEX_GAP = 300         # ...OR the headings are packed with no body between them
+# A real printed 10-K page holds thousands of chars. When a resolved body
+# averages fewer than this per page, the page-number map was polluted (a stray
+# financial-data table threaded increasing numbers into the pagination) and the
+# span is an index/TOC page, not the body — mark unsupported, never a partial.
+_MIN_CHARS_PER_PAGE = 300
+# When the EARLIEST single page range already resolves to at least this many
+# chars, it is the item's real body — use it alone (unchanged behavior; Citi's
+# Item 7 '8-36' = 86K). Only when the earliest range is smaller than this is the
+# body plausibly split across later ranges (Intel MD&A: a 2-page intro on 4-5,
+# the real body on 18-39), triggering multi-range source_ranges[] reassembly.
+_MIN_SINGLE_RANGE_CHARS = 20_000
 _NONE_LINE_RE = re.compile(r"^(none|not\s+applicable|\[?reserved\]?)\.?$", re.IGNORECASE)
 
 
@@ -249,12 +260,15 @@ def build_cross_reference_segments(
 
         if code in index.page_refs:
             ref = index.page_refs[code]
-            # try to RESOLVE the pointer to a real source-exact span via the
-            # printed page-number footers (robust: printed data, not a guess)
-            span = resolve_page_ref(page_map, ref, avoid=claimed_spans)
-            if span is not None and span[1] - span[0] > 400:
-                claimed_spans.add(span)
-                start, end = span
+            # First try the earliest single range (the item's primary body start,
+            # printed data not a guess). When it is already a substantial body, use
+            # it ALONE — the index's later ranges are supplementary/shared
+            # cross-references we must not greedily absorb (Citi lists '64-120'
+            # under both Item 7 and Item 7A; earliest-only keeps them distinct).
+            single = resolve_page_ref(page_map, ref, avoid=claimed_spans)
+            if single is not None and single[1] - single[0] >= _MIN_SINGLE_RANGE_CHARS:
+                claimed_spans.add(single)
+                start, end = single
                 text = doc.slice(start, end)
                 bd = ConfidenceBreakdown(components=[
                     CC(name="content_substantiveness", score=1.4, max_score=2.0,
@@ -272,6 +286,72 @@ def build_cross_reference_segments(
                         f"cross-reference-index 10-K: Item body resolved from the annual-report "
                         f"page range {ref} via printed page-number anchors (source-exact span). "
                         "Marked partial + needs_review because page-boundary alignment is "
+                        "heuristic — verify start/end against the filing. The index may "
+                        "over-claim page ranges (e.g. Item 1 '4-36' vs MD&A '8-36'), so a "
+                        "resolved span can overlap an adjacent item; identical spans are "
+                        "de-duplicated but nesting is possible."],
+                ))
+                continue
+            # Earliest range is tiny or absent — the real body is split across later
+            # page ranges (Intel MD&A: a 2-page intro on 4-5, the body on 18-39).
+            # Reassemble ALL declared ranges into source_ranges[] rather than
+            # truncating to the small first range.
+            res = resolve_page_ranges(page_map, ref, avoid=claimed_spans)
+            total = sum(e - s for s, e in res.spans)
+            if res.spans and total > 400:
+                # plausibility guard: a body that resolves to too few chars-per-page
+                # means the page-number map was polluted — the span is an index/TOC
+                # page, not the body. Mark unsupported, never a truncated partial.
+                if res.pages >= 3 and total < res.pages * _MIN_CHARS_PER_PAGE:
+                    es = index.entry_span.get(code, (index.index_start, index.index_start))
+                    bd = ConfidenceBreakdown(components=[
+                        CC(name="content_substantiveness", score=0.0, max_score=2.0,
+                           reason=f"page range {ref} resolved to only {total} chars over "
+                                  f"~{res.pages} pages — printed page-number map polluted"),
+                        CC(name="heading_strength", score=1.0, max_score=2.0,
+                           reason="item heading present in the cross-reference index"),
+                    ])
+                    breakdowns[code] = bd
+                    segments.append(ItemSegment(
+                        filing_id=filing_id, item_code=code, canonical_title=canonical,
+                        extracted_heading=heading, start_offset=es[0], end_offset=es[1],
+                        text_sha256="", status="unsupported", confidence=bd.total,
+                        provenance="unresolved", needs_review=True,
+                        warnings=[
+                            f"cross-reference-index 10-K: page range {ref} resolved to only "
+                            f"{total} chars across ~{res.pages} pages "
+                            f"(~{total // max(res.pages, 1)} chars/page) — far too sparse for a "
+                            "real body. The printed page-number map is polluted (a financial-data "
+                            "table threaded stray numbers into the pagination), so this span is an "
+                            "index/TOC page, not the item body. Marked unsupported rather than "
+                            "served as a truncated partial."],
+                    ))
+                    continue
+                for sp in res.spans:
+                    claimed_spans.add(sp)
+                multi = res.spans if len(res.spans) > 1 else []
+                start, end = res.spans[0][0], res.spans[-1][1]
+                text = "".join(doc.slice(s, e) for s, e in res.spans)
+                bd = ConfidenceBreakdown(components=[
+                    CC(name="content_substantiveness", score=1.4, max_score=2.0,
+                       reason=f"resolved page range {ref} to a {total}-char body span"
+                              + (f" reassembled from {len(res.spans)} ranges" if multi else "")),
+                    CC(name="heading_strength", score=1.5, max_score=2.0,
+                       reason="page anchor resolved from printed page-number footers"),
+                ])
+                breakdowns[code] = bd
+                segments.append(ItemSegment(
+                    filing_id=filing_id, item_code=code, canonical_title=canonical,
+                    extracted_heading=heading, start_offset=start, end_offset=end,
+                    source_ranges=multi,
+                    text_sha256=sha256_text(text), status="partial", confidence=bd.total,
+                    provenance="resolved_from_page_anchor", needs_review=True,
+                    warnings=[
+                        f"cross-reference-index 10-K: Item body resolved from the annual-report "
+                        f"page range {ref} via printed page-number anchors (source-exact span). "
+                        + (f"Body reassembled from {len(res.spans)} page ranges totalling "
+                           f"{total} chars. " if multi else "")
+                        + "Marked partial + needs_review because page-boundary alignment is "
                         "heuristic — verify start/end against the filing. The index may "
                         "over-claim page ranges (e.g. Item 1 '4-36' vs MD&A '8-36'), so a "
                         "resolved span can overlap an adjacent item; identical spans are "

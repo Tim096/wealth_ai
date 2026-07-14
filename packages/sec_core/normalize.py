@@ -14,6 +14,13 @@ from dataclasses import dataclass, field
 from html import unescape
 from html.parser import HTMLParser
 
+NORMALIZATION_VERSION = "1.0"
+"""Contract version for normalize_html's output. Item offsets and sha256 are only
+independently verifiable against a KNOWN normalizer revision, so this is stamped
+on the /normalized download and each item's normalized_sha. Bump whenever the
+normalized output for the SAME raw HTML could change (char map, block/cell tags,
+entity handling, TOC-backlink stripping)."""
+
 BLOCK_TAGS = {
     "p", "div", "br", "tr", "li", "table", "section", "article",
     "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "hr", "center",

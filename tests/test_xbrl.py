@@ -65,9 +65,47 @@ def test_certify_item8_gates_status_on_contradiction():
 
     chk = certify_item8(FakeResult(), FakeFetcher(), cik=1, accession="0000000000-00-000000")
     assert chk.verdict == "contradicted"
+    assert seg.status == "unsupported"   # a pass with no XBRL figures is demoted, not served
     assert seg.needs_review is True
     assert seg.xbrl_check.startswith("contradicted")
     assert any("XBRL oracle contradicts" in w for w in seg.warnings)
+
+
+def test_certify_item8_demotes_contradicted_partial_to_unsupported():
+    """A cross-reference-index Item 8 resolved to a `partial` span that XBRL
+    contradicts (e.g. a polluted page map landed on the financials INDEX page,
+    not the statements) must be demoted to `unsupported` — never served as a
+    truncated partial that reads like content (INTC FY2019 regression)."""
+    from sec_core.items import ItemSegment
+    from sec_core.xbrl import certify_item8
+
+    seg = ItemSegment(filing_id="f", item_code="8", canonical_title="Financial Statements",
+                      extracted_heading="Item 8.", start_offset=0, end_offset=50,
+                      text_sha256="x", status="partial", confidence=0.7,
+                      provenance="resolved_from_page_anchor", needs_review=True)
+
+    class FakeResult:
+        segments = [seg]
+        def text_of(self, code):  # the financials-index page, none of the figures
+            return "Index to Consolidated Financial Statements ... see page 66."
+
+    facts_json = {"facts": {"us-gaap": {
+        "Revenues": {"units": {"USD": [{"accn": "0000000000-00-000000", "form": "10-K", "val": 71_965_000_000}]}},
+        "NetIncomeLoss": {"units": {"USD": [{"accn": "0000000000-00-000000", "form": "10-K", "val": 21_048_000_000}]}},
+        "Assets": {"units": {"USD": [{"accn": "0000000000-00-000000", "form": "10-K", "val": 136_524_000_000}]}},
+    }}}
+
+    class FakeResp:
+        content = __import__("json").dumps(facts_json).encode()
+
+    class FakeFetcher:
+        def get(self, url):
+            return FakeResp()
+
+    chk = certify_item8(FakeResult(), FakeFetcher(), cik=1, accession="0000000000-00-000000")
+    assert chk.verdict == "contradicted"
+    assert seg.status == "unsupported"
+    assert seg.needs_review is True
 
 
 def test_key_facts_matched_by_accession():

@@ -8,7 +8,7 @@ SPEC 第 10 節要求保存關鍵 AI 協作過程。這裡不是完整 chat arch
 |---|---:|---|
 | **Verbatim transcript excerpt** | 5 | `---` 後標明 row 的 user/assistant 文字逐字保留；秘密與過長工具內容只以明確 marker 遮蔽或截斷 |
 | **Verbatim prompt artifact** | 1 | workflow 實際保存的 prompt template；不是人機對話 transcript |
-| **Derived decision record** | 19 | 依 Git、code、artifacts、docs 或 session evidence 重建決策；`Prompt` 段是摘要，不是逐字引言 |
+| **Derived decision record** | 20 | 依 Git、code、artifacts、docs 或 session evidence 重建決策；`Prompt` 段是摘要，不是逐字引言 |
 
 目前共 25 份紀錄。分類讓 reviewer 能分辨哪些字句可逐字核對、哪些是可由 code、artifacts 與 tests 驗證的設計紀錄。
 

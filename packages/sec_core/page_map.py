@@ -129,3 +129,58 @@ def resolve_page_ref(pm: PageMap, page_ref: str,
             continue
         return start, end
     return None
+
+
+@dataclass
+class PageResolution:
+    spans: list[tuple[int, int]]  # document-ordered, merged source-exact spans
+    pages: int                    # number of distinct nominal pages they cover
+
+
+def resolve_page_ranges(pm: PageMap, page_ref: str,
+                        avoid: object = ()) -> PageResolution:
+    """Resolve ALL page ranges in `page_ref` to source-exact spans (not just the
+    earliest, like resolve_page_ref). A cross-reference index often splits one
+    item's body across several ranges ("Pages 4-5, 18-39, 45-46"); returning only
+    the first locks onto a tiny intro cross-ref and DROPS the real body. We
+    resolve every in-map range, merge overlapping/adjacent spans, and return them
+    in document order so the caller can reassemble the full body. The caller only
+    reaches for this when the earliest single range is too small to be the body,
+    so a substantial-first-range item (Citi's Item 7 '8-36') keeps its clean
+    single-range resolution and is never over-assembled here.
+
+    `avoid` skips spans already claimed by earlier items (no two items share a
+    byte-identical span). `pages` counts the distinct nominal pages covered — a
+    plausibility signal: a body that resolves to far too few chars-per-page means
+    the printed page-number map was polluted (a financial-data table threaded
+    stray increasing numbers into the pagination), so the span is an index/TOC
+    page, not the body."""
+    if not pm.ok:
+        return PageResolution([], 0)
+    ranges = [(int(m.group(1)), int(m.group(2))) for m in _PAGE_RANGE.finditer(page_ref)]
+    if not ranges:
+        nums = [int(x) for x in _BARE_NUM.findall(page_ref)]
+        ranges = [(n, n) for n in nums]
+    valid = [(a, min(b, pm.hi_page)) for a, b in ranges if pm.lo_page <= a <= pm.hi_page]
+    claimed = set(avoid)
+    spans: list[tuple[int, int]] = []
+    page_set: set[int] = set()
+    for a, b in sorted(valid):
+        start = pm.marker_end.get(a - 1) or pm.marker_start.get(a)
+        end = pm.marker_start.get(b) or pm.marker_end.get(b)
+        if start is None or end is None or end <= start:
+            continue
+        if (start, end) in claimed:
+            continue
+        spans.append((start, end))
+        page_set.update(range(a, b + 1))
+    if not spans:
+        return PageResolution([], 0)
+    spans.sort()
+    merged: list[tuple[int, int]] = [spans[0]]
+    for s, e in spans[1:]:
+        if s <= merged[-1][1]:                       # overlapping or adjacent
+            merged[-1] = (merged[-1][0], max(merged[-1][1], e))
+        else:
+            merged.append((s, e))
+    return PageResolution(merged, len(page_set))

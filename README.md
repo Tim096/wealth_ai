@@ -130,7 +130,7 @@ Known limitations and planned experiments: [TODO.md](TODO.md).
 | 題目 | 內容 | 狀態 |
 |---|---|---|
 | 題目一 Browser Agent | 受控 action space、**preflight task contract 凍結並揭露條件來源**、deterministic verifier、a11y selector 自修復、selector memory、**Agent Mode(LLM 驅動,預設接 Codex OAuth via gateway)**、**卡住時自動視覺升級(SoM 截圖 + gpt-5.5 視覺)**、**答案交付通道(查數字/問答)**、code-enforced capability guard | **可執行**:selector-repair killer demo(`tools/browser_killer_demo.py`)+ live LLM 驅動(`tools/browser_agent_live.py`) |
-| 題目二 SEC Extractor | 10-K Item 1–16 source-exact 抽取、TOC 防禦、cross-reference-index 偵測、**same-file wrapper page-anchor 還原**、**XBRL 認證(Item 8)**、**topic-consistency oracle(全 item)** | **可執行**:11 家真實 10-K + Intel/Citi(`tools/eval_one.py`, `tools/certify.py`) |
+| 題目二 SEC Extractor | 10-K Item 1–16 source-exact 抽取、TOC 防禦、cross-reference-index 偵測、**same-file wrapper page-anchor 還原**、**多段頁碼 body 重組(`source_ranges[]`)**、**XBRL 認證(Item 8)**、**topic-consistency oracle(全 item)** | **可執行**:11 家真實 10-K + Intel(`tools/eval_one.py INTC`)/Citi(pseudo-ticker,`tools/eval_one.py CITI --cik 831001 --accession <acc>`)、`tools/certify.py` |
 | 共用層 | evidence schema / library、三態 verdict、eval case、LLM 成本紀錄 | Browser deployed path 會寫 EvidenceStore；SEC deployed path 目前以 raw bytes + offsets/hash + job payload 稽核，尚未注入 JSONL store |
 | Eval Dashboard | 兩題 eval、XBRL 認證、browser repair trace(真實數據) | `apps/web/eval-dashboard/`,自包含 HTML |
 
@@ -196,7 +196,7 @@ Task 1 用你自己的 **Codex OAuth**(預設走 gateway)實測:見 [docs/setup_
 | Class | 行為 |
 |---|---|
 | standard | offset-exact span 抽取;Item 8 另經 XBRL 認證 |
-| cross_reference_index(Intel/Citi/GE) | 自動偵測;items 標 `incorporated_by_reference` + `needs_review`,**不偽裝成內容** |
+| cross_reference_index(Intel/Citi/GE) | 自動偵測;可解析的 item body 由印刷頁碼錨點還原成 source-exact span(`partial` / `resolved_from_page_anchor`),body 被 index 拆成多段時以 `source_ranges[]` **多段重組**(如 Intel MD&A);頁碼圖被財報數字表污染或 XBRL 矛盾者**誠實降級 `unsupported`**,無錨點者留 `incorporated_by_reference`,一律 `needs_review`,**絕不偽裝成內容** |
 | non_10k | 誠實標 unsupported |
 
 輸入:ticker+year / CIK+year / accession / SEC URL / HTML upload / TXT upload。掃描 PDF:`unsupported`(正確作法是 OCR,見 insights)。

@@ -15,6 +15,25 @@ import apps.services.sec.main as sec_main
 from apps.services.sec.jobs import JobStore
 
 
+# ----------------------------------------------------------- health provenance
+def test_health_exposes_build_sha_and_pipeline_rev(monkeypatch):
+    """Deployment traceability: /api/health surfaces the deployed commit and the
+    pipeline output-contract revision, mirroring wealth-agent."""
+    from sec_core import PIPELINE_REV
+
+    monkeypatch.setenv("DEPLOY_COMMIT_SHA", "a" * 40)
+    h = TestClient(sec_main.app).get("/api/health").json()
+    assert h["ok"] is True and h["service"] == "wealth-sec"
+    assert h["build_sha"] == "a" * 40 and h["build_attested"] is True
+    assert h["pipeline_rev"] == PIPELINE_REV
+
+
+def test_health_build_attested_false_for_bad_sha(monkeypatch):
+    monkeypatch.setenv("DEPLOY_COMMIT_SHA", "not-a-real-sha")
+    h = TestClient(sec_main.app).get("/api/health").json()
+    assert h["build_attested"] is False
+
+
 # --------------------------------------------------------------- JobStore memo
 def test_memo_lookup_returns_done_job():
     store = JobStore(max_workers=1)

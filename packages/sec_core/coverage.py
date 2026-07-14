@@ -57,8 +57,13 @@ def partition_document(text: str, segments) -> list[Block]:
     n = len(text)
     if n == 0:
         return []
-    spans = [(s.start_offset, min(s.end_offset, n), s.item_code)
-             for s in segments if s.end_offset > s.start_offset and s.start_offset < n]
+    # A multi-range item owns only its actual (start, end) spans — expanding it
+    # here (rather than its bounding envelope) keeps between-range prose as an
+    # honest unclassified gap instead of falsely attributing it to this item.
+    spans = [(a, min(b, n), s.item_code)
+             for s in segments
+             for a, b in (getattr(s, "source_ranges", None) or [(s.start_offset, s.end_offset)])
+             if b > a and a < n]
     pts = {0, n}
     for a, b, _ in spans:
         pts.add(a)

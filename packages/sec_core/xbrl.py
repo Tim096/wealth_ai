@@ -114,10 +114,16 @@ def certify_item8(result, fetcher, cik: int, accession: str) -> XbrlCheck:
     seg = next(s for s in result.segments if s.item_code == "8")
     chk = validate_span(result.text_of("8"), facts)
     seg.xbrl_check = f"{chk.verdict}: {chk.detail}"
-    if chk.verdict == "contradicted" and seg.status == "pass":
+    if chk.verdict == "contradicted" and seg.status in ("pass", "partial"):
+        # An Item 8 span that contains NONE of the XBRL headline figures is not
+        # the financial statements — whether we called it a pass or a resolved
+        # partial. Demote to unsupported rather than serve a wrong/truncated body
+        # as content (a cross-reference partial on a polluted page map lands here).
+        seg.status = "unsupported"
         seg.needs_review = True
         seg.warnings.append(
-            "XBRL oracle contradicts this pass: none of the reported revenue/net income/assets "
-            "appear in the extracted Item 8 span — likely a boundary error. Flagged needs_review."
+            "XBRL oracle contradicts this Item 8: none of the reported revenue/net income/assets "
+            "appear in the extracted span — the financial statements are not here (boundary error "
+            "or polluted page map). Demoted to unsupported."
         )
     return chk

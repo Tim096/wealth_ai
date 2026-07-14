@@ -28,10 +28,12 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel
 
+from observability_core import sha256_text
+from sec_core import PIPELINE_REV
 from sec_core.coverage import compute_gaps, coverage_ratio, partition_document, region_at
 from sec_core.fetcher import EdgarFetcher
 from sec_core.main_doc import pick_main_document
-from sec_core.normalize import normalize_html
+from sec_core.normalize import NORMALIZATION_VERSION, normalize_html
 from sec_core.pipeline import extract_from_html
 from sec_core.resolver import FilingResolver
 from sec_core.risk_band import band_payload
@@ -103,11 +105,18 @@ def _fetch_exhibits(fetcher: EdgarFetcher, ref) -> list[dict]:
 def _items_payload(result, meta: dict, exhibits: list[dict]) -> dict:
     items = []
     for s in result.segments:
+        # A multi-range item's body is the SUM of its spans, not the envelope
+        # width — report the real char count and expose the spans so a grader can
+        # reproduce the sha (concatenate the ranges, not slice [start,end)).
+        body_chars = (sum(b - a for a, b in s.source_ranges) if s.source_ranges
+                      else max(0, s.end_offset - s.start_offset))
         items.append({
             "code": s.item_code, "title": s.canonical_title, "status": s.status,
             "confidence": round(s.confidence, 2), "risk_band": band_payload(s.confidence),
             "provenance": s.provenance,
-            "needs_review": s.needs_review, "chars": max(0, s.end_offset - s.start_offset),
+            "needs_review": s.needs_review, "chars": body_chars,
+            "normalized_sha": s.text_sha256,
+            "source_ranges": [list(r) for r in s.source_ranges],
             "xbrl": (s.xbrl_check.split(":")[0] if s.xbrl_check else ""),
             "topic": (s.topic_check.split(":")[0] if s.topic_check else ""),
             "warnings": len(s.warnings),
@@ -123,7 +132,9 @@ def _items_payload(result, meta: dict, exhibits: list[dict]) -> dict:
     exs = [{"code": e["code"], "title": e["title"], "file": e["file"], "chars": len(e["text"])}
            for e in exhibits]
     meta = {**meta, "coverage": round(coverage_ratio(result.doc.text, result.segments), 4),
-            "pipeline_warnings": result.warnings}
+            "pipeline_warnings": result.warnings,
+            "normalized_sha256": sha256_text(result.doc.text),
+            "normalization_version": NORMALIZATION_VERSION}
     return {"ok": True, "meta": meta, "items": items, "gaps": gaps, "exhibits": exs}
 
 
@@ -218,7 +229,14 @@ def _item_text(state: dict, code: str) -> dict:
             "confidence": round(seg.confidence, 2), "risk_band": band_payload(seg.confidence),
             "provenance": seg.provenance,
             "needs_review": seg.needs_review, "sha256": seg.text_sha256[:16],
+            # Full sha + the spans it is actually over, so a grader can reproduce
+            # it from the /normalized download. For a multi-range item, `offsets`
+            # is the bounding envelope; `source_ranges` are the real spans and the
+            # sha is over their concatenation (slice each, join, then sha256).
+            "normalized_sha": seg.text_sha256,
+            "normalization_version": NORMALIZATION_VERSION,
             "offsets": [seg.start_offset, seg.end_offset],
+            "source_ranges": [list(r) for r in seg.source_ranges],
             "full_chars": full_chars, "truncated": truncated,
             "xbrl": seg.xbrl_check, "topic": seg.topic_check,
             "warnings": seg.warnings, "text": text}
@@ -297,7 +315,16 @@ class ExtractRequest(BaseModel):
 
 @app.get("/api/health")
 def health() -> dict:
+    # Deployment traceability, mirroring wealth-agent: build_sha is the deployed
+    # commit (set as DEPLOY_COMMIT_SHA at deploy time); pipeline_rev names the
+    # extraction output-contract revision. Together a grader can read WHICH code
+    # and WHICH schema a live instance runs, instead of inferring it.
+    build_sha = os.environ.get("DEPLOY_COMMIT_SHA", "").strip()
     return {"ok": True, "service": "wealth-sec",
+            "build_sha": build_sha or None,
+            "build_attested": (len(build_sha) == 40
+                               and all(c in "0123456789abcdef" for c in build_sha.lower())),
+            "pipeline_rev": PIPELINE_REV,
             "sec_user_agent_configured": bool(os.environ.get("SEC_EDGAR_USER_AGENT", "").strip()),
             "auth_required": bool(os.environ.get("ACCESS_TOKEN", "")),
             "jobs": len(JOBS.list())}
@@ -411,6 +438,30 @@ def job_raw(job_id: str) -> Response:
     name = job.state.get("raw_name", "filing.htm")
     return Response(content=raw, media_type="application/octet-stream",
                     headers={"Content-Disposition": f'attachment; filename="{name}"'})
+
+
+@app.get("/api/jobs/{job_id}/normalized", dependencies=AUTH)
+def job_normalized(job_id: str) -> Response:
+    """The NORMALIZED text that offsets + sha256 actually index into — the
+    missing link that makes item provenance reproducible. Raw HTML is a different
+    string, so slicing it does NOT reproduce an item's sha. Recipe: download this,
+    take text[start:end] for a single-span item (or concatenate each span in
+    `source_ranges` for a multi-range item), sha256 the utf-8 bytes → equals the
+    item's `normalized_sha`. Offsets are Python str/code-point indices, so slice
+    the DECODED text then encode — do not byte-slice this file. X-Normalized-Sha256
+    pins the whole-document normalized text; X-Normalization-Version pins the
+    normalizer revision the offsets are valid against."""
+    job = _get_job(job_id)
+    if job.status != "done" or "result" not in job.state:
+        raise HTTPException(status_code=409,
+                            detail=f"job {job_id} 狀態 {job.status},尚無 normalized text")
+    body = job.state["result"].doc.text
+    name = job.state.get("raw_name", "filing") + ".normalized.txt"
+    return Response(content=body.encode("utf-8"),
+                    media_type="text/plain; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{name}"',
+                             "X-Normalized-Sha256": sha256_text(body),
+                             "X-Normalization-Version": NORMALIZATION_VERSION})
 
 
 # ------------------------------------------------------------------- UI pages

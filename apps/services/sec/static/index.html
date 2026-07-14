@@ -207,10 +207,10 @@
         <div class="case-actions"><button class="chip" data-q="AAPL"><b>Run</b> AAPL</button></div>
       </article>
       <article class="case-card good" id="task2BodyCase">
-        <div class="case-label">✓ 目前做得好（cross-reference 正文）</div>
+        <div class="case-label">✓ 目前做得好（cross-reference 正文 + 多段重組）</div>
         <h3>INTC / C · Cross-reference body via page anchors</h3>
-        <p>辨識 <span class="mono">cross_reference_index</span> 後，用印刷頁碼錨點把另冊 annual report 正文解成 source-exact span：Citi 解出 <b>9 個 Item</b>（Risk Factors 88K、MD&amp;A 86K、Market Risk 207K、Financials 577K 字），INTC Item 8 經 SEC XBRL <b>3/3</b> 認證。每個 item 標 <span class="mono">partial</span> + needs_review，且不同 item 不共用 span（碰撞防護）。</p>
-        <p class="case-limit"><b>限制：</b>頁邊界對齊為啟發式，故標 partial / needs_review，非宣稱逐字精確。</p>
+        <p>辨識 <span class="mono">cross_reference_index</span> 後，用印刷頁碼錨點把另冊 annual report 正文解成 source-exact span：Citi 解出 <b>9 個 Item</b>（Risk Factors 88K、MD&amp;A 86K、Market Risk 207K、Financials 577K 字），INTC Item 8 經 SEC XBRL <b>3/3</b> 認證。當 index 把單一 item 的正文拆成<b>多段頁碼</b>時，以 <span class="mono">source_ranges[]</span> 逐段重組回完整正文（Intel FY2019 Item 7 由截斷的 <b>7.7K 還原成 5 段共 76K</b>、FY2020 為 128K），sha256 對整段串接可獨立重算。每個 item 標 <span class="mono">partial</span> + needs_review，且不同 item 不共用 span（碰撞防護）。</p>
+        <p class="case-limit"><b>限制：</b>頁邊界對齊為啟發式，故標 partial / needs_review，非宣稱逐字精確；歷史年度用年度選擇器切換（如 INTC FY2019/FY2020）。</p>
         <div class="case-actions">
           <button class="chip" data-q="INTC"><b>Run</b> INTC</button>
           <button class="chip" data-q="C"><b>Run</b> C</button>
@@ -218,8 +218,8 @@
       </article>
       <article class="case-card weak" id="task2WeakCase">
         <div class="case-label">⚠ 目前沒做好 / needs review</div>
-        <h3>Proxy-incorporated items &amp; 狀態校準</h3>
-        <p>指向另外申報 proxy statement 的 item（多為 Item 11/13/14）維持誠實 pointer 或 missing，不 join、不捏造；索引有頁碼者（如 INTC Item 10）才解為 partial。所有 resolved span 尚無未參與調參的人工 span gold 與 confidence 校準（見 TODO），頁邊界為啟發式。</p>
+        <h3>Proxy-incorporated items &amp; 污染頁碼圖的誠實降級</h3>
+        <p>指向另外申報 proxy statement 的 item（多為 Item 11/13/14）維持誠實 pointer 或 missing，不 join、不捏造。當印刷頁碼圖被財報數字表污染、解出的 span 每頁字數過低時（Intel FY2019 Item 8 解到的是財報<b>索引頁</b>而非報表本身，且 SEC XBRL 三項數字皆不在 span 內），<b>誠實降級為 <span class="mono">unsupported</span></b> —— 絕不當成 partial 正文交付。所有 resolved span 尚無未參與調參的人工 span gold 與 confidence 校準（見 TODO），頁邊界為啟發式。</p>
         <p class="case-limit"><b>自查已修：</b>&gt;900 字的純 incorporation 段落曾被誤標 <span class="mono">pass</span>（XOM Item 10 real filing 命中），已改為 positive-evidence 判定（數字密度區分真表格與純指標）。</p>
         <div class="case-actions">
           <button class="chip" data-q="INTC"><b>Review</b> INTC</button>

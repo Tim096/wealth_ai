@@ -70,6 +70,13 @@ class ItemSegment(BaseModel):
     extracted_heading: str
     start_offset: int
     end_offset: int
+    # Multi-range body reassembly: normally empty, meaning the body is the single
+    # source-exact span [start_offset, end_offset). When a cross-reference-index
+    # item's body is split across several printed page ranges ("Pages 4-5, 18-39,
+    # 45-46"), this holds every document-ordered (start, end) span; the body is
+    # their CONCATENATION, start/end_offset hold the bounding envelope, and
+    # text_sha256 is over the concatenation. text_of()/clean_text_of() honour it.
+    source_ranges: list[tuple[int, int]] = Field(default_factory=list)
     text_sha256: str
     status: ItemStatus
     confidence: float = Field(ge=0.0, le=1.0)

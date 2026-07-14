@@ -9,10 +9,24 @@
  "main_document": "jpm-20251231.htm",
  "main_document_score": 3.0,
  "raw_chars": 12927325,
- "latency_ms": 2524.4,
+ "normalized_chars": 1395823,
+ "latency_ms": 3128.2,
+ "llm_calls": 0,
+ "llm_tokens": 0,
+ "llm_usd": 0.0,
  "candidates": 44,
  "toc_rejected": 22,
- "needs_review_items": [],
+ "needs_review_items": [
+  "1C",
+  "3",
+  "7",
+  "7A",
+  "8",
+  "11",
+  "12",
+  "13",
+  "14"
+ ],
  "pipeline_warnings": [],
  "items": {
   "1": {
@@ -22,7 +36,12 @@
    "needs_review": false,
    "xbrl_check": "",
    "heading": "Item 1. Business.",
-   "span_chars": 39056,
+   "start_offset": 230303,
+   "end_offset": 269414,
+   "source_ranges": [],
+   "text_sha256": "6832adcda4456338ad4d5998d324ec7f07d723008f6e145b945658216c86a742",
+   "toc_listed": true,
+   "span_chars": 39111,
    "warnings": [
     "trimmed trailing page furniture: 8"
    ]
@@ -34,29 +53,44 @@
    "needs_review": false,
    "xbrl_check": "",
    "heading": "Item 1A. Risk Factors.",
+   "start_offset": 269416,
+   "end_offset": 381544,
+   "source_ranges": [],
+   "text_sha256": "d558e0594c1367486b26b5f4a931620ad9ac3ff1f113e46fd7bf411a8cc411db",
+   "toc_listed": true,
    "span_chars": 112128,
    "warnings": []
   },
   "1B": {
    "status": "pass",
-   "confidence": 0.865,
+   "confidence": 0.965,
    "provenance": "offset_exact_span",
    "needs_review": false,
    "xbrl_check": "",
    "heading": "Item 1B. Unresolved Staff Comments.",
+   "start_offset": 381544,
+   "end_offset": 381586,
+   "source_ranges": [],
+   "text_sha256": "aab4472de0c66721419b593614b15b81488b48ac39031d20f80b19cf2f6432d3",
+   "toc_listed": true,
    "span_chars": 42,
    "warnings": []
   },
   "1C": {
-   "status": "incorporated_by_reference",
-   "confidence": 0.663,
-   "provenance": "offset_exact_span",
-   "needs_review": false,
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
+   "needs_review": true,
    "xbrl_check": "",
    "heading": "Item 1C. Cybersecurity.",
-   "span_chars": 170,
+   "start_offset": 762158,
+   "end_offset": 771903,
+   "source_ranges": [],
+   "text_sha256": "79731ca3d5303c18ba3f9c8cacfab58af08aac92df1cad27fb0bada355ff1018",
+   "toc_listed": true,
+   "span_chars": 9745,
    "warnings": [
-    "body is a reference stub pointing to a page range (pages 146-149) of this filing; the span is the pointer text only, not the referenced content"
+    "wrapper 10-K: this item's body was deferred to the financial-report section bound after the last item heading; reassembled from the page range 'pages 146-149' via printed page-number anchors, then snapped to the item's own page-top section heading 'Cybersecurity risk' inside those pages (source-exact span in the same document). Marked partial + needs_review because boundary alignment is heuristic \u2014 verify start/end against the filing."
    ]
   },
   "2": {
@@ -66,28 +100,44 @@
    "needs_review": false,
    "xbrl_check": "",
    "heading": "Item 2. Properties.",
-   "span_chars": 2098,
+   "start_offset": 381756,
+   "end_offset": 383856,
+   "source_ranges": [],
+   "text_sha256": "74e84139fd1c428ec53508ef8c1a4a7783a148e0676baaffc31ead98f88d4617",
+   "toc_listed": true,
+   "span_chars": 2100,
    "warnings": []
   },
   "3": {
    "status": "incorporated_by_reference",
-   "confidence": 0.664,
+   "confidence": 0.492,
    "provenance": "offset_exact_span",
-   "needs_review": false,
+   "needs_review": true,
    "xbrl_check": "",
    "heading": "Item 3. Legal Proceedings.",
+   "start_offset": 383856,
+   "end_offset": 383960,
+   "source_ranges": [],
+   "text_sha256": "2fcc60721d3368cec72a0da847cf507ef31da02b3381188595f789f098e19713",
+   "toc_listed": true,
    "span_chars": 104,
    "warnings": [
-    "body is a reference stub pointing to a financial-statement note (Note 30) elsewhere in this filing; the span is the pointer text only, not the referenced content"
+    "body is a reference stub pointing to a financial-statement note (Note 30) elsewhere in this filing; the span is the pointer text only, not the referenced content",
+    "pointer-content guardrail: item is an incorporated-by-reference stub; content-level trust is capped and the pointer routed to review \u2014 the referenced body is outside this filing's span"
    ]
   },
   "4": {
    "status": "pass",
-   "confidence": 0.865,
+   "confidence": 0.965,
    "provenance": "offset_exact_span",
    "needs_review": false,
    "xbrl_check": "",
    "heading": "Item 4. Mine Safety Disclosures.",
+   "start_offset": 383960,
+   "end_offset": 384009,
+   "source_ranges": [],
+   "text_sha256": "1a8b4373ffb709aed969b4a9fe32cdd99ab51c5dd52ac39b591873120d53153d",
+   "toc_listed": true,
    "span_chars": 49,
    "warnings": [
     "trimmed trailing page furniture: 32"
@@ -100,58 +150,83 @@
    "needs_review": false,
    "xbrl_check": "",
    "heading": "Item 5. Market for Registrant's Common Equity, Related Stockholder Matters and Issuer Purchases of Equity Securities.",
-   "span_chars": 2635,
+   "start_offset": 384012,
+   "end_offset": 386661,
+   "source_ranges": [],
+   "text_sha256": "e60bff9464ac2a0a90ee00a474a7e31df7c7670ab8a7f2091aa678f08f0b093a",
+   "toc_listed": true,
+   "span_chars": 2649,
    "warnings": []
   },
   "6": {
    "status": "reserved",
-   "confidence": 0.656,
+   "confidence": 0.756,
    "provenance": "offset_exact_span",
    "needs_review": false,
    "xbrl_check": "",
    "heading": "Item 6. Reserved",
+   "start_offset": 386661,
+   "end_offset": 386678,
+   "source_ranges": [],
+   "text_sha256": "24f1f04a9ddb0426d694a2404a29393920a236dfbfa9668b027293bba7b3fbca",
+   "toc_listed": true,
    "span_chars": 17,
    "warnings": [
-    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 2170 chars before this line; dense_cluster: 5 other item headings within 1500 chars (5 after) \u2014 heading list, not body; short_section: only 1 chars before the next item heading \u2014 no real section body; kept despite TOC signals: no later candidate exists for this item"
+    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 2184 chars before this line; dense_cluster: 5 other item headings within 1500 chars (5 after) \u2014 heading list, not body; short_section: only 1 chars before the next item heading \u2014 no real section body; kept despite TOC signals: no later candidate exists for this item"
    ]
   },
   "7": {
-   "status": "incorporated_by_reference",
-   "confidence": 0.566,
-   "provenance": "offset_exact_span",
-   "needs_review": false,
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
+   "needs_review": true,
    "xbrl_check": "",
    "heading": "Item 7. Management's Discussion and Analysis of Financial Condition and Results of Operations.",
-   "span_chars": 396,
+   "start_offset": 423803,
+   "end_offset": 814537,
+   "source_ranges": [],
+   "text_sha256": "9696ecb273c761a84b839f12791f28a35f1e5ce6b79c295405cd40eed877c882",
+   "toc_listed": true,
+   "span_chars": 390734,
    "warnings": [
-    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 2187 chars before this line; dense_cluster: 5 other item headings within 1500 chars (4 after) \u2014 heading list, not body; kept despite TOC signals: no later candidate exists for this item",
-    "body is a reference stub pointing to a page range (pages 46-160) of this filing; the span is the pointer text only, not the referenced content"
+    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 2201 chars before this line; dense_cluster: 5 other item headings within 1500 chars (4 after) \u2014 heading list, not body; kept despite TOC signals: no later candidate exists for this item",
+    "wrapper 10-K: this item's body was deferred to the financial-report section bound after the last item heading; reassembled from the page range 'pages 46-160' via printed page-number anchors (source-exact span in the same document). Marked partial + needs_review because boundary alignment is heuristic \u2014 verify start/end against the filing."
    ]
   },
   "7A": {
-   "status": "incorporated_by_reference",
-   "confidence": 0.566,
-   "provenance": "offset_exact_span",
-   "needs_review": false,
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
+   "needs_review": true,
    "xbrl_check": "",
    "heading": "Item 7A. Quantitative and Qualitative Disclosures About Market Risk.",
-   "span_chars": 270,
+   "start_offset": 704428,
+   "end_offset": 740060,
+   "source_ranges": [],
+   "text_sha256": "5e1cbea26960fa3fd9fa2bc125c0c76ec301ad5e434e95d2ec70a76a12636e03",
+   "toc_listed": true,
+   "span_chars": 35632,
    "warnings": [
-    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 2583 chars before this line; dense_cluster: 5 other item headings within 1500 chars (3 after) \u2014 heading list, not body; short_section: only 202 chars before the next item heading \u2014 no real section body; kept despite TOC signals: no later candidate exists for this item",
-    "body is a reference stub pointing to a page range (pages 133-142) of this filing; the span is the pointer text only, not the referenced content"
+    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 2597 chars before this line; dense_cluster: 5 other item headings within 1500 chars (3 after) \u2014 heading list, not body; short_section: only 202 chars before the next item heading \u2014 no real section body; kept despite TOC signals: no later candidate exists for this item",
+    "wrapper 10-K: this item's body was deferred to the financial-report section bound after the last item heading; reassembled from the page range 'pages 133-142' via printed page-number anchors (source-exact span in the same document). Marked partial + needs_review because boundary alignment is heuristic \u2014 verify start/end against the filing."
    ]
   },
   "8": {
-   "status": "incorporated_by_reference",
-   "confidence": 0.566,
-   "provenance": "offset_exact_span",
-   "needs_review": false,
-   "xbrl_check": "contradicted: none of the XBRL headline figures appear in the span \u2014 the financial statements are not here (wrapper stub or boundary error)",
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
+   "needs_review": true,
+   "xbrl_check": "certified: 3/3 XBRL headline figures found in the span",
    "heading": "Item 8. Financial Statements and Supplementary Data.",
-   "span_chars": 369,
+   "start_offset": 817619,
+   "end_offset": 1346052,
+   "source_ranges": [],
+   "text_sha256": "c2605214f6582acd757fefe7f04e73f419d736bc5a312c2488f5aaf570e4a78f",
+   "toc_listed": true,
+   "span_chars": 528433,
    "warnings": [
-    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 2853 chars before this line; dense_cluster: 5 other item headings within 1500 chars (2 after) \u2014 heading list, not body; kept despite TOC signals: no later candidate exists for this item",
-    "body is a reference stub pointing to a page range (pages 162-314) of this filing; the span is the pointer text only, not the referenced content"
+    "chosen candidate carries TOC-like signals: near_toc_marker: 'Table of Contents' marker 2867 chars before this line; dense_cluster: 5 other item headings within 1500 chars (2 after) \u2014 heading list, not body; kept despite TOC signals: no later candidate exists for this item",
+    "wrapper 10-K: this item's body was deferred to the financial-report section bound after the last item heading; reassembled from the page range 'pages 162-314' via printed page-number anchors (source-exact span in the same document). Marked partial + needs_review because boundary alignment is heuristic \u2014 verify start/end against the filing."
    ]
   },
   "9": {
@@ -161,6 +236,11 @@
    "needs_review": false,
    "xbrl_check": "",
    "heading": "Item 9. Changes in and Disagreements With Accountants on Accounting and Financial Disclosure.",
+   "start_offset": 387713,
+   "end_offset": 387813,
+   "source_ranges": [],
+   "text_sha256": "c2185308db38e1a1310e879e5eda70963405f30e23dff3e7a432377f62e72937",
+   "toc_listed": true,
    "span_chars": 100,
    "warnings": []
   },
@@ -171,6 +251,11 @@
    "needs_review": false,
    "xbrl_check": "",
    "heading": "Item 9A. Controls and Procedures.",
+   "start_offset": 387813,
+   "end_offset": 390038,
+   "source_ranges": [],
+   "text_sha256": "5af78c3c35d8dc1dc73b4690569b8b9d9a5ac6ddb4f5ec1ccf6f7bb7a47a14a0",
+   "toc_listed": true,
    "span_chars": 2225,
    "warnings": [
     "trimmed trailing page furniture: 34"
@@ -183,7 +268,12 @@
    "needs_review": false,
    "xbrl_check": "",
    "heading": "Item 9B. Other Information.",
-   "span_chars": 5348,
+   "start_offset": 390041,
+   "end_offset": 395429,
+   "source_ranges": [],
+   "text_sha256": "9a3b5969e590c73794346a6197dd63e9d4cc27c1ba5b4eb8c4f4758c331f7906",
+   "toc_listed": true,
+   "span_chars": 5388,
    "warnings": []
   },
   "9C": {
@@ -193,6 +283,11 @@
    "needs_review": false,
    "xbrl_check": "",
    "heading": "Item 9C. Disclosure regarding Foreign Jurisdictions that Prevent Inspections.",
+   "start_offset": 395429,
+   "end_offset": 395523,
+   "source_ranges": [],
+   "text_sha256": "3617a413ed037bdc6bc838cfe38ecb249c0e18e77b044e289a84b3951da150a5",
+   "toc_listed": true,
    "span_chars": 94,
    "warnings": [
     "trimmed trailing page furniture: 36"
@@ -205,54 +300,84 @@
    "needs_review": false,
    "xbrl_check": "",
    "heading": "Item 10. Directors, Executive Officers and Corporate Governance.",
-   "span_chars": 3930,
+   "start_offset": 395526,
+   "end_offset": 399471,
+   "source_ranges": [],
+   "text_sha256": "4d912d2bd7c4901f5de56e20d0958cf686f852c30acefd1bffd1f65541e5b408",
+   "toc_listed": true,
+   "span_chars": 3945,
    "warnings": []
   },
   "11": {
    "status": "incorporated_by_reference",
-   "confidence": 0.664,
+   "confidence": 0.492,
    "provenance": "offset_exact_span",
-   "needs_review": false,
+   "needs_review": true,
    "xbrl_check": "",
    "heading": "Item 11. Executive Compensation.",
+   "start_offset": 399471,
+   "end_offset": 399522,
+   "source_ranges": [],
+   "text_sha256": "2951cd7bceee2de75fee4be891e2e75e42c9f0376f060715031350a3198eb55a",
+   "toc_listed": true,
    "span_chars": 51,
    "warnings": [
-    "body is a reference stub pointing to another item (Item 10) in this filing; the span is the pointer text only, not the referenced content"
+    "body is a reference stub pointing to another item (Item 10) in this filing; the span is the pointer text only, not the referenced content",
+    "pointer-content guardrail: item is an incorporated-by-reference stub; content-level trust is capped and the pointer routed to review \u2014 the referenced body is outside this filing's span"
    ]
   },
   "12": {
    "status": "pass",
-   "confidence": 0.966,
+   "confidence": 0.716,
    "provenance": "offset_exact_span",
-   "needs_review": false,
+   "needs_review": true,
    "xbrl_check": "",
    "heading": "Item 12. Security Ownership of Certain Beneficial Owners and Management and Related Stockholder Matters.",
-   "span_chars": 1333,
-   "warnings": []
+   "start_offset": 399522,
+   "end_offset": 400859,
+   "source_ranges": [],
+   "text_sha256": "30835867ac658a8e06714e2948b50254f317656525627a8bf2b8975d5a2d3581",
+   "toc_listed": true,
+   "span_chars": 1337,
+   "warnings": [
+    "length-prior guardrail (undershoot): span is 0.0010 of the whole filing, outside the corpus-derived [0.0013, 0.0191] band for item 12 (10-K/MODERN, p50=0.0043, n=9) \u2014 the span is likely a fragment of the real item body; needs_review"
+   ]
   },
   "13": {
    "status": "incorporated_by_reference",
-   "confidence": 0.666,
+   "confidence": 0.493,
    "provenance": "offset_exact_span",
-   "needs_review": false,
+   "needs_review": true,
    "xbrl_check": "",
    "heading": "Item 13. Certain Relationships and Related Transactions, and Director Independence.",
+   "start_offset": 400859,
+   "end_offset": 400961,
+   "source_ranges": [],
+   "text_sha256": "cb2853a00260dc018f11bbd8e33842860acee6dc17a6e2952b9eabfa5e862e95",
+   "toc_listed": true,
    "span_chars": 102,
    "warnings": [
-    "body is a reference stub pointing to another item (Item 10) in this filing; the span is the pointer text only, not the referenced content"
+    "body is a reference stub pointing to another item (Item 10) in this filing; the span is the pointer text only, not the referenced content",
+    "pointer-content guardrail: item is an incorporated-by-reference stub; content-level trust is capped and the pointer routed to review \u2014 the referenced body is outside this filing's span"
    ]
   },
   "14": {
    "status": "incorporated_by_reference",
-   "confidence": 0.66,
+   "confidence": 0.489,
    "provenance": "offset_exact_span",
-   "needs_review": false,
+   "needs_review": true,
    "xbrl_check": "",
    "heading": "Item 14. Principal Accounting Fees and Services.",
+   "start_offset": 400961,
+   "end_offset": 401028,
+   "source_ranges": [],
+   "text_sha256": "ceb00b0b51d292d84e450725043559800596a875b4898e7fc13178fb3dc5f317",
+   "toc_listed": true,
    "span_chars": 67,
    "warnings": [
     "trimmed trailing page furniture: 38",
-    "body is a reference stub pointing to another item (Item 10) in this filing; the span is the pointer text only, not the referenced content"
+    "body is a reference stub pointing to another item (Item 10) in this filing; the span is the pointer text only, not the referenced content",
+    "pointer-content guardrail: item is an incorporated-by-reference stub; content-level trust is capped and the pointer routed to review \u2014 the referenced body is outside this filing's span"
    ]
   },
   "15": {
@@ -262,10 +387,15 @@
    "needs_review": false,
    "xbrl_check": "",
    "heading": "Item 15. Exhibits, Financial Statement Schedules.",
-   "span_chars": 15529,
+   "start_offset": 401031,
+   "end_offset": 416564,
+   "source_ranges": [],
+   "text_sha256": "04ae54095af137da00b9205a2bd48a31b6e1ea88cc941b67a8e84bee3c8e741a",
+   "toc_listed": true,
+   "span_chars": 15533,
    "warnings": [
     "trimmed trailing page furniture: 161",
-    "excluded 970031 chars of an appended non-item section (bound financial statements / annual report) that followed this item's body; items that point into it are marked incorporated_by_reference"
+    "excluded 977724 chars of an appended non-item section (bound financial statements / annual report) that followed this item's body; items that point into it are marked incorporated_by_reference"
    ]
   },
   "16": {
@@ -275,6 +405,11 @@
    "needs_review": false,
    "xbrl_check": "",
    "heading": "",
+   "start_offset": 0,
+   "end_offset": 0,
+   "source_ranges": [],
+   "text_sha256": "",
+   "toc_listed": false,
    "span_chars": 0,
    "warnings": [
     "no heading candidate found for item 16"

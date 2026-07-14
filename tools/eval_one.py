@@ -25,14 +25,21 @@ ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE = ROOT / "data" / "sec_eval" / "evidence"
 
 
-def run(ticker: str):
+def run(ticker: str, cik: int | None = None, accession: str | None = None):
     fetcher = EdgarFetcher(cache_dir=ROOT / "data" / "raw_filings")
     resolver = FilingResolver(fetcher)
-    cik = resolver.cik_for_ticker(ticker)
+    # `cik` overrides ticker resolution (for pseudo-tickers like CITI whose SEC
+    # ticker is 'C'); `accession` pins a specific historical 10-K instead of the
+    # latest — both needed to regenerate a frozen record deterministically.
+    if cik is None:
+        cik = resolver.cik_for_ticker(ticker)
     filings = resolver.annual_filings(cik)
-    ref = next((f for f in filings if not f.is_amendment), None)
+    if accession:
+        ref = next((f for f in filings if f.accession == accession), None)
+    else:
+        ref = next((f for f in filings if not f.is_amendment), None)
     if ref is None:
-        raise SystemExit(f"no original 10-K for {ticker}")
+        raise SystemExit(f"no 10-K for {ticker} (cik={cik}, accession={accession or 'latest'})")
     resolver.load_files(ref)
     best = pick_main_document(ref)
     raw = fetcher.get(ref.file_url(best.name)).content.decode("utf-8", errors="replace")
@@ -54,9 +61,15 @@ def run(ticker: str):
     return ref, best, raw, result
 
 
+def _arg(flag: str):
+    return sys.argv[sys.argv.index(flag) + 1] if flag in sys.argv else None
+
+
 def main() -> None:
     ticker = sys.argv[1].upper()
-    ref, best, raw, result = run(ticker)
+    cik = _arg("--cik")
+    ref, best, raw, result = run(ticker, cik=int(cik) if cik else None,
+                                 accession=_arg("--accession"))
 
     if "--item" in sys.argv:
         code = sys.argv[sys.argv.index("--item") + 1].upper()
@@ -96,10 +109,14 @@ def main() -> None:
                 "heading": seg.extracted_heading,
                 "start_offset": seg.start_offset,
                 "end_offset": seg.end_offset,
+                "source_ranges": [list(r) for r in seg.source_ranges],
                 "text_sha256": seg.text_sha256,
                 "toc_listed": seg.item_code in toc_codes,
-                "span_chars": (seg.end_offset - seg.start_offset)
-                if seg.status not in ("missing", "reserved") or seg.text_sha256 else 0,
+                # real body length: sum of the multi-range spans (not the
+                # envelope) for a reassembled item, else the single span
+                "span_chars": (sum(b - a for a, b in seg.source_ranges) if seg.source_ranges
+                               else (seg.end_offset - seg.start_offset)
+                               if seg.status not in ("missing", "reserved") or seg.text_sha256 else 0),
                 "warnings": seg.warnings,
             }
             for seg in result.segments

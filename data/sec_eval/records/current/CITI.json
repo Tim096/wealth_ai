@@ -1,7 +1,21 @@
 {
  "ticker": "CITI",
+ "cik": 831001,
  "accession": "0000831001-26-000011",
+ "form": "10-K",
+ "filing_date": "2026-02-20",
+ "report_date": "2025-12-31",
  "filing_class": "cross_reference_index",
+ "main_document": "c-20251231.htm",
+ "main_document_score": 3.0,
+ "raw_chars": 16150764,
+ "normalized_chars": 1488020,
+ "latency_ms": 3218.5,
+ "llm_calls": 0,
+ "llm_tokens": 0,
+ "llm_usd": 0.0,
+ "candidates": 0,
+ "toc_rejected": 0,
  "needs_review_items": [
   "1",
   "1A",
@@ -26,56 +40,117 @@
   "15",
   "16"
  ],
+ "pipeline_warnings": [
+  "cross-reference-index 10-K detected: 16 bare item entries ('<code>. <title>') clustered, 9 with page references \u2014 cross-reference index without the word 'Item'; item bodies are in the bound annual report. Items are pointers into the annual report (needs_review); body resolution is a documented next step.",
+  "no item heading candidates found \u2014 unsupported or non-10-K document"
+ ],
  "items": {
   "1": {
-   "status": "incorporated_by_reference",
-   "provenance": "cross_reference_pointer",
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
    "needs_review": true,
-   "span_chars": 1277,
+   "xbrl_check": "",
+   "heading": "Item 1. Business",
+   "start_offset": 342196,
+   "end_offset": 443147,
+   "source_ranges": [],
+   "text_sha256": "dab262d1f3b86aa8dc420667525f818326c68adc257e9640f4b525a79298685c",
+   "toc_listed": false,
+   "span_chars": 100951,
    "warnings": [
-    "cross-reference-index 10-K: this item's body is NOT in an addressable Item section; the filing points to the bound annual report at page(s) 4-36, 121-127,. Body resolution requires following the pointer into the annual-report exhibit (not yet implemented) \u2014 this is a pointer, not extracted content."
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range 4-36, 121-127, via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing. The index may over-claim page ranges (e.g. Item 1 '4-36' vs MD&A '8-36'), so a resolved span can overlap an adjacent item; identical spans are de-duplicated but nesting is possible."
    ]
   },
   "1A": {
-   "status": "incorporated_by_reference",
-   "provenance": "cross_reference_pointer",
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
    "needs_review": true,
-   "span_chars": 1277,
+   "xbrl_check": "",
+   "heading": "Item 1A. Risk Factors",
+   "start_offset": 488273,
+   "end_offset": 576532,
+   "source_ranges": [],
+   "text_sha256": "1a9e33d57c2b4c2d2eff15a916f7b31869f35d35477a8bd67f35b1e8c5cad216",
+   "toc_listed": false,
+   "span_chars": 88259,
    "warnings": [
-    "cross-reference-index 10-K: this item's body is NOT in an addressable Item section; the filing points to the bound annual report at page(s) 49-62. Body resolution requires following the pointer into the annual-report exhibit (not yet implemented) \u2014 this is a pointer, not extracted content."
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range 49-62 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing. The index may over-claim page ranges (e.g. Item 1 '4-36' vs MD&A '8-36'), so a resolved span can overlap an adjacent item; identical spans are de-duplicated but nesting is possible."
    ]
   },
   "1B": {
    "status": "incorporated_by_reference",
+   "confidence": 0.25,
    "provenance": "cross_reference_pointer",
    "needs_review": true,
-   "span_chars": 1277,
+   "xbrl_check": "",
+   "heading": "Item 1B. Unresolved Staff Comments",
+   "start_offset": 338266,
+   "end_offset": 338310,
+   "source_ranges": [],
+   "text_sha256": "",
+   "toc_listed": false,
+   "span_chars": 44,
    "warnings": [
     "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
    ]
   },
   "1C": {
-   "status": "incorporated_by_reference",
-   "provenance": "cross_reference_pointer",
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
    "needs_review": true,
-   "span_chars": 1277,
+   "xbrl_check": "",
+   "heading": "Item 1C. Cybersecurity",
+   "start_offset": 525973,
+   "end_offset": 767344,
+   "source_ranges": [
+    [
+     525973,
+     545762
+    ],
+    [
+     748670,
+     767344
+    ]
+   ],
+   "text_sha256": "fa5006ef52209de0d03c22795f68f523e0a0d257b266476801efa4a6a1739a67",
+   "toc_listed": false,
+   "span_chars": 38463,
    "warnings": [
-    "cross-reference-index 10-K: this item's body is NOT in an addressable Item section; the filing points to the bound annual report at page(s) 55-57, 113-115. Body resolution requires following the pointer into the annual-report exhibit (not yet implemented) \u2014 this is a pointer, not extracted content."
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range 55-57, 113-115 via printed page-number anchors (source-exact span). Body reassembled from 2 page ranges totalling 38463 chars. Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing. The index may over-claim page ranges (e.g. Item 1 '4-36' vs MD&A '8-36'), so a resolved span can overlap an adjacent item; identical spans are de-duplicated but nesting is possible."
    ]
   },
   "2": {
    "status": "incorporated_by_reference",
+   "confidence": 0.25,
    "provenance": "cross_reference_pointer",
    "needs_review": true,
-   "span_chars": 1277,
+   "xbrl_check": "",
+   "heading": "Item 2. Properties",
+   "start_offset": 338344,
+   "end_offset": 338372,
+   "source_ranges": [],
+   "text_sha256": "",
+   "toc_listed": false,
+   "span_chars": 28,
    "warnings": [
     "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
    ]
   },
   "3": {
    "status": "missing",
+   "confidence": 0.0,
    "provenance": "unresolved",
    "needs_review": true,
+   "xbrl_check": "",
+   "heading": "",
+   "start_offset": 0,
+   "end_offset": 0,
+   "source_ranges": [],
+   "text_sha256": "",
+   "toc_listed": false,
    "span_chars": 0,
    "warnings": [
     "no cross-reference index entry found for item 3"
@@ -83,96 +158,197 @@
   },
   "4": {
    "status": "incorporated_by_reference",
+   "confidence": 0.25,
    "provenance": "cross_reference_pointer",
    "needs_review": true,
-   "span_chars": 1277,
+   "xbrl_check": "",
+   "heading": "Item 4. Mine Safety Disclosures",
+   "start_offset": 338455,
+   "end_offset": 338496,
+   "source_ranges": [],
+   "text_sha256": "",
+   "toc_listed": false,
+   "span_chars": 41,
    "warnings": [
     "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
    ]
   },
   "5": {
-   "status": "missing",
-   "provenance": "unresolved",
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
    "needs_review": true,
-   "span_chars": 0,
+   "xbrl_check": "",
+   "heading": "Item 5. Market for Registrant's Common Equity, Related Stockholder Matters and Issuer Purchases of Equity Securities",
+   "start_offset": 852128,
+   "end_offset": 1432950,
+   "source_ranges": [
+    [
+     852128,
+     855881
+    ],
+    [
+     998108,
+     1012784
+    ],
+    [
+     1427419,
+     1432950
+    ]
+   ],
+   "text_sha256": "9bd366886ea8d10d5cedc3e0ba13066c889b1a6b6d7eb84dbf9b9d6fd76a5ff3",
+   "toc_listed": false,
+   "span_chars": 23960,
    "warnings": [
-    "no cross-reference index entry found for item 5"
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range 138-139, 170-172, 301-303 via printed page-number anchors (source-exact span). Body reassembled from 3 page ranges totalling 23960 chars. Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing. The index may over-claim page ranges (e.g. Item 1 '4-36' vs MD&A '8-36'), so a resolved span can overlap an adjacent item; identical spans are de-duplicated but nesting is possible."
    ]
   },
   "6": {
    "status": "reserved",
+   "confidence": 0.0,
    "provenance": "offset_exact_span",
    "needs_review": false,
+   "xbrl_check": "",
+   "heading": "Item 6. [Reserved]",
+   "start_offset": 0,
+   "end_offset": 0,
+   "source_ranges": [],
+   "text_sha256": "",
+   "toc_listed": false,
    "span_chars": 0,
    "warnings": []
   },
   "7": {
-   "status": "missing",
-   "provenance": "unresolved",
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
    "needs_review": true,
-   "span_chars": 0,
+   "xbrl_check": "",
+   "heading": "Item 7. Management's Discussion and Analysis of Financial Condition and Results of Operations",
+   "start_offset": 356685,
+   "end_offset": 443147,
+   "source_ranges": [],
+   "text_sha256": "d531c9ac56cf0cbfcbecc1d81808733bbf21bd923e9f6bd19b289e22f963e060",
+   "toc_listed": false,
+   "span_chars": 86462,
    "warnings": [
-    "no cross-reference index entry found for item 7"
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range 8-36, 64-120 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing. The index may over-claim page ranges (e.g. Item 1 '4-36' vs MD&A '8-36'), so a resolved span can overlap an adjacent item; identical spans are de-duplicated but nesting is possible."
    ]
   },
   "7A": {
-   "status": "incorporated_by_reference",
-   "provenance": "cross_reference_pointer",
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
    "needs_review": true,
-   "span_chars": 1277,
+   "xbrl_check": "",
+   "heading": "Item 7A. Quantitative and Qualitative Disclosures About Market Risk",
+   "start_offset": 578149,
+   "end_offset": 785524,
+   "source_ranges": [],
+   "text_sha256": "fb5538f02982661c507e26f4748909c609b4daca2209f35899db0ce9eeaac15a",
+   "toc_listed": false,
+   "span_chars": 207375,
    "warnings": [
-    "cross-reference-index 10-K: this item's body is NOT in an addressable Item section; the filing points to the bound annual report at page(s) 64-120, 165-169, 190-228, 235-278. Body resolution requires following the pointer into the annual-report exhibit (not yet implemented) \u2014 this is a pointer, not extracted content."
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range 64-120, 165-169, 190-228, 235-278 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing. The index may over-claim page ranges (e.g. Item 1 '4-36' vs MD&A '8-36'), so a resolved span can overlap an adjacent item; identical spans are de-duplicated but nesting is possible."
    ]
   },
   "8": {
-   "status": "incorporated_by_reference",
-   "provenance": "cross_reference_pointer",
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
    "needs_review": true,
-   "span_chars": 1277,
+   "xbrl_check": "certified: 3/3 XBRL headline figures found in the span",
+   "heading": "Item 8. Financial Statements and Supplementary Data",
+   "start_offset": 842303,
+   "end_offset": 1419239,
+   "source_ranges": [],
+   "text_sha256": "11ad2d34c32205f90829ba3d9398b9846e59390cd2e32fab8584a7720ce3ef06",
+   "toc_listed": false,
+   "span_chars": 576936,
    "warnings": [
-    "cross-reference-index 10-K: this item's body is NOT in an addressable Item section; the filing points to the bound annual report at page(s) 134-298. Body resolution requires following the pointer into the annual-report exhibit (not yet implemented) \u2014 this is a pointer, not extracted content."
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range 134-298 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing. The index may over-claim page ranges (e.g. Item 1 '4-36' vs MD&A '8-36'), so a resolved span can overlap an adjacent item; identical spans are de-duplicated but nesting is possible."
    ]
   },
   "9": {
-   "status": "missing",
-   "provenance": "unresolved",
+   "status": "incorporated_by_reference",
+   "confidence": 0.25,
+   "provenance": "cross_reference_pointer",
    "needs_review": true,
-   "span_chars": 0,
+   "xbrl_check": "",
+   "heading": "Item 9. Changes in and Disagreements with Accountants on Accounting and Financial Disclosure",
+   "start_offset": 338909,
+   "end_offset": 339011,
+   "source_ranges": [],
+   "text_sha256": "",
+   "toc_listed": false,
+   "span_chars": 102,
    "warnings": [
-    "no cross-reference index entry found for item 9"
+    "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
    ]
   },
   "9A": {
-   "status": "incorporated_by_reference",
-   "provenance": "cross_reference_pointer",
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
    "needs_review": true,
-   "span_chars": 1277,
+   "xbrl_check": "",
+   "heading": "Item 9A. Controls and Procedures",
+   "start_offset": 818229,
+   "end_offset": 822740,
+   "source_ranges": [],
+   "text_sha256": "e966d45f4330f2228814256a562465374faf26882e04faf9dee9c3a50ad4bba4",
+   "toc_listed": false,
+   "span_chars": 4511,
    "warnings": [
-    "cross-reference-index 10-K: this item's body is NOT in an addressable Item section; the filing points to the bound annual report at page(s) 127-128. Body resolution requires following the pointer into the annual-report exhibit (not yet implemented) \u2014 this is a pointer, not extracted content."
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range 127-128 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing. The index may over-claim page ranges (e.g. Item 1 '4-36' vs MD&A '8-36'), so a resolved span can overlap an adjacent item; identical spans are de-duplicated but nesting is possible."
    ]
   },
   "9B": {
-   "status": "incorporated_by_reference",
-   "provenance": "cross_reference_pointer",
+   "status": "partial",
+   "confidence": 0.725,
+   "provenance": "resolved_from_page_anchor",
    "needs_review": true,
-   "span_chars": 1277,
+   "xbrl_check": "",
+   "heading": "Item 9B. Other Information",
+   "start_offset": 1430872,
+   "end_offset": 1432001,
+   "source_ranges": [],
+   "text_sha256": "65f96b425bc67b020c646998ddcda39ccbd0cab7af1f3399ac25c1e8f65bb030",
+   "toc_listed": false,
+   "span_chars": 1129,
    "warnings": [
-    "cross-reference-index 10-K: this item's body is NOT in an addressable Item section; the filing points to the bound annual report at page(s) 302. Body resolution requires following the pointer into the annual-report exhibit (not yet implemented) \u2014 this is a pointer, not extracted content."
+    "cross-reference-index 10-K: Item body resolved from the annual-report page range 302 via printed page-number anchors (source-exact span). Marked partial + needs_review because page-boundary alignment is heuristic \u2014 verify start/end against the filing. The index may over-claim page ranges (e.g. Item 1 '4-36' vs MD&A '8-36'), so a resolved span can overlap an adjacent item; identical spans are de-duplicated but nesting is possible."
    ]
   },
   "9C": {
-   "status": "missing",
-   "provenance": "unresolved",
+   "status": "incorporated_by_reference",
+   "confidence": 0.25,
+   "provenance": "cross_reference_pointer",
    "needs_review": true,
-   "span_chars": 0,
+   "xbrl_check": "",
+   "heading": "Item 9C. Disclosure Regarding Foreign Jurisdictions that Prevent Inspections",
+   "start_offset": 339074,
+   "end_offset": 339160,
+   "source_ranges": [],
+   "text_sha256": "",
+   "toc_listed": false,
+   "span_chars": 86,
    "warnings": [
-    "no cross-reference index entry found for item 9C"
+    "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
    ]
   },
   "10": {
    "status": "missing",
+   "confidence": 0.0,
    "provenance": "unresolved",
    "needs_review": true,
+   "xbrl_check": "",
+   "heading": "",
+   "start_offset": 0,
+   "end_offset": 0,
+   "source_ranges": [],
+   "text_sha256": "",
+   "toc_listed": false,
    "span_chars": 0,
    "warnings": [
     "no cross-reference index entry found for item 10"
@@ -180,8 +356,16 @@
   },
   "11": {
    "status": "missing",
+   "confidence": 0.0,
    "provenance": "unresolved",
    "needs_review": true,
+   "xbrl_check": "",
+   "heading": "",
+   "start_offset": 0,
+   "end_offset": 0,
+   "source_ranges": [],
+   "text_sha256": "",
+   "toc_listed": false,
    "span_chars": 0,
    "warnings": [
     "no cross-reference index entry found for item 11"
@@ -189,8 +373,16 @@
   },
   "12": {
    "status": "missing",
+   "confidence": 0.0,
    "provenance": "unresolved",
    "needs_review": true,
+   "xbrl_check": "",
+   "heading": "",
+   "start_offset": 0,
+   "end_offset": 0,
+   "source_ranges": [],
+   "text_sha256": "",
+   "toc_listed": false,
    "span_chars": 0,
    "warnings": [
     "no cross-reference index entry found for item 12"
@@ -198,8 +390,16 @@
   },
   "13": {
    "status": "missing",
+   "confidence": 0.0,
    "provenance": "unresolved",
    "needs_review": true,
+   "xbrl_check": "",
+   "heading": "",
+   "start_offset": 0,
+   "end_offset": 0,
+   "source_ranges": [],
+   "text_sha256": "",
+   "toc_listed": false,
    "span_chars": 0,
    "warnings": [
     "no cross-reference index entry found for item 13"
@@ -207,8 +407,16 @@
   },
   "14": {
    "status": "missing",
+   "confidence": 0.0,
    "provenance": "unresolved",
    "needs_review": true,
+   "xbrl_check": "",
+   "heading": "",
+   "start_offset": 0,
+   "end_offset": 0,
+   "source_ranges": [],
+   "text_sha256": "",
+   "toc_listed": false,
    "span_chars": 0,
    "warnings": [
     "no cross-reference index entry found for item 14"
@@ -216,17 +424,33 @@
   },
   "15": {
    "status": "incorporated_by_reference",
+   "confidence": 0.25,
    "provenance": "cross_reference_pointer",
    "needs_review": true,
-   "span_chars": 1277,
+   "xbrl_check": "",
+   "heading": "Item 15. Exhibits, Financial Statement Schedules",
+   "start_offset": 339511,
+   "end_offset": 339556,
+   "source_ranges": [],
+   "text_sha256": "",
+   "toc_listed": false,
+   "span_chars": 45,
    "warnings": [
     "cross-reference-index 10-K: item body is not in an addressable Item section of the main document; content is in the bound annual report."
    ]
   },
   "16": {
    "status": "missing",
+   "confidence": 0.0,
    "provenance": "unresolved",
    "needs_review": true,
+   "xbrl_check": "",
+   "heading": "",
+   "start_offset": 0,
+   "end_offset": 0,
+   "source_ranges": [],
+   "text_sha256": "",
+   "toc_listed": false,
    "span_chars": 0,
    "warnings": [
     "no cross-reference index entry found for item 16"

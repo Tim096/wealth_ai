@@ -53,8 +53,12 @@ class ExtractionResult:
 
     def text_of(self, code: str) -> str:
         """Raw source-exact span (provenance layer): offsets + sha256 address
-        exactly this text. Internal verifiers score against it."""
+        exactly this text. Internal verifiers score against it. A multi-range
+        item (source_ranges populated) returns the CONCATENATION of its spans,
+        which is exactly what text_sha256 was computed over."""
         s = self.segment(code)
+        if s.source_ranges:
+            return "".join(self.doc.slice(a, b) for a, b in s.source_ranges)
         return self.doc.slice(s.start_offset, s.end_offset)
 
     def clean_text_of(self, code: str) -> str:
@@ -64,6 +68,8 @@ class ExtractionResult:
         docs/research/giants_task2.md (clean text for consumption, offsets for
         provenance)."""
         s = self.segment(code)
+        if s.source_ranges:
+            return "".join(self.doc.clean_slice(a, b) for a, b in s.source_ranges)
         return self.doc.clean_slice(s.start_offset, s.end_offset)
 
 

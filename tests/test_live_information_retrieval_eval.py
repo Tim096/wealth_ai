@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from tools import live_information_retrieval_eval as live_eval
 
 
@@ -118,3 +120,30 @@ def test_runner_can_score_verifier_contract_without_hidden_gold(monkeypatch, tmp
     assert result["summary"]["task_types"] == ["click"]
     assert result["results"][0]["scored_pass"] is True
     assert result["results"][0]["gold_match"] is None
+
+
+def test_runner_refuses_unattested_deployment(monkeypatch, tmp_path):
+    tasks = tmp_path / "tasks.json"
+    tasks.write_text(json.dumps({"suite": "attest", "protocol": "single launch",
+                                 "tasks": []}), encoding="utf-8")
+
+    class _Client:
+        def __init__(self, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def get(self, path):
+            return _Response({"ok": True, "build_sha": "wrong"})
+
+    monkeypatch.setattr(live_eval.httpx, "Client", _Client)
+    monkeypatch.setattr(live_eval, "_head", lambda: "expected")
+    with pytest.raises(RuntimeError, match="does not match"):
+        live_eval.run(
+            "https://agent.test", tasks, tmp_path / "results.json",
+            slow_threshold_s=60, require_build_sha=True,
+        )

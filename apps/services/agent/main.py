@@ -66,7 +66,11 @@ class TaskIn(BaseModel):
 
 @app.get("/api/health")
 def health():
+    build_sha = os.environ.get("DEPLOY_COMMIT_SHA", "").strip()
     out = {"ok": True, "service": "wealth-agent", **worker.INFO,
+           "build_sha": build_sha or None,
+           "build_attested": (len(build_sha) == 40
+                              and all(c in "0123456789abcdef" for c in build_sha.lower())),
            "queue_depth": worker.queue_depth(),
            "demo_tasks": len(worker.DEMO_TASKS)}
     if not worker.INFO.get("llm_ok"):

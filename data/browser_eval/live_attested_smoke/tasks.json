@@ -1,0 +1,26 @@
+{
+  "suite": "live-attested-smoke-v1",
+  "frozen_at": "2026-07-14T07:05:08Z",
+  "selection_rule": "Two reversible public tasks reused from the mixed-operation regression solely to verify deployed-build provenance end to end.",
+  "protocol": "The runner must abort before task submission unless public health.build_sha exactly equals runner git HEAD; one scored launch per task; this is deployment attestation, not a generalization estimate.",
+  "tasks": [
+    {
+      "id": "attested-001-add-element",
+      "domain": "the-internet.herokuapp.com",
+      "task_type": "dynamic_click",
+      "url": "https://the-internet.herokuapp.com/add_remove_elements/",
+      "task": "Click Add Element and confirm that a Delete button appears",
+      "success": ["text_visible:Delete"],
+      "max_steps": 6
+    },
+    {
+      "id": "attested-002-cross-site-navigation",
+      "domain": "example.com",
+      "task_type": "cross_site_navigation",
+      "url": "https://example.com/",
+      "task": "Follow the More information link and confirm you reach IANA example-domain help",
+      "success": ["url_contains:iana.org/help/example-domains"],
+      "max_steps": 6
+    }
+  ]
+}

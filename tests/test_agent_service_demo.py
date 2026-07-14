@@ -126,7 +126,7 @@ def test_agent_ui_renders_and_locks_frozen_contract():
         assert label in html
 
 
-def test_demo_endpoints():
+def test_demo_endpoints(monkeypatch):
     from fastapi.testclient import TestClient
     import main
     client = TestClient(main.app)     # no lifespan: endpoints only, no browser
@@ -136,8 +136,10 @@ def test_demo_endpoints():
     r = client.post("/api/demo/demo-injection")
     assert r.status_code == 202 and r.json()["task_id"]
     worker._JOBS.get_nowait()         # drain what we queued
+    monkeypatch.setenv("DEPLOY_COMMIT_SHA", "a" * 40)
     h = client.get("/api/health").json()
     assert h["demo_tasks"] == len(worker.DEMO_TASKS)
+    assert h["build_sha"] == "a" * 40 and h["build_attested"] is True
     if not h.get("llm_ok"):
         assert set(h["llm_env_required"]) == {
             "AGENT_LLM_MODE", "OPENAI_BASE_URL", "OPENAI_API_KEY", "OPENAI_MODEL"}

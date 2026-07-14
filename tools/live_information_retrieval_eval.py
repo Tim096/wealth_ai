@@ -30,12 +30,19 @@ def _head() -> str:
 
 
 def run(base_url: str, tasks_path: Path, output_path: Path,
-        slow_threshold_s: int) -> dict:
+        slow_threshold_s: int, require_build_sha: bool = False) -> dict:
     taskset = json.loads(tasks_path.read_text(encoding="utf-8"))
     started = datetime.now(UTC)
     rows = []
+    source_commit = _head()
     with httpx.Client(base_url=base_url.rstrip("/"), timeout=30.0) as client:
         health = client.get("/api/health").json()
+        deployment_attested = health.get("build_sha") == source_commit
+        if require_build_sha and not deployment_attested:
+            raise RuntimeError(
+                "deployed build SHA does not match runner HEAD: "
+                f"health={health.get('build_sha')!r}, head={source_commit!r}"
+            )
         for task in taskset["tasks"]:
             submitted = client.post(
                 "/api/tasks",
@@ -113,7 +120,8 @@ def run(base_url: str, tasks_path: Path, output_path: Path,
     result = {
         "suite": taskset["suite"],
         "taskset_sha256": _sha256(tasks_path),
-        "source_commit": _head(),
+        "source_commit": source_commit,
+        "deployment_attested": deployment_attested,
         "base_url": base_url.rstrip("/"),
         "started_at": started.isoformat().replace("+00:00", "Z"),
         "completed_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
@@ -134,8 +142,12 @@ def main() -> int:
     parser.add_argument("--tasks", type=Path, default=DEFAULT_TASKS)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--slow-threshold", type=int, default=60)
+    parser.add_argument("--require-build-sha", action="store_true")
     args = parser.parse_args()
-    result = run(args.base_url, args.tasks, args.output, args.slow_threshold)
+    result = run(
+        args.base_url, args.tasks, args.output, args.slow_threshold,
+        require_build_sha=args.require_build_sha,
+    )
     print(json.dumps(result["summary"], ensure_ascii=False))
     return 0
 

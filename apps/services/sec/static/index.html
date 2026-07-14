@@ -228,6 +228,7 @@
       </article>
     </div>
     <div class="case-boundary">能力邊界：<button class="chip" data-q="TSM">TSM · 20-F</button> 會明確拒絕；這是做得好的 failure handling，不是 extraction strong case。</div>
+    <div class="case-boundary">✓ <b>可獨立重驗（做得好）</b>：offsets／sha256 是對 <b>normalized text</b> 計算的。抽完後可下載 normalized 全文（<span class="mono">/api/jobs/{id}/normalized</span>，回傳 X-Normalized-Sha256 與版本），對 <span class="mono">source_ranges</span>（多段 item）或 offsets 切片後自行 sha256 比對 <span class="mono">normalized_sha</span> —— raw HTML 無法重現，這是刻意的重驗鏈。部署版本可從 <span class="mono">/api/health</span> 的 <span class="mono">build_sha</span>／<span class="mono">pipeline_rev</span> 追溯（deploy 前強制對齊 git HEAD）。</div>
   </section>
 
   <section class="panel">

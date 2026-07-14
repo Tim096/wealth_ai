@@ -136,7 +136,7 @@ npx zeabur@latest deploy --project-id <project-id> --service-id <agent-service-i
 ### 上線驗證(response-content 實測)
 
 - **wealth-sec** — `GET /api/health` → `{"ok":true,"sec_user_agent_configured":true,"auth_required":false}`;`POST /api/extract {"ticker":"AAPL"}` → job `done`,**23 items**;`GET /` → 200(dashboard)。**完全可用,免 auth。**
-- **wealth-agent** — 2026-07-11 起為 **direct 模式(OpenRouter `x-ai/grok-4.5`)**:`GET /api/health` → `{"ok":true,"ready":true,"mode":"direct","llm_ok":true,"model":"x-ai/grok-4.5"}`;live smoke test 實跑 Wikipedia 查詢任務(Eiffel Tower 完工年份)→ **status=pass**,`answer_matches:[0-9]{4}` 命中,容器 egress + OpenRouter + verifier 全鏈路驗證(task `t3738698837-0`)。key 只存 Zeabur variables,不進 repo。免 key 示範任務(4 preset)照常走 MockPlanner。歷史紀錄:2026-07-10 上線時為 mock 模式(repo 內無雲端 LLM 憑證)。
+- **wealth-agent** — 2026-07-11 起為 **direct 模式(OpenRouter `x-ai/grok-4.5`)**:`GET /api/health` → `{"ok":true,"ready":true,"mode":"direct","llm_ok":true,"model":"x-ai/grok-4.5"}`;live smoke test 實跑 Wikipedia 查詢任務(Eiffel Tower 完工年份)→ **status=pass**,`answer_matches:[0-9]{4}` 命中,容器 egress + OpenRouter + verifier 全鏈路驗證(task `t3738698837-0`)。key 只存 Zeabur variables,不進 repo。免 key 示範任務以 `GET /api/demo` 的即時列表為準並固定走 MockPlanner。歷史紀錄:2026-07-10 上線時為 mock 模式(repo 內無雲端 LLM 憑證)。
 
 ### wealth-agent:改用真實 LLM 需在 Zeabur dashboard 補的變數
 
@@ -166,4 +166,4 @@ LLM client 走標準 OpenAI-compatible `/chat/completions` + Bearer key,OpenRout
 
 ### 免 key 示範(示範任務)
 
-未設任何 LLM 變數(或 `AGENT_LLM_MODE=mock`)時,UI 顯示「示範任務」區:4 個一鍵 preset(v1 基準搜尋、v2 介面漂移自我修復、注入防禦、capability guard 誠實拒絕)以內建 mock 網站 + 確定性 MockPlanner 完整跑通(live 進度 / 軌跡 / 截圖與真實 run 相同)。API:`GET /api/demo` 列 preset、`POST /api/demo/{id}` 派工。設了 key 之後示範按鈕仍固定走 MockPlanner(穩定展示、零 token 成本),自然語言任務才走 LLM。
+未設任何 LLM 變數(或 `AGENT_LLM_MODE=mock`)時,UI 顯示「示範任務」區；preset 以 `GET /api/demo` 的即時列表為準，涵蓋基準搜尋、介面漂移自我修復、注入防禦、capability guard 與 honest-unknown 路徑，並以內建 mock 網站 + 確定性 MockPlanner 完整跑通(live 進度 / 軌跡 / 截圖與真實 run 相同)。API:`POST /api/demo/{id}` 派工。設了 key 之後示範按鈕仍固定走 MockPlanner(穩定展示、零 token 成本),自然語言任務才走 LLM。

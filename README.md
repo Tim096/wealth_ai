@@ -13,9 +13,10 @@ No installation or account is required for the deployed demos.
 | Task 1 — Browser Agent | [wealth-agent-ncku.zeabur.app](https://wealth-agent-ncku.zeabur.app) | Click **Self-repair / 自我修復(v2 介面漂移)** for a deterministic, keyless repair demo, or enter a public-web task and press **Run / 派工**. Inspect the live steps, screenshots, verifier verdict, and artifacts. |
 | Task 2 — SEC 10-K Extractor | [wealth-sec-ncku.zeabur.app](https://wealth-sec-ncku.zeabur.app) | Enter `AAPL`, click **Extract / 開始抽取**, then open any Item row to inspect the source-exact text, confidence, provenance, and validation signals. `/dashboard` shows the evaluation evidence. |
 
-The Task 1 deployment currently has an LLM configured. The four **示範任務**
-buttons remain deterministic and keyless. Login, CAPTCHA, purchases, posting, and
-other irreversible tasks are refused by design.
+The Task 1 deployment currently has an LLM configured. The **示範任務** buttons
+listed by [`GET /api/demo`](https://wealth-agent-ncku.zeabur.app/api/demo) remain
+deterministic and keyless. Login, CAPTCHA, purchases, posting, and other
+irreversible tasks are refused by design.
 
 ### Public API smoke test
 
@@ -61,7 +62,7 @@ see [docs/deploy.md](docs/deploy.md).
 
 | Area | Works well — reproducible examples | Does not work well — why |
 |---|---|---|
-| Task 1: UI drift and recovery | The deployed **自我修復(v2 介面漂移)** demo changes element IDs, adds a blocking cookie dialog, and introduces a decoy search button. The agent diagnoses the failure, repairs the locator, and the independent verifier checks the result. | Highly dynamic or anti-bot sites can become unreachable or invalidate observations between steps. Login, CAPTCHA, purchases, posting, and irreversible workflows are deliberately refused instead of being presented as supported. |
+| Task 1: UI drift and recovery | The deployed **自我修復(v2 介面漂移)** demo changes element IDs, adds a blocking cookie dialog, and introduces a decoy search button. Grounded action history also moves a deterministic three-shape recovery probe from `0/3` to `3/3`. | Highly dynamic or anti-bot sites can become unreachable or invalidate observations between steps. Login, CAPTCHA, purchases, posting, and irreversible workflows are deliberately refused instead of being presented as supported. |
 | Task 1: silent-failure prevention | The injection demo reaches all five adversarial traps in the undefended control but records defended ASR `0/5`; impossible and open-ended tasks end as `fail`/`unknown`, not a fabricated pass. | Real-web generalization remains the main weakness. On the frozen 300-task Online-Mind2Web run, 17 tasks were environment failures; the strict advisory WebJudge accepted only `21/283` completed trajectories. The planner, verifier, and external judge still disagree materially on ambiguous completion evidence. |
 | Task 2: standard modern 10-K | `AAPL`, `MSFT`, `JPM`, `XOM`, and the other tracked modern filings extract source-addressable Items with offsets, hashes, confidence, provenance, partition checks, and independent XBRL/topic signals. Try `AAPL` in the deployed UI. | `Intel`/`Citi`/`GE` cross-reference-index filings place substantive sections in a separately filed annual-report exhibit. The current pipeline detects the pointer but does not join that external document; affected Items are `incorporated_by_reference`/`needs_review`, not guessed text. |
 | Task 2: format variance | Same-file wrappers such as tracked `JPM`/`XOM` cases are reconstructed with page/section anchors and checked against XBRL/CYD evidence. Unsupported binary/PDF input is rejected without inventing Items. | Pre-2001 plain-text SGML examples (`AAPL` FY1996, `KO` FY1997) have headings that the HTML-oriented detector cannot reliably segment, so they return missing/unsupported coverage. Scanned PDFs need a separate OCR pipeline and are not supported. |
@@ -83,6 +84,7 @@ Full evidence, metrics, and failure traces: [evaluation report](docs/eval_report
    rejected approaches. The full manual Task 1 acceptance script is
    [docs/manual_test_browser.md](docs/manual_test_browser.md).
 5. 確認「裁判本身可不可信」:[docs/verifier_trust_card.md](docs/verifier_trust_card.md)(由 `tools/verifier_trust_card.py` 從 artifact 生成的計分卡,含 AUROC MISS 的誠實揭露)。
+6. 重跑 Task 1 action-history 泛化機制 probe：`.venv\Scripts\python tools\action_history_cross_site_eval.py`。
 
 Known limitations and planned experiments: [TODO.md](TODO.md).
 
@@ -92,10 +94,11 @@ Known limitations and planned experiments: [TODO.md](TODO.md).
 |---|---|---|
 | 題目一 Browser Agent | 受控 action space、**preflight task contract 凍結並揭露條件來源**、deterministic verifier、a11y selector 自修復、selector memory、**Agent Mode(LLM 驅動,預設接 Codex OAuth via gateway)**、**卡住時自動視覺升級(SoM 截圖 + gpt-5.5 視覺)**、**答案交付通道(查數字/問答)**、code-enforced capability guard | **可執行**:selector-repair killer demo(`tools/browser_killer_demo.py`)+ live LLM 驅動(`tools/browser_agent_live.py`) |
 | 題目二 SEC Extractor | 10-K Item 1–16 source-exact 抽取、TOC 防禦、cross-reference-index 偵測、**same-file wrapper page-anchor 還原**、**XBRL 認證(Item 8)**、**topic-consistency oracle(全 item)** | **可執行**:11 家真實 10-K + Intel/Citi(`tools/eval_one.py`, `tools/certify.py`) |
-| 共用層 | evidence store(兩題共用)、三態 verdict、eval case、LLM 成本紀錄 | 已實作 |
+| 共用層 | evidence schema / library、三態 verdict、eval case、LLM 成本紀錄 | Browser deployed path 會寫 EvidenceStore；SEC deployed path 目前以 raw bytes + offsets/hash + job payload 稽核，尚未注入 JSONL store |
 | Eval Dashboard | 兩題 eval、XBRL 認證、browser repair trace(真實數據) | `apps/web/eval-dashboard/`,自包含 HTML |
 
-**843 tests**(2026-07-12 本機重跑:**793 quick passed + 50 Playwright/integration passed**;integration lane 含真實瀏覽器 + gateway e2e)。**CI snapshot 綠(`.github/workflows/ci.yml`,run 29134525031 於 `v1.0-submission` tag 樹:ruff 全過 + 743 selected → 742 passed / 1 skipped);目前新增測試待本次 push 由 CI 驗證。** 完整規格:[docs/SPEC.md](docs/SPEC.md)。手動測 Task 1:[docs/setup_codex_gateway.md](docs/setup_codex_gateway.md)。
+[![CI](https://github.com/Tim096/wealth/actions/workflows/ci.yml/badge.svg)](https://github.com/Tim096/wealth/actions/workflows/ci.yml)
+測試數量與結果以當前 commit 的 CI collection/output 為準，不在文件複製容易過期的 snapshot。完整規格:[docs/SPEC.md](docs/SPEC.md)。手動測 Task 1:[docs/setup_codex_gateway.md](docs/setup_codex_gateway.md)。
 
 ## 核心原則(已在 code 層強制,不是文件宣示)
 
@@ -121,7 +124,7 @@ python -m venv .venv
 .venv\Scripts\python -m playwright install chromium
 $env:SEC_EDGAR_USER_AGENT = "your-name your@email"
 
-.venv\Scripts\python -m pytest -m "not integration"     # 793 passed(全集 843 tests)
+.venv\Scripts\python -m pytest -m "not integration"     # 快速 lane；實際數量由 pytest collection 回報
 .venv\Scripts\python tools\browser_killer_demo.py       # 題目一:v1→v2 selector 自修復
 .venv\Scripts\python tools\browser_agent_live.py --mock # 題目一:Agent Mode 迴圈(免 key)
 .venv\Scripts\python tools\eval_one.py AAPL             # 題目二:抽取一份 10-K
@@ -173,7 +176,7 @@ data/       sec_eval(fixtures + records), golden_labels, mock_sites(v1/v2), raw_
 docs/       SPEC, architecture, eval_report, cost_latency_report, failure_gallery,
             supported_and_unsupported, insights_and_directions, prior_art, ai_collaboration_report
 prompts/    所有影響開發的 prompt + 決策(含 rejected)
-tests/      843 tests(quick lane 793 passed + integration lane 50 passed)
+tests/      quick + Playwright/integration lanes；實際數量由 pytest collection 回報
 ```
 
 ## 部署(Zeabur)— 線上可直接用
@@ -181,7 +184,7 @@ tests/      843 tests(quick lane 793 passed + integration lane 50 passed)
 | 服務 | URL | 狀態(2026-07-11 實測) |
 |---|---|---|
 | SEC Extractor + dashboard | **https://wealth-sec-ncku.zeabur.app** | 完整可用、免 auth(AAPL 23 items、warm repeat ~0.6s) |
-| Browser Agent | **https://wealth-agent-ncku.zeabur.app** | **真實 LLM(OpenRouter `x-ai/grok-4.5`)**,live Wikipedia 任務實跑 pass;另有 4 個免 key 示範任務 |
+| Browser Agent | **https://wealth-agent-ncku.zeabur.app** | **真實 LLM(OpenRouter `x-ai/grok-4.5`)**,live Wikipedia 任務實跑 pass;另有 `/api/demo` 列出的免 key 示範任務 |
 
 兩個 service 各自容器化(Docker 本地驗證通過,零修正):**wealth-sec**(SEC Extractor API + dashboard,`Dockerfile.wealth-sec`)與 **wealth-agent**(Browser Agent + Playwright Chromium,`Dockerfile.wealth-agent`),同一 repo root 為 build context,根目錄 `.dockerignore` 排除 `.venv` / `data/raw_filings` / `runs`(context 縮小約 830MB)。
 
@@ -198,4 +201,4 @@ tests/      843 tests(quick lane 793 passed + integration lane 50 passed)
 
 ## AI 協作方式
 
-所有影響設計的 prompt 與決策(含被拒絕方案)記錄於 [prompts/](prompts/README.md)。AI 在 PM 授權下自主判斷 commit / push;commit history 保留真實開發順序、messages 與失敗嘗試。2026-07-12 因本機 clock metadata 錯誤校正 timestamps:第一筆為 2026-07-10 09:00,7/11 20:00 後原值不動;commit trees 未改。校正改變了 commit hash,2026-07-13 已將文件中引用的 hash 全數同步為校正後的現行值(verbatim transcripts 除外,見 `prompts/transcripts/README.md`)。見 [docs/ai_collaboration_report.md](docs/ai_collaboration_report.md)。
+AI 協作證據記錄於 [prompts/](prompts/README.md)：verbatim excerpts 保留可核對的原文邊界，derived decision records 則明確標示為摘要而非逐字 prompt。`tools/verify_prompt_provenance.py` 會核對分類、原始 Git blob 與 verbatim body hash；設計取捨與 AI 使用邊界見 [docs/ai_collaboration_report.md](docs/ai_collaboration_report.md)。

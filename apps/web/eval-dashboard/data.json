@@ -215,14 +215,23 @@
   },
   "sweep": "sweep3"
  },
- "audit": {
-  "agents": 56,
-  "anomalies_confirmed": 31,
-  "anomalies_refuted": 12,
-  "silent_failures_before": 31,
-  "silent_failures_after": 0,
-  "pass_before": 0.759,
-  "pass_after": 0.7
+ "status_reclassification": {
+  "before": {
+   "filings": 11,
+   "items": 253,
+   "pass": 192,
+   "reserved": 11,
+   "incorporated_by_reference": 48,
+   "missing": 2
+  },
+  "after": {
+   "filings": 11,
+   "items": 253,
+   "pass": 177,
+   "reserved": 11,
+   "incorporated_by_reference": 63,
+   "missing": 2
+  }
  },
  "browser": {
   "runs": [
@@ -232,8 +241,12 @@
     "site": "mockshop",
     "status": "pass",
     "confidence": 1.0,
+    "answer": "",
     "repairs": 0,
-    "total_latency_ms": 657.0,
+    "total_latency_ms": 875.0,
+    "llm_cost_usd": 0.0,
+    "llm_tokens": 0,
+    "phase_timings_ms": {},
     "repetition": {
      "n_steps": 2,
      "n_unique": 2,
@@ -244,6 +257,10 @@
      "loop_repeats": 0,
      "loop_detected": false
     },
+    "match_levels": {
+     "script": 2
+    },
+    "cache": {},
     "side_effects": {},
     "verifier": {
      "status": "pass",
@@ -267,8 +284,12 @@
       "repair_considered": [],
       "repair_chosen": "",
       "selector_used": "#search-box",
-      "latency_ms": 11.2,
-      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v1\\search_box-ok.png"
+      "latency_ms": 16.3,
+      "match_level": "script",
+      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v1\\search_box-ok.png",
+      "obs_hash": "",
+      "obs_excerpt": "",
+      "obs_candidates": ""
      },
      {
       "step": "submit_button",
@@ -280,8 +301,12 @@
       "repair_considered": [],
       "repair_chosen": "",
       "selector_used": "#search-btn",
-      "latency_ms": 52.8,
-      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v1\\submit_button-ok.png"
+      "latency_ms": 252.6,
+      "match_level": "script",
+      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v1\\submit_button-ok.png",
+      "obs_hash": "",
+      "obs_excerpt": "",
+      "obs_candidates": ""
      }
     ]
    },
@@ -291,8 +316,12 @@
     "site": "mockshop",
     "status": "pass",
     "confidence": 0.8,
+    "answer": "",
     "repairs": 2,
-    "total_latency_ms": 659.6,
+    "total_latency_ms": 1122.5,
+    "llm_cost_usd": 0.0,
+    "llm_tokens": 0,
+    "phase_timings_ms": {},
     "repetition": {
      "n_steps": 3,
      "n_unique": 3,
@@ -303,6 +332,10 @@
      "loop_repeats": 0,
      "loop_detected": false
     },
+    "match_levels": {
+     "purpose": 2
+    },
+    "cache": {},
     "side_effects": {},
     "verifier": {
      "status": "pass",
@@ -326,8 +359,12 @@
       "repair_considered": [],
       "repair_chosen": "",
       "selector_used": "#accept-cookies",
-      "latency_ms": 41.7,
-      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\modal-dismissed.png"
+      "latency_ms": 231.7,
+      "match_level": "",
+      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\modal-dismissed.png",
+      "obs_hash": "",
+      "obs_excerpt": "",
+      "obs_candidates": ""
      },
      {
       "step": "search_box",
@@ -343,8 +380,12 @@
       ],
       "repair_chosen": "input[name=query] score=5.5: tag=input, purpose word match, same form as a submit control",
       "selector_used": "input[name=query]",
-      "latency_ms": 8.8,
-      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\search_box-repaired.png"
+      "latency_ms": 9.5,
+      "match_level": "purpose",
+      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\search_box-repaired.png",
+      "obs_hash": "",
+      "obs_excerpt": "",
+      "obs_candidates": ""
      },
      {
       "step": "submit_button",
@@ -360,8 +401,12 @@
       ],
       "repair_chosen": "#go score=5.5: tag=button, purpose word match, type=submit",
       "selector_used": "#go",
-      "latency_ms": 13.9,
-      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\submit_button-repaired.png"
+      "latency_ms": 256.8,
+      "match_level": "purpose",
+      "screenshot": "E:\\Side_Project\\wealth\\runs\\browser_demo\\v2\\submit_button-repaired.png",
+      "obs_hash": "",
+      "obs_excerpt": "",
+      "obs_candidates": ""
      }
     ]
    }
@@ -674,15 +719,13 @@
   },
   "cyd": {
    "verdicts": {
-    "agree": 10,
-    "disagree": 1,
+    "agree": 11,
+    "disagree": 0,
     "unavailable": 0,
     "not_required": 0
    },
-   "disagreements": [
-    "GS"
-   ],
-   "coverage_mean_over_available": 0.9091,
+   "disagreements": [],
+   "coverage_mean_over_available": 1.0,
    "records": [
     {
      "ticker": "AAPL",
@@ -709,15 +752,15 @@
      "ticker": "JPM",
      "our_status": "partial",
      "coverage": 1.0,
-     "containment": 0.3334,
+     "containment": 0.7051,
      "verdict": "agree"
     },
     {
      "ticker": "GS",
-     "our_status": "incorporated_by_reference",
-     "coverage": 0.0,
-     "containment": 0.0,
-     "verdict": "disagree"
+     "our_status": "partial",
+     "coverage": 1.0,
+     "containment": 0.8557,
+     "verdict": "agree"
     },
     {
      "ticker": "WMT",

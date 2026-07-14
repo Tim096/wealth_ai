@@ -231,8 +231,8 @@
 
   <section>
     <div class="callout">
-      <div class="lab">Adversarial audit · how the silent failures were found</div>
-      <p style="margin:.4rem 0 0" id="auditNote"></p>
+      <div class="lab">Status reclassification · tracked sweep artifacts</div>
+      <p style="margin:.4rem 0 0" id="reclassNote"></p>
     </div>
   </section>
 
@@ -255,12 +255,12 @@ const PILL={pass:'p-pass',certified:'p-pass',incorporated_by_reference:'p-warn',
 function cvar(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
 
 // tiles
-const s=DATA.sec, a=DATA.audit;
+const s=DATA.sec, r=DATA.status_reclassification;
 const cert=s.xbrl_summary.certified||0, contra=s.xbrl_summary.contradicted||0;
 const tiles=[
   {n:s.total_items, k:'10-K items extracted', note:s.filings+' filings, 8 held-out'},
   {n:cert+'/'+(cert+contra), k:'Item 8 XBRL-certified', note:'0 disagreements w/ pipeline'},
-  {n:a.anomalies_confirmed, k:'silent failures caught', note:a.agents+'-agent audit → 0 remain'},
+  {n:r.before.pass+'→'+r.after.pass, k:'pass status shift', note:'tracked sweep1 → sweep2 artifacts'},
   {n:DATA.browser.runs.length?DATA.browser.runs[DATA.browser.runs.length-1].repairs:'—',
     k:'browser self-repairs', note:'UI drift → still PASS'},
 ];
@@ -472,7 +472,7 @@ if(!bad(strat)){
 }
 showErr('#eraErr',strat);
 
-$('#auditNote').innerHTML=`A ${a.agents}-agent workflow audited every extracted item, then had independent verifiers try to <em>refute</em> each finding. <b>${a.anomalies_confirmed} silent failures confirmed, ${a.anomalies_refuted} refuted</b> (the refuters caught false alarms). Pass-rate moved ${(a.pass_before*100).toFixed(1)}% → ${(a.pass_after*100).toFixed(1)}% as ${a.silent_failures_before} fakes were reclassified — and now <b>${a.silent_failures_after}</b> remain.`;
+$('#reclassNote').innerHTML=`Tracked sweep artifacts contain ${r.before.items} items across ${r.before.filings} filings. Status counts moved from <b>${r.before.pass} pass / ${r.before.incorporated_by_reference} incorporated-by-reference</b> to <b>${r.after.pass} / ${r.after.incorporated_by_reference}</b>; accession fixtures and regression tests lock the three documented failure classes.`;
 
 $('#foot').innerHTML=DATA.generated_note+' · <a href="https://github.com/Tim096/wealth">github.com/Tim096/wealth</a>';
 

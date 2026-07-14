@@ -195,14 +195,18 @@ def sec_evals_section() -> dict:
             "landmines": _guarded(landmines)}
 
 
-def audit_section() -> dict:
-    # read the committed audit artifact — no hardcoded numbers
-    a = json.loads((ROOT / "data" / "audit" / "adversarial_audit_2026-07-10.json").read_text(encoding="utf-8"))
-    return {"agents": a["agents"], "anomalies_confirmed": a["anomalies_confirmed"],
-            "anomalies_refuted": a["anomalies_refuted"],
-            "silent_failures_before": a["silent_failures_before"],
-            "silent_failures_after": a["silent_failures_after"],
-            "pass_before": a["pass_rate_before"], "pass_after": a["pass_rate_after"]}
+def status_reclassification_section() -> dict:
+    def counts(sweep: str) -> dict:
+        folder = ROOT / "data" / "sec_eval" / "records" / sweep
+        status: Counter[str] = Counter()
+        filings = 0
+        for path in sorted(folder.glob("*.json")):
+            record = json.loads(path.read_text(encoding="utf-8-sig"))
+            status.update(item["status"] for item in record["items"].values())
+            filings += 1
+        return {"filings": filings, "items": sum(status.values()), **dict(status)}
+
+    return {"before": counts("sweep1"), "after": counts("sweep2")}
 
 
 def browser_section() -> dict:
@@ -217,7 +221,7 @@ def main() -> None:
     data = {
         "generated_note": "assembled from real run artifacts by tools/build_dashboard_data.py",
         "sec": sec_section(),
-        "audit": audit_section(),
+        "status_reclassification": status_reclassification_section(),
         "browser": browser_section(),
         "browser_evals": browser_evals_section(),
         "sec_evals": sec_evals_section(),

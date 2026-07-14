@@ -36,7 +36,7 @@ dashboard is served at `/dashboard`.
 
 | Name | Required | 說明 |
 |---|---|---|
-| `SEC_EDGAR_USER_AGENT` | yes | SEC fair-access 要求的真實聯絡字串,例:`wealth-sec p76091014@gs.ncku.edu.tw`。未設時抽取 job 會以明確錯誤失敗,`/api/health` 回報 `sec_user_agent_configured:false` |
+| `SEC_EDGAR_USER_AGENT` | yes | SEC fair-access 要求的真實聯絡字串,例:`wealth-sec Your Name research@example.com`。未設時抽取 job 會以明確錯誤失敗,`/api/health` 回報 `sec_user_agent_configured:false` |
 | `PORT` | no | Zeabur 注入(8080);本機 fallback 8080 |
 | `ACCESS_TOKEN` | no | 預設不設 → 完全開放。設了之後 `/api/*`(health 除外)需 `X-Access-Token` header 或 `?token=`;UI 支援 `/?token=...` |
 | `MAX_CONCURRENCY` | no | 同時抽取 job 數,預設 2(每 job 自有 fetcher,各自 0.5s/req 限速) |
@@ -53,7 +53,7 @@ tar --exclude=.venv --exclude=data --exclude=runs --exclude=.git \
 
 # run
 docker run --rm -p 8080:8080 \
-  -e SEC_EDGAR_USER_AGENT="wealth-sec p76091014@gs.ncku.edu.tw" \
+  -e SEC_EDGAR_USER_AGENT="wealth-sec Your Name research@example.com" \
   wealth-sec
 
 # smoke

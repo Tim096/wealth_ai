@@ -6,7 +6,7 @@
 
 **AI coding 把「寫出來」變便宜了,所以稀缺的不是產出,是驗證。** 這個專案的主體不是兩個 demo,是一套能證明自己何時對、何時錯、何時證據不足的 reliability 基礎設施。Browser Agent 與 SEC Extractor 只是拿來壓力測試它的兩個高難度負載。
 
-這在本次開發中不是口號:我的 SEC pipeline 通過 3 家 smoke test 後自報 75.9% pass;接著我用 56 個 agent 的**對抗式稽核**(內部審計過程,per-agent 輸出未完整留存為 artifact;方法與結果摘要見 `prompts/eval_design/2026-07-10-adversarial-audit-workflow.md`)跑 11 家真實 10-K,證明其中 15 個 pass 是 silent failure(reference stub 被當成內容、末項吞掉整本財報)。**稽核抓到了我自己的系統在說謊,然後我才修。** 這就是「demo 不可信,所以要做 eval」的實例。
+這在本次開發中不是口號:SEC pipeline 通過早期 smoke test 後仍被 multi-agent **對抗式稽核**找出 reference stub、末項吞掉整本財報等 false-pass classes，之後以 accession-level fixtures 與 regression tests 重現並修復。內部 per-agent 輸出未完整留存，所以這裡不宣稱可重放的 agent 數量或逐-agent 統計；可驗證證據是 `prompts/eval_design/2026-07-10-adversarial-audit-workflow.md` 記錄的方法、`docs/failure_gallery.md` 的案例與對應 tests。**稽核抓到了系統在說謊,然後才修。** 這就是「demo 不可信,所以要做 eval」的實例。
 
 ## 1. 如果直接把這兩題丟給 autonomous coding agent(OpenClaw / Hermes 類)會怎樣?
 
@@ -24,7 +24,7 @@ OpenClaw / Hermes 這類「LLM 自主驅動瀏覽器」的核心迴圈就是:看
 
 **同樣「LLM 會亂點」的擔憂,我用「限制輸出空間 + guard + verifier + evidence」把它馴服。** 不是不用 LLM,而是**用 LLM 但不相信 LLM 自評**——這正是主管說的「AI 之後最稀缺的是驗證」。
 
-- **SEC 若丟給 autonomous agent**:它會 regex 切 Item、跑 AAPL/MSFT 很漂亮就宣稱完成;不會自己去跑 JPM/XOM/Intel 這種 wrapper 10-K,更不會發現 Item 16 吞了 31 萬字還標 confidence 1.0——因為沒有動機**反駁自己**。這就是「SEC 跑出來不完整但 AI 自報完成度很高」的結構性原因。我的對策:對抗式稽核(56 agent 證偽)+ XBRL/topic 雙獨立 oracle + page-anchor 真正把 Intel 正文抽回來。
+- **SEC 若丟給 autonomous agent**:它會 regex 切 Item、跑 AAPL/MSFT 很漂亮就宣稱完成;不會自己去跑 JPM/XOM/Intel 這種 wrapper 10-K,更不會發現 Item 16 吞了 31 萬字還標 confidence 1.0——因為沒有動機**反駁自己**。這就是「SEC 跑出來不完整但 AI 自報完成度很高」的結構性原因。我的對策:multi-agent 對抗式稽核找 failure classes + XBRL/topic 雙獨立 oracle + page-anchor 還原可驗證的 same-file wrapper 正文。
 - **一句話**:差異不在會不會寫,而在**會不會不相信自己**。我把「不相信自己」制度化。
 
 ## 2. SEC:wrapper 10-K 的 page-anchor resolution(**已實作**)
@@ -132,7 +132,7 @@ OpenClaw / Hermes 這類「LLM 自主驅動瀏覽器」的核心迴圈就是:看
 ## 7. 給評審的一頁總結
 
 - 我沒有向你們要 API key(資安考量);SEC 走公開 EDGAR,Browser 的 Codex 由**你自己的 OAuth** 經 gateway 驅動,key 從不進 repo。
-- 我沒有相信自己的 pass rate;我用對抗式稽核證偽它,抓到 15 個 silent failure 才修。
+- 我沒有相信自己的 pass rate；我用 sweep1/sweep2 artifacts、accession fixtures 與 regression tests 驗證 status reclassification。
 - **Intel/Citi 我不只誠實標示,還用 page-anchor 把正文真的抽回來了**(Item 1A 96K 字、Item 8 202K 字且 XBRL 認證)。
 - status 可信不只靠 Item 8 XBRL——每個 item 都有獨立的 topic-consistency oracle。
 - 「丟給 OpenClaw/Hermes 會怎樣」我直接做了(Agent Mode),證明差異在**用 LLM 但不信 LLM 自評**。

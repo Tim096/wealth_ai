@@ -25,11 +25,9 @@
 
 ### 對抗式稽核(這是本專案的驗證核心)
 
-用一個 multi-agent workflow(56 個 agent)稽核 sweep1 的 253 個 item:每個 ticker 一個 audit agent 檢查可疑 span(短 pass、低信心 pass、Item 7/8 內容真偽、TOC 洩漏),每個回報的 anomaly 再交給獨立的**對抗式驗證 agent**(prompt 設定為「盡力反駁這個 anomaly」),多數決才算成立。**誠實標註**:這是一次性的內部審計過程——workflow 設計與結果摘要留存於 `prompts/eval_design/2026-07-10-adversarial-audit-workflow.md`,但 per-agent 逐一輸出未完整留存為 artifact;下方 31/12 等數字引自該紀錄,非可逐 agent 重放的 committed 資料。
+multi-agent workflow 把 audit 與 adversarial verification 分成獨立角色；只有能落成 accession-level fixture、oracle artifact 或 regression test 的 finding 才算成立。公開證據不依賴 agent 數量或工作紀錄：`data/sec_eval/records/sweep1` 與 `sweep2` 可直接重算出 pass `192 → 177`、`incorporated_by_reference` `48 → 63`，並由下方三類 regression 鎖住對應行為。
 
-結果:**31 個 anomaly 確認、12 個被反駁**(反駁的多是「這其實是誠實的 incorporated_by_reference / None. 行為,不是 bug」——驗證層自己擋掉了誤報)。
-
-這直接命中評審在意的痛點:**很多作業 SEC 跑出來不完整,但 AI 自報完成度很高。** 我的 sweep1 metrics 自報 75.9% pass,對抗式稽核卻證明其中 15 個是 silent failure。稽核抓到了我自己的 pipeline 在說謊。
+這直接命中評審在意的痛點:**很多作業 SEC 跑出來不完整,但 AI 自報完成度很高。** 本專案不把 pass rate 當正確率；短 reference stub、trailing furniture 與 terminal runaway 都必須通過具名測試與 oracle 才能保留 pass。
 
 ### 三大 silent-failure class(稽核發現 → 已修復)
 
@@ -47,7 +45,6 @@
 | incorporated_by_reference | 19.0% (48) | **24.9% (63)** | stub 現在誠實標示指向何處 |
 | reserved | 4.3% (11) | 4.3% (11) | Item 6 |
 | missing | 0.8% (2) | 0.8% (2) | GS/JPM Item 16 誠實省略 |
-| 稽核確認 silent failure | **31** | 目標 0(見殘留) | — |
 | 最大 terminal span | 985,564 字 | **15,529 字** | runaway 已封鎖 |
 | confidence 鑑別度 | 全部 ~0.958 | **substantive 0.962 / stub 0.666** | confidence 現在能分辨 stub |
 
@@ -384,6 +381,16 @@ mock sites 仍是主軸(可控 UI 漂移,offline 可重現、零 flakiness)。�
 **可比性(強制聲明)**:原 20 題的 61.1% 是 ITERATED composite(agent/verifier 對其跨波改進),本 held-out 是不相交任務上的 SINGLE frozen run(禁止迭代)——兩個數字**並排是反 overfitting 證據,不是同分母比較**。held-out 單跑 66.7% ≥ 迭代後 61.1%,指向 pipeline 泛化而非對原 20 題過擬合;n=18 仍小、live variance 未控,同前節 caveat。
 
 - Artifacts:`data/browser_eval/external/m2w_heldout_20260711.json`、`runs/browser_eval/m2w_heldout_20260711/`(freeze_manifest / results / manifest / console.log;runs/ 為 gitignored,**追蹤快照在 `data/browser_eval/external_runs/m2w_heldout_20260711/`**)
+
+### Grounded action-history recovery probe（2026-07-14，離線確定性）
+
+Agent Mode failure analysis 暴露一個通用 feedback 缺口：planner history 只收到 `click:ok`，不知道剛才點了哪個 target；頁面沒變時，planner 可能重複同一個無效控制項。現行 history 會保留 grounded `target`、輸入值／按鍵與 planner `intent`；同一 observation state（URL、title、visible text、a11y/DOM candidate structure）連續兩次 no-effect 後，第三次相同 action 會在 executor 前被擋下。即使 URL 與文字不變，只要可操作 controls 已變就視為有進展，不會誤擋新狀態下的操作。
+
+確定性 probe 使用相同 exploration policy，跨 native buttons、ARIA links、custom `role=button` 三種 DOM 形狀；每頁都把 inert control 放在有效 control 前。只切換 planner 可見的 history information channel：legacy generic history：**0/3**；grounded history：**3/3**。這是針對 action-history feedback 的 mechanism test，不含 LLM、network 或 judge，也不更新上方 frozen `21/283` 外部成績。
+
+- 重現：`.venv\Scripts\python tools\action_history_cross_site_eval.py`
+- Artifact：`data/browser_eval/action_history/results.json`
+- Regression：`tests/test_agent_mode.py` 的 grounded history、same-state no-effect block 與 machine-readable prefix cases
 
 ### Browser 300 題官方全量(2026-07-11,無排除、雙口徑;**最終 rollup:done 283/300**)
 

@@ -38,7 +38,7 @@
 | Actual | MSFT/NVDA/CAT Item 3、JPM 1C/7/7A/8、GS 1C/7A/11/13/14、XOM 3/7/7A/8、NVDA 8 全被標 pass、confidence ~0.958 |
 | Status | fixed |
 | Failure Type | silent_failure(FG-SEC-001 的一般化)|
-| Evidence | 對抗式稽核 31 confirmed 中的多數;例:GS Item 11 body = 「...is incorporated in this Form 10-K by reference.」regex `incorporated\s+(?:herein\s+)?by\s+reference` 因中間夾「in this Form 10-K」而不命中 |
+| Evidence | 11-company accession sweep 的重複 failure class；例：GS Item 11 body = 「...is incorporated in this Form 10-K by reference.」regex `incorporated\s+(?:herein\s+)?by\s+reference` 因中間夾「in this Form 10-K」而不命中。逐 accession artifacts 位於 `data/sec_eval/records/sweep2/` 與 `sweep3/`。 |
 | Root Cause | FG-SEC-001 的修復 `_CROSS_REF_RE` 只認「refer to/see Item N」;真實 filing 用大量其他措辭指向 Note、named section、page range、proxy(不同 word order)。單一狹窄 regex 是脆弱設計 |
 | Repair Attempt | 新 `refine.classify_reference_stub`:body < 900 字且命中廣義 reference cue → incorporated_by_reference,並用 `_describe_target` 標明指向 proxy / Note / Item / Financial Section / page range |
 | Why It Still Failed | (已修復)殘留:內容真正還原(接回 MD&A/財報)尚未做,見 insights §2 |
@@ -130,7 +130,7 @@ FG-SEC-001~004 是「pipeline 內部把 silent failure 修掉」。FG-SEC-005 �
 
 ## 稽核方法本身(元層次)
 
-這四個 FG 都不是我「讀 code 想出來的」,而是 **56 個 agent 的對抗式稽核**跑真實 filing 跑出來的,且每個都經過獨立 verifier「盡力反駁」後才留下(12 個被反駁的 anomaly 沒進這裡)。**誠實標註**:此稽核是內部審計過程,per-agent 逐一輸出未完整留存為 artifact——留存的是 workflow 設計與結果摘要(`prompts/eval_design/2026-07-10-adversarial-audit-workflow.md`)與由它導出的修復(FG-SEC-001~004 各有 accession 級 evidence)。這個「用 AI 對抗式驗證 AI 產出」的 harness 本身,就是 SPEC 17 想證明的「AI 時代最稀缺的是驗證能力」。
+這四個 FG 來自一次 multi-agent 對抗式稽核，再由獨立 verifier 嘗試反駁。**證據限制**:per-agent 逐一輸出未完整留存，不能把 agent 數量或內部投票統計當成可重現 claim；留存且可驗證的是 workflow 方法(`prompts/eval_design/2026-07-10-adversarial-audit-workflow.md`)與後續修復(FG-SEC-001~004 各有 accession-level evidence/tests)。這個「用 AI 對抗式驗證 AI 產出」的方法是發現工具，最終裁決仍由可重跑的 fixture、oracle 與 regression test 負責。
 
 ---
 

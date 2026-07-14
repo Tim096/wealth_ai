@@ -309,8 +309,7 @@ def _sraf_join(sraf_csv: Path, accessions: dict[str, dict]) -> dict:
             if row["ACC_NUM"] in accessions:
                 sraf_rows[row["ACC_NUM"]] = int(row["N_Words"])
 
-    fetcher = EdgarFetcher(cache_dir=_ROOT / "data" / "raw_filings",
-                           user_agent="wealth-research p76091014@gs.ncku.edu.tw")
+    fetcher = EdgarFetcher(cache_dir=_ROOT / "data" / "raw_filings")
     filings, violations = [], 0
     for acc, meta in sorted(accessions.items()):
         n_words = sraf_rows.get(acc)
@@ -357,8 +356,7 @@ def measure_runtime_specificity(triangulation_path: Path) -> dict:
     from sec_core.fetcher import EdgarFetcher
     from sec_core.pipeline import extract_from_html
 
-    fetcher = EdgarFetcher(cache_dir=_ROOT / "data" / "raw_filings",
-                           user_agent="wealth-research p76091014@gs.ncku.edu.tw")
+    fetcher = EdgarFetcher(cache_dir=_ROOT / "data" / "raw_filings")
     tri = json.loads(triangulation_path.read_text(encoding="utf-8"))
     filings = clean_pass = 0
     flags: list[dict] = []

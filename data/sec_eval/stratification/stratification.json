@@ -1,6 +1,6 @@
 {
  "generated_at": "2026-07-10T11:23:05Z",
- "user_agent": "wealth-eval p76091014@gs.ncku.edu.tw",
+ "user_agent": "wealth-eval [REDACTED-email]",
  "purpose": "T2-4 stratified sampling by format source (era x filing agent); fills era/agent gaps left by the all-iXBRL scored sweep.",
  "efts_note": "forms= is exact-match ('10-K' excludes '10-K/A'); pre-2001 not in FTS index so sourced from the submissions API instead.",
  "baseline_scored_sweep": {

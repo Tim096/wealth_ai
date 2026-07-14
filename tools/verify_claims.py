@@ -43,7 +43,10 @@ MUTATION_CLASSES = (
 )
 _RECALL_LINE = re.compile(r"^\s*(\w+): recall ([0-9.]+) \(n=\d+\)", re.MULTILINE)
 
-REQUIRED_KEYS = ("claim_id", "description", "doc_locations", "expected", "artifact", "rule")
+REQUIRED_KEYS = (
+    "claim_id", "description", "doc_locations", "doc_evidence",
+    "expected", "artifact", "rule",
+)
 
 
 def _load_json(path: Path) -> Any:
@@ -129,6 +132,13 @@ def load_registry(path: Path) -> list[dict[str, Any]]:
         rule_name = str(claim["rule"]).split(":", 1)[0]
         if rule_name not in RULES:
             raise ValueError(f"claim {claim['claim_id']!r}: unknown rule {rule_name!r}")
+        locations = claim["doc_locations"]
+        evidence = claim["doc_evidence"]
+        if (not isinstance(locations, list) or not locations
+                or not isinstance(evidence, list) or len(evidence) != len(locations)):
+            raise ValueError(
+                f"claim {claim['claim_id']!r}: doc_locations and doc_evidence "
+                "must be non-empty lists of equal length")
     return claims
 
 
@@ -145,6 +155,24 @@ def values_match(expected: Any, actual: Any) -> bool:
     return expected == actual
 
 
+def verify_documentation(claim: dict[str, Any]) -> list[str]:
+    """Require each registered claim's contextual evidence to remain in docs.
+
+    Artifact re-derivation alone cannot catch a README/report edit that changes
+    or removes the public statement. `doc_evidence` is deliberately contextual
+    (for example ``| disagree | 4 |`` rather than the ambiguous string ``4``).
+    """
+    errors: list[str] = []
+    for rel, needle in zip(claim["doc_locations"], claim["doc_evidence"], strict=True):
+        path = ROOT / str(rel)
+        if not path.exists():
+            errors.append(f"doc not found: {rel}")
+            continue
+        if str(needle) not in path.read_text(encoding="utf-8"):
+            errors.append(f"doc evidence missing from {rel}: {needle!r}")
+    return errors
+
+
 def verify_claim(claim: dict[str, Any]) -> tuple[str, Any]:
     """Returns (status, actual): status in {PASS, DRIFT, ERROR}."""
     artifact = ROOT / str(claim["artifact"])
@@ -154,7 +182,12 @@ def verify_claim(claim: dict[str, Any]) -> tuple[str, Any]:
         actual = apply_rule(str(claim["rule"]), artifact)
     except Exception as exc:  # noqa: BLE001 — any extraction failure is a reportable ERROR
         return "ERROR", f"{type(exc).__name__}: {exc}"
-    return ("PASS" if values_match(claim["expected"], actual) else "DRIFT"), actual
+    if not values_match(claim["expected"], actual):
+        return "DRIFT", actual
+    doc_errors = verify_documentation(claim)
+    if doc_errors:
+        return "DRIFT", "; ".join(doc_errors)
+    return "PASS", actual
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -41,7 +41,7 @@ docs/                 (active)      — SPEC, this file, eval/cost/failure repor
 
 ## Language decision
 
-Core pipelines are **Python 3.12 in a repo-local `.venv`** (PM directive, 2026-07-10). The SPEC's TypeScript type definitions are implemented as pydantic models with identical field names, so a future TS/JS frontend consumes the same JSON shapes verbatim. The shipped web surfaces (eval dashboard, test center) are self-contained HTML served by the Python services.
+Core pipelines are **Python 3.12 in a repo-local `.venv`**. The SPEC's TypeScript type definitions are implemented as pydantic models with identical field names, so a future TS/JS frontend consumes the same JSON shapes verbatim. The shipped web surfaces (eval dashboard, test center) are self-contained HTML served by the Python services.
 
 ## Non-negotiable invariants (enforced in code, not convention)
 

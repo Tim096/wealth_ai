@@ -66,3 +66,6 @@ def test_data_matches_source_artifacts():
     dg = data["browser_evals"]["degradation"]
     assert set(dg) == {"perception", "action", "execution"}
     assert all(len(points) == 4 for points in dg.values())
+    shift = data["status_reclassification"]
+    assert shift["before"]["pass"] == 192
+    assert shift["after"]["pass"] == 177

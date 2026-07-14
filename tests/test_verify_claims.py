@@ -27,8 +27,11 @@ def test_registry_loads_and_is_well_formed():
     assert len(ids) == len(set(ids)), "claim_id values must be unique"
     for claim in claims:
         assert claim["doc_locations"], claim["claim_id"]
-        for doc in claim["doc_locations"]:
+        assert len(claim["doc_locations"]) == len(claim["doc_evidence"])
+        for doc, evidence in zip(claim["doc_locations"], claim["doc_evidence"], strict=True):
             assert (ROOT / doc).exists(), f"{claim['claim_id']}: doc missing: {doc}"
+            assert evidence in (ROOT / doc).read_text(encoding="utf-8"), (
+                f"{claim['claim_id']}: doc evidence missing: {evidence!r}")
 
 
 def test_every_registered_artifact_exists():
@@ -63,6 +66,16 @@ def test_missing_artifact_is_reported_as_error(tmp_path, capsys):
     bad_registry.write_text(json.dumps([broken]), encoding="utf-8")
     assert verify_claims.main(["--registry", str(bad_registry)]) == 1
     assert "ERROR" in capsys.readouterr().out
+
+
+def test_missing_document_evidence_is_reported_as_drift(tmp_path, capsys):
+    claims = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    broken = dict(claims[0], doc_evidence=["text that is deliberately absent"])
+    bad_registry = tmp_path / "claims_registry.json"
+    bad_registry.write_text(json.dumps([broken]), encoding="utf-8")
+    assert verify_claims.main(["--registry", str(bad_registry)]) == 1
+    out = capsys.readouterr().out
+    assert "DRIFT" in out and "doc evidence missing" in out
 
 
 def test_unknown_rule_is_rejected_at_load(tmp_path):

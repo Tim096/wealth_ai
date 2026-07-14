@@ -52,9 +52,9 @@ AI 就是這種實習生。它會操作網頁、會讀財報、會給答案,而�
 
 **比喻**:常去的超市改裝了,貨架全搬位。死記「第三排左邊」的人會失敗;記得「我要找的是醬油」的人會重新找到。修復靠的是理解用途,不是死記位置。
 
-**機制**:動作失敗時先「診斷」失敗類型(selector 找不到、被 modal 擋住、點了沒反應……),再套對應策略——是診斷驅動,不是盲目重試。修復時列舉頁面 accessibility tree 的候選元素,以 role / aria-label / placeholder / 文字 / 位置對「元素用途」(搜尋框、送出鈕、下載鈕……)評分選擇,並明確避開誘餌(decoy)元素;還有可行性 gate:如果沒有任何元素真的能執行該動作,誠實回報「no viable candidate」,而不是默默點錯的東西。
+**機制**:動作失敗時先「診斷」失敗類型(selector 找不到、被 modal 擋住、點了沒反應……),再套對應策略——是診斷驅動,不是盲目重試。修復時列舉頁面 accessibility tree 的候選元素,以 role / aria-label / placeholder / 文字 / 位置對「元素用途」(搜尋框、送出鈕、下載鈕……)評分選擇,並明確避開誘餌(decoy)元素;還有可行性 gate:如果沒有任何元素真的能執行該動作,誠實回報「no viable candidate」,而不是默默點錯的東西。Agent Mode 的 history 也保留 grounded target、輸入值與 intent；同頁狀態連續兩次 no-effect 後，第三次相同 action 會在 executor 前被擋下。三種不同 DOM shape 的確定性 mechanism probe 從 generic history `0/3` 提升到 grounded history `3/3`。
 
-**指路**:`packages/browser_agent/repair.py`(`diagnose_failure`、`_PURPOSE_HINTS`、decoy 與 feasibility gate)。
+**指路**:`packages/browser_agent/repair.py`(`diagnose_failure`、`_PURPOSE_HINTS`、decoy 與 feasibility gate)；`packages/browser_agent/agent.py`(`action_history_entry`、`action_state_signature`)；`tools/action_history_cross_site_eval.py`。
 
 ### 3.4 source-exact 溯源:offset + sha256
 
@@ -92,9 +92,9 @@ AI 就是這種實習生。它會操作網頁、會讀財報、會給答案,而�
 
 **比喻**:天主教封聖曾設「魔鬼代言人」,唯一職責是找出候選人不該封聖的理由。能活過專職找碴的結論,才值得信。
 
-**機制**:用 multi-agent workflow(56 個 agent)稽核 pipeline 自報的結果:每家公司一個 audit agent 找可疑 span,每個回報的異常再交給獨立的「對抗式驗證 agent」(prompt 明令「盡力反駁這個異常」),多數決才成立。結果:31 個異常確認、12 個被成功反駁。最有價值的發現是**稽核抓到 pipeline 在說謊**——自報 75.9% pass 裡有 15 個是 silent failure,全數修復後 pass 率「下降」到 70.0%,而下降正是進步:錯的 pass 被誠實重分類了。
+**機制**:multi-agent workflow 把「找問題」與「盡力反駁問題」分成獨立角色；只有能落成 accession-level fixture、artifact 或 regression test 的 finding 才算成立。這避免 audit agent 的自信文字直接變成產品結論，也讓 reviewer 不必相信 agent 數量或會議紀錄，只需重跑具名案例與測試。
 
-**指路**:`docs/eval_report.md`「對抗式稽核」節(含誠實標註:per-agent 逐一輸出未完整留存,數字引自 workflow 紀錄)。
+**指路**:`prompts/eval_design/2026-07-10-adversarial-audit-workflow.md`；`data/sec_eval/records/`；`tests/test_landmines.py`、`tests/test_refine.py`、`tests/test_cross_ref.py`。
 
 ## 4. 誠實的數字(不粉飾)
 

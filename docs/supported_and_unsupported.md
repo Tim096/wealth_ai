@@ -1,6 +1,6 @@
 # Supported & Unsupported (誠實邊界)
 
-> SPEC 1.1「誠實邊界」+ 主管回饋:好的作業會明確列出 unsupported class。這裡把 10-K 依**結構類別**分,並說明每一類的行為與可信度。
+> 對應 SPEC 1.1「誠實邊界」：這裡把 10-K 依**結構類別**分，並明確列出 unsupported class、行為與可信度。
 
 ## SEC 10-K:filing class 與行為
 
@@ -84,6 +84,6 @@ pipeline 產生的**確切字串值**(非概念):
 四層防禦,不靠 AI 自述:
 
 1. **三態判定**:缺證據 → `unknown`/`needs_review`,結構上不能升級成 pass(`eval_core/verdict.py`)。
-2. **對抗式稽核**:56-agent workflow 證偽自報 pass rate,抓到 15 個 silent failure(`eval_report.md`;內部審計過程,per-agent 輸出未完整留存為 artifact)。
+2. **對抗式稽核**:multi-agent workflow 找出可重現的 silent-failure classes；per-agent 輸出未完整留存，因此 agent 數量與內部投票不是 headline evidence。可驗證結果是 `eval_report.md` 對應的 accession-level fixtures、oracles 與 regression tests。
 3. **XBRL 獨立 oracle**:Item 8 對照 SEC companyfacts 的營收/淨利/總資產——真財報 span 一定含這些數字,wrapper stub 不含。11 家實測 **certified 10 / contradicted 1**(NVDA 誠實 IBR stub;JPM/XOM 經 P0-10 重組後 3/3 認證)(`tools/certify.py`,artifact `data/sec_eval/certification/item8_certification.json`)。
 4. **provenance + needs_review**:每個 item 標明來源(offset_exact_span / cross_reference_pointer / unresolved)與是否需人工複核。

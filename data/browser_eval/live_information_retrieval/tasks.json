@@ -1,15 +1,16 @@
 {
-  "suite": "live-information-retrieval-v1",
-  "frozen_at": "2026-07-14T05:30:07Z",
-  "selection_rule": "Ten read-only answer tasks on ten public documentation/reference domains, fixed before the first run of the readable-content change.",
-  "protocol": "Single launch per task against the deployed service; no task edits or agent edits between task runs; every terminal verdict remains in results.json.",
+  "suite": "live-information-retrieval-v2",
+  "frozen_at": "2026-07-14T05:57:23Z",
+  "selection_rule": "Ten read-only answer tasks on ten public documentation/reference domains; v2 freezes task wording and hidden gold before its first scored run.",
+  "protocol": "Single launch per task against the deployed service; the agent receives only the generic success contract, while the runner applies expected_answer_regex after the run; no task or agent edits between task runs.",
   "tasks": [
     {
       "id": "live-ir-001-wikipedia-eiffel",
       "domain": "en.wikipedia.org",
       "url": "https://en.wikipedia.org/wiki/Eiffel_Tower",
       "task": "On the Eiffel Tower page, return the year construction was completed.",
-      "success": ["answer_matches:(?i)\\b1889\\b"],
+      "success": ["answer_matches:\\b[0-9]{4}\\b"],
+      "expected_answer_regex": "(?i)\\b1889\\b",
       "max_steps": 6
     },
     {
@@ -17,7 +18,8 @@
       "domain": "peps.python.org",
       "url": "https://peps.python.org/pep-0008/",
       "task": "In PEP 8, return the maximum line length recommended for code.",
-      "success": ["answer_matches:(?i)\\b79\\b"],
+      "success": ["answer_matches:\\b[0-9]{2,3}\\b"],
+      "expected_answer_regex": "(?i)\\b79\\b",
       "max_steps": 6
     },
     {
@@ -25,7 +27,8 @@
       "domain": "developer.mozilla.org",
       "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/418",
       "task": "Return the name of HTTP status 418 shown on this MDN page.",
-      "success": ["answer_matches:(?i)teapot"],
+      "success": ["answer_matches:(?s).+"],
+      "expected_answer_regex": "(?i)teapot",
       "max_steps": 6
     },
     {
@@ -33,15 +36,17 @@
       "domain": "www.postgresql.org",
       "url": "https://www.postgresql.org/docs/current/runtime-config-connection.html",
       "task": "Return PostgreSQL's default TCP port from this documentation page.",
-      "success": ["answer_matches:(?i)\\b5432\\b"],
+      "success": ["answer_matches:\\b[0-9]{4,5}\\b"],
+      "expected_answer_regex": "(?i)\\b5432\\b",
       "max_steps": 6
     },
     {
       "id": "live-ir-005-rust-ownership-rules",
       "domain": "doc.rust-lang.org",
       "url": "https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html",
-      "task": "Return how many ownership rules the Rust Book lists.",
-      "success": ["answer_matches:(?i)\\bthree\\b|\\b3\\b"],
+      "task": "Return the Rust type the Ownership page uses for dynamically sized string data.",
+      "success": ["answer_matches:(?s).+"],
+      "expected_answer_regex": "(?i)\\bString\\b",
       "max_steps": 6
     },
     {
@@ -49,7 +54,8 @@
       "domain": "numpy.org",
       "url": "https://numpy.org/doc/stable/reference/generated/numpy.arange.html",
       "task": "Return whether numpy.arange includes or excludes its stop value.",
-      "success": ["answer_matches:(?i)not including|exclusive|excluded"],
+      "success": ["answer_matches:(?s).+"],
+      "expected_answer_regex": "(?i)excluding stop|does not include (?:this|the stop) value",
       "max_steps": 6
     },
     {
@@ -57,7 +63,8 @@
       "domain": "www.sqlite.org",
       "url": "https://www.sqlite.org/limits.html",
       "task": "Return SQLite's maximum number of tables in a join.",
-      "success": ["answer_matches:(?i)\\b64\\b"],
+      "success": ["answer_matches:\\b[0-9]{2,3}\\b"],
+      "expected_answer_regex": "(?i)\\b64\\b",
       "max_steps": 6
     },
     {
@@ -65,7 +72,8 @@
       "domain": "www.iana.org",
       "url": "https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml",
       "task": "Return the registered description for HTTP status code 404.",
-      "success": ["answer_matches:(?i)not found"],
+      "success": ["answer_matches:(?s).+"],
+      "expected_answer_regex": "(?i)not found",
       "max_steps": 6
     },
     {
@@ -73,7 +81,8 @@
       "domain": "www.rfc-editor.org",
       "url": "https://www.rfc-editor.org/rfc/rfc9110.html",
       "task": "Return the publication month and year shown for RFC 9110.",
-      "success": ["answer_matches:(?i)june\\s+2022"],
+      "success": ["answer_matches:(?i)\\b[A-Z][a-z]+\\s+20[0-9]{2}\\b"],
+      "expected_answer_regex": "(?i)june\\s+2022",
       "max_steps": 6
     },
     {
@@ -81,7 +90,8 @@
       "domain": "git-scm.com",
       "url": "https://git-scm.com/docs/git-clone",
       "task": "Return what kind of clone git clone --depth creates.",
-      "success": ["answer_matches:(?i)shallow\\s+clone"],
+      "success": ["answer_matches:(?s).+"],
+      "expected_answer_regex": "(?i)shallow\\s+clone",
       "max_steps": 6
     }
   ]

@@ -40,16 +40,22 @@ _ENUMERATE_JS = r"""
     'main h1,main h2,main h3,main h4,article h1,article h2,article h3,article h4,'
       + '[role=main] h1,[role=main] h2,[role=main] h3',
     'main p,main li,main blockquote,main pre,article p,article li,'
-      + '[role=main] p,[role=main] li'
+      + '[role=main] p,[role=main] li',
+    // Older documentation sites often have no semantic main/article wrapper.
+    // Fall back to body text only after the higher-signal groups above.
+    'body tr',
+    'body dt,body dd',
+    'body h1,body h2,body h3,body h4',
+    'body p,body li,body blockquote,body pre'
   ];
   for (const group of readableGroups) {
     for (const el of document.querySelectorAll(group)) {
       if (!seen.has(el) && (el.innerText || '').trim()) {
         readable.push(el); seen.add(el);
       }
-      if (readable.length >= 40) break;
+      if (readable.length >= 400) break;
     }
-    if (readable.length >= 40) break;
+    if (readable.length >= 400) break;
   }
   const els = interactive.concat(readable);
   return els.map((el, i) => {
@@ -66,7 +72,13 @@ _ENUMERATE_JS = r"""
       role: el.getAttribute('role') || '',
       aria_label: el.getAttribute('aria-label') || '',
       placeholder: el.getAttribute('placeholder') || '',
-      text: (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 200),
+      text: (function () {
+        const own = el.innerText || el.textContent || '';
+        const prev = el.tagName === 'DD' && el.previousElementSibling
+          && el.previousElementSibling.tagName === 'DT'
+          ? (el.previousElementSibling.innerText || '') + ' ' : '';
+        return (prev + own).replace(/\s+/g, ' ').trim().slice(0, 200);
+      })(),
       href: el.getAttribute('href') || '',
       // enclosing form (id, else its document.forms index) — repair's
       // form-context signal for disambiguating fields (FG-BROWSER-005)
@@ -104,7 +116,13 @@ _ELEMENT_FIELDS_JS = r"""
     id: el.id || '', name: el.getAttribute('name') || '',
     role: el.getAttribute('role') || '', aria_label: el.getAttribute('aria-label') || '',
     placeholder: el.getAttribute('placeholder') || '',
-    text: (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 200),
+    text: (function () {
+      const own = el.innerText || el.textContent || '';
+      const prev = el.tagName === 'DD' && el.previousElementSibling
+        && el.previousElementSibling.tagName === 'DT'
+        ? (el.previousElementSibling.innerText || '') + ' ' : '';
+      return (prev + own).replace(/\s+/g, ' ').trim().slice(0, 200);
+    })(),
     href: el.getAttribute('href') || '',
     classes: el.getAttribute('class') || '',
     parent_path: p.join('>')

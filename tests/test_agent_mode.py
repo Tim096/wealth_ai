@@ -163,12 +163,72 @@ def test_task_relevant_readable_candidate_surfaces_past_header_controls():
     assert "Completed 31 March 1889" in lines
 
 
+def test_answer_ranking_prefers_compact_value_over_repeated_structural_ids():
+    from browser_agent.planner import _candidate_lines
+
+    header = [cand(index=i, tag="a", text=f"Navigation {i}") for i in range(20)]
+    noisy = [cand(index=20 + i, tag="dt", type="", id="docs-rfc-9110",
+                  text=f"Reference {i}") for i in range(60)]
+    published = cand(index=337, tag="dd", type="", text="Published: June 2022")
+    obs = Observation(url="u", title="RFC 9110", visible_text="",
+                      candidates=header + noisy + [published])
+    lines = _candidate_lines(
+        obs,
+        "Return the publication month and year shown for RFC 9110",
+        [r"answer_matches:(?i)\b[A-Z][a-z]+\s+20[0-9]{2}\b"],
+    )
+    assert "aid=337 <dd>" in lines
+    assert "Published: June 2022" in lines
+
+
+def test_answer_candidate_keeps_value_past_default_label_prefix():
+    from browser_agent.planner import _candidate_lines
+
+    answer = cand(index=160, tag="p", type="", text=(
+        "arange(stop): Values are generated within the half-open interval "
+        "with explanatory context that makes the evidence longer than a control label "
+        "(in other words, excluding stop)."
+    ))
+    obs = Observation(url="u", title="numpy.arange", visible_text="",
+                      candidates=[answer])
+    lines = _candidate_lines(
+        obs,
+        "Return whether numpy.arange includes or excludes its stop value",
+        ["answer_matches:(?s).+"],
+    )
+    assert "excluding stop" in lines
+
+
 def test_task_focused_excerpt_recovers_answer_beyond_banner_prefix():
     from browser_agent.planner import _visible_text_excerpt
 
     text = "Donation banner " * 150 + "\nCompleted 31 March 1889\nOther text"
     excerpt = _visible_text_excerpt("Find the year construction was completed", text)
     assert "Completed 31 March 1889" in excerpt
+
+
+def test_answer_task_uses_compact_read_only_system_prompt():
+    from browser_agent.planner import _ANSWER_SYSTEM, _SYSTEM
+
+    class _Capture:
+        system = ""
+
+        def available(self):
+            return True
+
+        def complete_json(self, system, user, image_path=None):
+            self.system = system
+            return {"action": "extract_text", "aid": 4, "reason": "read value"}, None
+
+    client = _Capture()
+    obs = Observation(url="u", title="t", visible_text="",
+                      candidates=[cand(index=4, tag="tr", text="Completed 1889")])
+    decision = LLMPlanner(client).next_action(
+        "Return the completion year", ["answer_matches:[0-9]{4}"], obs, []
+    )
+    assert decision.kind == "action" and decision.action.type == "extract_text"
+    assert client.system == _ANSWER_SYSTEM
+    assert len(_ANSWER_SYSTEM) < len(_SYSTEM) / 3
 
 
 @pytest.mark.integration

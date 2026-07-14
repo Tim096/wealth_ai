@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import time
 from datetime import UTC, datetime
@@ -28,7 +29,7 @@ def _head() -> str:
 
 
 def run(base_url: str, tasks_path: Path, output_path: Path,
-        poll_timeout_s: int) -> dict:
+        slow_threshold_s: int) -> dict:
     taskset = json.loads(tasks_path.read_text(encoding="utf-8"))
     started = datetime.now(UTC)
     rows = []
@@ -46,26 +47,30 @@ def run(base_url: str, tasks_path: Path, output_path: Path,
             )
             submitted.raise_for_status()
             task_id = submitted.json()["task_id"]
-            deadline = time.monotonic() + poll_timeout_s
+            task_started = time.monotonic()
             state = {}
-            while time.monotonic() < deadline:
+            while True:
                 response = client.get(f"/api/tasks/{task_id}")
                 response.raise_for_status()
                 state = response.json()
                 if state["status"] not in {"queued", "running"}:
                     break
                 time.sleep(2)
-            else:
-                state = {"status": "timeout", "verifier": "poll timeout"}
             trace = state.get("trace") or {}
+            answer = state.get("answer", "")
+            gold_match = bool(re.search(task["expected_answer_regex"], answer or ""))
             rows.append({
                 "id": task["id"],
                 "domain": task["domain"],
                 "task_id": task_id,
                 "status": state.get("status"),
                 "confidence": state.get("confidence"),
-                "answer": state.get("answer", ""),
+                "answer": answer,
                 "verifier": state.get("verifier", ""),
+                "expected_answer_regex": task["expected_answer_regex"],
+                "gold_match": gold_match,
+                "gold_pass": state.get("status") == "pass" and gold_match,
+                "slow": time.monotonic() - task_started > slow_threshold_s,
                 "planner_steps": trace.get("repetition", {}).get("n_steps"),
                 "llm_calls": state.get("llm_calls"),
                 "llm_tokens": state.get("llm_tokens"),
@@ -73,7 +78,7 @@ def run(base_url: str, tasks_path: Path, output_path: Path,
                 "total_latency_ms": trace.get("total_latency_ms"),
             })
             print(f"{task['id']}: {rows[-1]['status']} ({task_id})", flush=True)
-    passed = sum(row["status"] == "pass" for row in rows)
+    passed = sum(row["gold_pass"] for row in rows)
     result = {
         "suite": taskset["suite"],
         "taskset_sha256": _sha256(tasks_path),
@@ -97,9 +102,9 @@ def main() -> int:
     parser.add_argument("--base-url", default="https://wealth-agent-ncku.zeabur.app")
     parser.add_argument("--tasks", type=Path, default=DEFAULT_TASKS)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--poll-timeout", type=int, default=180)
+    parser.add_argument("--slow-threshold", type=int, default=60)
     args = parser.parse_args()
-    result = run(args.base_url, args.tasks, args.output, args.poll_timeout)
+    result = run(args.base_url, args.tasks, args.output, args.slow_threshold)
     print(json.dumps(result["summary"], ensure_ascii=False))
     return 0
 

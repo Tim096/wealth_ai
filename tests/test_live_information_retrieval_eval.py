@@ -67,6 +67,54 @@ def test_runner_waits_for_terminal_state_before_submitting_next(monkeypatch, tmp
     output = tmp_path / "results.json"
     result = live_eval.run("https://agent.test", tasks, output, slow_threshold_s=60)
 
-    assert result["summary"] == {"passed": 2, "total": 2, "pass_rate": 1.0}
+    assert result["summary"]["passed"] == 2
+    assert result["summary"]["total"] == 2
+    assert result["summary"]["pass_rate"] == 1.0
+    assert result["summary"]["llm_calls_total"] == 0
     assert all(row["gold_pass"] for row in result["results"])
     assert json.loads(output.read_text(encoding="utf-8"))["taskset_sha256"]
+
+
+def test_runner_can_score_verifier_contract_without_hidden_gold(monkeypatch, tmp_path):
+    tasks = tmp_path / "tasks.json"
+    tasks.write_text(json.dumps({
+        "suite": "mixed",
+        "protocol": "single launch",
+        "tasks": [{
+            "id": "click", "domain": "example.test", "task_type": "click",
+            "task": "click", "url": "https://example.test",
+            "success": ["text_visible:done"], "max_steps": 2,
+        }],
+    }), encoding="utf-8")
+
+    class _Client:
+        def __init__(self, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def get(self, path):
+            if path == "/api/health":
+                return _Response({"ok": True})
+            return _Response({
+                "status": "pass", "answer": "", "verifier": "pass",
+                "llm_calls": 1, "llm_tokens": 10, "llm_cost_usd": 0.001,
+                "trace": {"repetition": {"n_steps": 1}, "total_latency_ms": 10},
+            })
+
+        def post(self, path, json):
+            return _Response({"task_id": "t-click"})
+
+    monkeypatch.setattr(live_eval.httpx, "Client", _Client)
+    result = live_eval.run(
+        "https://agent.test", tasks, tmp_path / "results.json", slow_threshold_s=60
+    )
+
+    assert result["summary"]["passed"] == 1
+    assert result["summary"]["task_types"] == ["click"]
+    assert result["results"][0]["scored_pass"] is True
+    assert result["results"][0]["gold_match"] is None

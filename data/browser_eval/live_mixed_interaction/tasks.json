@@ -1,0 +1,98 @@
+{
+  "suite": "live-mixed-interaction-v1",
+  "frozen_at": "2026-07-14T06:42:14Z",
+  "selection_rule": "Ten reversible, no-account browser tasks retained after a separate reachability and feasibility probe; six public test/content domains and eight operation types.",
+  "protocol": "One scored launch per frozen task against one deployed commit; wait for a terminal result before submitting the next task; keep every terminal verdict; no task or agent edits between scored runs.",
+  "tasks": [
+    {
+      "id": "mixed-001-add-element",
+      "domain": "the-internet.herokuapp.com",
+      "task_type": "dynamic_click",
+      "url": "https://the-internet.herokuapp.com/add_remove_elements/",
+      "task": "Click Add Element and confirm that a Delete button appears",
+      "success": ["text_visible:Delete"],
+      "max_steps": 6
+    },
+    {
+      "id": "mixed-002-dynamic-load",
+      "domain": "the-internet.herokuapp.com",
+      "task_type": "dynamic_wait",
+      "url": "https://the-internet.herokuapp.com/dynamic_loading/1",
+      "task": "Start the dynamic loading example and confirm Hello World appears",
+      "success": ["text_visible:Hello World!"],
+      "max_steps": 6
+    },
+    {
+      "id": "mixed-003-form-submit",
+      "domain": "www.selenium.dev",
+      "task_type": "fill_and_submit",
+      "url": "https://www.selenium.dev/selenium/web/web-form.html",
+      "task": "Fill the Text input field with WhaleForce, submit the web form, and confirm it was received",
+      "success": ["text_visible:Received!"],
+      "max_steps": 7
+    },
+    {
+      "id": "mixed-004-cross-site-navigation",
+      "domain": "example.com",
+      "task_type": "cross_site_navigation",
+      "url": "https://example.com/",
+      "task": "Follow the More information link and confirm you reach IANA example-domain help",
+      "success": ["url_contains:iana.org/help/example-domains"],
+      "max_steps": 6
+    },
+    {
+      "id": "mixed-005-category-navigation",
+      "domain": "books.toscrape.com",
+      "task_type": "category_navigation",
+      "url": "https://books.toscrape.com/",
+      "task": "Open the Poetry category and confirm you reach its category page",
+      "success": ["url_contains:catalogue/category/books/poetry_23"],
+      "max_steps": 6
+    },
+    {
+      "id": "mixed-006-dynamic-remove",
+      "domain": "the-internet.herokuapp.com",
+      "task_type": "dynamic_state_change",
+      "url": "https://the-internet.herokuapp.com/dynamic_controls",
+      "task": "Click Remove and wait until the checkbox is gone, then confirm the page says It's gone!",
+      "success": ["text_visible:It's gone!"],
+      "max_steps": 7
+    },
+    {
+      "id": "mixed-007-keyboard",
+      "domain": "the-internet.herokuapp.com",
+      "task_type": "keyboard",
+      "url": "https://the-internet.herokuapp.com/key_presses",
+      "task": "Send the ENTER key to the key-press page and confirm it reports ENTER",
+      "success": ["text_visible:You entered: ENTER"],
+      "max_steps": 5
+    },
+    {
+      "id": "mixed-008-new-tab",
+      "domain": "the-internet.herokuapp.com",
+      "task_type": "new_tab",
+      "url": "https://the-internet.herokuapp.com/windows",
+      "task": "Click the Click Here link, follow the new tab, and confirm the new-window URL",
+      "success": ["url_contains:/windows/new"],
+      "max_steps": 6
+    },
+    {
+      "id": "mixed-009-tag-navigation",
+      "domain": "quotes.toscrape.com",
+      "task_type": "tag_navigation",
+      "url": "https://quotes.toscrape.com/",
+      "task": "Open the humor tag and confirm you reach its tag page",
+      "success": ["url_contains:/tag/humor/"],
+      "max_steps": 6
+    },
+    {
+      "id": "mixed-010-hierarchical-navigation",
+      "domain": "webscraper.io",
+      "task_type": "hierarchical_navigation",
+      "url": "https://webscraper.io/test-sites/e-commerce/allinone",
+      "task": "Open Computers, then Laptops, and confirm the laptops category URL",
+      "success": ["url_contains:/computers/laptops"],
+      "max_steps": 7
+    }
+  ]
+}

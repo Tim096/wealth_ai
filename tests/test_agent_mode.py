@@ -676,6 +676,31 @@ def test_no_progress_detection_ignores_env_note():
     assert vision_escalation_reason(hist, []) != ""
 
 
+def test_action_history_names_grounded_target_and_intent():
+    from browser_core import ElementTarget
+    from browser_core.actions import ClickAction
+    from browser_agent.agent import action_history_entry, action_state_signature
+
+    obs = Observation(
+        url="https://example.test/", title="test", visible_text="ready",
+        candidates=[cand(index=7, tag="button", text="Location")])
+    action = ClickAction(target=ElementTarget(
+        selector='[data-aid="7"]', selector_type="css"))
+
+    entry = action_history_entry(action, obs, "open the location filter", ok=True)
+
+    assert entry == ('click:ok | target=button "Location" aid=7 '
+                     '| intent="open the location filter"')
+    progressed = Observation(
+        url=obs.url, title=obs.title, visible_text="results loaded",
+        candidates=obs.candidates)
+    assert action_state_signature(action, obs) != action_state_signature(action, progressed)
+    dom_progressed = Observation(
+        url=obs.url, title=obs.title, visible_text=obs.visible_text,
+        candidates=[cand(index=8, tag="button", text="Location")])
+    assert action_state_signature(action, obs) != action_state_signature(action, dom_progressed)
+
+
 class _ClickInertButtonPlanner:
     """Clicks the only button once, then gives up — records the history it was
     shown so the test can see the env note the loop appended."""
@@ -697,6 +722,19 @@ class _ClickInertButtonPlanner:
                 target=ElementTarget(selector=c.aid_selector(), selector_type="css")),
                 reason="click the button")
         return PlannerDecision(kind="give_up", reason="nothing works")
+
+
+class _RepeatInertButtonPlanner:
+    """A planner that ignores feedback and retries the exact inert control."""
+    def next_action(self, task, success_conditions, obs, history,
+                    plan_steps=None, image_path=None):
+        from browser_core import ElementTarget
+        from browser_core.actions import ClickAction
+        from browser_agent.planner import PlannerDecision
+        return PlannerDecision(kind="action", action=ClickAction(
+            target=ElementTarget(selector=obs.candidates[0].aid_selector(),
+                                 selector_type="css")),
+            reason="retry the same inert button")
 
 
 @pytest.mark.integration
@@ -724,10 +762,39 @@ def test_silent_click_failure_gets_env_note_and_diagnosis(tmp_path):
         b.close()
     # the turn AFTER the click sees the env note appended to its entry
     entry = planner.seen[1][0]
-    assert entry.startswith("click:ok | env: page unchanged")
+    assert entry.startswith('click:ok | target=button "does nothing" aid=0')
+    assert 'intent="click the button"' in entry
+    assert "env: page unchanged" in entry
     assert "silently failed" in entry
     click = next(s for s in run.steps if s.step == "planner" and s.action == "click")
     assert click.diagnosis == "silent_failure_suspected"
+
+
+@pytest.mark.integration
+def test_repeated_no_effect_action_is_blocked_before_executor(tmp_path):
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from browser_agent.agent import BrowserAgent
+    from browser_agent.memory_store import MemoryStore
+
+    contract = BrowserTaskContract(
+        task_id="repeat-inert", natural_language_task="press the magic button",
+        expected_outcome="magic happens",
+        success_conditions=[SuccessCondition(type="text_visible", value="NEVER_THERE_XYZ")])
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.set_content("<button id='b'>does nothing</button>")
+        agent = BrowserAgent(page, MemoryStore(tmp_path / "m.json"), "live", "agentic")
+        run = agent.run_agentic(
+            "repeat-inert", contract, _RepeatInertButtonPlanner(), max_steps=4)
+        browser.close()
+
+    executed_clicks = [s for s in run.steps if s.step == "planner" and s.action == "click"]
+    blocked = [s for s in run.steps if s.diagnosis == "repeated_no_effect"]
+    assert len(executed_clicks) == 2
+    assert len(blocked) >= 1
 
 
 class _NoopLoopPlanner:

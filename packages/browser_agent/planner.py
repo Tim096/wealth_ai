@@ -58,6 +58,7 @@ WHEN BLOCKED
 - If a CAPTCHA / "unusual traffic" / "are you a robot" page appears, do NOT try to solve it. Prefer "goto" to reach the target site by URL directly, bypassing the search engine. Only if there is genuinely no way forward, "give_up" with the reason — this is honest and correct, not a failure of effort.
 
 PROGRESS DISCIPLINE
+- Action entries name the grounded `target=...`, attempted value/key, and `intent=...`. If an entry says `env: page unchanged`, do NOT choose that same target/action again while the page state is unchanged; select a different control or route.
 - Check ACTIONS SO FAR before deciding: never repeat an action that already failed the same way — change strategy instead (different element, press instead of click, dismiss a modal).
 - Entries in ACTIONS SO FAR carry an env note ("| env: …") of what each action actually changed. "page unchanged" after a click means it silently did nothing — do not repeat it; use a different element or method.
 - Modern sites are SPAs: the URL/content may have changed after your last action even without a full reload. Re-read the CURRENT state before acting.

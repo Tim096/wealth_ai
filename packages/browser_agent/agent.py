@@ -137,8 +137,8 @@ def vision_escalation_reason(history: list[str], page_hashes: list[str],
     multimodal model); actions stay schema-validated and the verifier stays
     the only judge."""
     def _no_progress(h: str) -> bool:
-        h = h.split(" | env:")[0]     # P0-4 appends an env note after the status
-        return h.startswith(("noop(", "give_up_rejected(")) or h.endswith(":fail")
+        head = h.split(" |", 1)[0]
+        return head.startswith(("noop(", "give_up_rejected(")) or head.endswith(":fail")
     if len(history) >= window and all(_no_progress(h) for h in history[-window:]):
         return f"連續 {window} 步無進展"
     if len(page_hashes) >= window + 1 and len(set(page_hashes[-(window + 1):])) == 1:
@@ -189,9 +189,76 @@ def _no_progress_entry(h: str) -> bool:
     """A history entry that advanced nothing: a failed action, a planner noop,
     or a rejected give_up/done. The P0-4 env note (' | env: …') is stripped
     first so the status token stays the thing being tested."""
-    h = h.split(" | env:")[0]
-    return (h.startswith(("noop(", "give_up_rejected(", "done_rejected("))
-            or h.endswith(":fail"))
+    head = h.split(" |", 1)[0]
+    return (head.startswith(("noop(", "give_up_rejected(", "done_rejected("))
+            or head.endswith(":fail"))
+
+
+def _history_head(entry: str) -> str:
+    """Return the machine-readable status prefix from a history row."""
+    return entry.split(" |", 1)[0]
+
+
+def _clean_history_text(value: object, cap: int = 100) -> str:
+    return " ".join(str(value or "").replace("|", "/").split())[:cap]
+
+
+def _action_target_hint(action, obs) -> str:
+    """Describe the exact observed control an action addressed."""
+    target = getattr(action, "target", None)
+    selector = str(getattr(target, "selector", "") or "")
+    candidate = next((c for c in obs.candidates if c.aid_selector() == selector), None)
+    if candidate is not None:
+        label = (candidate.aria_label or candidate.placeholder or candidate.text
+                 or candidate.name or candidate.id or "unlabelled")
+        role = f" role={candidate.role}" if candidate.role else ""
+        return (f'{candidate.tag}{role} "{_clean_history_text(label, 60)}" '
+                f"aid={candidate.index}")
+    if selector:
+        return f'selector="{_clean_history_text(selector, 80)}"'
+    if getattr(action, "type", "") == "mouse":
+        return f"screen ({action.x},{action.y})"
+    return "none"
+
+
+def action_history_entry(action, obs, reason: str, ok: bool) -> str:
+    """Build one grounded, compact action-feedback row for the next turn."""
+    action_type = str(getattr(action, "type", "action"))
+    parts = [f"{action_type}:{'ok' if ok else 'fail'}"]
+    if getattr(action, "target", None) is not None or action_type == "mouse":
+        parts.append(f"target={_action_target_hint(action, obs)}")
+    if action_type == "fill":
+        parts.append(f'value="{_clean_history_text(getattr(action, "value", ""), 80)}"')
+    elif action_type == "press":
+        parts.append(f'key="{_clean_history_text(getattr(action, "key", ""), 30)}"')
+    elif action_type == "goto":
+        parts.append(f'url="{_clean_history_text(getattr(action, "url", ""), 120)}"')
+    elif action_type == "keyboard":
+        key_or_text = getattr(action, "keys", "") or getattr(action, "text", "")
+        parts.append(f'input="{_clean_history_text(key_or_text, 60)}"')
+    if reason:
+        parts.append(f'intent="{_clean_history_text(reason)}"')
+    return " | ".join(parts)
+
+
+def action_state_signature(action, obs) -> str:
+    """Key a no-effect action to the exact observed page state."""
+    candidates = "\n".join(
+        "|".join(_clean_history_text(value, 120) for value in (
+            candidate.index, candidate.tag, candidate.type, candidate.role,
+            candidate.id, candidate.name, candidate.text, candidate.aria_label,
+            candidate.placeholder, candidate.href, candidate.checked,
+            candidate.form, candidate.classes, candidate.parent_path,
+            candidate.visible,
+        ))
+        for candidate in obs.candidates
+    )
+    state = sha256_text("|".join((obs.url, obs.title, obs.visible_text, candidates)))[:16]
+    detail = action_history_entry(action, obs, reason="", ok=True).split(":ok", 1)[1]
+    return f"{state}:{getattr(action, 'type', 'action')}{detail}"
+
+
+_MAX_NO_EFFECT_EXECUTIONS = 2
 
 
 # BUCKET 3a give_up classification: a give_up naming a HARD block (CAPTCHA /
@@ -831,6 +898,8 @@ class BrowserAgent:
         vision_capable = bool(_sv and callable(_sv) and _sv()) and self.artifact_dir is not None
         page_hashes: list[str] = []
         prev_obs = None      # P0-4: the previous observation, for the env diff
+        last_action_signature = ""
+        no_effect_actions: dict[str, int] = {}
         # P0-5 latch ledger (WC key-node semantics, arXiv:2406.12373):
         # 'type:value' -> step at which the condition was FIRST observed
         # satisfied. Every verdict below merges it, so evidence that genuinely
@@ -881,8 +950,12 @@ class BrowserAgent:
             # silent-failure signal — recorded in that step's diagnosis.
             env = diff_observations(prev_obs, obs)
             prev_obs = obs
-            if env and history and history[-1].endswith((":ok", ":fail")):
-                if env == "page unchanged" and history[-1].startswith(("click:ok", "press:ok")):
+            if env and history and _history_head(history[-1]).endswith((":ok", ":fail")):
+                if (env == "page unchanged"
+                        and _history_head(history[-1]).startswith(("click:ok", "press:ok"))):
+                    if last_action_signature:
+                        no_effect_actions[last_action_signature] = (
+                            no_effect_actions.get(last_action_signature, 0) + 1)
                     env += " — the action may have silently failed"
                     for s in reversed(trace):
                         if s.step == "planner" and s.action in ("click", "press"):
@@ -922,7 +995,7 @@ class BrowserAgent:
                     if r_out.followed_url:
                         self.page = self.executor.page
                         self.observer.page = self.page
-                    history.append(f"{r_action.type}:ok")
+                    history.append(action_history_entry(r_action, obs, rs.label, ok=True))
                     if (r_action.type == "extract_text" and r_out.extracted_text
                             and is_meaningful_answer(r_out.extracted_text)):
                         answers.append(r_out.extracted_text.strip())
@@ -1059,6 +1132,17 @@ class BrowserAgent:
                                                   detail=ascreen.reason)))
                 _emit(f"🛑 拒絕(責任邊界):{ascreen.reason}")
                 break
+            action_signature = action_state_signature(action, obs)
+            if no_effect_actions.get(action_signature, 0) >= _MAX_NO_EFFECT_EXECUTIONS:
+                hint = action_history_entry(action, obs, decision.reason, ok=False)
+                detail = ("rejected repeated no-effect action in the same page state: "
+                          + hint)
+                history.append(f"noop({detail})")
+                trace.append(_stamp_obs(StepTrace(
+                    step="planner", action="noop", ok=False, mode="agent",
+                    diagnosis="repeated_no_effect", detail=detail)))
+                _emit("rejected a repeated no-effect action; planner must change route")
+                continue
             out = self.executor.execute(action)
             phase["action_ms"] += out.latency_ms
             if out.followed_url:
@@ -1069,7 +1153,8 @@ class BrowserAgent:
                 trace.append(StepTrace(step="follow_tab", action="switch", ok=True, mode="agent",
                                        detail=f"↪ 跟隨新分頁:{out.followed_url}"))
                 _emit(f"↪ 跟隨新分頁:{out.followed_url}")
-            history.append(f"{action.type}:{'ok' if out.ok else 'fail'}")
+            history.append(action_history_entry(action, obs, decision.reason, ok=out.ok))
+            last_action_signature = action_signature
             detail = decision.reason
             if action.type == "download" and out.ok:
                 detail = f"下載完成 → {self.executor.last_download_path}"

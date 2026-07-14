@@ -1,0 +1,57 @@
+{
+  "protocol": "offline deterministic cross-site mechanism probe; three distinct DOM shapes; same generic exploration policy; no LLM/network/judge",
+  "before": {
+    "passed": 0,
+    "total": 3,
+    "pass_rate": 0.0
+  },
+  "after": {
+    "passed": 3,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "cases": [
+    {
+      "case_id": "native_buttons",
+      "mode": "legacy_generic_history",
+      "status": "fail",
+      "executed_clicks": 2,
+      "repeated_no_effect_blocks": 2
+    },
+    {
+      "case_id": "native_buttons",
+      "mode": "grounded_action_history",
+      "status": "pass",
+      "executed_clicks": 2,
+      "repeated_no_effect_blocks": 0
+    },
+    {
+      "case_id": "aria_links",
+      "mode": "legacy_generic_history",
+      "status": "fail",
+      "executed_clicks": 2,
+      "repeated_no_effect_blocks": 2
+    },
+    {
+      "case_id": "aria_links",
+      "mode": "grounded_action_history",
+      "status": "pass",
+      "executed_clicks": 2,
+      "repeated_no_effect_blocks": 0
+    },
+    {
+      "case_id": "custom_role_buttons",
+      "mode": "legacy_generic_history",
+      "status": "fail",
+      "executed_clicks": 2,
+      "repeated_no_effect_blocks": 2
+    },
+    {
+      "case_id": "custom_role_buttons",
+      "mode": "grounded_action_history",
+      "status": "pass",
+      "executed_clicks": 2,
+      "repeated_no_effect_blocks": 0
+    }
+  ]
+}

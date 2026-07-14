@@ -26,8 +26,33 @@ _ENUMERATE_JS = r"""
     + '[role=button],[role=link],[role=searchbox],[role=textbox],'
     + '[role=radio],[role=checkbox],[role=switch],[role=option],'
     + '[role=menuitemradio],[role=menuitemcheckbox],[role=tab]';
-  const els = Array.from(document.querySelectorAll(sel));
-  return els.slice(0, 200).map((el, i) => {
+  const interactive = Array.from(document.querySelectorAll(sel)).slice(0, 160);
+  // Plain article text is also actionable for `extract_text`. Keep a bounded
+  // set of semantic reading blocks after the interactive controls so an
+  // answer in an infobox/table/paragraph can receive a grounded data-aid.
+  const seen = new Set(interactive);
+  const readable = [];
+  // Selector-list querySelectorAll returns document order, so a long nav <li>
+  // list can otherwise consume every slot before an early infobox <tr>.
+  const readableGroups = [
+    'main tr,article tr,[role=main] tr',
+    'main dt,main dd,article dt,article dd,[role=main] dt,[role=main] dd',
+    'main h1,main h2,main h3,main h4,article h1,article h2,article h3,article h4,'
+      + '[role=main] h1,[role=main] h2,[role=main] h3',
+    'main p,main li,main blockquote,main pre,article p,article li,'
+      + '[role=main] p,[role=main] li'
+  ];
+  for (const group of readableGroups) {
+    for (const el of document.querySelectorAll(group)) {
+      if (!seen.has(el) && (el.innerText || '').trim()) {
+        readable.push(el); seen.add(el);
+      }
+      if (readable.length >= 40) break;
+    }
+    if (readable.length >= 40) break;
+  }
+  const els = interactive.concat(readable);
+  return els.map((el, i) => {
     el.setAttribute('data-aid', String(i));
     const r = el.getBoundingClientRect();
     const cs = getComputedStyle(el);
@@ -41,7 +66,7 @@ _ENUMERATE_JS = r"""
       role: el.getAttribute('role') || '',
       aria_label: el.getAttribute('aria-label') || '',
       placeholder: el.getAttribute('placeholder') || '',
-      text: (el.textContent || '').trim().slice(0, 80),
+      text: (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 200),
       href: el.getAttribute('href') || '',
       // enclosing form (id, else its document.forms index) — repair's
       // form-context signal for disambiguating fields (FG-BROWSER-005)
@@ -79,7 +104,7 @@ _ELEMENT_FIELDS_JS = r"""
     id: el.id || '', name: el.getAttribute('name') || '',
     role: el.getAttribute('role') || '', aria_label: el.getAttribute('aria-label') || '',
     placeholder: el.getAttribute('placeholder') || '',
-    text: (el.textContent || '').trim().slice(0, 80),
+    text: (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 200),
     href: el.getAttribute('href') || '',
     classes: el.getAttribute('class') || '',
     parent_path: p.join('>')
@@ -243,7 +268,7 @@ class PageObserver:
             ".modal,#cookie,.popup,.overlay,.interstitial')"
         )
         try:
-            body_text = self.page.inner_text("body")[:5000]
+            body_text = self.page.inner_text("body")[:12_000]
         except Exception:
             body_text = ""
         return Observation(

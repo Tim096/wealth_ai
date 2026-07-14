@@ -11,6 +11,7 @@ LLM generality for unknown sites without giving up the reliability spine.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Protocol
 
@@ -37,7 +38,7 @@ CHOOSING ELEMENTS
 - Prefer semantically-right controls: a real submit (type=submit / role=button with a search/submit label) over a random clickable; an input/textarea/searchbox for typing.
 - AVOID traps: ids/labels containing decoy/fake/ad/promo/sponsor, login/sign-in prompts, cookie-notice links.
 - A candidate prefixed with `*` is NEW since your last action — it appeared BECAUSE of it (a dropdown/autocomplete option, a revealed panel, a new dialog). If a * element serves the task (an option to pick, a suggestion to click), act on it now; a * dialog/overlay must be dismissed first.
-- DISMISS OVERLAYS FIRST: any modal, popup, cookie/consent banner, newsletter, "unusual traffic" notice, or interstitial that covers the page must be closed before the task can proceed — click its close/×/dismiss/accept/agree/"no thanks"/"not now" control. A blocking popup is a step to clear, not a reason to stop.
+- DISMISS BLOCKING OVERLAYS FIRST: a modal/interstitial that actually covers the target must be closed before proceeding. Do not spend the step budget chasing a non-blocking banner when a grounded text candidate already contains the answer; extract that candidate immediately.
 
 PLAYBOOK
 - Prefer going straight to the target site over a web search. If the task names a site or brand with an obvious domain (finlab -> finlab.tw, wikipedia -> en.wikipedia.org, a company's SEC 10-K -> sec.gov EDGAR), use "goto" with that URL instead of searching. Search engines often block automation with a CAPTCHA.
@@ -100,18 +101,60 @@ class Planner(Protocol):
                     image_path: str | None = None) -> PlannerDecision: ...
 
 
-def _candidate_lines(obs: Observation) -> str:
+_READABLE_TAGS = {"p", "li", "dt", "dd", "tr", "h1", "h2", "h3", "h4",
+                  "blockquote", "pre"}
+_TERM_STOPWORDS = {
+    "about", "after", "before", "find", "from", "into", "page", "return",
+    "that", "the", "this", "what", "when", "where", "which", "with", "year",
+}
+
+
+def _task_terms(*parts: str) -> set[str]:
+    return {
+        token for token in re.findall(r"[^\W_]{3,}", " ".join(parts).lower())
+        if token not in _TERM_STOPWORDS
+    }
+
+
+def _candidate_lines(obs: Observation, task: str = "",
+                     success_conditions: list[str] | None = None) -> str:
+    visible = [c for c in obs.candidates if c.visible]
+    terms = _task_terms(task, *(success_conditions or []))
+
+    # Preserve the page's first controls (navigation/dialog actions), then use
+    # the remaining slots for task-relevant controls or semantic text blocks.
+    # This prevents a link-heavy header from hiding the answer-bearing row.
+    chosen = visible[:35]
+    chosen_ids = {id(c) for c in chosen}
+    ranked = []
+    for c in visible[35:]:
+        blob = " ".join((c.text, c.aria_label, c.placeholder, c.name, c.id)).lower()
+        score = sum(term in blob for term in terms)
+        if score or c.tag in _READABLE_TAGS:
+            ranked.append((score, c.tag in _READABLE_TAGS, -c.index, c))
+    ranked.sort(reverse=True, key=lambda row: row[:3])
+    for _, _, _, c in ranked:
+        if len(chosen) >= 50:
+            break
+        if id(c) not in chosen_ids:
+            chosen.append(c)
+            chosen_ids.add(id(c))
+    for c in visible:
+        if len(chosen) >= 50:
+            break
+        if id(c) not in chosen_ids:
+            chosen.append(c)
+            chosen_ids.add(id(c))
+
     out = []
-    for c in obs.candidates:
-        if not c.visible:
-            continue
+    for c in chosen:
         label = c.aria_label or c.placeholder or c.text or c.name or c.id
         # P0-4 (BU `*[index]` new-element mark): a leading '*' flags an element
         # that was NOT in the previous observation — it appeared as a RESULT of
         # the last action (a dropdown option, an autocomplete suggestion).
         line = (("*" if c.is_new else "")
                 + f'aid={c.index} <{c.tag}{" role="+c.role if c.role else ""}> '
-                  f'type={c.type or "-"} id="{c.id[:30]}" label="{label[:50]}"')
+                  f'type={c.type or "-"} id="{c.id[:30]}" label="{label[:120]}"')
         # selection state of a choice control: tells the planner an option is
         # ALREADY chosen so it won't click it again and toggle it back off.
         if c.checked in ("true", "false", "mixed"):
@@ -127,7 +170,31 @@ def _candidate_lines(obs: Observation) -> str:
         if c.tag == "a" and c.href and not c.href.startswith(("javascript:", "#")):
             line += f' href="{c.href[:80]}"'
         out.append(line)
-    return "\n".join(out[:50]) or "(no visible interactive elements)"
+    return "\n".join(out[:50]) or "(no visible candidate elements)"
+
+
+def _visible_text_excerpt(task: str, visible_text: str) -> str:
+    """Keep the page opening plus bounded task-relevant lines from deeper text."""
+    head = visible_text[:1000]
+    terms = _task_terms(task)
+    hits = []
+    for raw in visible_text.splitlines():
+        line = " ".join(raw.split())
+        if not line:
+            continue
+        score = sum(term in line.lower() for term in terms)
+        if score:
+            hits.append((score, line[:280]))
+    hits.sort(reverse=True, key=lambda row: row[0])
+    relevant = []
+    for _, line in hits:
+        if line not in relevant and line not in head:
+            relevant.append(line)
+        if len(relevant) == 6:
+            break
+    if not relevant:
+        return visible_text[:1600]
+    return head + "\nTASK-RELEVANT TEXT:\n" + "\n".join(relevant)
 
 
 # P0-2 mouse-coordinate grounding margin: candidate x,y are top-left corners,
@@ -330,8 +397,8 @@ class LLMPlanner:
             f"SUCCESS WHEN: {'; '.join(success_conditions)}\n"
             f"CURRENT URL: {obs.url}\nTITLE: {obs.title}\n"
             f"{shot}"
-            f"VISIBLE TEXT (excerpt): {obs.visible_text[:1600]}\n"
-            f"CANDIDATE ELEMENTS:\n{_candidate_lines(obs)}\n"
+            f"VISIBLE TEXT (task-focused excerpt): {_visible_text_excerpt(task, obs.visible_text)}\n"
+            f"CANDIDATE ELEMENTS:\n{_candidate_lines(obs, task, success_conditions)}\n"
             f"ACTIONS SO FAR: {', '.join(history[-6:]) or '(none)'}\n"
             "Return the next single action as JSON."
         )

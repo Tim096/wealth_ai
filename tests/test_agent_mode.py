@@ -146,6 +146,56 @@ def test_candidate_line_shows_coordinate():
     assert "at=(104,204)" in _candidate_lines(obs)
 
 
+def test_task_relevant_readable_candidate_surfaces_past_header_controls():
+    from browser_agent.planner import _candidate_lines
+
+    header = [cand(index=i, tag="a", text=f"Navigation {i}") for i in range(60)]
+    answer = cand(index=160, tag="tr", type="",
+                  text="Construction started 28 January 1887 Completed 31 March 1889")
+    obs = Observation(url="u", title="Eiffel Tower", visible_text="",
+                      candidates=header + [answer])
+    lines = _candidate_lines(
+        obs,
+        "Find the year construction was completed",
+        ["answer_matches:[0-9]{4}"],
+    )
+    assert "aid=160 <tr>" in lines
+    assert "Completed 31 March 1889" in lines
+
+
+def test_task_focused_excerpt_recovers_answer_beyond_banner_prefix():
+    from browser_agent.planner import _visible_text_excerpt
+
+    text = "Donation banner " * 150 + "\nCompleted 31 March 1889\nOther text"
+    excerpt = _visible_text_excerpt("Find the year construction was completed", text)
+    assert "Completed 31 March 1889" in excerpt
+
+
+@pytest.mark.integration
+def test_observer_exposes_plain_article_row_for_extract_text():
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    from browser_agent.observer import PageObserver
+    from browser_agent.planner import _candidate_lines
+
+    html = "".join(f'<a href="#{i}">Navigation {i}</a>' for i in range(180)) + (
+        '<main><table><tr><th>Completed</th><td>31 March 1889</td></tr></table></main>'
+    )
+    with sync_playwright() as p:
+        b = p.chromium.launch(headless=True)
+        page = b.new_page()
+        page.set_content(html)
+        obs = PageObserver(page).observe()
+        row = next(c for c in obs.candidates if c.tag == "tr")
+        extracted = page.locator(row.aid_selector()).inner_text()
+        b.close()
+    assert "31 March 1889" in extracted
+    assert f"aid={row.index} <tr>" in _candidate_lines(
+        obs, "Find the year construction was completed"
+    )
+
+
 def test_keyboard_cannot_bypass_credential_boundary():
     from browser_agent.capability import screen_action
     from browser_core.actions import KeyboardAction

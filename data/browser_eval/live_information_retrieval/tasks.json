@@ -1,0 +1,88 @@
+{
+  "suite": "live-information-retrieval-v1",
+  "frozen_at": "2026-07-14T05:30:07Z",
+  "selection_rule": "Ten read-only answer tasks on ten public documentation/reference domains, fixed before the first run of the readable-content change.",
+  "protocol": "Single launch per task against the deployed service; no task edits or agent edits between task runs; every terminal verdict remains in results.json.",
+  "tasks": [
+    {
+      "id": "live-ir-001-wikipedia-eiffel",
+      "domain": "en.wikipedia.org",
+      "url": "https://en.wikipedia.org/wiki/Eiffel_Tower",
+      "task": "On the Eiffel Tower page, return the year construction was completed.",
+      "success": ["answer_matches:(?i)\\b1889\\b"],
+      "max_steps": 6
+    },
+    {
+      "id": "live-ir-002-pep8-line-length",
+      "domain": "peps.python.org",
+      "url": "https://peps.python.org/pep-0008/",
+      "task": "In PEP 8, return the maximum line length recommended for code.",
+      "success": ["answer_matches:(?i)\\b79\\b"],
+      "max_steps": 6
+    },
+    {
+      "id": "live-ir-003-mdn-418",
+      "domain": "developer.mozilla.org",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/418",
+      "task": "Return the name of HTTP status 418 shown on this MDN page.",
+      "success": ["answer_matches:(?i)teapot"],
+      "max_steps": 6
+    },
+    {
+      "id": "live-ir-004-postgresql-port",
+      "domain": "www.postgresql.org",
+      "url": "https://www.postgresql.org/docs/current/runtime-config-connection.html",
+      "task": "Return PostgreSQL's default TCP port from this documentation page.",
+      "success": ["answer_matches:(?i)\\b5432\\b"],
+      "max_steps": 6
+    },
+    {
+      "id": "live-ir-005-rust-ownership-rules",
+      "domain": "doc.rust-lang.org",
+      "url": "https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html",
+      "task": "Return how many ownership rules the Rust Book lists.",
+      "success": ["answer_matches:(?i)\\bthree\\b|\\b3\\b"],
+      "max_steps": 6
+    },
+    {
+      "id": "live-ir-006-numpy-arange-stop",
+      "domain": "numpy.org",
+      "url": "https://numpy.org/doc/stable/reference/generated/numpy.arange.html",
+      "task": "Return whether numpy.arange includes or excludes its stop value.",
+      "success": ["answer_matches:(?i)not including|exclusive|excluded"],
+      "max_steps": 6
+    },
+    {
+      "id": "live-ir-007-sqlite-join-limit",
+      "domain": "www.sqlite.org",
+      "url": "https://www.sqlite.org/limits.html",
+      "task": "Return SQLite's maximum number of tables in a join.",
+      "success": ["answer_matches:(?i)\\b64\\b"],
+      "max_steps": 6
+    },
+    {
+      "id": "live-ir-008-iana-404",
+      "domain": "www.iana.org",
+      "url": "https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml",
+      "task": "Return the registered description for HTTP status code 404.",
+      "success": ["answer_matches:(?i)not found"],
+      "max_steps": 6
+    },
+    {
+      "id": "live-ir-009-rfc9110-date",
+      "domain": "www.rfc-editor.org",
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.html",
+      "task": "Return the publication month and year shown for RFC 9110.",
+      "success": ["answer_matches:(?i)june\\s+2022"],
+      "max_steps": 6
+    },
+    {
+      "id": "live-ir-010-git-clone-depth",
+      "domain": "git-scm.com",
+      "url": "https://git-scm.com/docs/git-clone",
+      "task": "Return what kind of clone git clone --depth creates.",
+      "success": ["answer_matches:(?i)shallow\\s+clone"],
+      "max_steps": 6
+    }
+  ]
+}

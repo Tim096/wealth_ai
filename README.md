@@ -20,6 +20,18 @@ irreversible tasks are refused by design.
 
 ### Latest deployed Task 1 evidence (2026-07-14)
 
+The frozen `live-mixed-interaction-v1` regression suite covers ten reversible,
+no-account tasks on six public domains: dynamic controls and waits, form fill +
+submit, keyboard input, new-tab following, cross-site navigation, and category,
+tag, and hierarchical navigation. Its ten granular task labels map to eight
+operation families. One scored run on commit `f384843` recorded mixed-operation
+pass **10/10**, 18 LLM calls, median latency **6.160 s**, inclusive p95
+**40.237 s**, **79,497** total tokens, and **$0.042266** total model cost; no
+task crossed 60 s. This is an externally hosted regression suite, not a
+held-out estimate: reachability and feasibility were probed before freeze. See
+the frozen [mixed task set](data/browser_eval/live_mixed_interaction/tasks.json)
+and [per-task results](data/browser_eval/live_mixed_interaction/results.json).
+
 The frozen `live-information-retrieval-v2` suite runs ten read-only answer tasks
 against ten public documentation/reference domains. The deployed agent receives
 only a generic answer-shape contract; the runner applies hidden gold offline.
@@ -30,8 +42,8 @@ threshold. See the frozen [task set](data/browser_eval/live_information_retrieva
 [per-task results](data/browser_eval/live_information_retrieval/results.json),
 and [runner](tools/live_information_retrieval_eval.py).
 
-This narrow information-retrieval suite does not replace the historical frozen
-Online-Mind2Web result: the strict advisory WebJudge figure remains `21/283`.
+Neither suite replaces the historical frozen Online-Mind2Web result: the strict
+advisory WebJudge figure remains `21/283`.
 
 ### Public API smoke test
 
@@ -101,6 +113,7 @@ Full evidence, metrics, and failure traces: [evaluation report](docs/eval_report
 5. 確認「裁判本身可不可信」:[docs/verifier_trust_card.md](docs/verifier_trust_card.md)(由 `tools/verifier_trust_card.py` 從 artifact 生成的計分卡,含 AUROC MISS 的誠實揭露)。
 6. 重跑 Task 1 action-history 泛化機制 probe：`.venv\Scripts\python tools\action_history_cross_site_eval.py`。
 7. 重跑 deployed 10-domain information-retrieval suite：`.venv\Scripts\python tools\live_information_retrieval_eval.py`。
+8. 重跑 deployed mixed-operation suite：`.venv\Scripts\python tools\live_information_retrieval_eval.py --tasks data/browser_eval/live_mixed_interaction/tasks.json --output data/browser_eval/live_mixed_interaction/results.json`。
 
 Known limitations and planned experiments: [TODO.md](TODO.md).
 
@@ -200,7 +213,7 @@ tests/      quick + Playwright/integration lanes；實際數量由 pytest collec
 | 服務 | URL | 狀態(2026-07-14 實測) |
 |---|---|---|
 | SEC Extractor + dashboard | **https://wealth-sec-ncku.zeabur.app** | 完整可用、免 auth(AAPL 23 items、warm repeat ~0.6s) |
-| Browser Agent | **https://wealth-agent-ncku.zeabur.app** | **真實 LLM(OpenRouter `x-ai/grok-4.5`)**；frozen 10-domain answer suite 實跑 **10/10**，另有 `/api/demo` 列出的免 key 示範任務 |
+| Browser Agent | **https://wealth-agent-ncku.zeabur.app** | **真實 LLM(OpenRouter `x-ai/grok-4.5`)**；frozen answer 與 mixed-operation suites 各實跑 **10/10**，另有 `/api/demo` 列出的免 key 示範任務 |
 
 兩個 service 各自容器化(Docker 本地驗證通過,零修正):**wealth-sec**(SEC Extractor API + dashboard,`Dockerfile.wealth-sec`)與 **wealth-agent**(Browser Agent + Playwright Chromium,`Dockerfile.wealth-agent`),同一 repo root 為 build context,根目錄 `.dockerignore` 排除 `.venv` / `data/raw_filings` / `runs`(context 縮小約 830MB)。
 

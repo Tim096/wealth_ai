@@ -404,6 +404,17 @@ Agent Mode failure analysis 暴露一個通用 feedback 缺口：planner history
 - Artifacts：`data/browser_eval/live_information_retrieval/tasks.json`、`data/browser_eval/live_information_retrieval/results.json`
 - Runner regression：`tests/test_live_information_retrieval_eval.py`
 
+### Deployed mixed-operation regression（2026-07-14，凍結單跑）
+
+`live-mixed-interaction-v1` 凍結十個 reversible、no-account tasks，分布於六個 public test/content domains。十個 granular `task_type` labels 對應八個 operation families：dynamic controls/waits、fill+submit、keyboard、new-tab、cross-site 與多層 navigation。single-worker runner 等每題 terminal 後才送下一題；全部 success contracts 在起始狀態都不成立，避免 baseline false pass。
+
+部署版本 `f384843ac69fa96621ff398438f02d161fcb440d`、direct `x-ai/grok-4.5` 的唯一 scored run：mixed-operation pass **10/10**；LLM calls total **18**、median 1.5、max 4；總 tokens **79,497**；總成本 **$0.042266**；latency median **6.160 s**、inclusive p95 **40.237 s**、max **48.251 s**；60 s slow threshold 以上 **0/10**。taskset sha256：`a05c5ab2d29485449d656d35d781f1fef0c5629e2a9dbd4de59c92e2de79121b`。
+
+這是 externally hosted regression，不是 held-out success estimate：正式 freeze 前先做 reachability/feasibility probe，確定任務安全、可逆、無帳號且站點在 deployment network 可到達。它補足 operation breadth 與 deployed execution evidence，但不覆寫 Online-Mind2Web 的 `21/283` advisory 結果。
+
+- 重現：`.venv\Scripts\python tools\live_information_retrieval_eval.py --tasks data/browser_eval/live_mixed_interaction/tasks.json --output data/browser_eval/live_mixed_interaction/results.json`
+- Artifacts：`data/browser_eval/live_mixed_interaction/tasks.json`、`data/browser_eval/live_mixed_interaction/results.json`
+
 ### Browser 300 題官方全量(2026-07-11,無排除、雙口徑;**最終 rollup:done 283/300**)
 
 外部量測敘事鏈至此三級,**三組口徑不可混比、各自作用明標**:

@@ -1,8 +1,10 @@
 # SPEC 導入與平台基礎建設決策
 
+> **Record type:** Derived decision record
+
 ## Trigger
 
-使用者(PM)交付完整 SPEC(docs/SPEC.md),並授權 AI 自主產生 prompt、commit、push。AI 需決定第一階段建什麼、用什麼 stack。
+`docs/SPEC.md` is the project brief. The first implementation step was choosing the shared reliability layer, stack, and package boundaries.
 
 ## Scoring Criteria
 
@@ -10,12 +12,11 @@
 - AI 協作品質:本檔案即第一筆 decision log
 - 正確性驗證:所有不變量以 code + test 落地,不是文件宣示
 
-## Prompt
+## Prompt summary
 
-(使用者原始 prompt = docs/SPEC.md 全文,加上兩則補充指示)
+需求來源：`docs/SPEC.md`。
 
-1. AI 獲授權自主產生 prompt 紀錄,並自主執行 git commit / push(依 SPEC 11–12 判斷時機)。
-2. 環境一律使用 repo-local `.venv`,所需套件由 AI 自行安裝。
+以 `docs/SPEC.md` 為需求來源，決策紀錄放在 `prompts/`，Python 工具鏈統一使用 repo-local `.venv`。
 
 ## AI Output Summary
 
@@ -28,10 +29,10 @@
 - `sec_core`:ItemSegment(offset + sha256,LLM 不產生 filing text)、可解釋 confidence、adjudicator guard(高信心無 quote → ValidationError)
 - 16 個 tests 全過
 
-## Human / PM Decision
+## Decision
 
-- 採納:AI 自主 commit / push 授權(使用者明示)
-- 修改:原本 AI 先建了 TypeScript monorepo(npm workspaces);PM 於開發初期確立「環境統一用 .venv」方針,AI 改為 Python-first,TS 根配置移除(未進 commit history,因為尚未 commit)
+- Create prompt records alongside implementation changes.
+- Replace the initial uncommitted TypeScript-first attempt with Python-first and a repo-local `.venv`.
 - 拒絕紀錄:見 `prompts/rejected_prompts/2026-07-10-typescript-first-stack.md`
 
 ## Reason

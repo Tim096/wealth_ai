@@ -1,8 +1,10 @@
 # Planner system prompt v2(大改版)
 
+> **Record type:** Derived decision record
+
 ## Trigger
 
-PM directive:planner 的 system prompt 必須與系統實際能力同步演進——每一輪新增的能力(general download、decoy 防禦、consent-modal 處理)與每一次真實 run 觀察到的行為模式(SPA 導航、無效動作迴圈),都要固化進 prompt,不得停留在 v1。原 v1 只有 5 條規則,是 Agent Mode 初版的最小可行 prompt。
+Planner prompt 必須跟上已實作能力(general download、decoy 防禦、consent-modal 處理)與實測失敗模式(SPA 導航、無效動作迴圈)，不能停在只有五條規則的 v1。
 
 ## Scoring Criteria
 
@@ -10,7 +12,7 @@ PM directive:planner 的 system prompt 必須與系統實際能力同步演進�
 - 失敗處理:把實測看到的失敗模式(重複無效 click、SPA 誤判、decoy)寫進 prompt 預防
 - 誠實邊界:done/give_up 的誠實準則、能力邊界明示
 
-## Prompt(v2 全文)
+## Prompt summary
 
 見 `packages/browser_agent/planner.py::_SYSTEM`(單一事實來源,不在此複製以免漂移)。
 
@@ -32,9 +34,9 @@ PM directive:planner 的 system prompt 必須與系統實際能力同步演進�
 
 v2 寫入 planner.py;93 tests 不變全過(prompt 內容不影響結構化測試);gateway 的 output schema 不變(action enum 已含 download)。
 
-## Human / PM Decision
+## Decision
 
-使用者主動要求本次更新;內容由 AI 依實測經驗擬定。
+依實測結果更新至 v2，structured output schema 不變。
 
 ## Reason
 

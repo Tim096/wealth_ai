@@ -1,5 +1,7 @@
 # JPM Item 11 cross-reference stub 誤判 triage
 
+> **Record type:** Derived decision record
+
 ## Trigger
 
 AI 自主判斷:首次真實 EDGAR smoke run(AAPL/JPM/XOM)後逐項檢查輸出,發現 JPM Item 11 span 僅 51 字元卻標 pass。
@@ -10,7 +12,7 @@ AI 自主判斷:首次真實 EDGAR smoke run(AAPL/JPM/XOM)後逐項檢查輸出,
 - 正確性驗證:不信任 verifier 表面 pass,主動查 span 內容
 - 評估紀律:失敗案例進 failure gallery
 
-## Prompt
+## Prompt summary
 
 (AI 自我指令)「JPM Item 11 span 只有 'Refer to Item 10.'。檢查:(1) 這是 filing 本身如此還是 boundary 錯誤?(2) 若 filing 如此,現有 status 分類是否誠實?(3) Item 16 missing 是真 missing 還是 normalizer 丟失?」
 
@@ -22,9 +24,9 @@ AI 自主判斷:首次真實 EDGAR smoke run(AAPL/JPM/XOM)後逐項檢查輸出,
 
 修復:`_CROSS_REF_RE` + body < 600 字元 → `incorporated_by_reference` + warning。
 
-## Human / PM Decision
+## Decision
 
-AI 自主修復(在 PM 授權範圍內),PM 未介入。
+Stub 不得標成 `pass`；改用誠實狀態分類。
 
 ## Reason
 

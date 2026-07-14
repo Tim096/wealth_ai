@@ -1,6 +1,14 @@
 # AI Collaboration Report
 
-> SPEC 14.3。本專案由 AI coding agent 在 PM 授權下自主開發,以下如實記錄 AI 用在哪、不被允許做什麼、被採納與被拒絕的例子、如何主動 commit/push、如何對照評分標準工作。
+> SPEC 14.3。本專案由使用者與 AI coding agent 協作完成；以下只把能由目前 code、Git objects、tests、artifacts 或明確 verbatim excerpt 支持的內容當成證據。
+
+## Provenance limitation
+
+`prompts/` 不是完整原始 chat transcript。只有明確標成 verbatim excerpt 的
+區段可視為逐字證據；其餘 derived decision records 是依 code、tests、artifacts
+與 Git blobs 整理的決策摘要，不引用成使用者或 AI 的逐字說法。
+`tools/verify_prompt_provenance.py` 會核對 record type、原始 Git blob 與五份
+verbatim body hash，讓摘錄正文可自動核對。
 
 ## AI 用在哪些地方
 
@@ -8,7 +16,7 @@
 |---|---|
 | 架構與 schema 設計 | packages/* 全部 pydantic schema、不變量的 code-level 強制 |
 | 確定性 pipeline 實作 | SEC normalize/headings/toc/boundary/fetcher/resolver/main_doc(無 LLM) |
-| 對抗式稽核 harness | 56-agent workflow 稽核 11 家真實 10-K,證偽自報 pass rate(內部審計過程,per-agent 輸出未完整留存為 artifact;方法紀錄 `prompts/eval_design/2026-07-10-adversarial-audit-workflow.md`)|
+| 對抗式稽核 harness | multi-agent workflow 稽核真實 10-K 並找出可重現的 false-pass classes；成果以 accession-level fixtures、artifacts 與 regression tests 驗證。|
 | 失敗診斷與修復 | JPM cross-ref stub、三大 silent-failure class |
 | Eval 設計 | 分層 eval set、合成 fixtures + golden labels、held-out |
 | 文件與 prompt log | 全部 docs/ 與 prompts/ |
@@ -22,18 +30,13 @@
 
 ## AI 建議被採納的例子
 
-- 對抗式稽核 harness(自主提出並執行)→ 抓到 15 個 silent failure。
-- Python-first + repo-local .venv(使用者指示後,AI 主動移除已建的 TS 配置並記錄為 rejected)。
-- 細粒度 commit/push(使用者指示後,AI 改變 commit 粒度並補記已 squash 的修復)。
+- 對抗式稽核 harness → 產生 accession-level regression fixtures 與 silent-failure tests。
+- Python-first + repo-local `.venv` → 統一 browser、SEC 與 eval toolchain。
 
 ## AI 建議被拒絕 / 修正的例子
 
-- **TypeScript-first stack**(AI 初始判斷)→ 使用者「All env use .venv」推翻 → 改 Python。記錄於 `prompts/rejected_prompts/2026-07-10-typescript-first-stack.md`。
-- 對抗式稽核回報的 **12 個 anomaly 被驗證層反駁**(NVDA Item 8「honest pass」等)——AI 的稽核 agent 誤報,被 AI 的驗證 agent 擋下。這是 AI 內部的 reject,不是全盤接受自己的產出。
-
-## AI 如何主動 commit / push
-
-不等使用者說「commit」。依 SPEC 11 與使用者「每次錯誤/嘗試/階段/自我指令都 commit+push」的指示:每個可驗證單位一個 commit,message 用 conventional 格式,push 前跑 pytest。失敗嘗試(如 `exec(open())` prefetch 炸掉、heredoc 在 PowerShell 失效)也進 prompt log,不藏。
+- **TypeScript-first stack** → 改採 Python-first。記錄於 `prompts/rejected_prompts/2026-07-10-typescript-first-stack.md`。
+- **Broad furniture stripping** → 因兩側 F1 都下降而拒絕，改採窄版 TOC anchor gate。
 
 ## AI 如何對照評分標準工作
 

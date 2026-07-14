@@ -1,8 +1,10 @@
 # AI-generated reviewer / auditor prompts (verbatim)
 
-依 SPEC 10.1:AI 主動產生給 reviewer / auditor agent 的 prompt 必須逐字保存。以下是兩個 multi-agent workflow 實際使用的 prompt 模板(完整腳本:`.claude/.../workflows/scripts/`)。
+> **Record type:** Verbatim prompt artifact
 
-## A. 對抗式抽取稽核(56 agents:11 auditor + per-anomaly verifier)
+Fenced blocks 是 reviewer 與 auditor prompt templates；章節標題與說明是後加的閱讀脈絡。
+
+## A. 對抗式抽取稽核 templates
 
 ### Auditor prompt(每個 ticker 一個)
 
@@ -43,7 +45,7 @@ Try to REFUTE this claim. Steps:
    you can quote concrete evidence the output misleads a consumer.
 ```
 
-## B. 最終評分驗證(16 agents:8 grader + 8 adversarial verifier)
+## B. 最終評分驗證 templates
 
 ### Grader prompt(每個 rubric 維度一個)
 
@@ -71,4 +73,4 @@ verified_score (0-10). Default to skepticism; raise only if code genuinely over-
 
 ## 為何保存
 
-這兩個 harness 本身就是 SPEC 17「AI 時代最稀缺的是驗證能力」的演出:用對抗式 AI 證偽 AI 產出。第一個 workflow 確認 **31 個 anomaly**(反駁 12 個),其中的 silent-failure classes 導致 **15 個 item 被重新分類**(pass 192→177),對應 FG-SEC-002..004;第二個把作品從自報「完成」逐輪逼到誠實 6.5→7.5→7.9/10 並列出具體缺口。保存 prompt 讓評審能重跑、能檢視我們如何驗證。
+這些 templates 保存「用獨立反駁者檢查第一個 agent」的設計。可驗證結果以 `data/sec_eval/records/sweep2/`、`sweep3/` 與 `tests/test_refine.py`、`tests/test_cross_ref.py`、`tests/test_wrapper_reassembly.py`、`tests/test_golden_drift.py` 為準。

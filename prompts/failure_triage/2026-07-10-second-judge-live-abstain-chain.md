@@ -1,5 +1,7 @@
 # Second-judge live 全 abstain 根因鏈:HOLE A 接線 + gateway wrapper unwrap
 
+> **Record type:** Derived decision record
+
 ## Trigger
 
 外部量測(Online-Mind2Web 20 題 live 子集)兩輪皆出現同一異常:advisory second judge **18/18 abstain**。第二輪已把 extractor 接上 LLM(每題 cost 0.00014–0.00042,LLM 確實被呼叫)仍全 abstain——「能力在、live 泛化不在」,6 個 open-ended unknown 一分未得。
@@ -10,7 +12,7 @@
 - 正確性驗證:修復後的 pass 必須 evidence-grounded 且人工抽查
 - 誠實邊界:證據不足仍 abstain,不引入假 pass;verifier 唯一裁判不動搖
 
-## Prompt(reconstructed from session records)
+## Prompt summary
 
 AI 自我指令(triage pass):
 
@@ -34,9 +36,9 @@ AI 自我指令(triage pass):
 
 **定向重驗**(只重跑上一輪 6 個 unknown,artifact `runs/browser_eval/m2w_abstain_fix2_20260710/`):3 pass / 2 fail / 1 abstain-unknown。TSLA 收盤價題 grounded pass(證據含 `Mar 17, 2023 … Close 180.13`,**人工抽查非幻覺**);證據不足者誠實 fail/abstain,零假 pass。合成後 11/18 = 61.1%(誠實標明:組成數字非單次全集跑,n 小屬方向指標)。
 
-## Human / PM Decision
+## Decision
 
-AI 自主 triage 與修復(總指揮授權);「composed 61% 必須標明組成、不得當單跑引用」為誠實紀律的自我約束,PM 未介入。
+Fix the wiring, evidence starvation, and gateway unwrap path. Any composed 61% result must disclose its components and must not be presented as a single-run score.
 
 ## Reason
 

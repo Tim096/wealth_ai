@@ -1,8 +1,10 @@
-# 對抗式稽核 workflow(56 agents)
+# 對抗式稽核設計
+
+> **Record type:** Derived decision record
 
 ## Trigger
 
-AI 自主判斷 + 使用者本輪啟用 ultracode。SEC pipeline 通過合成 fixtures 與 3 家 smoke test 後,不能相信自報的 pass rate——需要對真實 filing 做**證偽式**驗證,而非確認式。
+Synthetic fixtures 與三家公司 smoke test 通過後，下一步是主動證偽 real-filing 輸出，而不是相信自報 pass rate。
 
 ## Scoring Criteria
 
@@ -11,7 +13,7 @@ AI 自主判斷 + 使用者本輪啟用 ultracode。SEC pipeline 通過合成 fi
 - 失敗處理:silent failure 的系統性偵測
 - AI 協作品質:AI 驗證 AI 的 harness 設計
 
-## Prompt / Harness 設計
+## Prompt summary
 
 Multi-agent workflow(`Workflow` tool),兩階段 pipeline:
 
@@ -22,19 +24,18 @@ schema 強制結構化輸出(StructuredOutput),避免自由文字解析。
 
 ## AI Output Summary
 
-56 agents(54 完成、2 因 StructuredOutput 重試上限失敗)。**31 anomaly 確認、12 反駁。** 反駁層擋掉的多是「這其實是誠實 incorporated_by_reference / None. 行為」的誤報——證明反駁層真的在工作,不是橡皮圖章。
+**Reproducible evidence:** the repository retains 11-company accession-level records under `data/sec_eval/records/sweep2/` and `sweep3/`. The failure classes are locked by tests including `tests/test_refine.py`, `tests/test_cross_ref.py`, `tests/test_wrapper_reassembly.py`, and accession drift checks in `tests/test_golden_drift.py`.
 
-三大確認 class:reference-stub 誤標 pass、trailing furniture 洩漏、terminal runaway(XOM Item 16 = 311K 字、JPM Item 15 = 985K 字)。
+這些可重跑證據覆蓋三類問題：reference-stub misclassification、trailing-furniture leakage、terminal-runaway spans。
 
-## Human / PM Decision
+## Decision
 
-AI 自主執行並依結果修復(PM 授權範圍)。使用者事後給了策略指引(見文末),確認方向正確(Intel/Citi corner case、驗證是最看重的能力、OCR/XBRL 是對的驗證基材)。
+採納 accession audit 結果，補上 Intel/Citi 處理、XBRL validation 與上述三類 regression tests。
 
 ## Reason
 
 - demo 不可信(SPEC 17)。確認式驗證會漏掉 silent failure;證偽式(對抗)才會逼出來。
-- fan-out 讓 11 家平行稽核,pipeline 讓每個 anomaly 一浮現就驗證,不等 barrier。
-- 兩個 StructuredOutput 失敗的 agent 已記錄為已知限制,不影響結論(43 個 anomaly 判定完成)。
+- Separate the 11 accession audits, then use an independent verifier stage to challenge reported anomalies.
 
 ## Resulting Change
 

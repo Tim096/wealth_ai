@@ -1,5 +1,7 @@
 # Runtime verifier mutation harness(P0-4):門檻用 assert,不是報數字
 
+> **Record type:** Derived decision record
+
 ## Trigger
 
 giants 研究完整性批判(`docs/research/giants_task2.md` §5.3)指出兩個洞:(1) 既有 mutation test 只覆蓋 scorer,runtime 驗證訊號本身(confidence / needs_review / triangulation / topic_check / size band)從未被 mutation 測試——「驗證器自己被驗證」缺口;(2) 無量化門檻的 harness 只是存在性證明,不可引用。
@@ -10,7 +12,7 @@ giants 研究完整性批判(`docs/research/giants_task2.md` §5.3)指出兩個�
 - 評估紀律:量化門檻(recall ≥ 0.95、false-alarm ≤ 0.05)寫死為 gate
 - silent-failure prevention:注入的腐蝕必須被 shipped 驗證層抓到
 
-## Prompt(reconstructed from session records)
+## Prompt summary
 
 workflow 派工指令(基於 P0-4 條目):
 
@@ -23,9 +25,9 @@ workflow 派工指令(基於 P0-4 條目):
 - **Gates asserted, not reported**:per-class recall ≥ 0.95 → 實測 **1.0000 全六類**(n=13..567);clean false-alarm ≤ 0.05 → fixture 0.0000(n=18)、proxy 0.0000(n=171)、recorded sweep3 runtime 輸出 0.0393(7/178,全部是 pre-P0-5 的 item-16 engine-blind disagrees,保守上界)。
 - Fixtures:`data/sec_eval/mutations/`(合成 TOC stub + 合成 Financial Section wrapper,約 1.4K 字,零 SEC 原文)。
 
-## Human / PM Decision
+## Decision
 
-AI 依 workflow 授權自主實作;門檻數字直接採批判 pass 提出的 0.95/0.05,無放寬。
+實作 harness，維持 0.95 recall / 0.05 false-alarm gates，不放寬門檻。
 
 ## Reason
 

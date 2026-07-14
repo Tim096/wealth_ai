@@ -1,5 +1,7 @@
 # NTU head-to-head 終判:F1 輸了照寫,敘事轉驗證軸
 
+> **Record type:** Derived decision record
+
 ## Trigger
 
 P0-2 姊妹交付物 A(同場競技表)實測完成:NTU 30-slice、4 引擎同一 gold set 跑 `tools/head_to_head.py`。raw macro-F1 **我們輸**——ours 0.5964 < datamule 0.6244 < edgar_crawler 0.6332。「超越最佳公開實作」的單軸主張在此刻被自己的量測證偽,必須決定敘事怎麼寫。
@@ -10,9 +12,9 @@ P0-2 姊妹交付物 A(同場競技表)實測完成:NTU 30-slice、4 引擎同�
 - 評估紀律:外部 benchmark、對手引擎同場、artifact 可重算
 - 正確性驗證:錯誤裁決要更正並留痕
 
-## Prompt(reconstructed from session records)
+## Prompt summary
 
-AI 自我指令(adversarial interpreter pass,總指揮授權範圍內):
+對抗式 interpreter 任務：
 
 > 對 post-fix 的 head-to-head artifact 做對抗式重算:每個 macro-F1 由 per-filing 逐筆重算,不引用 tool 輸出;結論先講、輸的照寫。若 F1 收不掉,判定 F1 line 是否 CLOSED、敘事轉往哪一軸。
 
@@ -26,9 +28,9 @@ AI 自我指令(adversarial interpreter pass,總指揮授權範圍內):
 
 最終敘事:我們用 precision 換 capture-first recall(bleed 是這筆 trade 的帳單),換來全場唯一自我審計的系統——false-pass 100 筆(strip 後 79)是我們自己量出來自己公布的;edgar_crawler 的 0.6332 是一個無法自我審計的數字。單軸 F1 輸 0.0087;「敢不敢把輸出直接餵下游」這一軸,對面三家沒有參賽資格。
 
-## Human / PM Decision
+## Decision
 
-PM 鐵律「誠實優先:數字不粉飾,輸的照寫」+ 既定總目標(外部老師當弱老師、不追單點跑分)授權下,AI 裁決:F1 line CLOSED、敘事全面轉可靠性/可驗證性差異化。PM 事後確認此為 Task 2 的正式敘事方向。
+確認剩餘差距是真實 extraction gap 後，停止調 F1；輸的數字照寫，後續比較轉向 reliability 與 verifiability evidence。
 
 ## Reason
 

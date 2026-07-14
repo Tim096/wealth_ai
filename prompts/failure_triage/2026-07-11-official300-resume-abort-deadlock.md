@@ -1,5 +1,7 @@
 # 官方全量 300 題 resume-abort 死鎖:harness resume 語意修復
 
+> **Record type:** Derived decision record
+
 ## Trigger
 
 官方 Online-Mind2Web 全量 300 題(無排除、任務檔凍結 sha256)跑到 done=46 即死鎖:`--resume --limit 300` 兩次 launch 皆立即 abort(exit 2),確定性重現。chunk agent 依「不改 code、不介入個別失敗」鐵律停止並 escalate,未自行 hack。
@@ -10,7 +12,7 @@
 - 評估紀律:凍結任務檔不得改動;修 harness 不修題
 - 誠實邊界:永久壞站照跑照記 error,不排除、不粉飾
 
-## Prompt(reconstructed from session records)
+## Prompt summary
 
 chunk agent 回報死鎖後,orchestrator 決策指令:
 
@@ -26,9 +28,9 @@ chunk agent 回報死鎖後,orchestrator 決策指令:
 
 續跑設計(wave-4b):累積式 `--limit`(100→150→…→300)+ 同一 `--out --resume`,3 個死站每輪照重試照記 error。最終 300 題全量完成,雙口徑(runtime verifier + WebJudge advisory)落 `docs/eval_report.md`。
 
-## Human / PM Decision
+## Decision
 
-PM 授權 wave-4 全量跑(官方口徑、不做任何排除);死鎖處置由 AI 自主決策——chunk agent 依鐵律 escalate、orchestrator 判定為 harness bug 並修復,PM 未介入個案。
+保持官方完整 task set 不變；只修 harness deadlock，不改凍結任務或 success criteria。
 
 ## Reason
 

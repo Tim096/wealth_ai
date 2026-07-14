@@ -1,5 +1,7 @@
 # Rejected: 用 vision LLM 定位元素做 selector 修復
 
+> **Record type:** Derived decision record
+
 ## Trigger
 
 設計 browser agent selector 修復時,AI 考慮的一個方案:UI 漂移時,截圖丟給 vision LLM(如 GPT-4V/Claude vision),讓它指出「搜尋框在哪」的座標,再點下去。這是 Skyvern 類的做法。
@@ -9,7 +11,7 @@
 - 工程權衡:成本、延遲、可重現性、可驗證性
 - 正確性驗證:修復是否可小步驗證
 
-## Prompt(被評估的設計)
+## Prompt summary
 
 「selector 找不到時,screenshot → vision LLM → 回傳 bounding box → 點座標。」
 
@@ -22,7 +24,7 @@
 3. **不可驗證**:座標點擊難以小步驗證「點到正確元素」;a11y 候選有 role/label/text 可解釋為何選它、為何避開 decoy。
 4. **可觀測性差**:座標無語意,selector memory 存座標無意義;存 `input[name=query]` 才可跨 run 復用。
 
-## Human / PM Decision
+## Decision
 
 拒絕為主要路徑。保留為**未來 fallback**:當 a11y 樹貧乏(canvas-heavy / 無語意 DOM)時,vision 定位是合理的最後手段(見 `docs/prior_art.md` Skyvern 條)。
 

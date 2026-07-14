@@ -1,8 +1,10 @@
 # Browser Agent — selector repair 與 capability guard 設計
 
+> **Record type:** Derived decision record
+
 ## Trigger
 
-AI 自主判斷 + PM 指示以 multi-agent(ultracode)方式推進兩題。題目一從零開始,需決定:selector 修復怎麼做才穩健、如何避免 silent failure、責任邊界如何強制。
+Browser task 需要穩定的 selector repair、silent-failure prevention，以及由 code 強制的 capability boundary。
 
 ## Scoring Criteria
 
@@ -11,7 +13,7 @@ AI 自主判斷 + PM 指示以 multi-agent(ultracode)方式推進兩題。題目
 - 正確性驗證:task contract verifier 三態,verifier false-positive rate 可量測
 - 誠實邊界:capability boundary 要 code-enforced
 
-## Prompt(AI 自我指令摘要)
+## Prompt summary
 
 「設計一個 capability-aware browser agent:(1) LLM 只輸出受控 action JSON,不跑 code;(2) selector 壞掉時,用 accessibility tree 的候選元素依 purpose 評分修復,避開 decoy;(3) 每個任務轉成 verifier contract,空結果/錯頁不得偽裝成 pass;(4) 責任邊界(login/purchase/submit)用程式擋,不是文件寫寫。用本地 mock site v1→v2 製造 UI 漂移來證明自我修復。」
 
@@ -22,9 +24,9 @@ AI 自主判斷 + PM 指示以 multi-agent(ultracode)方式推進兩題。題目
 - killer demo:v1 pass(0 repair)→ v2 2 repairs still pass;v2-gizmo 0 repair(memory 命中)。
 - verifier false-positive rate 0.0(空結果 task 正確 fail)。
 
-## Human / PM Decision
+## Decision
 
-AI 自主(PM 授權)。事後對抗式驗證(16-agent)指出:repair 一開始只記 diagnosis 沒 dispatch、boundary 只在 docs——已於同輪修正(dispatch by failure_type + code-enforced guard)。
+A later review found that repair only recorded diagnosis without dispatch and kept a boundary only in docs. Both were fixed with failure-type dispatch and a code-enforced guard.
 
 ## Reason
 

@@ -1,5 +1,7 @@
 # Rejected: broad「duplicated=furniture」全 strip 收 F1 gap
 
+> **Record type:** Derived decision record
+
 ## Trigger
 
 NTU head-to-head 終判(18:40 對抗裁決)期間,AI 評估的一個方案:既然 per-item probe 證明重複頁眉/導覽行灌了大量 fp,把**所有**跨頁重複文字當 furniture 全部 strip 掉,一口氣收掉對 edgar_crawler 的 0.0368 F1 gap。
@@ -9,7 +11,7 @@ NTU head-to-head 終判(18:40 對抗裁決)期間,AI 評估的一個方案:既�
 - 誠實邊界:metric hack vs 真產品特性的分界
 - 正確性驗證:strip 規則必須可辯護、對所有引擎語義一致
 
-## Prompt(被評估的設計)
+## Prompt summary
 
 「凡在同一 filing 內重複出現 ≥N 次的行視為 furniture,評分前全部移除,雙方對稱套用。」
 
@@ -21,7 +23,7 @@ NTU head-to-head 終判(18:40 對抗裁決)期間,AI 評估的一個方案:既�
 2. **不可辯護**:strip 規則若只為評分存在、不對應任何交付價值,就是 metric hack;面試官一問「這規則產品裡在哪」即穿幫。
 3. **真正非對稱的只有一類**:per-item probe 拆帳證明只有 TOC 導覽 backlink 是 EC strip 我們留的非對稱項;其餘 recurring furniture 兩引擎逐筆相同(對稱),高-fp item 主體是真 boundary bleed。
 
-## Human / PM Decision
+## Decision
 
 拒絕 broad strip。改走**窄而合法**的路:TOC-navigation-backlink stripping 落成產品雙層輸出——`clean_slice()` delivery 層移除「整行 ∈ TOC 片語白名單 **且** 整行字元都在內部錨點內」的行;provenance 層(offsets/sha256/coverage)不動。它獨立於評分存在(可讀性、下游 diff),放進評分只是誠實把交付層算進去。
 

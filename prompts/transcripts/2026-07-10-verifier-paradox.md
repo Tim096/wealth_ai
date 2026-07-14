@@ -2,7 +2,9 @@
 
 - **Session**: `3ae1f24f-695e-448f-94aa-7efb6c9d79ab`
 - **日期**: 2026-07-10（原始輪次 row 3–20;文末回顧引自同 session row 1051）
-- **性質**: verbatim excerpt, secrets redacted（原文逐字節錄,秘密已遮蔽）
+- **Record type**: Verbatim transcript excerpt with editorial context
+- **Verbatim boundary**: Only the dated `row ...` sections below `---` are verbatim. The title, metadata, summary, and cross-references are editorial scaffolding.
+- **Redaction**: Secrets are replaced with explicit `[REDACTED-...]` markers; omitted tool material is marked `[...elided...]` where applicable.
 - **對應重建紀錄**: `prompts/eval_design/`（不變量 / 錯誤注入 / 多引擎投票的設計決策)、記憶 `capture-first-then-classify`
 
 > 這是整個第二題(SEC 抽取)驗證體系的哲學源頭。使用者提出一個悖論,AI 拆解成「裁判驗不變量而非答案」「裁判可棄權」「錯誤注入量裁判自己」,這條回歸鏈後來貫穿了所有 eval 設計。

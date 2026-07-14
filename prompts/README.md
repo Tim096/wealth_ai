@@ -1,17 +1,27 @@
-# Prompt Logs
+# AI Collaboration Records
 
-依 SPEC 第 10 節:任何影響設計、程式、eval、文件、修復的 prompt 都必須記錄——不論來自使用者還是 AI 自主產生。
+SPEC 第 10 節要求保存關鍵 AI 協作過程。這裡不是完整 chat archive，也不是每個檔案都宣稱是原始 prompt；它保存影響設計、實作、eval、修復與拒絕方案的高價值紀錄，並在每檔開頭標示 provenance。
+
+## Provenance 類型
+
+| 類型 | 數量 | 可以主張什麼 |
+|---|---:|---|
+| **Verbatim transcript excerpt** | 5 | `---` 後標明 row 的 user/assistant 文字逐字保留；秘密與過長工具內容只以明確 marker 遮蔽或截斷 |
+| **Verbatim prompt artifact** | 1 | workflow 實際保存的 prompt template；不是人機對話 transcript |
+| **Derived decision record** | 19 | 依 Git、code、artifacts、docs 或 session evidence 重建決策；`Prompt` 段是摘要，不是逐字引言 |
+
+目前共 25 份紀錄。分類讓 reviewer 能分辨哪些字句可逐字核對、哪些是可由 code、artifacts 與 tests 驗證的設計紀錄。
 
 ## 目錄
 
 | 目錄 | 一句話定位 |
 |---|---|
-| `project/` | 專案層級決策:SPEC 導入、stack 選擇、commit 粒度等流程鐵律 |
+| `project/` | 專案層級決策:SPEC 導入、stack 選擇與平台基礎 |
 | `browser_agent/` | Task 1 agent 本體的設計決策:selector 修復、planner system prompt 演進 |
 | `eval_design/` | 評測體系的設計決策:eval set、對抗式稽核、外部 benchmark、mutation harness、多引擎投票 |
 | `failure_triage/` | 真實失敗的診斷紀錄:根因鏈、修復、重驗(不信任表面 pass) |
 | `rejected_prompts/` | 被拒絕的設計:為什麼拒、拒了之後走哪條路、事後看對不對 |
-| `transcripts/` | 原始 AI 協作對話逐字摘錄(脫敏):重建決策紀錄的證據軸,補面試官指出的「缺原始對話」gap;與重建紀錄重疊的摘錄已整併進對應紀錄(見該目錄 README),留存原始性最高的 2 份 |
+| `transcripts/` | 5 份已脫敏的原始 AI 協作對話摘錄；verbatim body 由 provenance manifest 與 verifier 固定 |
 
 > `sec_extractor/` 的 boundary/adjudicator 決策目前併在 `eval_design/` 與 `failure_triage/`(SEC 尚未觸發 LLM adjudicator);待 adjudicator 實際啟用再獨立成目錄。
 
@@ -22,8 +32,6 @@
 | 檔案 | 一句話 |
 |---|---|
 | `2026-07-10-spec-ingestion-and-foundation.md` | SPEC 導入後第一階段建什麼、用什麼 stack 的奠基決策 |
-| `2026-07-10-commit-granularity-directive.md` | PM 指令:每次錯誤/嘗試/階段都獨立 commit,history 反映真實開發過程 |
-| `2026-07-13-submission-doc-cleanup.md` | 交件前 curation:transcripts 整併、giants 濃縮、TODO 去自評分數、40 個失效 hash 校正——刪減全留痕 |
 
 ### browser_agent/
 
@@ -37,7 +45,7 @@
 | 檔案 | 一句話 |
 |---|---|
 | `2026-07-10-real-filing-sweep.md` | 11 家公司分層真實樣本 sweep 設計 |
-| `2026-07-10-adversarial-audit-workflow.md` | 56-agent 對抗式稽核:確認與證偽由不同 agent 做 |
+| `2026-07-10-adversarial-audit-workflow.md` | 對抗式稽核設計:11-company accession evidence、獨立 verifier 與 regression tests |
 | `2026-07-10-xbrl-and-cross-ref.md` | cross-reference-index 處理 + XBRL 當獨立驗證基材 |
 | `2026-07-10-reviewer-prompts-verbatim.md` | reviewer/auditor agent prompt 逐字保存(SPEC 10.1) |
 | `2026-07-10-eval-upgrade-todo-from-web-research.md` | 兩個研究 agent 網查後的 11 項 eval 升級波(invariant + 校準裁判本身) |
@@ -64,9 +72,21 @@
 | `2026-07-10-sec-title-based-body-resolution.md` | 拒 title-based 正文猜測 → 誠實指標;事後:page-anchor + wrapper reassembly 補完正文 |
 | `2026-07-10-broad-furniture-strip-for-f1.md` | 拒 broad duplicated-strip 刷 F1(實測雙降)→ 窄版錨點閘門 TOC-strip 落成產品特性,仍輸照寫 |
 
+### transcripts/
+
+| 檔案 | 一句話 |
+|---|---|
+| `2026-07-10-verifier-paradox.md` | verifier 不可能完美時，如何用不變量、棄權、交叉分歧與錯誤注入建立退出條件 |
+| `2026-07-10-ntu-f1-honest-narrative.md` | 外部 F1 輸給 edgar_crawler 後，如何裁決相反診斷並停止追分 |
+| `2026-07-10-second-judge-abstain-wrapper.md` | live second judge 全 abstain 的兩層根因與 gateway wrapper 修復 |
+| `2026-07-11-heldout-freeze-protocol.md` | held-out 任務先凍結、後執行的原始協作過程 |
+| `2026-07-11-official-300-resume-abort-deadlock.md` | 官方 300 題 run 被 resume/abort deadlock 卡住後的診斷、escalation 與修復 |
+
 ## 格式
 
-每個檔案依 SPEC 10.2:Trigger / Scoring Criteria / Prompt / AI Output Summary / Human-PM Decision / Reason / Resulting Change。
+Derived records 依 SPEC 10.2 使用 Trigger / Scoring Criteria / Prompt summary / AI Output Summary / Decision / Reason / Resulting Change；verbatim excerpts 保留原本輪次結構。
 
-- Prompt 原文無法逐字重現時,依 git history 與 docs 忠實重建並標注 `reconstructed from session records`。
-- 命名:`YYYY-MM-DD-short-slug.md`(日期 = 實際決策日)。
+- 每檔先標 `Record type`。未標 verbatim 的 `Prompt` 段一律視為重建摘要，不是原始對話。
+- Verbatim transcript 中只有 `---` 後標明 row 的段落屬逐字內容；檔名、標題、metadata 與開場摘要是 editorial context。
+- 無法逐字重現時，不補寫 user/assistant 對話；改以 Git、code、artifact、doc 或 session evidence 重建 decision record。
+- 命名:`YYYY-MM-DD-short-slug.md`。日期是整理時採用的事件標籤，不是 chronology proof；時序應以可解析 Git objects、artifacts 或 verbatim row metadata 交叉驗證。

@@ -2,7 +2,9 @@
 
 - **Session**: `6fd60c6f-4f09-4322-8120-604e8a5a60bf`
 - **日期**: 2026-07-11（原始輪次 row 410–592)
-- **性質**: verbatim excerpt, secrets redacted（原文逐字節錄,秘密已遮蔽;過長的 workflow 腳本以 `[...tool input elided...]` 截斷)
+- **Record type**: Verbatim transcript excerpt with editorial context
+- **Verbatim boundary**: Only the dated `row ...` sections below `---` are verbatim. The title, metadata, summary, and cross-references are editorial scaffolding.
+- **Redaction**: Secrets are replaced with explicit `[REDACTED-...]` markers; omitted tool material is marked `[...elided...]` where applicable.
 - **對應重建紀錄**: `docs/eval_report.md`（held-out 節)、`docs/research/giants_task1.md`、記憶 `codex-interviewer-grade-and-gaps`
 
 > 面試官給 Task 1 評測可信度 6.5(最弱維度)。回應是打「held-out 新 20 題」:與迭代過的原 20 題零重疊、選題規則 pre-registered、sha256 先凍結後開跑、禁止看結果後迭代。結果 66.7% 高於迭代後的 61.1%——這是「沒有 overfit 到自建題」的最強證據。凍結協議(freeze-before-run + 確定性選題規則)是這串節錄的核心。

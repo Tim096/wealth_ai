@@ -1,8 +1,10 @@
 # Eval 升級 TODO(基於兩個研究 agent 的網路調查)
 
+> **Record type:** Derived decision record
+
 ## Trigger
 
-使用者:現況約 75 分,大部分功能正常,但 edge case 驗證方法不完整。要求以第一性原理設計測試,並派 agent 上網查證是否有更強做法。派出兩個平行研究 agent(browser agent eval / SEC 10-K 抽取驗證,各含 WebSearch 調查 2023-2026 文獻與工具)後整合。
+功能覆蓋已比 edge-case 驗證完整，因此下一步轉向第一性原理的測試設計，以及 browser-agent、SEC extraction 的外部研究。
 
 ## Scoring Criteria
 
@@ -11,11 +13,11 @@
 - silent-failure prevention(Task 1 明列評分項)
 - 格式變異穩健性(Task 2 明列評分項)
 
-## Prompt
+## Prompt summary
 
-> 我現在自己使用測試中心測了我能想到的大概情況,但 edge case 要如何測試設計?有沒有簡單粗暴、第一性原理的方法寫測試案例?第一題我想到的是 agent 能不能執行人類每一種動作;第二題是用原文比對,但我不覺得方法完美。
-> (後續)派 agent 上網看看有沒有更強的地方。
-> (後續)寫成 TODO 寫進去 prompts。ultracode go all, u r PM。
+- Design edge-case tests from invariants rather than enumerating only known cases.
+- Research stronger external methods for browser-agent and SEC extraction evaluation.
+- Convert the findings into an implementation TODO and execute them through a multi-track workflow.
 
 ## AI Output Summary
 
@@ -121,9 +123,9 @@ T1-1 → T2-1 → T2-2 → T1-2 → T2-3 → T1-3,其餘穿插。(實際執行:u
 - **sec-parser 當引擎**:已停止維護、官方不保證正確性、無量化 accuracy。
 - **constrained decoding 強化輸出**:ExtractBench 實測反而降 validity(37% vs 51%);我們 offset 定址架構本來就不吐大 JSON,不受此限。
 
-## Human / PM Decision
+## Decision
 
-使用者確認整合方案後指示寫成 TODO;隨後以 ultracode 授權 AI 任 PM 派工全部執行(workflow:Map → 兩 track 平行實作 → 對抗式驗證 → 文件整合),easy task 用 opus 4.8 控 token 成本。
+把研究結果整理成 TODO，再依 Map → 平行實作 → 對抗驗證 → 文件整合的順序執行。
 
 ## Reason
 

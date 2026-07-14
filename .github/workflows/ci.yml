@@ -1,12 +1,7 @@
 # CI for ai-coding-test-2026.
 #
-# HONESTY NOTE: this workflow has NOT run yet — it executes for the first time
-# only after this file is pushed to GitHub. All "verified" claims below refer
-# to local verification on the dev machine (Windows, Python 3.12 venv):
-#   - ruff check .                    -> All checks passed
-#   - pytest -m "not integration"     -> 743 passed, 50 deselected
-# Linux-specific issues (path casing, missing system libs) can only surface on
-# the first real run.
+# The current result and collected test counts belong in GitHub Actions output,
+# not in this file: copied snapshots become stale as tests are added.
 #
 # Job design:
 #   unit        — lint + non-integration tests. Installs the playwright *pip
@@ -34,6 +29,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Prompt provenance tests compare verbatim bodies with their original
+          # historical Git blob; a shallow checkout cannot prove that lineage.
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -59,7 +58,6 @@ jobs:
       - name: Unit tests
         # Marker per pyproject [tool.pytest.ini_options]:
         #   "integration: tests that drive a real browser (Playwright)"
-        # Locally verified: 743 passed, 50 deselected (2026-07-11).
         run: pytest -m "not integration"
 
       - name: Verify headline claims against tracked artifacts
@@ -69,6 +67,9 @@ jobs:
         # rerun) and exits 1 on any drift — docs can never silently diverge
         # from their evidence.
         run: python tools/verify_claims.py
+
+      - name: Verify prompt provenance against Git history
+        run: python tools/verify_prompt_provenance.py
 
   integration:
     name: integration tests (Playwright, advisory)

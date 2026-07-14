@@ -1,8 +1,10 @@
 # Cross-reference-index 處理 + XBRL 獨立驗證
 
+> **Record type:** Derived decision record
+
 ## Trigger
 
-使用者轉述主管對**其他人選作業**的回饋(反推評分重點):
+設計 review 找出四個 evaluation risks：
 - SEC status 不是全 item 可信、需探討「如何確保 status 可信」
 - INTC FY2019/FY2020 Item 14 被標 extracted/ok,實際只是短連結/摘要
 - 好作業有 char_range/status/confidence/provenance、失敗會標 needs_review、文件列 Intel/GE 為 unsupported class
@@ -14,12 +16,12 @@
 
 正確性驗證、失敗處理、誠實邊界、可觀測性、系統性思考。
 
-## Prompt / 決策
+## Prompt summary
 
 AI 自主判斷,分兩線:
 
 1. **實測 Intel/Citi**(不是讀 code 猜)。發現 Intel = 正文在前段用無 Item 前綴標題、正式 Item 索引在文末指向年報頁碼;Citi = 索引寫成「1A.Risk Factors49-62」完全無「Item」。兩者皆 cross-reference-index filing class。
-2. **決定不做脆弱的正文還原**:Intel 正文無 emphasis 標記、標題重複當頁首,title-based 抽取會出錯。**錯的正文比誠實的指標更糟**(違反主管最看重的 trustworthy status)。改為:偵測 filing class + 誠實標 incorporated_by_reference/needs_review。
+2. **決定不做脆弱的正文還原**:Intel 正文無 emphasis 標記、標題重複當頁首,title-based 抽取會出錯。**錯的正文比誠實的指標更糟**(違反 trustworthy-status priority)。改為:偵測 filing class + 誠實標 incorporated_by_reference/needs_review。
 3. **加獨立 oracle 回答「如何確保 status 可信」**:XBRL companyfacts cross-check Item 8。非 LLM,對照 SEC 自己的結構化數字。
 
 ## AI Output Summary
@@ -29,13 +31,13 @@ AI 自主判斷,分兩線:
 - ItemSegment 加 `provenance` / `needs_review` / `xbrl_check`(對齊好作業揭露的欄位)。
 - 52 tests。
 
-## Human / PM Decision
+## Decision
 
-AI 自主(PM 授權)。策略對照主管回饋:避免「Item 14 標 ok」的錯、超越「只標 unsupported」到「自動偵測 + XBRL 認證」。
+避免錯誤的 `ok` status，加入 filing-class 自動偵測與 XBRL validation。
 
 ## Reason
 
-主管最看重「驗證能力」與「trustworthy status」。四層防禦(三態 / 對抗式稽核 / XBRL oracle / provenance)直接回應,且明確不出貨脆弱正文以維持可信度。
+四層防禦(三態 / 對抗式稽核 / XBRL oracle / provenance)直接處理 verification 與 trustworthy status 兩個核心風險。
 
 ## Resulting Change
 

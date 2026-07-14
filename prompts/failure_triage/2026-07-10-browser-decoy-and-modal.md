@@ -1,5 +1,7 @@
 # Browser failure triage:decoy button + modal 攔截導致修復選錯元素
 
+> **Record type:** Derived decision record
+
 ## Trigger
 
 建 mock site v2 後首次跑 killer demo,AI 自主檢查 repair 選了哪個元素——擔心 selector_not_found 的 a11y 修復會選到 decoy button(`#fake-search`,text=「Search」但 onclick 什麼都不做),或被 cookie modal 攔截而誤判。
@@ -10,7 +12,7 @@
 - 正確性驗證:修復後小步驗證,不偽裝成功
 - 可觀測性:repair considered candidates 要可檢視
 
-## Prompt(AI 自我診斷指令)
+## Prompt summary
 
 「跑 v2 search,dump 每一步的 diagnosis、considered candidates(含分數)、chosen selector。確認:(1) modal 是否先被關掉;(2) submit_button 修復是否選 `#go`(真 submit)而非 `#fake-search`(decoy);(3) verifier 是否看到真實結果。若選到 decoy,調整 `_score_candidate` 的 decoy 過濾。」
 
@@ -24,9 +26,9 @@
 
 結論:decoy 過濾與 diagnosis-driven 修復如預期運作,無需調整;記錄為 FG-BROWSER-001。
 
-## Human / PM Decision
+## Decision
 
-AI 自主(PM 授權)。第二輪對抗式驗證指出「browser 只有 mock、無真實網站泛化」——已如實列為 roadmap(WebArena/WebVoyager),不隱瞞。
+採用 deterministic fix。現有證據仍偏 mock，real-site generalization 另列 WebArena/WebVoyager roadmap。
 
 ## Reason
 

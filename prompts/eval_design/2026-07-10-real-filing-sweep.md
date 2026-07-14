@@ -1,8 +1,10 @@
 # Real-filing eval sweep 設計(11 家公司)
 
+> **Record type:** Derived decision record
+
 ## Trigger
 
-AI 自主判斷:SEC pipeline 已通過 synthetic fixtures 與 3 家 smoke test(AAPL/JPM/XOM),需要分層真實樣本量化 metrics。使用者本輪啟用 ultracode(multi-agent orchestration)。
+Synthetic fixtures 與 AAPL/JPM/XOM smoke test 通過後，SEC pipeline 進入分層 real-filing sweep。
 
 ## Scoring Criteria
 
@@ -10,7 +12,7 @@ AI 自主判斷:SEC pipeline 已通過 synthetic fixtures 與 3 家 smoke test(A
 - 可觀測性:每份 filing 有 JSON eval record
 - 工程權衡:SEC rate limit 下的並行策略
 
-## Prompt / 設計
+## Prompt summary
 
 分層(SPEC 7.14):
 
@@ -31,6 +33,10 @@ AI 自主判斷:SEC pipeline 已通過 synthetic fixtures 與 3 家 smoke test(A
 
 1. **失敗**:`python -c "exec(open('tools/eval_one.py').read())"` — exec 環境無 `__file__`,`ROOT = Path(__file__)` 炸掉,8 家全 exit 255。
 2. **修正**:直接 `python tools\eval_one.py TICKER > runs\sweep1\TICKER.json`,成功。
+
+## Decision
+
+先 serial prefetch 到 shared cache，再對分層 ticker set 做平行、cache-only analysis。
 
 ## Resulting Change
 

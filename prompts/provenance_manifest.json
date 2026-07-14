@@ -1,0 +1,15 @@
+{
+  "source_commit": "3c2a0451b93872cc2fcc5573f725c1a0aed39f5e",
+  "record_counts": {
+    "Derived decision record": 19,
+    "Verbatim transcript excerpt": 5,
+    "Verbatim prompt artifact": 1
+  },
+  "transcript_body_sha256": {
+    "prompts/transcripts/2026-07-10-ntu-f1-honest-narrative.md": "cd19197d0746c6d7c3e6bcd2a8620eb6b240ffc6b385767f35b8871fd7b389f5",
+    "prompts/transcripts/2026-07-10-second-judge-abstain-wrapper.md": "2621a7924592a2fa155f5dd16e215a0a96c424b57b5fd7ad4423158c7d596279",
+    "prompts/transcripts/2026-07-10-verifier-paradox.md": "18af7fb6ded42e6d7fc010656a8517963458728be01e5d8958e7c3f6e3921f9d",
+    "prompts/transcripts/2026-07-11-heldout-freeze-protocol.md": "a82ea6835d249fc456b671021ffcd951198e8a7318cf3b4792ab74316eaf2c9f",
+    "prompts/transcripts/2026-07-11-official-300-resume-abort-deadlock.md": "ba794e9c0c627b2088997c6fb289b3c282c1b183e7e40ae58750c29884383590"
+  }
+}

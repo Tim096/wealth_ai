@@ -328,7 +328,10 @@ def extract_from_html(
             f"reassembled from the annual report as source-exact spans (partial, needs_review); "
             f"Items pointing to a separately filed proxy statement stay incorporated_by_reference."
         )
-    if not candidates:
+    if not candidates and not xref.detected:
+        # A bare-index cross-reference filing (e.g. Citi) legitimately has zero
+        # "Item"-prefixed heading candidates yet is resolved via the xref path —
+        # only warn "unsupported / non-10-K" when it is NEITHER.
         result.warnings.append("no item heading candidates found — unsupported or non-10-K document")
 
     # Optional LLM adjudication tier (SPEC 7.13): opt-in only, so the default

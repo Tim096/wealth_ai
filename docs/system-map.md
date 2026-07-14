@@ -1,6 +1,6 @@
 # Wealth Reliability Platform — System Map
 
-> **快照日期：2026-07-13。** 本圖只畫目前 source tree 真正走得到的路徑；`spec.md` / `docs/SPEC.md` 裡只有規劃、尚未接線的內容，不算現況。
+> **快照日期：2026-07-15。** 本圖只畫目前 source tree 真正走得到的路徑；`spec.md` / `docs/SPEC.md` 裡只有規劃、尚未接線的內容，不算現況。
 
 ## 這套系統到底在做什麼？
 
@@ -25,6 +25,8 @@
 | 雙前端 4-station reviewer tour 的完整測試 | `f8187e7` | 這個 commit 的實際 diff 只有 `tests/test_reviewer_tour.py`；UI 本體已在前兩個 commits 落地 |
 
 `git blame` / `git show` 的判定比 commit title 更可靠。**不是 title 寫了什麼就算做了，是目前 tree 有接線、tests 能重跑才算。**
+
+**2026-07-14~15 續落地(同樣以 tree + tests 為準):** cross-reference-index 多段正文以 `source_ranges[]` 串接還原成 source-exact `partial`(INTC FY2019 Item 7=76,363/5 ranges、FY2020=127,871);**item 級 `unsupported`** 開始 emit(Item 8 與 XBRL 矛盾、或污染頁碼圖 → 誠實降級,非假 partial);unsupported filing 的**誠實顯示邊界**(payload `supported` flag、unsupported 時 `coverage=null`、UI 紅色未支援 banner 取代假 100%)。仍**未做**:另外跨檔申報的 proxy statement(Item 10–14)join。
 
 ```mermaid
 flowchart LR
@@ -172,7 +174,7 @@ flowchart TD
     N[normalize_html\n建立 offset mapping]
     H[heading candidates + TOC filter]
     X{cross-reference index?}
-    XP[pointer segments\nneeds_review]
+    XP[page-anchor partial bodies\n+ proxy pointers · needs_review]
     ST[standard boundary resolution]
     WR[同檔 wrapper / section pointer reassembly]
     G[topic + overshoot + size + length + topic priors]
@@ -214,7 +216,7 @@ flowchart TD
 | `incorporated_by_reference` | 本檔只有指標，正文可能在別處；不是抽取成功 |
 | `missing` | 沒找到可交付 span |
 | `reserved` | SEC 定義保留欄位，沒有正文屬正常 |
-| `unsupported` | 輸入格式不在 pipeline 能力內 |
+| `unsupported` | 兩種:**filing 級**(輸入格式不在能力內,如 scanned PDF / binary)＋ **item 級**(Item 8 與 SEC XBRL 三項數字矛盾、或污染頁碼圖解出的 span 不可信 → 誠實降級) |
 
 ### SEC confidence 現在怎麼顯示？
 
@@ -371,7 +373,7 @@ Agent 目前仍是 verdict 對固定顯示分數的 mapping，沒有 per-run pro
 - health check 等於 end-to-end 可用。
 - dashboard 會即時反映 production traffic。
 - Browser Agent 對所有網站泛化良好；login、CAPTCHA、不可逆操作本來就不支援。
-- SEC 已處理跨文件 annual-report exhibit body、pre-2001 plain-text SGML 或 scanned PDF OCR。
+- SEC 已 join 另外**跨檔申報**的 proxy statement 正文(cross-reference-index 的 Item 10–14 維持 pointer;同檔印刷頁碼錨點的 Intel/Citi 正文已還原為 `partial`,不在此列)、或已處理 pre-2001 plain-text SGML 與 scanned PDF OCR。
 
 ## 出問題時，先看哪裡？
 

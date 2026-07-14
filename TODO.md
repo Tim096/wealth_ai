@@ -27,10 +27,10 @@
 ### Task 2
 
 - [ ] 建立並以獨立證據與可重跑 artifact 驗證真正具代表性的 Task 2 strong cases；前端優先明列目前做得好與目前沒做好的案例及證據，README 同步，通過前只稱限定案例或候選，不宣稱整體 strong case。
-- [ ] 實作 cross-file exhibit join：只接受 accession、filing manifest、document type 與 source link 可驗證的正文；Intel/Citi 必須由既有 `incorporated_by_reference` 轉為 source-addressable span，否則維持 review。
-- [ ] 修正 normalized text 的可重現鏈：提供 normalization version、raw SHA、normalized SHA 與一行驗證指令。
+- [ ] 實作**真正跨檔** exhibit / proxy-statement join：只接受 accession、filing manifest、document type 與 source link 可驗證的正文。〔**部分已達**:Intel/Citi 的**同檔**印刷頁碼錨點正文已由 `page_map` / `source_ranges[]` 從 `incorporated_by_reference` 轉為 source-addressable `partial` span(多段串接);仍未做的是另外**跨檔申報**的 proxy statement(Item 10–14)join,維持 pointer + review。〕
+- [x] ✅ **已完成(2026-07-14)**:normalized text 可重現鏈 — `/api/jobs/{id}/normalized` 提供 normalized 全文 + `X-Normalized-Sha256` / `X-Normalization-Version` header;item payload 帶 `normalized_sha` / `source_ranges`,線上實測依 offsets 重算 SHA 為 MATCH。
 - [ ] 移除全域 filing state 的併發串台風險；所有 item request 必須攜帶 accession，mismatch 明確失敗。
-- [ ] 對 20-F、10-K/A、pre-2001 SGML、PDF/scanned filing 顯示具體 unsupported reason，不回模糊的「找不到」。
+- [ ] 對 20-F、10-K/A、pre-2001 SGML、PDF/scanned filing 顯示具體 unsupported reason，不回模糊的「找不到」。〔**部分已達**:20-F 走 `NotA10KFilerError` 列出實際 form 分布;PDF/scanned/binary 標 `unsupported_scanned_or_binary` + 前端紅色未支援 banner(2026-07-15,payload `supported` + `coverage=null`,非假 100%)。仍待:10-K/A amendment 專門處理、pre-2001 SGML text-mode normalizer。〕
 - [ ] 加入 review workload 指標：coverage、false-pass risk、每 100 filings 預期人工審查量與每正確 item 成本。
 
 ## P2 — Reviewer experience 與可營運性

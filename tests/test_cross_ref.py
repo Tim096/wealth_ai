@@ -52,6 +52,17 @@ def test_cross_reference_items_are_honest_pointers():
     assert s.text_sha256 == ""
 
 
+def test_bare_index_does_not_warn_unsupported():
+    # A bare-index cross-reference filing (Citi-style) yields ZERO heading
+    # candidates yet IS resolved via the xref path — it must NOT also emit the
+    # "unsupported / non-10-K" warning (that string contradicted a successful
+    # Citi run before the `and not xref.detected` guard).
+    result = extract_from_html(BARE_INDEX, "synthetic-bare")
+    assert result.filing_class == "cross_reference_index"
+    assert len(result.candidates) == 0            # exercises the `not candidates` branch
+    assert not any("unsupported or non-10-K" in w for w in result.warnings)
+
+
 def test_pointers_show_own_entry_not_whole_index():
     # each unresolved pointer must span only its own index entry, never the
     # entire index block (which would make every pointer's text identical)

@@ -392,6 +392,18 @@ Agent Mode failure analysis 暴露一個通用 feedback 缺口：planner history
 - Artifact：`data/browser_eval/action_history/results.json`
 - Regression：`tests/test_agent_mode.py` 的 grounded history、same-state no-effect block 與 machine-readable prefix cases
 
+### Deployed 10-domain information retrieval（2026-07-14，凍結單跑）
+
+`live-information-retrieval-v2` 在正式 scored run 前凍結十個 read-only answer tasks，涵蓋 Wikipedia、PEP、MDN、PostgreSQL、Rust、NumPy、SQLite、IANA、RFC Editor、Git 文件。Agent 只收到 generic answer-shape contract；`expected_answer_regex` 只由 runner 在 terminal result 後離線套用，不傳入 planner。single-worker runner 必須等前題 terminal 才能送下一題，避免 timeout 後造成 queue contamination。
+
+部署版本 `abc2e19e3d959f74c0094bfd157855256f55a12f`、direct `x-ai/grok-4.5` 的唯一 scored run：gold-pass **10/10**；每題皆 1 次 LLM call；總 tokens **36,207**；總成本 **$0.015917**；latency median **4.505 s**、inclusive p95 **7.333 s**、max **8.639 s**；60 s slow threshold 以上 **0/10**。taskset sha256：`5e105efb3405f529c4a0dab1a24c0427026d80899673d0010369ad9699a477b2`。
+
+這是窄範圍、可核對答案的跨站 information-retrieval suite，不是官方 Online-Mind2Web leaderboard，也不覆寫下節 frozen 300 題的 `21/283` WebJudge advisory 結果。它回答的是修正後 deployed answer extraction 是否能在多種真實文件 DOM 上穩定交付可核對答案。
+
+- 重現：`.venv\Scripts\python tools\live_information_retrieval_eval.py`
+- Artifacts：`data/browser_eval/live_information_retrieval/tasks.json`、`data/browser_eval/live_information_retrieval/results.json`
+- Runner regression：`tests/test_live_information_retrieval_eval.py`
+
 ### Browser 300 題官方全量(2026-07-11,無排除、雙口徑;**最終 rollup:done 283/300**)
 
 外部量測敘事鏈至此三級,**三組口徑不可混比、各自作用明標**:

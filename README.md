@@ -18,6 +18,21 @@ listed by [`GET /api/demo`](https://wealth-agent-ncku.zeabur.app/api/demo) remai
 deterministic and keyless. Login, CAPTCHA, purchases, posting, and other
 irreversible tasks are refused by design.
 
+### Latest deployed Task 1 evidence (2026-07-14)
+
+The frozen `live-information-retrieval-v2` suite runs ten read-only answer tasks
+against ten public documentation/reference domains. The deployed agent receives
+only a generic answer-shape contract; the runner applies hidden gold offline.
+One scored run on direct `x-ai/grok-4.5` passed **10/10** with one LLM call per
+task, median latency **4.505 s**, inclusive p95 **7.333 s**, **36,207** total
+tokens, and **$0.015917** total model cost. No task crossed the 60 s slow
+threshold. See the frozen [task set](data/browser_eval/live_information_retrieval/tasks.json),
+[per-task results](data/browser_eval/live_information_retrieval/results.json),
+and [runner](tools/live_information_retrieval_eval.py).
+
+This narrow information-retrieval suite does not replace the historical frozen
+Online-Mind2Web result: the strict advisory WebJudge figure remains `21/283`.
+
 ### Public API smoke test
 
 ```bash
@@ -85,6 +100,7 @@ Full evidence, metrics, and failure traces: [evaluation report](docs/eval_report
    [docs/manual_test_browser.md](docs/manual_test_browser.md).
 5. 確認「裁判本身可不可信」:[docs/verifier_trust_card.md](docs/verifier_trust_card.md)(由 `tools/verifier_trust_card.py` 從 artifact 生成的計分卡,含 AUROC MISS 的誠實揭露)。
 6. 重跑 Task 1 action-history 泛化機制 probe：`.venv\Scripts\python tools\action_history_cross_site_eval.py`。
+7. 重跑 deployed 10-domain information-retrieval suite：`.venv\Scripts\python tools\live_information_retrieval_eval.py`。
 
 Known limitations and planned experiments: [TODO.md](TODO.md).
 
@@ -181,10 +197,10 @@ tests/      quick + Playwright/integration lanes；實際數量由 pytest collec
 
 ## 部署(Zeabur)— 線上可直接用
 
-| 服務 | URL | 狀態(2026-07-11 實測) |
+| 服務 | URL | 狀態(2026-07-14 實測) |
 |---|---|---|
 | SEC Extractor + dashboard | **https://wealth-sec-ncku.zeabur.app** | 完整可用、免 auth(AAPL 23 items、warm repeat ~0.6s) |
-| Browser Agent | **https://wealth-agent-ncku.zeabur.app** | **真實 LLM(OpenRouter `x-ai/grok-4.5`)**,live Wikipedia 任務實跑 pass;另有 `/api/demo` 列出的免 key 示範任務 |
+| Browser Agent | **https://wealth-agent-ncku.zeabur.app** | **真實 LLM(OpenRouter `x-ai/grok-4.5`)**；frozen 10-domain answer suite 實跑 **10/10**，另有 `/api/demo` 列出的免 key 示範任務 |
 
 兩個 service 各自容器化(Docker 本地驗證通過,零修正):**wealth-sec**(SEC Extractor API + dashboard,`Dockerfile.wealth-sec`)與 **wealth-agent**(Browser Agent + Playwright Chromium,`Dockerfile.wealth-agent`),同一 repo root 為 build context,根目錄 `.dockerignore` 排除 `.venv` / `data/raw_filings` / `runs`(context 縮小約 830MB)。
 

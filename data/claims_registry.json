@@ -18,6 +18,15 @@
     "rule": "json_ratio_pair:after.passed|after.total"
   },
   {
+    "claim_id": "task1_live_ir_v2_gold_pass",
+    "description": "Deployed frozen ten-domain read-only information-retrieval suite: terminal pass plus offline hidden-gold match.",
+    "doc_locations": ["README.md", "docs/eval_report.md"],
+    "doc_evidence": ["passed **10/10**", "gold-pass **10/10**"],
+    "expected": "10/10",
+    "artifact": "data/browser_eval/live_information_retrieval/results.json",
+    "rule": "json_ratio_pair:summary.passed|summary.total"
+  },
+  {
     "claim_id": "task1_300run_verifier_landmark",
     "description": "Browser 300-run official full set: runtime verifier landmark-hit axis = pass 95 of done 283 (diagnostic axis, NOT task success rate).",
     "doc_locations": ["docs/eval_report.md"],

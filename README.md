@@ -182,7 +182,7 @@ Known limitations and planned experiments: [TODO.md](TODO.md).
 
 注意共用層那一格寫的是「尚未注入 JSONL store」—— **這是還沒做完的事,我寫在總覽表裡,不寫在附錄裡。**
 
-[![CI](https://github.com/Tim096/wealth/actions/workflows/ci.yml/badge.svg)](https://github.com/Tim096/wealth/actions/workflows/ci.yml)
+[![CI](https://github.com/Tim096/wealth_ai/actions/workflows/ci.yml/badge.svg)](https://github.com/Tim096/wealth_ai/actions/workflows/ci.yml)
 測試數量與結果以當前 commit 的 CI collection/output 為準，不在文件複製容易過期的 snapshot。完整規格:[docs/SPEC.md](docs/SPEC.md)。手動測 Task 1:[docs/setup_codex_gateway.md](docs/setup_codex_gateway.md)。
 
 **不是我懶得寫測試數量,是寫死的數字必然過期成謊話。** 要看數字就去看 CI 那一跑。

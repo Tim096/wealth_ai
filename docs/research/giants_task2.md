@@ -3,9 +3,24 @@
 > 六份「巨人 vs 本 repo(packages/sec_core)」逐項驗證的合併總結;所有 status 經實際 grep / 執行 regex / 讀碼驗證,非僅文獻比對。巨人:edgar-crawler(nlpaueb)、edgartools、sec-parser(alphanome-ai)、sec-api.io(商業)、EDGAR-CORPUS(資料集)、NTU itemseg(arXiv 2502.08875,外部 benchmark)。
 > 第二波(2026-07-10,回應 §5 完整性批判):SRAF/Loughran-McDonald 10-X Parse、OpenEDGAR(LexPredict)、doc2dict、datamule(皆實際 clone 讀碼或實測 EDGAR index)+ 10-K405/10-KSB form-variant 普查。判定見 §1.5,引用見 §4,處理狀態見 §5。
 
-## 1. 對照表:本 repo vs 各巨人(依評分維度)
+**題目一句話**:從一份 10-K 年報 HTML 裡,把 Item 1、Item 1A、Item 7… 各自的正文切出來。聽起來像「找標題、切段落」,但這批文件橫跨不同年代、不同排版工具,標題可能藏在表格裡、被 `<span>` 拆碎、或根本不長得像標題。
+
+**這份文件一句話**:站在巨人的肩膀上量自己 —— 我把十個公開實作/資料源 clone 下來逐行讀碼,逐條問「他有、我有沒有」,再把每一次跑分照實記下來,**包括我單軸輸給對手的那次**。
+
+**這份分五段**(先給地圖):
+
+1. **§1 對照表** —— 四個評分維度,逐條「對方做法 / 本 repo 現況 / 評等(優·平·劣)」;§1.5 是第二波新查的四個巨人,含「查完發現不能用」的誠實判定。
+2. **§2 Backlog** —— 差距翻成 P0/P1/P2 待辦;§2.1 是 form-type→item-schema 的一手普查規格。
+3. **§3 Per-criterion 定位** —— 每個維度我強在哪、破在哪。
+4. **§4 引用來源與使用限制** —— 誰的東西、什麼授權、能當票還是能當 gold。
+5. **§5 完整性批判 + 各波實測** —— 別人挑我的漏,加上五波前景實測:F1 我輸、gate 多數 MISS,原樣印在這裡。
+
+## 1. 對照表:本 repo vs 各巨人(依評分維度)—— 同一個坑,誰踩過、誰修了?
 評等:**優** / **平** / **劣**(對方有、本 repo 沒有)。
-### 1.1 Format-variance robustness(格式變異穩健性)
+
+白話:**評等不是自我感覺,是三選一的相對位置** —— 對方有我沒有就寫「劣」,並且後面一定掛一個 backlog 編號。
+### 1.1 Format-variance robustness(格式變異穩健性):同一個 Item 1,一百種寫法都認得嗎?
+白話:三十年的年報,標題可能寫成 `ITEM 1`、`I T E M 1`、`Item No. 1`,可能藏在表格裡、被 CSS 加粗當成標題 —— 這一格量的是「換個排版,程式還找不找得到」。
 | 巨人 | 對方做法 | 本 repo 現況 | 評等 |
 |---|---|---|---|
 | edgar-crawler | flat regex + 字距修復('I T E M 1');'Item No. 1' 仍是 open issue #37 | streaming char-flag normalizer(normalize.py)+ 4 detector(strict/loose regex、dom_heading、visual_layout);mid-word `<span>` 拆字 by construction 免疫;'Item No. 1'/roman 同樣不匹配 | 平(backlog 後轉優) |
@@ -13,27 +28,39 @@
 | sec-parser | inline-CSS style-fingerprint 辨識 heading | 只有 tag-level flags;`<span style="font-weight:700">` 全盲;CSS margin-as-newline 也缺 | 劣(P1) |
 | sec-api.io | 自承 Citi Item 7、GE Item 1、Intel 為其 failure;pre-2002 不支援 | 同名 filer 已修復並有 fixture(FG-SEC-005);pre-2001 誠實標 unsupported | 優 |
 | EDGAR-CORPUS | remove_tables=True 的 regex 切分,1993+ 全覆蓋 | 保留 table 內文、offset+sha256 source-exact;pre-2001 SGML 不支援 | 平 |
-### 1.2 Self-verification without ground truth(無標註自我驗證)
+
+> **`Item No. 1` 這一格我跟 edgar-crawler 一樣不會 —— 對方掛 issue #37 沒修,我也沒修,所以評「平」不評「優」。** 反過來,`<span style="font-weight:700">` 我是全盲,sec-parser 會,這格我認「劣」。
+### 1.2 Self-verification without ground truth(無標註自我驗證):沒有標準答案,怎麼知道自己切錯?
+白話:真實世界沒人給你答案卷。這一格量的是「程式能不能自己發現自己抽錯了,並且舉手說『這筆我沒把握』」。
 | 巨人 | 對方做法 | 本 repo 現況 | 評等 |
 |---|---|---|---|
 | edgartools | 54-filing fixture corpus CI 重測;flag 後照常回傳、caller 不看 warning | partition invariants(coverage.py)、7 值 typed ItemStatus、needs_review 一級欄位、3-engine 2-of-N triangulation(249 agree / 4 disagree)、8 組 named confidence components | 優 |
 | sec-parser | per-element ProcessingLog 審計鏈 | BoundaryEvidence + ConfidenceComponent + toc_reasons 機器可讀;缺純分數落選候選 disposition(P1-7) | 平偏優 |
 | sec-api.io | 'processing' 空字串反模式(issue #34:partial text + HTTP 200) | typed absent/failed 區分是 design center(scoring.py tri-state、IBR typed status) | 優 |
 | NTU itemseg | 3,737 份人工標註 benchmark(無公開 leaderboard,§4 小節) | 自家 gold 僅 5 份 self-frozen(F1 1.0 無誤差訊號可校準)→ P0-2/P0-3 | 劣(P0) |
-### 1.3 Edge cases(地雷覆蓋)
+
+> **自家 gold 只有 5 份、F1 1.0** —— 這不是「我很準」,是「我的考卷太少、全對,所以量不出誤差」。滿分在這裡是壞消息:沒有錯誤訊號就沒東西可校準。評「劣」,掛 P0-2/P0-3。
+### 1.3 Edge cases(地雷覆蓋):最難的那幾份,誰真的處理了?
+白話:大家都知道坑在哪(合併章節、標題標錯、指向別處的 pointer),差別在**知道之後有沒有修**。
 | 巨人 | 對方做法 | 本 repo 現況 | 評等 |
 |---|---|---|---|
 | edgar-crawler | issue #35 combined items 兩邊皆空、#37 'Item No. 1' 未修 | 'Items 1 and 2' 顯式 combined 端到端建模(覆蓋 #35 案例);缺 singular-header 隱含合併推斷(P0-9)、'Item No. 1'/roman(P1-1) | 優(2 缺口在 backlog) |
 | edgartools | items 10-16 rescue path bug(_ITEM_TITLE_PATTERNS 止於 9C;**pinned @ 5.42.0**,升版需重驗)、terminal EOF-runoff | SIGNATURES body-scan 終界 + detect_appended_section_cut(XOM 311,785→33 字);2-of-N 下 edgartools item 16 票 5/11 filings 遭 outvote(另 item 11 ×1),殘餘 disagree 4 → P0-5 down-weight | 優 |
 | sec-api.io | 自承 STRATS/CorTS trust(MD&A 合法缺席)為難例 | 語彙支援 9C/16/1C;corpus 無 trust 10-K、無 legitimately-absent 測試(P0-6) | 平(P0 fixture) |
 | NTU 論文 | 錯標 heading(9A 標成 14)、<100 行 stub、7A 巢狀於 7 | landmine L1-L10 + 15 tests;上述三類無 fixture(P0-6) | 平(P0 fixture) |
-### 1.4 Cost discipline(成本紀律)
+
+> XOM 那筆是這格最好懂的例子:同一個 Item 16,**從 311,785 字修到 33 字** —— 原本它一路吃到檔案結尾。不是「抽多了一點」,是把整份年報的尾巴都當成那一章。
+### 1.4 Cost discipline(成本紀律):要不要花錢請 LLM,誰在把關?
+白話:這題最貴的做法是「整份丟給 LLM 讀」。這一格量的是:主管線能不能零成本跑完,LLM 只在真的搞不定時上場,而且花了多少錢有沒有記帳。
 | 巨人 | 對方做法 | 本 repo 現況 | 評等 |
 |---|---|---|---|
 | doc2dict/datamule 路線 | deterministic style-aware parser first、LLM 僅 invariant failure | 同構且已文件化;LLM adjudicator 已 wired(pipeline.py:330,`SEC_LLM_ADJUDICATE=1` opt-in、預設 off、evidence-only),$/裁決與 per-filing 成本欄已實測(P0-12) | 平(P0-12 已補量測) |
 | sec-api.io | $49-599/mo 商業 API | 全免費;其 free tier(100 lifetime calls)可當外部仲裁票(P0-7b) | 優 |
 | EDGAR-CORPUS | 一次性離線 corpus,零邊際成本 | join 當 weak-label 額外一票,批次成本近零(P0-1) | 平 |
-### 1.5 第二波巨人(2026-07-10 調研,誠實判定)
+
+> **LLM 在這個系統裡永遠不生成 filing 文字,只被允許「投票」** —— span 與 offsets 由確定性程式決定,LLM 改不動。這是成本紀律,也是防幻覺的結構。
+### 1.5 第二波巨人(2026-07-10 調研,誠實判定):新查的四個,有幾個真的能用?
+白話:完整性批判說我漏了四個巨人。我全部 clone 下來讀碼實測 —— 結果**兩個不能當老師、一個只能借想法、一個能當票**。查完發現不能用,也是結論,照樣寫在表上。
 | 巨人 | 有無 item segmentation | 維護狀態(pinned) | 判定 |
 |---|---|---|---|
 | **SRAF / Loughran-McDonald 10-X Parse**(Notre Dame) | **無**:Stage One parse 是整份清洗,衍生資料集皆 whole-filing 粒度;公開 `Generic_Parser.py`(2016/06 鏡像實讀)無 item 邏輯 | 資料持續更新(Summaries 至 2025);血統與 edgar-crawler/edgartools 完全獨立 | **不是 boundary teacher,不能當 P0-7 票**;實際價值:LM_10X_Summaries 對帳 oracle、sum-of-items 不變式(P0-11)、10-X Header Data(140 萬筆,1993–2025)master index、清洗規範參照;>10% numeric 表格被刪 → Item 8 文字殘缺,不可當內容 gold |
@@ -41,8 +68,12 @@
 | **doc2dict**(john-friedman) | 引擎層:regex 主裁判 + bold/font-size 樣式 fallback 分層(`convert_instructions_to_dict.py:229-271`) | 活躍:commit `01e6d0c` 2026-02-02;README 自承 early stage | **borrow techniques**:樣式佐證 header(P1-3 參照)、repetitive-text 頁首尾去除、TOC 免疫;弱點:regex 命中即給 level、不要求樣式佐證 |
 | **datamule**(john-friedman;後端=doc2dict) | **有,一級公民**:per-form mapping(~40 form),`document.py:291` `parse()` → `:539` `get_section('item1a')`;pre-2001 .txt 有路徑 | 非常活躍:commit `122fc54` 2026-06-25 | **usable as triangulation vote**(P0-7c);**無公開 accuracy benchmark——當票不當 gold** |
 
+> **SRAF 血統獨立、資料更新到 2025,看起來是完美的第四票 —— 但它根本不切 item。** 讀了 `Generic_Parser.py` 才知道,不是讀了 README 就知道。這就是為什麼 status 全部要 grep 過、讀碼過,不能只比文獻。
+
 ## 2. Prioritized backlog(已去重;僅列 status = missing / partial)
 指定必須處理的四個 known gaps 對應:verifier calibration curve → **P0-3**;runtime verifier mutation harness → **P0-4**;golden-set expansion via multi-teacher pseudo-gold → **P0-1**;wrapper reassembly → **P0-10**。
+
+白話:P0 = 不做會被打的洞;P1 = 該做可排隊;P2 = 需要決策或研究性。每列的 Status 欄一律寫「已落地 / 部分落地 / 開放」—— **開放就寫開放,不寫「規劃中」**。
 ### P0
 | # | What(one line) | Status / 落點 |
 |---|---|---|
@@ -59,6 +90,9 @@
 | P0-11 | Per-(form,item) 經驗 size band 硬性 guardrail + SRAF sum-of-items 全檔上界不變式(SRAF 為 whole-filing 粒度,不能供 per-item band) | 部分落地:sec_core/size_bands.py(見 §外部量測 rerun);SRAF 不變式開放 |
 | P0-12 | Cost discipline 落地量測:LLM adjudicator wire 一次 + 實測 $/裁決 + per-filing 成本欄 | 已落地(自 P2-6 升級,§5.2):packages/sec_core/pipeline.py:330 於 extract_from_html wire `adjudicate_ambiguous`,`SEC_LLM_ADJUDICATE=1` opt-in、預設 off、evidence-only(span/offsets 不動,決策僅記 BoundaryEvidence + needs_review;schema + verbatim evidence-quote 雙閘);守門 tests/test_adjudicator_wiring.py;$/裁決實測 mean $0.0058(cost_latency_report.md「LLM 成本」節)、sweep_metrics.py 聚合 per-filing llm calls/usd 欄 |
 ### 2.1 P0-1 附屬規格:form-type→item-schema 對映(2026-07-10 實測 EDGAR full-index 1993–2009 + 真實樣本 filings 驗證)
+
+白話:年報不是只有一種。早年有 10-K405、小公司交 10-KSB、還有 /A 修正版 —— **同樣叫「Item 7」,在不同表格型別裡是不同章**。這節是我實際去數 EDGAR 索引、開真實 filing 驗出來的對映規格。不做這件事,pseudo-gold 的老師票會系統性錯位。
+
 **EDGAR-CORPUS 實際組成(決定性證據)**:建置 config(edgar-crawler commit [`058a121a41`](https://raw.githubusercontent.com/nlpaueb/edgar-crawler/058a121a41/config.json))`filing_types = ["10-K","10-K405","10-KT"]`,下載端精確匹配(`edgar_crawler.py` @`5823367ae1` L45/L295)→ corpus = 10-K ∪ 10-K405 ∪ 10-KT,**永遠不含 KSB 家族與任何 /A**(1997 算術驗證吻合:corpus 10,106 ≈ 6,698+3,201+18)。
 
 **規格(join 與直抽兩側都必須套)**:
@@ -70,6 +104,8 @@
 5. **P1-8 era-emptiness prior 素材**(同批普查產出):7A≥FY1997、9A≥2002H2、9B≥2004、1A/1B≥FYE 2005-12、16≥2016、9C≥2021、1C≥FYE 2023-12;Item 4 語義 Vote→Removed(2010)→Mine Safety(2011)。
 
 樣本 filings 與 SEC release 引註見 §4。
+
+> **丟掉 KSB 最省事,但那等於把 1995–2008 的小公司全部從樣本裡刪掉 —— 這叫倖存者偏差,不叫資料清理。** 所以規格是「分流 + 對映」,不是「丟棄」。
 ### P1
 - P1-1 heading 變體:'Item No. 1'(edgar-crawler open issue #37)+ roman numeral alternates — headings.py。
 - P1-2 CSS margin-as-line-break 補 newline(heading 黏上前行 → line-anchored regex 靜默失敗)— normalize.py。
@@ -92,17 +128,26 @@
 - P2-6 ~~LLM tier 量測~~ 已升級為 **P0-12**(§5.2)。
 - P2-7 Content-based item 重新指派(研究性;論文顯示所有自動方法在此類全滅,不建議近期做)。
 
-## 3. Per-criterion 定位(依評分維度)
-### 3.1 Format-variance robustness
+## 3. Per-criterion 定位(依評分維度):我到底站在哪一格?
+### 3.1 Format-variance robustness:換排版還認得嗎?
 對照基準:sec-parser 的 style-fingerprint heading 偵測 + edgartools 的 multi-strategy fallback。本 repo:streaming char-flag normalizer 使 mid-word `<span>` 拆字 by construction 不存在(架構論證;直接測試佐證尚缺,與 P1-10 同綁,fixture 落地前此句不得單獨外引);4-detector body-scan 主路徑;Intel/Citi/GE cross-reference-index typed 修復 + 真實 accession fixture(Citi Item 7 / GE Item 1 為 sec-api 官方文件自承 failure)。缺口:P1-1/P1-2/P1-3;P0-10 已收尾。
-### 3.2 Self-verification without ground truth
+
+> 注意那句 caveat:**「by construction 免疫」目前是架構論證,不是測出來的** —— fixture 沒落地前這句不准單獨拿出去引用。宣稱的強度,不能超過證據的強度。
+### 3.2 Self-verification without ground truth:誰來驗證驗證器?
 對照基準:edgartools 54-fixture CI 重測(但 flag 後照常回傳、caller 不看 warning)。本 repo:multi-oracle triangulation(2-of-N,249 agree / 4 disagree 全路由 needs_review)、capture-first coverage(每 char 屬於恰一 block,「先全抓再分類」)、offset+sha256 source-exact span(LLM 永不生成 filing 文字,AdjudicatorDecision 無 evidence quote 即拒絕)、7 值 typed status(absent≠failed,對照 sec-api issue #34)、honest failure gallery(FG-SEC-001..009)。配套:P0-3 calibration、P0-4 mutation harness、P0-5/P0-7/P0-11——在逐項驗證過的十個公開實作/資料源中,無一同時校準並 mutation-test 驗證器本身(範圍限定於已驗證清單)。
-### 3.3 Edge cases
+
+> 這裡有一層元層思考:證明「驗證器沒發現問題」不夠 —— 我還要**故意注入腐蝕,看驗證器抓不抓得到**(P0-4 mutation harness,recall 六類全 1.0、clean false-alarm ≤0.0056)。結論才能從「沒發現問題」升級成「有能力發現、且沒發現」。至於「無一同時校準並 mutation-test 驗證器本身」這句,**範圍已經窄化到我逐項驗證過的十個實作**,不是全稱否定(§5.4)。
+### 3.3 Edge cases:最難的那幾份,修了沒?
 對照基準:sec-api 自承難例清單 + NTU 論文錯誤分類法(知道坑在哪,多數沒修)。本 repo:landmine L1-L10 + 15 tests;combined 'Items 1 and 2' 端到端建模(覆蓋 edgar-crawler #35);IBR typed status + Item 8 stub 指路;SIGNATURES body-scan + appended-section cut(XOM Item 16 從 311,785 字修到 33 字);TOC 5-signal 加權拒絕。缺口:P0-6、P0-9、P1-10。
-### 3.4 Cost discipline
+### 3.4 Cost discipline:LLM 花了多少,誰在記帳?
 對照基準:doc2dict 路線的 deterministic-first 分層。本 repo:主管線 deterministic $0;LLM adjudicator 已 wired 且 opt-in(pipeline.py:330 `adjudicate_ambiguous`,`SEC_LLM_ADJUDICATE=1`、預設 off)、schema-gated 且 evidence-only(span 不動;tests/test_adjudicator_wiring.py),$/裁決與 per-filing 成本欄已實測入帳(cost_latency_report.md「LLM 成本」節、sweep_metrics.py);eval 用 era×agent 分層抽樣。缺口:P0-7b(sec-api 免費仲裁票)、P0-1(corpus join 近零邊際成本)。
 
-## 4. 引用來源與使用限制
+> 不是「我們也用了 LLM」,是「**主管線 $0,LLM 只能在證據旁邊寫意見,動不了 span**」。
+
+## 4. 引用來源與使用限制:誰的東西、什麼授權、能當票還是能當 gold?
+
+白話:這張表最重要的一欄是最右邊。**「當票」和「當 gold」差很多** —— 當票是「他也投一票,錯了大家一起錯」;當 gold 是「他說了算,我照他改」。這份 repo 裡沒有任何外部來源被當成 gold。
+
 | 來源 | 用途 | 限制 / attribution |
 |---|---|---|
 | nlpaueb/edgar-crawler(GitHub) | heading 變體、字距修復、issues #35/#37 對照與 fixture 來源;P0-7a 擬 vendor regex core | **Vendoring 前必查 LICENSE 並保留原始授權與版權聲明**;授權不相容(GPL 系)則 subprocess 隔離或重實作;README 要求引用 Loukas et al. 2021 |
@@ -119,15 +164,17 @@
 | 本 repo 既有文件 | docs/prior_art.md、docs/failure_gallery.md(FG-SEC-001..009)、docs/eval_report.md、docs/cost_latency_report.md、docs/ATTRIBUTION.md | 新增引用一律同步 ATTRIBUTION.md |
 
 **SEC EDGAR 本身**:原始 filings 為公開資料;快取 raw HTML 進 fixtures(P0-8)無授權問題,但需遵守 SEC fair-access rate limit(既有 fetch 工具已處理)。
-### NTU itemseg dataset:授權判定與 adapter 度量(原 external_benchmark_spike.md)
+### NTU itemseg dataset:授權判定與 adapter 度量(原 external_benchmark_spike.md)—— 這批標註,我到底能怎麼用?
 - **授權判定(three-tier rule,2026-07-10 spike 實測)**:論文 arXiv 頁 CC BY 4.0(僅涵蓋論文文字);程式碼 repo `hsinmin/itemseg` README 明載 **CC BY-NC 4.0**;dataset 壓縮檔(`itemseg10kdata.7z`,3,741 entries 全列過)**無任何 LICENSE/README**,期刊版 Data Availability 又寫 "upon request"。訊號矛盾、取最嚴格解讀 → **tier「unclear/research-only」→ download-script route**:`tools/fetch_ntu_itemseg.py` fetch-on-demand(sha256 凍結 `769bc7da89cdd0c53f8182f74d294be23839607ad9e75735767be445d1efd727`,重跑必驗)至 gitignored `data/raw_filings/external/ntu_itemseg/`(位於 `data/raw_filings/` 之下,結構上不可能被 commit);**不 vendor、不節錄 fixture**(逐行內容即標註資產本體);任何使用其數字的文件引 arXiv 2502.08875。
 - **無公開 leaderboard(backlog 原文更正)**:GitHub repo、paperswithcode、論文正文皆無;外部對標的形狀是「同一 test fold 上與論文自報數字並列」,不是排行榜提交。
 - **Containment-adapter 度量定義(tools/head_to_head.py)**:每 engine 統一介面 `item_code -> text`;NTU 每條非瑣碎 gold line(alnum-normalized 後 ≥8 字元)測其是否為某 item 正規化全文的 substring → per-item tp/fn/fp 與 P/R/F1;macro-F1 只平均「有 gold lines 的 item」(fp-only item 列出但不進 macro);正規化 = lowercase + 只留 alnum(對 inscriptis/本 repo normalizer/edgartools renderer 三種渲染差異穩健)。
 - **下界、不可與 BIO-F1 互比(誠實記錄)**:論文自報數字(BERT4ItemSeg core-item macro-F1 0.9825、GPT4ItemSeg 0.9567)是 **per-line BIO 分類 F1** 且為監督式訓練;containment adapter 是把 span 輸出投影回行的**下界**(engine 內文任何渲染丟字都算 fn)。兩組數字同表並列必帶此註;引擎間比較只在同一 adapter 欄位間成立,不可跨到論文欄位(另見「NTU benchmark 軸差異聲明」節)。
 
+白話:授權訊號互相矛盾(論文 CC BY、程式碼 CC BY-NC、資料集沒寫、期刊版說「來信索取」),**我取最嚴格的那個解讀** —— 不 vendor、不節錄、只下載到 gitignore 的路徑。這不是法務要求,是我自己畫的線。
+
 正式 30-slice 跑分見本文件終判各節與 `docs/eval_report.md`(canonical)。
 
-## 5. 完整性批判
+## 5. 完整性批判:別人挑我的漏,挑到了什麼?
 > Completeness critic pass(2026-07-10),針對完整性目標的具體缺漏;✅ = 已落地,⏳ = 開放。
 ### 5.1 漏掉的巨人 / 資料集
 - **SRAF / Loughran-McDonald**:✅ 調查完成(§1.5)——無 item segmentation,不能當 P0-7 票或 teacher,whole-filing 粒度不能餵 per-item band/emptiness prior;落地為 P0-11 不變式 + master index + 清洗規範參照;入 §4(non-commercial 註記)。
@@ -136,11 +183,13 @@
 - **10-K405/10-KSB form variants**:✅ 完整規格落地(§2.1,實測 form.idx 1993–2009 + 4 份真實樣本):corpus 組成證實為 10-K∪10-K405∪10-KT;g1–g7 guardrails 折入 P0-1。
 ### 5.2 評分維度缺 P0
 - Cost discipline 無真 P0:✅ 已落地為 **P0-12**(現況已驗證:sweep_metrics.py 只聚合 latency_ms、cost_latency_report.md:42 自承估計無量測);P2-6 註銷併入。其餘三維度皆有 ≥2 個 P0,無缺口。
-### 5.3 Who-judges-the-judge:未完全終結
+### 5.3 Who-judges-the-judge:未完全終結——驗證器自己被誰驗證?
 1. 校準循環未斷:✅ 修法入 P0-1(pseudo-gold 投票排除 edgartools 或分層)與 P0-3(human-labeled subset 為主曲線、pseudo-gold 僅輔助);真正終點是人工標籤。實跑見 Gate rerun 各節。
 2. 既有 mutation test 只覆蓋 scorer,runtime 驗證訊號本身(confidence/needs_review/triangulation/topic_check/size band)未被 mutation 測試——「驗證器自己被驗證」缺口:✅ P0-4 harness 已落地。
 3. 無量化門檻的 harness 只是存在性證明、不可引用:✅ P0-4 已加硬門檻(per-class recall ≥0.95、clean false-alarm ≤0.05)+ 開放類 mutation(±N% 邊界抖動、跨 item 換文)。
 4. 閉環:✅「verifier false-pass rate on external benchmark」為 P0-2 交付物 B;P0-3 risk-coverage 曲線顯式標出。
+
+> 第 3 點值得記下來當通則:**沒有量化門檻的 harness 只是「我有做喔」的存在性證明,不能引用。** 有門檻才有「達標 / 未達標」,才會有下面那一堆誠實的 MISS。
 ### 5.4 缺證據的宣稱
 - §3.2 全稱否定「沒有任何公開實作做到」:✅ 改為「逐項驗證過的十個公開實作/資料源中無一做到」。
 - P0-3「0.962 vs 0.666」:✅ 註明為 sweep2 數字;sweep3 pass mean 已漂移至 0.975(eval_report.md:91),校準以 sweep3 為準。
@@ -151,9 +200,11 @@
 ### 5.5 缺席的直接對決
 ✅ 已落地為 P0-2 交付物 A(tools/head_to_head.py):edgar-crawler、edgartools(5.42.0)、datamule 跑在同一份 gold set,輸出 per-item F1 對照表;sec-parser 因無 end-to-end item extractor(heading 偵測層)不參賽,如實註記。實跑數字見終判各節。
 
-## 外部量測 rerun 2026-07-10(post wave-2)
+## 外部量測 rerun 2026-07-10(post wave-2):修了 overshoot guard,gate 過了嗎?
 > 結論:overshoot guard(`60fe10f`)上線後 17:22–17:23 完成 4-engine 30-slice rerun(artifacts committed `4d3b3a5`),macro-F1/ECE/攔截拆帳全數由獨立腳本手工重算吻合;三個主 gate 全 MISS。
 > 殘餘:123/141 boundary-bleed 主導桶對 guard 幾乎無感——containment 前提(下一 item heading 可被 detector 找到)在 NTU 多不成立(bare/變體/表格內 heading);在新訊號落地前,AUROC ≥0.75 與 ≥50% 攔截維持未達成,不得引用 0.63 為「可接受」。流程教訓:calibration 重跑前必驗 head_to_head schema(4-engine)與 mtime 配對,否則重演「數字全同」假象。Artifacts:`data/sec_eval/scoring/head_to_head.json`、`data/sec_eval/calibration/calibration.json`。
+
+白話:**三個主要驗收門檻,一個都沒過。** 下面兩張表就是帳單——每個數字都由獨立腳本手工重算對過,不是照抄程式輸出。
 ### 數字表(before = pre-wave 實測;after = post overshoot-guard rerun 實測)
 | 指標 | 來源 | before(pre-wave) | after(post-fix) | 手工重算驗證 |
 |---|---|---|---|---|
@@ -174,7 +225,10 @@
 | macro-F1(副產品) | 上漲 | 0.5961 → 0.5964 | PASS(邊際) |
 
 診斷(512 筆 raw data,非臆測):主導桶 boundary bleed 123/141(87%;121 筆 fp 行數 > gold,recall≈1、起點對、不知道停;徹底 miss 僅 18)——引用「87% boundary bleed」須註明含 TOC artifact 膨脹(18:40 更正);conf 飽和使 verifier 對主導桶全盲(87/141 錯落在 conf≥0.9,needs_review 僅攔 19/141);items 10–13 IBR 次要桶 40/141;pseudo_gold AUROC 0.4288 < 0.5 → weak-label 僅當煙霧偵測、不調參。下一步修法(overshoot 訊號、驗收 gate、mtime 配對流程)已依原文執行,結果見終判與 Gate rerun 各節。
-### 終判 2026-07-10 18:05(end-boundary fix `3ba717b` 之後,fresh foreground rerun)
+
+> **pseudo_gold AUROC 0.4288,比丟銅板還差。** 不是「訊號比較弱」,是這個弱老師在這個任務上根本沒有辨識力 —— 所以它只准當煙霧偵測器,絕不准拿來調參。
+> 錯誤的形狀也講清楚:**121 筆是「起點找對了、不知道該停」** —— recall 幾乎滿分、precision 被拖垮。這是 capture-first 的帳單,不是找不到章節。
+### 終判 2026-07-10 18:05(end-boundary fix `3ba717b` 之後,fresh foreground rerun):單軸 F1,我贏了嗎?
 結論:**raw 單引擎 macro-F1 我們沒有贏**——ours 0.5964 < datamule 0.6244(差 0.0280)< edgar_crawler 0.6332(差 0.0368)。end-boundary fix 上線且 707 tests 全過,但 rescan cut 在 30-slice 觸發 0 次(A-bucket 案例 per-item delta 全 0)——修法落地但在量測 slice 上無效,實測事實照錄。adapter 未做任何 convention-trim。
 
 | 系統 | macro-F1(NTU 30-slice) | scored / failures | 多 oracle 驗證(XBRL/CYD/topic/2-of-N) | 誠實 needs_review / 棄權 | 覆蓋保證(capture-first) | mutation harness |
@@ -185,7 +239,10 @@
 | edgartools (5.42.0) | 0.4386 | 26 / 4 | 無 | 無 | 無 | 無 |
 
 定位:以 precision 換 capture-first recall(bleed 是這筆 trade 的帳單),換得的是唯一附驗證層、可自我審計的輸出(false-pass 100 筆為自行量測公布;其他引擎的 false-pass rate 為未知);F1 單軸落後如實記。殘餘:heading-undetectable cascade 為主血源(counterfactual ceiling 僅 +0.0026);2 筆 no-items filings(EC 該兩筆 ~0.9–0.99)為最高槓桿;C-bucket furniture「對稱/公平」判斷有誤,已於 18:40 終判更正。Artifact:`data/sec_eval/scoring/head_to_head.json`(mtime 18:05,30 filings,4 engines)。
-### 終判 2026-07-10 18:40(furniture-strip 對抗裁決後,F1 線收束)
+
+> **我輸了 0.0368,寫在這裡,不改判、不軟化。** 而且注意那個修法:end-boundary fix 上線、707 tests 全過,但在量測 slice 上觸發 0 次 —— 修法落地不等於修法有用,兩件事分開記。
+> 這張表右邊四欄才是我要的差異化:false-pass 100 筆是**我自己量、自己公布的**;其他三個引擎的 false-pass rate 不是 0,是**未知**。
+### 終判 2026-07-10 18:40(furniture-strip 對抗裁決後,F1 線收束):把 TOC 導覽列砍掉,追得回來嗎?
 結論:即使套用合法 TOC-strip,F1 仍未反超——post-strip 0.6244(投影,後經 landed 節實測)追平 datamule(0.6244,非「贏」),仍輸 edgar_crawler 0.0088;**F1 tuning 就此 CLOSED**,敘事轉可靠性/可驗證性差異化。
 錯誤更正(誠實記帳):18:05 點 3 判 furniture-fp「對雙方對稱、公平」**是錯的**,per-item probe 拆帳為混合——`Table of Contents` 導覽 backlink 一類**非對稱**(EC strip 掉、我們留著;典型 2713014 item14 一個 315-char span 因 doc-wide substring containment 灌 fp=100);非-TOC recurring furniture(公司頁眉)兩引擎逐筆相同,對稱;高-fp item(item15 fp=402、10216298 item2 fp=284)是真過抽,非 scorer artifact——殘餘 0.0088 是真 boundary bleed。
 
@@ -197,7 +254,10 @@
 | edgartools | 0.4386 | — | — |
 
 殘餘:broad「duplicated=furniture」全 strip 為**非法**——吃掉真實 recurring 財務內容,雙引擎雙降(ours 0.5964→0.57、EC 0.6332→0.5905),不採用(`prompts/rejected_prompts/2026-07-10-broad-furniture-strip-for-f1.md`);TOC-strip 為雙層輸出產品特性(clean text 交付 + source offsets 保留),獨立於評分存在,非 metric hack——且它沒讓 F1 反超,是特性揭露不是勝負宣稱。
-### 終判 2026-07-10 landed(TOC-navigation-backlink stripping 出貨,投影→實測)
+
+> **我自己 18:05 的判斷是錯的,錯在哪、怎麼查出來的,寫在上面。** 這不是謙虛,是記帳:「對稱、公平」是我沒拆帳就下的結論,per-item probe 一拆就破。
+> 還有一條線我踩住了:broad furniture strip 能讓數字好看,但它會吃掉真實財務內容 —— **能漲分但非法,所以不採用**,連拒絕的理由都留了檔。
+### 終判 2026-07-10 landed(TOC-navigation-backlink stripping 出貨,投影→實測):投影兌現了嗎?
 結論:TOC-strip 從投影升級為 shipped 兩層特性 + 實測——`normalize.py` `clean_slice()`(delivery 層;`_is_toc_backlink_line()` 要求整行 ∈ `_TOC_BACKLINK_PHRASES` 且整行非空白字元皆在 `FLAG_TOC_LINK` 錨點內)+ `pipeline.py` `clean_text_of()`;provenance 層 `slice()`/offsets/sha256/coverage 不動;head_to_head OURS adapter 改吃交付輸出(非 adapter-only trim;EC 自身就 strip,故對 EC no-op)。
 
 | 系統 | before(raw / pre-landing) | after(shipped clean delivery) | 對 ours 的落差 |
@@ -208,12 +268,19 @@
 | **ours** | **0.5964** | **0.6245**(+0.0281) | — |
 
 殘餘:實測 0.6245 vs 18:40 投影 0.6244 差 +0.0001——錨點閘門更保守(保留非錨點 `TABLE OF CONTENTS` 標題),如實記錄;真正章節標題、item 標題、recurring 財務內容永不被 strip,broad strip 維持非法不採用;side-effect `verifier_false_pass_items` 100→79;**F1 單軸仍輸 EC 0.0087、追平 datamule,F1 line 維持 CLOSED**。守門:`tests/test_toc_backlink_strip.py`(7 tests);mutation recall 六類維持 1.0(clean false-alarm 0.0056);JPM/XOM reassembly、combined-item、overshoot guard、full SEC suite 全綠。Artifact:`data/sec_eval/scoring/head_to_head.json`。
-### NTU benchmark 軸差異聲明(2026-07-11,防誤讀)
+
+> 投影 0.6244、實測 0.6245,差 +0.0001,**連這 0.0001 我都解釋了它從哪來**(錨點閘門更保守)。
+> **這一節是「贏了 0.0281 但還是輸 0.0087」的節** —— 不是「大幅改善」,是「改善了,仍然輸,F1 這條線就此關閉」。
+### NTU benchmark 軸差異聲明(2026-07-11,防誤讀):0.9825 是我的天花板嗎?
 NTU ItemSeg 論文(arXiv 2502.08875)報的 **BERT4ItemSeg macro-F1 0.9825** 量的是 **per-line BIO 邊界分段分類**,且為**監督式訓練**(見 §4「NTU itemseg dataset:授權判定與 adapter 度量」小節);本文件所有 head-to-head 數字量的是 **item 全文抽取 F1**(30-filing slice、**zero-training**,未在 NTU gold 上調任何參數)。兩者不同軸、不可直接比較——0.9825 **不是** 0.62x 的同軸天花板,並排比大小是誤讀。NTU gold 在本 repo 的角色是**外部弱老師(head-to-head 的一票),不是 gold 真值**(§4 引用限制;MEMORY 引用原則:外部老師當弱老師/一票,不當 gold)。
-### Gate rerun 2026-07-11(gold-free per-item length prior 落地,§gate 表後續)
+
+> 白話:一個是「這一行屬於哪一章」的分類考(還先在同一批資料上訓練過),一個是「把整章原文完整切出來」的抽取考,**題型不同,分數不能並排比大小**。我寫這一節不是為了替 0.62x 找台階,是為了不讓人拿 0.9825 當我的天花板誤讀。
+### Gate rerun 2026-07-11(gold-free per-item length prior 落地,§gate 表後續):長度異常訊號,救得了 AUROC 嗎?
 結論:三個主 gate 仍 MISS——訊號有真實貢獻(攔截 +9.4pt、conf≥0.9 桶錯 −15、ECE −0.022)但 AUROC 微降且距 0.75 甚遠,照實記錄,不引用為達標。
 落地:`packages/sec_core/length_prior.py`(全 gold-free,NTU 零參與調參)——span 占 filing normalized 總長**占比**的 per-(form, schema, item) [p05, p95] band,由 corpus-only 317 筆導出(artifact `data/sec_eval/calibration/length_prior.json`,in_band_fraction 0.8457);雙向執法 → needs_review + 零分 3.5 權重 component 封頂 confidence(≤~0.74);**span 永不改動**;kill-switch `SEC_LENGTH_PRIOR=0`;`tests/test_length_prior.py` 20 tests。
 Pairing 更正(process-fix 首次執行):§gate 表引用的 before(AUROC 0.6307/29/83)是 **stale pairing**(calibration 讀了 furniture-strip 之前的 head_to_head);可比 before = 18:42 h2h 重算(AUROC 0.6711 / 118 錯);本波 rerun 已驗 mtime 配對,gate 對照以可比 before 為準。
+
+白話:這個訊號的想法很土 —— **「這一章的長度佔全文比例,落在歷史區間外嗎?」** 太長或太短就舉手說「這筆我沒把握」。它不改任何 span,只降信心。而且門檻全部由 corpus 自己算出來,NTU 一個參數都沒參與。
 #### before/after(strata `ntu_human_labeled`,n=512;artifact `data/sec_eval/calibration/calibration.json`)
 | 指標 | doc-stated before(stale pairing) | 可比 before(18:42 h2h、無 prior) | **after(prior 上線)** | Gate | 判定 |
 |---|---|---|---|---|---|
@@ -232,8 +299,13 @@ Pairing 更正(process-fix 首次執行):§gate 表引用的 before(AUROC 0.6307
 | **雙向 flat(shipped)** | **0.6621** | **0.1133** | **39/118** | **47** | 71/19 |
 
 護欄:sweep3 clean corpus 前景重跑誤報 12/178 = 6.7%(分位數構造的預期代價,**高於** size-band 的 0.05 benchmark,照實揭露);mutation recall 六類全 1.0 不變;pytest 763 passed;aux `pseudo_gold_corpus_only` AUROC 0.4139→0.3459,維持煙霧偵測定位照錄。殘餘:anchor-distance 訊號量測後零收益(觸發 0/1/1 全打 correct)**判死不進 codebase**;未攔 79 錯 = pass 42(內容錯位非尺寸異常)+ IBR 35 + missing 8 + partial 5——長度/位置類 gold-free 訊號天花板已實測見底,AUROC 0.75 與攔截 ≥50% 兩 gate **維持未達成**,需內容歸屬訊號(topic_check 更強版)。
-### Wrapper section-anchor 收尾 2026-07-11(P0-10 完成:CYD 11 agree / 0 disagree)
+
+> **Pairing 更正是這節最重要的一句**:我原本引用的 before(0.6307)是配錯版本的舊數字。**修完流程,可比 before 其實是 0.6711 —— 也就是說我的新訊號讓 AUROC 掉了 0.009,不是漲。** 拿舊 before 比會看起來變好,那是假象;我換成可比 before,自打臉照登。
+> anchor-distance 訊號量測後零收益,**判死,整段不進 codebase** —— 不是藏在開關後面假裝有這個功能。
+### Wrapper section-anchor 收尾 2026-07-11(P0-10 完成:CYD 11 agree / 0 disagree):指向別處的 pointer,怎麼追回正文?
 結論:CYD agreement 從 10/1 修到 11/0(11 家,`tools/certify_cyd.py`),F1 與 calibration 零連帶變動(前景重跑實測:ours 0.6245、AUROC/ECE/false-pass 逐位不變、`calibration.json` diff 僅 timestamp),shipped。
+
+白話:有些 10-K 的某一章只寫一句「內容請見第 XX 頁的某某段落」(incorporation by reference,IBR)。**照抄那句話等於什麼都沒抽到** —— 得順著指標找到真正的正文。
 
 | 家 | BEFORE | AFTER |
 |---|---|---|
@@ -243,9 +315,14 @@ Pairing 更正(process-fix 首次執行):§gate 表引用的 before(AUROC 0.6307
 
 根因與修法:GS 類(intra-document pointer,stub 指向 Item 7 span 內部 section)+ JPM 類(page-window 過寬,頁窗開頭是母 section)——同一結構缺口:wrapper body resolution 沒讀「印刷頁面結構」;修法 = `cross_ref.py` page-top section anchoring(通用結構規則,無 ticker 特例)+ `resolve_intra_document_pointers` pass + `_snap_window_to_item_section`,外加 **item-topic guard**(anchored heading 必須與 item canonical title 語彙相關;**wrong body 比 honest pointer 更糟**——GS 7A 曾被解析到母章節總覽,已擋回 honest pointer)。
 守門:kill-switch `SEC_WRAPPER_SECTION_ANCHOR=0` 實檔驗證完整還原 before(GS 0%/247、JPM 33.3%/20,610);pytest 772 passed(+9 `tests/test_section_anchor.py`);mutation 全綠;NTU slice(2001–2019)無 CYD 時代 wrapper 1C stub,無交集符合預期。Artifacts:`data/sec_eval/cyd_groundtruth/cyd_agreement.json`、`data/sec_eval/scoring/head_to_head.json`、`data/sec_eval/calibration/calibration.json`;修改檔 `packages/sec_core/cross_ref.py`、`packages/sec_core/pipeline.py`。
-### 內容軸 Gate rerun 2026-07-11(gold-free span content-attribution prior 落地,§Gate rerun 後續)
+
+> **「wrong body 比 honest pointer 更糟」** —— 這是這節的設計核心。追指標追到錯的段落,會產出一段讀起來很像正文的假貨;誠實地留著那句 pointer,至少沒有騙人。所以 item-topic guard 寧可擋回 honest pointer(GS 7A 就是這樣被擋回來的)。
+> 修法是**通用結構規則,沒有任何 ticker 特例** —— 不是「為 GS 和 JPM 各寫一個 if」。
+### 內容軸 Gate rerun 2026-07-11(gold-free span content-attribution prior 落地,§Gate rerun 後續):換內容訊號,gate 終於過了一個?
 結論:攔截 gate 首次 PASS(65.3% ≥ 50%),AUROC gate 仍 MISS(0.6667 < 0.75)——照實記錄,不引用為達標;三個候選子訊號量測後**出貨兩個、判死一個**(floor 在 held-out 上 20 發中 18 發打在 correct,依 anchor-distance 前例整段移除,非藏在開關後)。
 落地:`packages/sec_core/topic_prior.py`(全 gold-free,NTU 零參與調參)——per-item 內容歸屬 lexicon 由 corpus-only 245 個 substantive span 導出(artifact `data/sec_eval/calibration/topic_lexicon.json`);(a) **misattribution margin**(對別的 item lexicon 覆蓋率高出 margin_tau=p99=0.3807,in-sample 已揭露)與 (b) **IBR pointer trust cap**(pointer 文本結構性不可驗證,純結構規則、無調參)→ needs_review + 零分 3.5 權重 component;span 永不改動;kill-switch `SEC_TOPIC_PRIOR=0`(分訊號 `SEC_TOPIC_PRIOR_{MARGIN,IBR}=0`);`tests/test_topic_prior.py` 16 tests。
+
+白話:上一波用「長度」抓錯,天花板見底了;這一波改用「內容」抓錯 —— **這段文字讀起來比較像別章,還是像它自稱的那一章?** 像別章就舉手。一樣不改 span,只降信心。
 #### before/after(strata `ntu_human_labeled`,n=512;artifact `data/sec_eval/calibration/calibration.json`,mtime 配對已驗)
 | 指標 | before(length-prior 波,無 topic prior) | **after(margin+IBR 上線)** | Gate | 判定 |
 |---|---|---|---|---|
@@ -267,3 +344,7 @@ Pairing 更正(process-fix 首次執行):§gate 表引用的 before(AUROC 0.6307
 
 護欄:sweep3 clean corpus margin 誤報 **0/176**(優於 length-prior 6.7% 與 size-band 0.05 benchmark);IBR cap 54/54 全火為設計行為(pointer 一律走 review),review 負載如實列帳;mutation recall 六類全 1.0 不變;pytest 788 passed;lexicon 門檻為 in-sample p99(artifact `gold_free` 欄已揭露),NTU 全程 held-out;aux `pseudo_gold_corpus_only` AUROC 0.3459→0.3389、ECE 0.2168→0.2521 照錄不調參。
 殘餘:攔截幾乎全由 IBR 側貢獻(+35 錯全是 Part III proxy stub);未攔 41 錯中 pass 28(conf 0.86–1.0)是 margin p99 門檻逮不到的細粒度邊界/內容混合錯位——需「span 內部逐段歸屬」訊號(per-paragraph attribution 或 boundary bisection);AUROC 0.75 gate 在 cap-to-~0.74 機制下數學上已近不可達(模擬上限 ≈0.747)——下一波換連續值訊號,或承認 needs_review 通道(攔截/false-pass)才是此驗證器的主軸、AUROC 只是排序副指標。Artifacts:`data/sec_eval/calibration/topic_lexicon.json`、`topic_prior_attribution.json`、`calibration.json`、`data/sec_eval/scoring/head_to_head.json`;修改檔 `packages/sec_core/topic_prior.py`、`packages/sec_core/pipeline.py`、`tests/test_topic_prior.py`。
+
+> **攔截 65.3% 首次 PASS,但 AUROC 0.6667 仍未通過 0.75 —— 不改判、不軟化。** 而且我要把攔截這個 PASS 的來源拆開講:**它幾乎全靠 IBR 那一側**(+35 錯全是 Part III proxy stub),margin 側只貢獻一點點。一個 gate 過了,不代表整個機制都行。
+> 三個候選訊號,**出貨兩個、判死一個** —— floor 在 held-out 上 20 發打中 18 發是正確的(誤傷),照 anchor-distance 的前例整段刪掉。炫技的正確姿勢不是把三個都留著報喜,是讓多數技巧誠實地失敗、只留站得住的那幾個。
+> 最後一句是給下一波的:**AUROC 0.75 在「封頂到 ~0.74」的機制下數學上已近不可達(模擬上限 ≈0.747)** —— 這不是找藉口,是承認我可能一開始就選錯了主指標:needs_review 通道(攔截 / false-pass)才是這個驗證器的主軸,AUROC 只是排序副指標。

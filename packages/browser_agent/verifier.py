@@ -294,6 +294,7 @@ def verify_contract(contract: BrowserTaskContract, obs: Observation,
     # Conditions with no power to tell a right answer from a wrong one. They are
     # collected here so the verdict can be capped and the trail can say why.
     nd_notes: list[str] = []
+    nd_keys: set[str] = set()
     for c in contract.success_conditions:
         key = f"{c.type}:{c.value}"
         observed = _check_success(c, obs, extracted)
@@ -301,6 +302,7 @@ def verify_contract(contract: BrowserTaskContract, obs: Observation,
         note = _non_discriminative_note(c)
         if note:
             nd_notes.append(note)
+            nd_keys.add(key)
             evidence_ref = note
         elif observed != "pass" and not c.revocable and key in latched:
             # a non-discriminative condition must never be latch-promoted: that
@@ -344,8 +346,18 @@ def verify_contract(contract: BrowserTaskContract, obs: Observation,
         # condition that cannot discriminate is not a pass. The deliverable is
         # untouched — the caller still hands the answer to the user; we simply
         # refuse to claim we verified it.
+        #
+        # `unverifiable` says WHY this is unknown, and only when the
+        # non-discriminative conditions are the SOLE thing standing between this
+        # run and a pass. If any other condition is still unsatisfied, the run
+        # can genuinely make progress, so this stays False and callers keep
+        # working — an evidence-missing unknown and an unjudgeable unknown are
+        # different facts and must not be conflated.
+        others_satisfied = all(c.observed == "pass" for c in checks
+                               if c.condition not in nd_keys)
         return result.model_copy(update={
             "status": "unknown",
+            "unverifiable": others_satisfied,
             "reason": "; ".join(nd_notes),
             "missing_evidence": list(result.missing_evidence) + nd_notes,
         })

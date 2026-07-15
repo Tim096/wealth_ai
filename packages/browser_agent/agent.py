@@ -1060,6 +1060,15 @@ class BrowserAgent:
             if self.executor.last_download_path:
                 ex["__download__"] = self.executor.last_download_path
             return ex
+
+        def _delivered() -> bool:
+            """Is the deliverable already in hand? Reads the SAME evidence
+            surface the verifier judges (the P2 answer channel + the download
+            path) — no parallel notion of 'done'. Used only to decide whether
+            further steps could still change anything, never to decide a verdict.
+            """
+            ex = _extracted()
+            return bool(ex.get("answer") or ex.get("__download__"))
         # P0-10 cross-run replay: a verified previous run of the SAME task
         # banked its successful actions — replay them before paying for the
         # planner. Every successful action of THIS run is re-recorded, so a
@@ -1172,7 +1181,16 @@ class BrowserAgent:
             # ends the run here instead of waiting for the model to claim done
             verdict = verify_contract(contract, obs, _extracted(), latched=latched)
             phase["verify_ms"] += (time.perf_counter() - _tv) * 1000
-            if verdict.status == "pass":
+            # "is the verdict honest" and "should the loop stop" are DIFFERENT
+            # questions and must not share one expression. A non-discriminative
+            # condition can never be satisfied, so a pass-only exit could never
+            # fire and the run burned its whole budget re-extracting the same
+            # answer (measured: 1 -> 18 planner calls, 3.2s -> 249s). When the
+            # verdict is unverifiable AND the deliverable is already in hand,
+            # more steps cannot change anything — stop. The verdict itself is
+            # untouched: it stays `unknown`, and the final verify_contract below
+            # is still what decides it.
+            if verdict.status == "pass" or (verdict.unverifiable and _delivered()):
                 break
             # P0-10 replay fast path: execute the next banked action directly —
             # no LLM call. Any resolution/execution failure abandons the cache
@@ -1303,8 +1321,14 @@ class BrowserAgent:
             # conditions true; a second done (or one on the last step) is
             # honoured — the final verdict still comes from verify_contract,
             # never from the claim.
+            # `not verdict.unverifiable`: rejecting a done is only meaningful
+            # when the remaining steps COULD make the conditions true. When the
+            # conditions cannot discriminate, no amount of further work can ever
+            # satisfy them, so the rejection is guaranteed waste — it was what
+            # drove the planner round the loop 18 times. An evidence-missing
+            # unknown still rejects exactly as before.
             if (decision.kind == "done" and dones < 1 and verdict.status != "pass"
-                    and step_i < max_steps - 1):
+                    and not verdict.unverifiable and step_i < max_steps - 1):
                 dones += 1
                 missing = "; ".join(verdict.missing_evidence) or verdict.reason
                 history.append(f"done_rejected(not verified yet: {missing})")

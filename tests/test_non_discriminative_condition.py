@@ -229,3 +229,174 @@ def test_agentic_run_with_a_discriminative_condition_still_passes(tmp_path):
                             _ExtractThenDonePlanner(answer), max_steps=5)
     assert run.status == "pass"
     assert run.answer == answer
+
+
+# ---------- the cost of the cap: an honest verdict must not hang the loop -----
+#
+# Measured regression from the fix above, on the deployed service:
+#     llm_calls: 1 -> 18      (18x)
+#     latency:   3.2s -> 249s (78x, far past the 60s slow threshold)
+#     answer:    the same sentence extracted TWICE
+#
+# Root cause: the agent's "should the loop stop" signal and the verifier's
+# "what is the verdict" shared one expression, `verdict.status == "pass"`.
+#   - the only early exit was `if verdict.status == "pass": break`
+#   - the done-rejection gate fired on `verdict.status != "pass"`
+# A non-discriminative condition can NEVER be satisfied, so neither exit could
+# ever fire: the planner said done, was rejected, and the loop burned to
+# max_steps re-extracting the same answer.
+#
+# Rejecting a `done` is only meaningful when the remaining steps COULD make the
+# conditions true. Unverifiable means no number of further steps can — so the
+# rejection is guaranteed waste. The two ideas must be decoupled:
+#
+#     "is the verdict honest?"  -> stays unknown, confidence 0.4 (never relaxed)
+#     "should the loop stop?"   -> reads VerifierResult.unverifiable
+#
+# The two unknowns are NOT the same and must not be conflated:
+#     unknown because evidence is MISSING        -> keep working, reject done
+#     unknown because the condition CANNOT judge -> stop, deliver, stay unknown
+
+
+class _AlwaysExtractPlanner:
+    """Never volunteers `done` — it just keeps extracting. Without an exit that
+    understands `unverifiable`, this burns the entire step budget and appends
+    the same answer once per step (the observed duplicate)."""
+
+    def __init__(self, answer):
+        self.answer = answer
+        self.calls = 0
+
+    def available(self):
+        return True
+
+    def next_action(self, task, success_conditions, obs, history,
+                    plan_steps=None, image_path=None):
+        from browser_agent.planner import PlannerDecision
+        from browser_core.actions import ElementTarget, ExtractTextAction
+        self.calls += 1
+        return PlannerDecision(
+            kind="action", reason="read the #1 story title",
+            action=ExtractTextAction(target=ElementTarget(
+                selector='[data-aid="1"]', selector_type="css")))
+
+
+class _DonePlanner:
+    def __init__(self):
+        self.calls = 0
+
+    def available(self):
+        return True
+
+    def next_action(self, task, success_conditions, obs, history,
+                    plan_steps=None, image_path=None):
+        from browser_agent.planner import PlannerDecision
+        self.calls += 1
+        return PlannerDecision(kind="done", reason="I read the title")
+
+
+def _hn_agent(tmp_path, **kw):
+    from tests.fakes_browser import fake_agent
+    return fake_agent(tmp_path, site="news.ycombinator.com",
+                      url="https://news.ycombinator.com/", **kw)
+
+
+def test_unverifiable_flag_separates_the_two_kinds_of_unknown():
+    # unknown because the condition cannot discriminate -> unverifiable
+    v = verify_contract(contract(), obs(), {"answer": HN_ANSWER})
+    assert v.status == "unknown" and v.unverifiable is True
+    # unknown because evidence is MISSING -> NOT unverifiable: keep working
+    c = BrowserTaskContract(
+        task_id="d", natural_language_task="t", expected_outcome="o",
+        success_conditions=[SuccessCondition(type="download_exists", value="report")])
+    v2 = verify_contract(c, obs(), {})
+    assert v2.status == "unknown" and v2.unverifiable is False
+
+
+def test_unverifiable_is_false_while_the_deliverable_is_still_missing():
+    # no answer yet -> a real fail, not an excuse to stop early
+    v = verify_contract(contract(), obs(), {})
+    assert v.unverifiable is False
+
+
+def test_a_discriminative_pass_is_not_flagged_unverifiable():
+    v = verify_contract(contract(DISCRIMINATIVE_RE), obs(),
+                        {"answer": "Total revenue: $53.1 billion"})
+    assert v.status == "pass" and v.unverifiable is False
+
+
+def test_mixed_contract_keeps_working_while_real_evidence_is_missing():
+    """A non-discriminative condition alongside a genuinely unmet one must NOT
+    stop the loop: the run can still make the real condition true."""
+    c = BrowserTaskContract(
+        task_id="mix", natural_language_task="t", expected_outcome="o",
+        success_conditions=[
+            SuccessCondition(type="answer_matches", value=VACUOUS_RE),
+            SuccessCondition(type="download_exists", value="report"),
+        ])
+    v = verify_contract(c, obs(), {"answer": HN_ANSWER})
+    assert v.status == "unknown"
+    assert v.unverifiable is False        # the download is still achievable
+
+
+def test_loop_stops_once_the_answer_is_delivered_under_a_vacuous_condition(tmp_path):
+    """THE regression. Before: 18 planner calls, the budget burned to max_steps.
+    After: the loop stops as soon as the deliverable exists — and the verdict is
+    STILL unknown at confidence 0.4."""
+    planner = _AlwaysExtractPlanner(HN_ANSWER)
+    agent = _hn_agent(tmp_path, extract_text=HN_ANSWER)
+    run = agent.run_agentic("hn-loop", contract(), planner, max_steps=18)
+
+    assert planner.calls <= 2               # was: 18 (the whole budget)
+    assert run.status == "unknown"          # the honest verdict is NOT relaxed
+    assert run.confidence == 0.4
+    assert run.answer == HN_ANSWER
+
+
+def test_the_answer_is_not_extracted_twice(tmp_path):
+    """The observed duplicate ('...predictor...\n...predictor...') was the same
+    root cause: the loop kept running after delivery and appended each time."""
+    planner = _AlwaysExtractPlanner(HN_ANSWER)
+    agent = _hn_agent(tmp_path, extract_text=HN_ANSWER)
+    run = agent.run_agentic("hn-dup", contract(), planner, max_steps=18)
+    assert run.answer.count(HN_ANSWER) == 1
+
+
+def test_a_correct_done_is_never_rejected_under_a_vacuous_condition(tmp_path):
+    """Before: the planner delivered the answer, correctly said `done`, and was
+    REJECTED ('conditions not satisfied yet') — then spent more steps chasing a
+    condition nothing could ever satisfy. After: the loop has already stopped,
+    so the model is never argued with about a done it was right about."""
+    planner = _ExtractThenDonePlanner(HN_ANSWER)
+    agent = _hn_agent(tmp_path, extract_text=HN_ANSWER)
+    run = agent.run_agentic("hn-done", contract(), planner, max_steps=18)
+    assert planner.calls == 1               # was: 3 (extract -> done -> rejected -> done)
+    assert not any(s.action == "done_rejected" for s in run.steps)
+    assert run.status == "unknown"
+
+
+def test_unverifiable_implies_the_deliverable_exists(tmp_path):
+    """Honest note on the done-rejection gate. `unverifiable` can only be True
+    once an answer exists (no answer -> answer_matches is a `fail`, not an
+    unknown), so the loop-head exit above always fires first and the
+    `not verdict.unverifiable` term in the done gate is defence-in-depth rather
+    than a live path. Pinned here so that stays TRUE by test, not by assumption:
+    if a future condition type can be unverifiable with nothing delivered, this
+    breaks and the done gate becomes load-bearing."""
+    v = verify_contract(contract(), obs(), {})
+    assert v.status == "fail" and v.unverifiable is False
+    v2 = verify_contract(contract(), obs(), {"answer": HN_ANSWER})
+    assert v2.unverifiable is True          # ... and an answer is necessarily present
+
+
+def test_done_rejection_still_fires_when_evidence_is_merely_missing(tmp_path):
+    """Regression guard on P0-3: the done-rejection front gate must keep working
+    for the ordinary 'not there yet' unknown."""
+    c = BrowserTaskContract(
+        task_id="dl", natural_language_task="download the report",
+        expected_outcome="a report file",
+        success_conditions=[SuccessCondition(type="download_exists", value="report")])
+    planner = _DonePlanner()
+    agent = _hn_agent(tmp_path)
+    run = agent.run_agentic("dl", c, planner, max_steps=6)
+    assert any(s.action == "done_rejected" for s in run.steps)

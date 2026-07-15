@@ -37,6 +37,17 @@ class VerifierResult(BaseModel):
     required_evidence: list[str] = Field(default_factory=list)
     observed_evidence: list[str] = Field(default_factory=list)
     missing_evidence: list[str] = Field(default_factory=list)
+    # Why this `unknown` is unknown — the two kinds are NOT interchangeable:
+    #   unverifiable=False: evidence is MISSING. The task may still be
+    #       completable; an agent should keep working and a premature "done"
+    #       should still be rejected.
+    #   unverifiable=True:  the remaining conditions CANNOT discriminate a right
+    #       answer from a wrong one (see browser_agent.verifier), so no number of
+    #       further steps could ever turn this into a pass. Working on is
+    #       guaranteed waste.
+    # This is a control signal for callers deciding whether to continue; it never
+    # softens the verdict itself, which stays `unknown`.
+    unverifiable: bool = False
 
 
 class EvidenceRecord(BaseModel):

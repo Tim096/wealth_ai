@@ -319,6 +319,47 @@ def extract_from_html(
                 f"Item 8 here is a pointer; the actual financial statements are extracted under "
                 f"Item {best_code} of this filing ({best_len:,} chars) — look there for the tables.")
 
+    # Shared-span safety net (runs LAST, with the zero-confidence net below, so
+    # nothing downstream can un-flag it). When two or more items resolve to the
+    # IDENTICAL span, the item is not independently consumable: a reader asking
+    # for Item 15 is handed Item 14's bytes. Two things fail at once — the
+    # tie-break is undefined (same start AND same width, so "tightest span wins"
+    # cannot separate them) and, before this net, both items were served at
+    # needs_review=False, i.e. silently. It is NOT era-specific: an explicit
+    # "Items 1 and 2" heading and boundary._infer_combined_headings (P0-9)
+    # produce the same collision on a modern HTML filing.
+    #
+    # This net DISCLOSES the ambiguity; it deliberately does not resolve it. We
+    # do not guess which item owns the span and we never drop an item — a wrong
+    # attribution is worse than a declared one.
+    #
+    # Pointer spans are excluded: a `cross_reference_pointer` span is the pointer
+    # TEXT (an index entry, or one Part-level incorporation sentence covering
+    # Items 10-14), explicitly not the item's content, and every pointer path
+    # already sets needs_review — so the flag is not at stake and calling it a
+    # content collision would be false.
+    shared: dict[tuple, list[ItemSegment]] = {}
+    for seg in segments:
+        if seg.end_offset > seg.start_offset and seg.provenance != "cross_reference_pointer":
+            key = (seg.start_offset, seg.end_offset, tuple(seg.source_ranges))
+            shared.setdefault(key, []).append(seg)
+    for (span_start, span_end, _ranges), group in shared.items():
+        if len(group) < 2:
+            continue
+        codes = [g.item_code for g in group]
+        for seg in group:
+            others = [c for c in codes if c != seg.item_code]
+            seg.needs_review = True
+            seg.warnings.append(
+                f"shared-span safety net: items {', '.join(codes)} were all resolved to the "
+                f"identical span [{span_start}, {span_end}) ({span_end - span_start} chars), so "
+                f"this item's delivered text is byte-identical to item(s) {', '.join(others)} — "
+                f"it is not independently consumable. The pipeline cannot tell which item owns "
+                f"the span (same start and same width, so no boundary tie-break applies), so it "
+                f"declares the ambiguity instead of guessing: no item was dropped and no "
+                f"attribution was invented. A reviewer must decide the split."
+            )
+
     # Zero-confidence safety net (runs LAST, after every classifier and guard,
     # so nothing downstream can un-flag it). A `missing` verdict at confidence
     # 0.0 means the pipeline found nothing AND has no idea why — serving that

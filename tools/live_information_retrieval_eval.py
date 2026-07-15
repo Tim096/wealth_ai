@@ -69,7 +69,16 @@ def run(base_url: str, tasks_path: Path, output_path: Path,
             expected_answer_regex = task.get("expected_answer_regex")
             gold_match = (bool(re.search(expected_answer_regex, answer or ""))
                           if expected_answer_regex else None)
-            scored_pass = state.get("status") == "pass" and gold_match is not False
+            # Two axes, never collapsed into one number: gold_match answers "is
+            # the delivered answer right", the agent's own status answers "does
+            # the agent know it". Scoring on `status == "pass" and gold_match`
+            # made the external gold subordinate to the agent's self-verdict —
+            # so an honest `unknown` on a demonstrably CORRECT answer scored the
+            # same as a wrong answer. Gold decides correctness; self-verdict is
+            # reported beside it (self_certified) and never gates it.
+            scored_pass = (gold_match if expected_answer_regex is not None
+                           else state.get("status") == "pass")
+            self_certified = state.get("status") == "pass"
             rows.append({
                 "id": task["id"],
                 "domain": task["domain"],
@@ -83,6 +92,7 @@ def run(base_url: str, tasks_path: Path, output_path: Path,
                 "gold_match": gold_match,
                 "gold_pass": scored_pass if expected_answer_regex else None,
                 "scored_pass": scored_pass,
+                "self_certified": self_certified,
                 "slow": time.monotonic() - task_started > slow_threshold_s,
                 "planner_steps": trace.get("repetition", {}).get("n_steps"),
                 "llm_calls": state.get("llm_calls"),
@@ -97,10 +107,15 @@ def run(base_url: str, tasks_path: Path, output_path: Path,
     calls = [row["llm_calls"] for row in rows if row["llm_calls"] is not None]
     tokens = [row["llm_tokens"] for row in rows if row["llm_tokens"] is not None]
     costs = [row["llm_cost_usd"] for row in rows if row["llm_cost_usd"] is not None]
+    self_certified = sum(row["self_certified"] for row in rows)
     summary = {
         "passed": passed,
         "total": len(rows),
         "pass_rate": passed / len(rows),
+        # The gap between these two and pass_rate is the point, not a defect:
+        # answers the agent got right but honestly declined to certify.
+        "self_certified": self_certified,
+        "self_certified_rate": self_certified / len(rows),
         "domains": len({row["domain"] for row in rows}),
         "task_types": sorted({row["task_type"] for row in rows if row["task_type"]}),
         "slow_count": sum(row["slow"] for row in rows),

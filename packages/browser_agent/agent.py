@@ -10,6 +10,7 @@ trace, never a bare "looks done".
 
 from __future__ import annotations
 
+import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -24,7 +25,8 @@ from browser_agent.executor import ActionExecutor, ActionOutcome
 from browser_agent.marks import set_of_marks
 from browser_agent.memory_store import MemoryStore
 from browser_agent.observer import (
-    _ELEMENT_FIELDS_JS, PageObserver, diff_observations, structural_hashes,
+    _ELEMENT_FIELDS_JS, ElementCandidate, Observation, PageObserver,
+    diff_observations, structural_hashes,
 )
 from browser_agent.repair import diagnose_failure, rebind_by_hash, repair_target
 from browser_agent.replay_cache import (
@@ -454,6 +456,68 @@ class TaskRun:
         }
 
 
+# --- HOLE B: the agent-mode half of the self-maintenance cascade -------------
+#
+# Script mode addresses elements by a purpose tag it was handed (Step.purpose).
+# Agent mode has no such tag: the planner points at an element by its volatile
+# data-aid, chosen from THIS observation. To reuse the existing cascade
+# (diagnose_failure -> rebind_by_hash -> repair_target) and the existing
+# selector memory, an agentic action must first be mapped back to the same
+# purpose vocabulary those components already speak.
+
+_AID_RE = re.compile(r'\[data-aid="(\d+)"\]')
+
+# Selector memory keys on ElementPurpose, a closed Literal (browser_core.
+# selector_memory). Mapping to anything outside it is a validation error, so an
+# action whose purpose is not one of these is simply not a memory/repair
+# subject — it falls through to the planner exactly as before.
+_DOWNLOAD_WORDS = ("download", "csv", "pdf", "export")
+
+
+def _candidate_for(action, obs: Observation) -> "ElementCandidate | None":
+    """The observed element an agentic action addresses, via its data-aid."""
+    selector = getattr(getattr(action, "target", None), "selector", "") or ""
+    m = _AID_RE.search(selector)
+    if not m:
+        return None
+    idx = int(m.group(1))
+    return next((c for c in obs.candidates if c.index == idx), None)
+
+
+def agentic_purpose(action, cand) -> str:
+    """Map a planner action + its target element onto the ElementPurpose
+    vocabulary the repair cascade and selector memory already use. '' means
+    'not a selector-memory subject' (goto/scroll/extract_text/mouse/...), which
+    keeps this mapping honest instead of forcing every action into a bucket."""
+    kind = getattr(action, "type", "")
+    if kind == "fill":
+        return "search_box"
+    if kind == "select":
+        return "filter_dropdown"
+    if kind == "download":
+        return "download_button" if getattr(action, "target", None) else ""
+    if kind not in ("click", "press"):
+        return ""
+    if cand is None:
+        return "submit_button"
+    blob = f"{cand.aria_label} {cand.text} {cand.id} {cand.name}".lower()
+    if any(w in blob for w in _DOWNLOAD_WORDS):
+        return "download_button"
+    if cand.tag == "select" or cand.role in ("listbox", "combobox"):
+        return "filter_dropdown"
+    if cand.tag == "a" or cand.role == "link":
+        return "result_link"
+    return "submit_button"
+
+
+def _retarget(action, selector: str, description: str):
+    """The same action pointed at a different element. model_copy keeps every
+    other field (fill value, press key) intact, so no action-kind switch is
+    needed here — the schema stays the single source of truth."""
+    return action.model_copy(update={"target": ElementTarget(
+        selector=selector, selector_type="css", description=description)})
+
+
 class BrowserAgent:
     def __init__(self, page, memory: MemoryStore, site: str, task_type: str,
                  artifact_dir: Path | str | None = None,
@@ -807,6 +871,136 @@ class BrowserAgent:
                                screenshot=self._screenshot(f"{step.purpose}-repaired")))
         return out2
 
+    def _remember_agentic(self, action, obs: Observation) -> None:
+        """HOLE B: bank the selector an agentic action just used successfully.
+
+        Learning must not require a failure first — the selector that worked on
+        the first try is exactly the one worth remembering, and it is what makes
+        the NEXT run's repair take the cheap rungs of the ladder. This is the
+        write that was missing: every selector-memory key in the repo was
+        `mockshop::*` because only script mode ever recorded anything.
+
+        dom_fingerprint is deliberately NOT written here. It is script mode's
+        shadow-check input (compared against page.content()), and writing an
+        agentic value would both cost a full page serialisation every step and
+        cross-contaminate that check. The element hashes come free from the
+        observation.
+        """
+        cand = _candidate_for(action, obs)
+        if cand is None:
+            return
+        purpose = agentic_purpose(action, cand)
+        if not purpose:
+            return
+        hx, hs = structural_hashes(cand)
+        self.memory.record(self.site, self.task_type, purpose, cand.css(),
+                           self._now(), success=True,
+                           element_hash=hx, element_hash_stable=hs)
+
+    def _repair_agentic(self, action, obs: Observation, url_before: str,
+                        out: ActionOutcome, trace: list[StepTrace],
+                        ) -> tuple[ActionOutcome, bool]:
+        """HOLE B: run the EXISTING self-maintenance cascade on the agentic path.
+
+        Same primitives, same order, same evidence discipline as script mode's
+        _resolve_and_run — diagnose_failure -> remembered selector -> P0-7 hash
+        rebind -> a11y purpose scoring -> memory.record. It is a separate entry
+        point rather than a call into _resolve_and_run because that method is
+        driven by a scripted Step (purpose + fallback selector, resolved from
+        memory BEFORE acting), whereas here the planner has already chosen a
+        specific element from THIS observation and acted on it. Re-resolving
+        from memory first would override the model's choice; the cascade only
+        earns its turn once that choice has actually failed.
+
+        Bounded by construction: each rung acts at most once, no rung calls the
+        planner, and the whole thing only runs on a failed action — so the outer
+        step budget / stagnation ladder stay the only loop controls.
+
+        Returns (outcome, repaired).
+        """
+        cand = _candidate_for(action, obs)
+        purpose = agentic_purpose(action, cand)
+        if not purpose:
+            return out, False        # not a selector problem we have a vocabulary for
+        failed_selector = cand.css() if cand is not None else getattr(
+            getattr(action, "target", None), "selector", "")
+        obs2 = self.observer.observe()
+        diag = diagnose_failure(out, obs2, url_before != self.page.url)
+        # the failure is recorded against the purpose whether or not it is
+        # repairable — a fail_count is evidence too
+        self.memory.record(self.site, self.task_type, purpose, failed_selector,
+                           self._now(), success=False)
+        if diag.failure_type == "empty_result":
+            # not a selector problem — refuse to repair-into-success (SPEC 6.8);
+            # the same rule script mode applies. Left for the verifier to judge.
+            trace.append(StepTrace(
+                step="repair", action=action.type, ok=False, mode="repair",
+                diagnosis=diag.failure_type, selector_used=failed_selector,
+                detail="empty result set — not repairable by selector; left for verifier"))
+            return out, True
+
+        def _bank(new_action, new_out, durable, level, reason, considered=()):
+            repair = RepairEvent(
+                timestamp=self._now(), failed_selector=failed_selector,
+                failure_type=diag.failure_type, candidates_considered=list(considered),
+                chosen_selector=durable, choice_reason=reason,
+                verified=new_out.ok, evidence_run_id="")
+            hx, hs = ("", "")
+            c2 = _candidate_for(new_action, obs2)
+            if new_out.ok and c2 is not None:
+                hx, hs = structural_hashes(c2)
+            self.memory.record(self.site, self.task_type, purpose, durable,
+                               self._now(), success=new_out.ok, repair=repair,
+                               element_hash=hx, element_hash_stable=hs)
+            trace.append(StepTrace(
+                step="repair", action=new_action.type, ok=new_out.ok, mode="repair",
+                diagnosis=diag.failure_type, detail=reason,
+                repair_considered=list(considered), repair_chosen=reason,
+                selector_used=durable, match_level=level,
+                latency_ms=new_out.latency_ms,
+                screenshot=self._screenshot(f"agentic-repair-{len(trace)}")))
+
+        # Rung 1 — a selector already known to work for this purpose (the
+        # cross-run payoff: a site repaired once is repaired instantly after).
+        remembered = self.memory.preferred(self.site, self.task_type, purpose)
+        if remembered and remembered != failed_selector:
+            act = _retarget(action, remembered, f"remembered {purpose}")
+            if screen_action(act).allowed:
+                out_r = self.executor.execute(act)
+                if out_r.ok:
+                    _bank(act, out_r, remembered, "script",
+                          f"remembered selector for {purpose} still resolves")
+                    return out_r, True
+
+        # Rung 2 — P0-7 deterministic structural rebind (no scoring).
+        known_exact, known_stable = self.memory.hashes(self.site, self.task_type, purpose)
+        rebound, level = rebind_by_hash(known_exact, known_stable, obs2)
+        if rebound is not None:
+            act = _retarget(action, rebound.aid_selector(), f"hash-rebound {purpose}")
+            if screen_action(act).allowed:
+                out_h = self.executor.execute(act)
+                if out_h.ok:
+                    _bank(act, out_h, rebound.css(), level,
+                          f"hash-{level} rebind: exactly one structural match")
+                    return out_h, True
+
+        # Rung 3 — a11y purpose scoring (the cascade's last functional level).
+        rr = repair_target(purpose, obs2, want_value=getattr(action, "value", "") or "")
+        if not rr.ok or rr.new_target is None:
+            trace.append(StepTrace(
+                step="repair", action=action.type, ok=False, mode="repair",
+                diagnosis=diag.failure_type, detail="no viable candidate",
+                repair_considered=rr.considered, match_level="none",
+                selector_used=failed_selector))
+            return out, True
+        act = _retarget(action, rr.new_target.selector, f"repaired {purpose}")
+        if not screen_action(act).allowed:
+            return out, True
+        out2 = self.executor.execute(act)
+        _bank(act, out2, rr.durable_selector, "purpose", rr.chosen_reason,
+              rr.considered)
+        return out2, True
+
     def _build_action(self, step: Step, target: ElementTarget):
         if step.kind == "fill":
             return FillAction(target=target, value=step.value)
@@ -850,6 +1044,9 @@ class BrowserAgent:
         phase = {"planner_ms": 0.0, "action_ms": 0.0, "verify_ms": 0.0}
         give_ups = 0
         dones = 0    # P0-3: premature-done rejections spent (front gate fires once)
+        # HOLE B: real self-maintenance count for THIS run. Was a hardcoded 0 —
+        # the agentic path could not report a repair even when it made one.
+        repairs = 0
         # Answer channel (P2): every successful extract_text APPENDS here — the
         # observed INTC failure was extract results dropped on the floor while
         # extracted only ever carried __download__, so an answer-type task had
@@ -1143,8 +1340,24 @@ class BrowserAgent:
                     diagnosis="repeated_no_effect", detail=detail)))
                 _emit("rejected a repeated no-effect action; planner must change route")
                 continue
+            url_before = self.page.url
             out = self.executor.execute(action)
             phase["action_ms"] += out.latency_ms
+            # HOLE B: the self-maintenance cascade, on the path deployment
+            # actually takes. A failed action is diagnosed and re-targeted by
+            # the existing ladder (remembered selector -> P0-7 hash rebind ->
+            # a11y purpose scoring) instead of being handed straight back to the
+            # planner; a successful one banks the selector that worked. Costs no
+            # planner call, so the step budget stays the only loop control.
+            if not out.ok:
+                # the cascade banks whatever selector it repaired TO itself; the
+                # original action's selector is the one that just failed and must
+                # never be recorded as a success
+                out, repaired = self._repair_agentic(action, obs, url_before, out, trace)
+                if repaired:
+                    repairs += 1
+            else:
+                self._remember_agentic(action, obs)
             if out.followed_url:
                 # F12: the click's effect lives in a NEW tab — repoint the agent
                 # and observer so the loop keeps seeing where the journey went.
@@ -1239,9 +1452,13 @@ class BrowserAgent:
                              contract.natural_language_task, recorded,
                              timestamp=self._now())
             self.replay.save()
+        # HOLE B: selector memory is a cross-RUN store — an in-memory learn that
+        # is never flushed teaches the next run nothing. run() saved; run_agentic
+        # never did.
+        self.memory.save()
         base = {"pass": 1.0, "unknown": 0.4, "fail": 0.0}[verdict.status]
         run = TaskRun(task_id=task_id, site=self.site, status=verdict.status, verifier=verdict,
-                      steps=trace, repairs=0, confidence=base,
+                      steps=trace, repairs=repairs, confidence=base,
                       answer=extracted.get("answer", ""),
                       llm_cost_usd=llm_cost, llm_tokens=llm_tokens,
                       phase_timings=phase, cache_stats=dict(self.cache_stats),

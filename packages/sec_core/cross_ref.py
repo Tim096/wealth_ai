@@ -423,6 +423,137 @@ def build_cross_reference_segments(
     return segments, breakdowns
 
 
+# --- Part-level incorporation by reference (the Berkshire class) -------------
+# Most filers repeat an incorporation sentence under EVERY Part III item
+# heading, which refine.classify_reference_stub catches item by item. Berkshire
+# Hathaway (FY2025 10-K, CIK 1067983, accession 0001193125-26-083899) instead
+# writes ONE Part-level sentence and omits the per-item headings entirely:
+#
+#   Part III
+#   Except for the information set forth under the caption "Executive Officers
+#   of the Registrant" in Part I hereof, information required by this Part
+#   (Items 10, 11, 12, 13 and 14) is incorporated by reference from the
+#   Registrant's definitive proxy statement, filed pursuant to Regulation 14A,
+#   for the Annual Meeting of Shareholders ...
+#
+# Heading-oriented detection finds nothing there, so Items 10-14 came back
+# `missing` at confidence 0.0 — factually wrong: the filing states plainly that
+# they ARE incorporated by reference. We read the declaration's OWN enumerated
+# item list; the codes are never inferred from the Part number and never guessed
+# from body content, and an item that already has a body of its own is never
+# touched (Berkshire's own sentence carves out "Executive Officers of the
+# Registrant", which lives in Part I).
+_PART_INCORP_RE = re.compile(
+    r"information\s+required\s+by\s+this\s+part\s*"
+    r"[(\[]?\s*(items?\s+\d[^)\]]{0,120}?)\s*[)\]]?\s*"
+    r"(?:of\s+this\s+(?:report|form\s*10-?k)\s*)?"
+    r"(?:is|are|will\s+be|shall\s+be)\s+"
+    r"incorporated\s+(?:herein\s+)?by\s+reference"
+    r"[\w\s,'’&\-\"“”()]{0,200}?"
+    r"\b(?:definitive\s+)?(?:proxy|information)\s+statement\b",
+    re.IGNORECASE,
+)
+
+# Enumeration forms seen in Part-level declarations:
+#   "Items 10, 11, 12, 13 and 14" | "Items 10 through 14" | "Item 10 and Item 11"
+_ITEM_RANGE_RE = re.compile(
+    r"(?:items?\s+)?(\d{1,2}[A-C]?)\s*(?:through|thru|to|[-–—])\s*(?:items?\s+)?(\d{1,2}[A-C]?)$",
+    re.IGNORECASE,
+)
+_ITEM_SINGLE_RE = re.compile(r"(?:items?\s+)?(\d{1,2}[A-C]?)$", re.IGNORECASE)
+
+
+def parse_item_code_list(text: str) -> list[str]:
+    """Item codes named by an enumeration such as 'Items 10, 11, 12, 13 and 14',
+    'Items 10 through 14' or 'Item 10 and Item 11'. Ranges are expanded over the
+    canonical 10-K item order. Anything that is not a real 10-K item code is
+    dropped, and the result is returned in canonical order without duplicates.
+    This reads the declaration's own words only — it never infers."""
+    found: set[str] = set()
+    for chunk in re.split(r",|\band\b", text, flags=re.IGNORECASE):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        rng = _ITEM_RANGE_RE.match(chunk)
+        if rng:
+            a, b = rng.group(1).upper(), rng.group(2).upper()
+            if a in VALID_CODES and b in VALID_CODES:
+                i, j = VALID_CODES.index(a), VALID_CODES.index(b)
+                if i <= j:
+                    found.update(VALID_CODES[i:j + 1])
+            continue
+        one = _ITEM_SINGLE_RE.match(chunk)
+        if one and one.group(1).upper() in VALID_CODES:
+            found.add(one.group(1).upper())
+    return [c for c in VALID_CODES if c in found]
+
+
+def _declaration_span(doc: NormalizedDocument, start: int, end: int) -> tuple[int, int]:
+    """The whole declaration sentence as printed: the line(s) covering the
+    match. This is the provenance the pointer is addressed by."""
+    lo, hi = start, end
+    for ln in doc.lines:
+        if ln.start <= start < ln.end or (ln.start <= start and start == ln.end):
+            lo = min(lo, ln.start)
+        if ln.start < end <= ln.end:
+            hi = max(hi, ln.end)
+    return lo, hi
+
+
+def apply_part_level_incorporation(
+    doc: NormalizedDocument,
+    segments: list[ItemSegment],
+    breakdowns: dict[str, ConfidenceBreakdown],
+) -> int:
+    """Classify items covered by a PART-LEVEL incorporation-by-reference
+    declaration (see _PART_INCORP_RE). Only items the pipeline left `missing`
+    are touched — an item with a real body keeps it. The item becomes an honest
+    `incorporated_by_reference` pointer whose span is the declaration sentence
+    itself (source-exact), never fabricated content. Returns how many items
+    were reclassified."""
+    by_code = {s.item_code: s for s in segments}
+    reclassified = 0
+    for m in _PART_INCORP_RE.finditer(doc.text):
+        codes = parse_item_code_list(m.group(1))
+        if not codes:
+            continue
+        start, end = _declaration_span(doc, m.start(), m.end())
+        declaration = doc.slice(start, end)
+        for code in codes:
+            seg = by_code.get(code)
+            # never overwrite an item that has content of its own
+            if seg is None or seg.status != "missing":
+                continue
+            bd = ConfidenceBreakdown(components=[
+                CC(name="content_substantiveness", score=0.0, max_score=2.0,
+                   reason="Part-level incorporation by reference: the item's content is in "
+                          "the referenced proxy statement, not in this filing"),
+                CC(name="heading_strength", score=1.0, max_score=2.0,
+                   reason=f"item {code} is named explicitly in the Part-level incorporation "
+                          f"declaration, though it has no heading of its own"),
+            ])
+            breakdowns[code] = bd
+            seg.extracted_heading = ""
+            seg.start_offset, seg.end_offset = start, end
+            seg.text_sha256 = sha256_text(declaration)
+            seg.status = "incorporated_by_reference"
+            seg.confidence = bd.total
+            seg.provenance = "cross_reference_pointer"
+            seg.needs_review = True
+            seg.warnings = [w for w in seg.warnings
+                            if "no heading candidate found" not in w]
+            seg.warnings.append(
+                f"Part-level incorporation by reference: this filing has no Item {code} "
+                f"heading; instead one Part-level declaration states that the information "
+                f"required by this Part (items {', '.join(codes)}) is incorporated by "
+                f"reference from the definitive proxy statement. The span is that "
+                f"declaration sentence (source-exact), NOT the item's content — the proxy "
+                f"statement is a separate filing and was not fetched."
+            )
+            reclassified += 1
+    return reclassified
+
+
 # --- wrapper body reassembly (the JPM / XOM class) ---------------------------
 # A wrapper 10-K keeps real item headings in the main Part I-IV text but writes
 # some items (JPM: 1C/7/7A/8; XOM: 7/7A/8) as one-sentence stubs deferring to a

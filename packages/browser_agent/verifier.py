@@ -5,6 +5,7 @@ observed, the verdict is `unknown` — never a disguised pass.
 
 from __future__ import annotations
 
+import functools
 import os
 import re
 
@@ -34,6 +35,96 @@ def _text_visible_hit(needle: str, visible_text: str) -> bool:
                      if not _QUERY_ECHO_RE.search(line))
     from browser_agent.text_match import robust_contains
     return robust_contains(needle, kept)
+
+
+# --- Non-discriminative conditions: the second half of the vacuous pass ------
+#
+# subtract_baseline kills a condition that is already true at t0, because
+# something true before any action cannot be evidence of completion. That guard
+# has a blind spot: `answer_matches:.+` is legitimately FALSE at t0 (no answer
+# yet) and TRUE for every answer that could ever follow. It never fires, and the
+# run passes with confidence 1.0 having verified only that the answer is
+# non-empty. Same discipline, second axis:
+#
+#     satisfied at t0        -> not evidence of completion  (subtract_baseline)
+#     satisfied by anything  -> not evidence of completion  (here)
+#
+# The probe is empirical, not a pattern blocklist: run the regex against a fixed
+# corpus of DECOY answers — text a correct run would never deliver. A regex that
+# accepts most of them has no power to tell a right answer from a wrong one, so
+# it cannot count as satisfied evidence.
+#
+# Corpus composition is deliberate. The two vacuous shapes the planner actually
+# emits are "any text" (`.+`) and "any number" (`[0-9]+`), so roughly half the
+# decoys carry digits — a corpus of prose alone would never catch the second.
+# The decoys are generic web residue, never mock-site strings.
+_DECOY_ANSWERS: tuple[str, ...] = (
+    # empty-ish residue: an "answer" that is only whitespace
+    " ",
+    "\n\t \n",
+    # placeholder / error residue
+    "undefined",
+    "null",
+    "N/A",
+    "Loading…",
+    "Error 404: page not found",
+    # site chrome, navigation, boilerplate — what a mis-aimed extract grabs
+    "Hacker News",
+    "new | past | comments | ask | show | jobs | submit",
+    "Skip to main content",
+    "Sign in",
+    "Copyright © 2026 Example Inc. All rights reserved.",
+    # arbitrary numbers: a bare numeric shape is not proof of the right number
+    "0",
+    "1",
+    "42",
+    "-1",
+    "007",
+    "3.14159",
+    "12345",
+    "2026",
+    "1,234,567",
+    "12:34",
+)
+
+# A regex accepting at least this share of the decoy corpus is judged to have no
+# discriminative power. Measured separation on the corpus above: the vacuous
+# family scores >= 0.55 (`.+` = 1.00, `[0-9]+` = 0.55) while real shape
+# conditions score <= 0.41 (a revenue figure = 0.00, a 4-digit year = 0.09), so
+# 0.5 sits inside a real gap rather than on top of a cluster.
+_MAX_DECOY_HIT_RATIO = 0.5
+
+
+@functools.lru_cache(maxsize=256)
+def decoy_hit_ratio(pattern: str) -> tuple[int, int]:
+    """(hits, corpus size) for `pattern` against the decoy corpus. An
+    uncompilable pattern scores 0 hits — it is handled as an honest `unknown`
+    at the point of use, and must not be mislabelled non-discriminative."""
+    try:
+        rx = re.compile(pattern, re.IGNORECASE | re.DOTALL)
+    except re.error:
+        return 0, len(_DECOY_ANSWERS)
+    return sum(bool(rx.search(d)) for d in _DECOY_ANSWERS), len(_DECOY_ANSWERS)
+
+
+def is_non_discriminative(pattern: str) -> bool:
+    """True when `pattern` accepts so much of the decoy corpus that satisfying
+    it says nothing about correctness."""
+    hits, total = decoy_hit_ratio(pattern)
+    return bool(total) and hits / total >= _MAX_DECOY_HIT_RATIO
+
+
+def _non_discriminative_note(cond) -> str:
+    """The audit line for a condition that cannot discriminate ('' when it
+    can). Carries the measured hit rate, not an adjective."""
+    if cond.type != "answer_matches":
+        return ""
+    hits, total = decoy_hit_ratio(cond.value)
+    if not (total and hits / total >= _MAX_DECOY_HIT_RATIO):
+        return ""
+    return (f"non-discriminative condition: {cond.type}:{cond.value} matches "
+            f"{hits}/{total} decoys — it is satisfied by answers that are "
+            f"obviously wrong, so satisfying it is not evidence of completion")
 
 
 def _download_ok(path: str, needle: str) -> str:
@@ -82,9 +173,19 @@ def _check_success(cond, obs: Observation, extracted: dict[str, str]) -> str:
         if not answer:
             return "fail"
         try:
-            return "pass" if re.search(v, answer, re.IGNORECASE | re.DOTALL) else "fail"
+            hit = re.search(v, answer, re.IGNORECASE | re.DOTALL)
         except re.error:
             return "unknown"  # malformed pattern cannot be evaluated — honest unknown
+        if not hit:
+            return "fail"     # delivered the wrong shape — a real, informative fail
+        # Matched — but a regex that also accepts the decoy corpus proves only
+        # that the answer has SOME shape, never that it is the right answer.
+        # `unknown` here (not `pass`) is what stops the vacuous pass at source:
+        # check_conditions therefore never latches it, so the P0-5 latch cannot
+        # smuggle it back in as "satisfied at step N" either.
+        if is_non_discriminative(v):
+            return "unknown"
+        return "pass"
     if t == "table_extracted":
         return "pass" if any(v.lower() in x.lower() for x in extracted.values()) else "unknown"
     if t == "field_value_equals":
@@ -190,11 +291,20 @@ def verify_contract(contract: BrowserTaskContract, obs: Observation,
     extracted = extracted or {}
     latched = latched or {}
     checks: list[ConditionCheck] = []
+    # Conditions with no power to tell a right answer from a wrong one. They are
+    # collected here so the verdict can be capped and the trail can say why.
+    nd_notes: list[str] = []
     for c in contract.success_conditions:
         key = f"{c.type}:{c.value}"
         observed = _check_success(c, obs, extracted)
         evidence_ref = ""
-        if observed != "pass" and not c.revocable and key in latched:
+        note = _non_discriminative_note(c)
+        if note:
+            nd_notes.append(note)
+            evidence_ref = note
+        elif observed != "pass" and not c.revocable and key in latched:
+            # a non-discriminative condition must never be latch-promoted: that
+            # would re-open the vacuous pass through the ledger door
             observed = "pass"
             evidence_ref = f"latched: satisfied at step {latched[key]}"
         checks.append(ConditionCheck(condition=key, required=True,
@@ -227,4 +337,16 @@ def verify_contract(contract: BrowserTaskContract, obs: Observation,
             missing_evidence=["open-ended task: no machine-checkable success condition; "
                               "trace attached for human review"],
         )
-    return combine_checks(checks)
+    result = combine_checks(checks)
+    if nd_notes and result.status != "fail":
+        # Cap at `unknown`, never below: a real violation stays a fail (capping
+        # must not LAUNDER a fail into an unknown), and a pass built on a
+        # condition that cannot discriminate is not a pass. The deliverable is
+        # untouched — the caller still hands the answer to the user; we simply
+        # refuse to claim we verified it.
+        return result.model_copy(update={
+            "status": "unknown",
+            "reason": "; ".join(nd_notes),
+            "missing_evidence": list(result.missing_evidence) + nd_notes,
+        })
+    return result

@@ -223,18 +223,24 @@
   {
    "failure_id": "FG-SEC-009",
    "app": "sec_extractor",
-   "failure_type": "format_era_unsupported",
-   "status": "unsupported",
-   "summary": "pre-2001 plain-text SGML 10-Ks are honestly unsupported: normalize keeps the text but candidate detection is HTML-oriented, so 0 candidates, all items missing/reserved, filing_class non_10k — no crash, no fake pass",
+   "failure_type": "normalize_line_collapse",
+   "status": "fixed",
+   "summary": "pre-2001 plain-text SGML 10-Ks returned 0 candidates / all-items-missing / filing_class non_10k. This entry PREVIOUSLY FROZE THAT AS AN EXPECTED FORMAT-ERA BOUNDARY ('detection is HTML-oriented') — a false root cause. The detector was never broken: normalize._emit_text only emitted newlines for BLOCK_TAGS, so the newlines that carry ALL of a plain-text filing's structure were eaten as whitespace (AAPL 1996: 6,246 raw newlines -> 51; whole document collapsed into 52 lines, longest 74,186 chars). Fixed by normalize text mode (v1.1, looks_like_plain_text): AAPL 1996 -> 16 candidates / 7 pass, KO 1997 -> 18 candidates / 6 pass, offset map still exact. The checks below now pin the REAL post-fix behavior. Items 1A/1B/1C/7A/9A/9B/9C/16 stay missing because those item codes did not exist in the 1996/1997 10-K schema, and AAPL 14/15 stay partial (the era's combined 'Item 14. Exhibits ... and Reports on Form 8-K' heading) — honest, not a false pass",
    "input": {"ticker": "AAPL/KO", "accession": "0000320193-96-000023 / 0000021344-98-000004"},
    "gallery": "docs/failure_gallery.md#fg-sec-009",
    "related_commits": ["54bc872"],
-   "guarded_by": [],
+   "guarded_by": ["tests/test_text_mode_normalize.py"],
    "checks": [
-    {"type": "filing_class", "fixture": "AAPL_FY1996", "expected": "non_10k"},
-    {"type": "all_items_status_in", "fixture": "AAPL_FY1996", "expected": ["missing", "reserved"]},
-    {"type": "filing_class", "fixture": "KO_FY1997", "expected": "non_10k"},
-    {"type": "all_items_status_in", "fixture": "KO_FY1997", "expected": ["missing", "reserved"]}
+    {"type": "filing_class", "fixture": "AAPL_FY1996", "expected": "standard"},
+    {"type": "all_items_status_in", "fixture": "AAPL_FY1996", "expected": ["pass", "partial", "missing", "incorporated_by_reference"]},
+    {"type": "item_status_in", "fixture": "AAPL_FY1996", "item": "1", "expected": ["pass"]},
+    {"type": "item_status_in", "fixture": "AAPL_FY1996", "item": "7", "expected": ["pass"]},
+    {"type": "item_status_in", "fixture": "AAPL_FY1996", "item": "1A", "expected": ["missing"]},
+    {"type": "filing_class", "fixture": "KO_FY1997", "expected": "standard"},
+    {"type": "all_items_status_in", "fixture": "KO_FY1997", "expected": ["pass", "partial", "missing", "incorporated_by_reference"]},
+    {"type": "item_status_in", "fixture": "KO_FY1997", "item": "1", "expected": ["pass"]},
+    {"type": "item_status_in", "fixture": "KO_FY1997", "item": "2", "expected": ["pass"]},
+    {"type": "item_status_in", "fixture": "KO_FY1997", "item": "1A", "expected": ["missing"]}
    ]
   }
  ]

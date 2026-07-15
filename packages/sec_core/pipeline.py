@@ -14,6 +14,7 @@ from sec_core.adjudicator import BoundaryEvidence
 from sec_core.boundary import apply_overshoot_guard, resolve_items
 from sec_core.confidence import ConfidenceBreakdown
 from sec_core.cross_ref import (
+    apply_part_level_incorporation,
     build_cross_reference_segments,
     detect_cross_reference_index,
     reassemble_wrapper_bodies,
@@ -236,6 +237,12 @@ def extract_from_html(
         # ('See "... - Cybersecurity Risk Management" in Part II, Item 7 of
         # this Form 10-K') is resolved to that section's source-exact span.
         resolve_intra_document_pointers(doc, segments, breakdowns)
+        # Part-level incorporation by reference (Berkshire class): a filing
+        # that declares ONCE, in Part III prose, that "the information required
+        # by this Part (Items 10, 11, 12, 13 and 14) is incorporated by
+        # reference from the ... proxy statement" and writes no per-item
+        # headings. Those items are pointers, not `missing`.
+        apply_part_level_incorporation(doc, segments, breakdowns)
 
     # per-item topic-consistency oracle (independent, lexical, all items) —
     # a span labelled Item 1A that has no risk-factor language is suspect even
@@ -311,6 +318,26 @@ def extract_from_html(
             item8.warnings.append(
                 f"Item 8 here is a pointer; the actual financial statements are extracted under "
                 f"Item {best_code} of this filing ({best_len:,} chars) — look there for the tables.")
+
+    # Zero-confidence safety net (runs LAST, after every classifier and guard,
+    # so nothing downstream can un-flag it). A `missing` verdict at confidence
+    # 0.0 means the pipeline found nothing AND has no idea why — serving that
+    # without asking a human to look is a silent failure by construction. This
+    # is deliberately INDEPENDENT of any particular detector: it is the net that
+    # catches misjudgement classes we have not characterised yet (it is what
+    # would have caught the Berkshire Part-level incorporation before anyone
+    # knew that class existed). It only ever raises the review flag — it never
+    # invents a status, a span or content.
+    for seg in segments:
+        if seg.status == "missing" and seg.confidence == 0.0 and not seg.needs_review:
+            seg.needs_review = True
+            seg.warnings.append(
+                "zero-confidence safety net: this item was judged 'missing' at confidence 0.0 — "
+                "the pipeline has no positive evidence for that verdict, so it is routed to "
+                "human review rather than served as a settled answer. A confidence 0.0 miss can "
+                "mean the item genuinely is absent (e.g. an item code that did not exist in the "
+                "filing's era) OR that we failed to find it; only a reviewer can tell those apart."
+            )
 
     latency_ms = (time.perf_counter() - t0) * 1000
     result = ExtractionResult(

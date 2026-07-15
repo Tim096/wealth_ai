@@ -14,12 +14,17 @@ from dataclasses import dataclass, field
 from html import unescape
 from html.parser import HTMLParser
 
-NORMALIZATION_VERSION = "1.0"
+NORMALIZATION_VERSION = "1.1"
 """Contract version for normalize_html's output. Item offsets and sha256 are only
 independently verifiable against a KNOWN normalizer revision, so this is stamped
 on the /normalized download and each item's normalized_sha. Bump whenever the
 normalized output for the SAME raw HTML could change (char map, block/cell tags,
-entity handling, TOC-backlink stripping)."""
+entity handling, TOC-backlink stripping).
+
+1.1 — added text mode (see looks_like_plain_text): a document with no meaningful
+HTML block structure keeps the newlines of its TEXT nodes instead of having them
+collapsed to spaces. Changes normalized output for plain-text/SGML filings ONLY;
+HTML-era output is byte-identical to 1.0."""
 
 BLOCK_TAGS = {
     "p", "div", "br", "tr", "li", "table", "section", "article",
@@ -47,6 +52,36 @@ _CHAR_MAP = {
 
 
 _ALNUM_RE = re.compile(r"[^a-z0-9]+")
+
+# --- plain-text / SGML detection (the pre-2001 era) -------------------------
+# A pre-2001 EDGAR filing is plain text inside a thin SGML envelope
+# (<SEC-DOCUMENT>, <TYPE>, <TEXT>): ALL of its structure — headings, paragraphs,
+# tables — lives in its NEWLINES. An HTML filing carries structure in block tags
+# instead and its raw newlines are meaningless minifier artifacts. Emitting
+# newlines for text-node "\n" is therefore right for the first class and wrong
+# for the second, so we must tell them apart before parsing.
+#
+# The discriminator is block tags per raw newline. Measured over the whole
+# fixture corpus the two classes are separated by ~250x, with no middle ground:
+#   plain text : AAPL_FY1996 0.004, KO_FY1997 0.003, strats_trust 0.004
+#   html       : corts 0.50, beta 0.44, alpha 0.61, MSFT 0.95, KO/AAPL/NEM/JPM >275
+# The 0.1 cut sits in the empty gap: >25x margin above the text class, >4x below
+# the closest HTML document. The newline floor keeps tiny synthetic snippets
+# (which have neither structure) on the unchanged HTML path.
+_BLOCK_TAG_SCAN_RE = re.compile(r"<\s*(?:p|div|br|tr|table|li|h[1-6])\b", re.IGNORECASE)
+_TEXT_MODE_MIN_NEWLINES = 50
+_TEXT_MODE_MAX_BLOCK_RATIO = 0.1
+
+
+def looks_like_plain_text(raw: str) -> bool:
+    """True when `raw` is substantially plain text / SGML rather than HTML —
+    i.e. it has no meaningful HTML block structure, so its line structure is the
+    only structure it has and must be preserved verbatim."""
+    newlines = raw.count("\n")
+    if newlines < _TEXT_MODE_MIN_NEWLINES:
+        return False
+    blocks = len(_BLOCK_TAG_SCAN_RE.findall(raw))
+    return blocks < newlines * _TEXT_MODE_MAX_BLOCK_RATIO
 
 # Table-of-contents navigation backlink phrases (delivery-layer furniture). A
 # whole line whose text is one of these AND sits entirely inside an internal
@@ -136,8 +171,11 @@ class NormalizedDocument:
 
 
 class _Normalizer(HTMLParser):
-    def __init__(self) -> None:
+    def __init__(self, text_mode: bool = False) -> None:
         super().__init__(convert_charrefs=False)
+        # text mode: a "\n" inside a TEXT node is a real line break, not
+        # collapsible whitespace (see looks_like_plain_text)
+        self._text_mode = text_mode
         self.chars: list[str] = []
         self.offsets = array("q")
         self.flags = bytearray()
@@ -189,6 +227,13 @@ class _Normalizer(HTMLParser):
         if self._skip_depth:
             return
         for i, c in enumerate(decoded):
+            # In text mode the document's structure IS its newlines: emit the
+            # line break and address it by the raw offset of the newline it came
+            # from, so norm_to_raw stays exact (an HTML-mode newline is emitted
+            # by a tag and addressed by that tag's position instead).
+            if c == "\n" and self._text_mode:
+                self._emit_newline_at(raw_offset + i)
+                continue
             c = _CHAR_MAP.get(c, c)
             if c.isspace():
                 self._pending_space = True
@@ -199,11 +244,14 @@ class _Normalizer(HTMLParser):
             self._at_line_start = False
             self._emit(c, raw_offset + i)
 
-    def _emit_newline(self) -> None:
+    def _emit_newline_at(self, raw_offset: int) -> None:
         if not self._at_line_start:
-            self._emit("\n", self._abs_pos())
+            self._emit("\n", raw_offset)
             self._at_line_start = True
         self._pending_space = False
+
+    def _emit_newline(self) -> None:
+        self._emit_newline_at(self._abs_pos())
 
     # -- parser hooks ---------------------------------------------------------
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
@@ -252,7 +300,7 @@ class _Normalizer(HTMLParser):
 
 
 def normalize_html(raw_html: str) -> NormalizedDocument:
-    parser = _Normalizer()
+    parser = _Normalizer(text_mode=looks_like_plain_text(raw_html))
     parser.feed_document(raw_html)
     text = "".join(parser.chars)
 

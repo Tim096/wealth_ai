@@ -408,17 +408,38 @@ def test_trust_filer_not_applicable_md_and_a_is_legitimate_boilerplate_pass():
         assert "Not Applicable" in result.text_of(code)
 
 
-def test_trust_filer_plain_text_strats_is_honest_unsupported_never_fabricated():
+def test_trust_filer_plain_text_strats_is_honest_never_fabricated():
     """STRATS Trust for BellSouth (CIK 1281001), 10-K FY2005, accession
-    0000905148-06-002999 — plain-text SGML primary document. The HTML pipeline
-    cannot anchor headings in it; the honest outcome is non_10k with zero
-    fabricated spans, not a fake extraction."""
+    0000905148-06-002999 — plain-text SGML primary document.
+
+    This test used to assert `filing_class == "non_10k"` with zero spans, on the
+    stated rationale that "the HTML pipeline cannot anchor headings in it". That
+    rationale was the same false root cause FG-SEC-009 froze: the detector was
+    fine, `normalize` was collapsing the document's newlines (and with them all
+    of a plain-text filing's structure) before detection ran. With normalize text
+    mode (v1.1) this excerpt — which is the filing's cover page + item index, no
+    item bodies — is now correctly read as an index of pointers.
+
+    The INVARIANT this landmine actually protects is unchanged and still pinned
+    below: never a fabricated or mislocated body. Nothing may be `pass`/`partial`
+    here, because none of these items' bodies are in these bytes; every item must
+    be an honest, review-flagged pointer whose span is a real source-exact index
+    line, and no item may claim content (text_sha256 stays empty)."""
     raw = (FIXTURES / "strats_trust_10k_excerpt.txt").read_text(encoding="utf-8")
     result = extract_from_html(raw, "strats-trust-fy2005")
-    assert result.filing_class == "non_10k"
-    assert all(s.end_offset == s.start_offset for s in result.segments)
+
+    # no body is present in this excerpt, so nothing may claim to have extracted one
+    assert not [s for s in result.segments if s.status in ("pass", "partial")]
     assert all(s.text_sha256 == "" for s in result.segments)
-    assert any("no item heading candidates" in w for w in result.warnings)
+
+    pointers = [s for s in result.segments if s.status == "incorporated_by_reference"]
+    assert pointers, "the index entries must be surfaced as honest pointers"
+    for seg in pointers:
+        assert seg.needs_review is True
+        # the span must be the real index line, quoted source-exactly
+        span = result.doc.slice(seg.start_offset, seg.end_offset)
+        assert span in result.doc.text
+        assert f"Item {seg.item_code}." in span
 
 
 # ===========================================================================

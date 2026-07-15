@@ -209,7 +209,7 @@ SEC 對 FY ≥ 2024-12-15 強制 Item 1C 的 CYD taxonomy iXBRL block-tag——*
 
 白話:我那 11 家全是新式格式的檔。萬一系統只會處理新檔呢?所以我沿兩個軸補抽:年代軸(檔案格式的世代)、代工商軸(幫公司送件的廠商)。
 
-baseline 11 家全是 iXBRL(10 Workiva + 1 DFIN)——覆蓋缺口用分層抽樣補:era 軸 × filing-agent 軸。結果:html_2001_2008 cov 0.9824、xbrl_2009_2018 cov 0.9592、Toppan Merrill cov 0.9107 皆 Supported;**pre-2001 純文字 SGML 誠實標 Unsupported**(cov 0.0,heading detector 0 candidate;partition invariant 仍成立,整份退化為單一 unclassified block → FG-SEC-009)。agent survey(efts 2025-02,n=40):Workiva 31 / unknown 8 / Toppan 1——生態系 Workiva 壟斷,baseline 抽樣合理。完整支援表見 `supported_and_unsupported.md`。
+baseline 11 家全是 iXBRL(10 Workiva + 1 DFIN)——覆蓋缺口用分層抽樣補:era 軸 × filing-agent 軸。結果:html_2001_2008 cov 0.9824、xbrl_2009_2018 cov 0.9592、Toppan Merrill cov 0.9107 皆 Supported;**pre-2001 純文字 SGML 當時標 Unsupported(cov 0.0),但那個結論在 2026-07-16 被自己的實測推翻** —— root cause 不是「heading detector 0 candidate 的時代邊界」,是 normalize 把純文字的換行吃掉(`normalize_line_collapse`)。text mode(`NORMALIZATION_VERSION` 1.1)後重算:AAPL FY1996 cov **0.6788**(7 pass / 2 partial / 6 IBR / 8 missing)、KO FY1997 cov **0.2126**(6 pass / 9 IBR / 8 missing)→ 見 FG-SEC-009 與 `supported_and_unsupported.md` format-era 表。`stratification.json` 已重生,前→後最難看的一格不是 coverage 是 **`filing_class`:AAPL FY1996 與 KO FY1997 原本被判 `non_10k` / `supported: false`**——**兩份貨真價實的 10-K,被判成「這不是 10-K」**,而 `non_10k` 正是本專案用來誠實拒絕的標籤。重生後兩者皆 `standard`;AAPL `supported: true`,KO 因 cov 0.2126 < 0.30 門檻**仍列 `unsupported`**(9 個真 IBR stub 壓低分數,非漏抽——我不改尺)。agent survey(efts 2025-02,n=40):Workiva 31 / unknown 8 / Toppan 1——生態系 Workiva 壟斷,baseline 抽樣合理。完整支援表見 `supported_and_unsupported.md`。
 
 > 2001 年以前的純文字檔,我抓不到,就寫 **Unsupported** —— 不是「有限支援」,不是「效果較差」,是抓不到。
 
@@ -535,11 +535,26 @@ Agent Mode failure analysis 暴露一個通用 feedback 缺口：planner history
 
 `live-information-retrieval-v2` 在正式 scored run 前凍結十個 read-only answer tasks，涵蓋 Wikipedia、PEP、MDN、PostgreSQL、Rust、NumPy、SQLite、IANA、RFC Editor、Git 文件。Agent 只收到 generic answer-shape contract；`expected_answer_regex` 只由 runner 在 terminal result 後離線套用，不傳入 planner。single-worker runner 必須等前題 terminal 才能送下一題，避免 timeout 後造成 queue contamination。
 
-部署版本 `abc2e19e3d959f74c0094bfd157855256f55a12f`、direct `x-ai/grok-4.5` 的唯一 scored run：gold-pass **10/10**；每題皆 1 次 LLM call；總 tokens **36,207**；總成本 **$0.015917**；latency median **4.505 s**、inclusive p95 **7.333 s**、max **8.639 s**；60 s slow threshold 以上 **0/10**。taskset sha256：`5e105efb3405f529c4a0dab1a24c0427026d80899673d0010369ad9699a477b2`。
+**這個 suite 現在報兩個數字,而且它們不一樣 —— 那個落差才是本節的重點。**
+
+部署版本 `aa1c039e4d697c193f5b244f008db8230867f66c`、direct `x-ai/grok-4.5` 的唯一 scored run(`--require-build-sha` 通過,deployment-attested **true**）:
+
+| 軸 | 值 | 這一軸在問什麼 |
+|---|---|---|
+| **hidden gold** | gold-pass **10/10**(pass_rate 1.0)| 答案**對不對** —— 由 runner 事後離線比對,agent 看不到 |
+| **self-certified** | self-certified **5/10**(self_certified_rate 0.5)| agent **自己敢不敢說**它做對了 |
+
+llm_calls total **10**(median 1、max 1)；總 tokens **35,822**(median 3,509.5、max 4,681)；總成本 **$0.015147**；latency median **3,598.5 ms**、inclusive p95 **5,820.5 ms**、max **5,909.6 ms**；60 s slow threshold 以上 **0/10**。taskset sha256：`5e105efb3405f529c4a0dab1a24c0427026d80899673d0010369ad9699a477b2`。
+
+**為什麼是兩個數字而不是一個?** 舊版 runner 的計分是 `scored_pass = (status == "pass") and gold_match` —— 它把 hidden gold **從屬於** agent 的自我判決。後果很具體:**一個誠實的 unknown 配上一個 gold 說「對」的答案,計分等同答錯。** 那不是在量正確率,是在量「agent 敢不敢替自己背書」。現在 **gold 決定正確性,`self_certified` 併列回報、不再 gate**。
+
+**那 5 個沒有自我認證的是怎麼回事?** 它們的驗證條件被判定為無鑑別力(`answer_matches:.+` 這一類),判決封頂 `unknown` —— **答案照常交付、gold 照樣說對**(見 `failure_gallery.md` FG-BROWSER-009)。
+
+**舊值(本波取代,列出以供對照)**:10/10 單軸、median 4.505 s、p95 7.333 s、36,207 tokens、$0.015917、部署版本 `abc2e19e3d959f74c0094bfd157855256f55a12f`。
 
 這是窄範圍、可核對答案的跨站 information-retrieval suite，不是官方 Online-Mind2Web leaderboard，也不覆寫下節 frozen 300 題的 `21/283` WebJudge advisory 結果。它回答的是修正後 deployed answer extraction 是否能在多種真實文件 DOM 上穩定交付可核對答案。
 
-> 10/10 很好看 —— 所以我立刻告訴你它的範圍:**窄範圍、查得到答案的題**,不是 leaderboard 成績,不覆寫任何東西。
+> 舊版這裡寫的是一個乾淨的 10/10。**那個數字是假的 —— 不是因為答案錯,是因為它把外部 gold 綁在 agent 的自評上。** 現在的 10/10 和 5/10 都是真的,而且它們必須並排,因為**能力(10/10)和自信(5/10)本來就是兩件事,合併成一個數字就一定有一件被吃掉。**
 
 - 重現：`.venv\Scripts\python tools\live_information_retrieval_eval.py`
 - Artifacts：`data/browser_eval/live_information_retrieval/tasks.json`、`data/browser_eval/live_information_retrieval/results.json`
@@ -551,7 +566,11 @@ Agent Mode failure analysis 暴露一個通用 feedback 缺口：planner history
 
 `live-mixed-interaction-v1` 凍結十個 reversible、no-account tasks，分布於六個 public test/content domains。十個 granular `task_type` labels 對應八個 operation families：dynamic controls/waits、fill+submit、keyboard、new-tab、cross-site 與多層 navigation。single-worker runner 等每題 terminal 後才送下一題；全部 success contracts 在起始狀態都不成立，避免 baseline false pass。
 
-部署版本 `f384843ac69fa96621ff398438f02d161fcb440d`、direct `x-ai/grok-4.5` 的唯一 scored run：mixed-operation pass **10/10**；LLM calls total **18**、median 1.5、max 4；總 tokens **79,497**；總成本 **$0.042266**；latency median **6.160 s**、inclusive p95 **40.237 s**、max **48.251 s**；60 s slow threshold 以上 **0/10**。taskset sha256：`a05c5ab2d29485449d656d35d781f1fef0c5629e2a9dbd4de59c92e2de79121b`。
+部署版本 `aa1c039e4d697c193f5b244f008db8230867f66c`、direct `x-ai/grok-4.5` 的唯一 scored run(`--require-build-sha` 通過)：mixed-operation pass **10/10**、self-certified **10/10**；LLM calls total **16**、median 1.5、max 3；總 tokens **70,955**(median 6,337.5、max 15,428)；總成本 **$0.036847**；latency median **5,831.25 ms**、inclusive p95 **28,608.905 ms**、max **31,191.5 ms**；60 s slow threshold 以上 **0/10**。taskset sha256：`a05c5ab2d29485449d656d35d781f1fef0c5629e2a9dbd4de59c92e2de79121b`。
+
+**這裡的兩軸沒有落差(10/10 vs 10/10),而上一節有(10/10 vs 5/10)** —— 因為操作型任務的成功條件本來就是可觀測的狀態(元素出現了、頁面換了),寫得出有鑑別力的條件;答案型任務的條件是 planner 對著一個還不存在的答案寫的,才會退化成 `.+`。**同一個 verifier、同一波修復,兩個 suite 的反應不同,這件事本身就是訊息。**
+
+**舊值(本波取代,列出以供對照)**:18 calls、median 6.160 s、p95 40.237 s、79,497 tokens、$0.042266、部署版本 `f384843ac69fa96621ff398438f02d161fcb440d`。
 
 這是 externally hosted regression，不是 held-out success estimate：正式 freeze 前先做 reachability/feasibility probe，確定任務安全、可逆、無帳號且站點在 deployment network 可到達。它補足 operation breadth 與 deployed execution evidence，但不覆寫 Online-Mind2Web 的 `21/283` advisory 結果。
 
@@ -661,7 +680,8 @@ Agent Mode failure analysis 暴露一個通用 feedback 缺口：planner history
 | held-out 凍結單跑不低於迭代後成績,指向泛化而非過擬合 | 不能宣稱與官方 Online-Mind2Web leaderboard 可比 —— judge 非論文 o4-mini/WebJudge-7B |
 | Intel/Citi 的 wrapper/index 正文已用印刷頁碼錨點還原 | 不能宣稱 resolved span 逐字精確 —— 一律 heuristic partial + needs_review |
 | 同檔正文已還原 | 不能宣稱跨檔 proxy statement 已 join |
-| 2001 年以後的三個格式世代與 Toppan Merrill 皆 Supported | 不能宣稱 pre-2001 純文字 SGML 有支援 —— **Unsupported** |
+| 2001 年以後的三個格式世代與 Toppan Merrill 皆 Supported;pre-2001 純文字 SGML 經 text-mode normalize 後實際會抽(AAPL FY1996 cov 0.6788、KO FY1997 cov 0.2126)| 不能宣稱 pre-2001 的 item 編號對得上現代 schema —— **era-aware mapping 未實作**,共用 span 只標 needs_review 不消歧 |
+| gold 與 self-certified 兩軸分開報(IR suite 10/10 vs 5/10)| 不能宣稱那 10/10 是 leaderboard 成績 —— 窄範圍、查得到答案的題 |
 | 每個數字都能溯源到 committed artifact,並附重跑指令 | 不能宣稱這些數字是最終正確率 —— 弱老師只有一票,不是 gold 真值 |
 
 > 這份報告最值得的一行不是任何一個 metric,是那三個我主動放在最前面的失敗:pass rate 掉了、F1 輸了、AUROC 沒過。**能被自己抓到的錯,才是真的修得好的錯。**

@@ -27,13 +27,16 @@ pipeline 會先判定 filing class(`ExtractionResult.filing_class`),不同類走
 |---|---|---|---|
 | **standard** | 正文含可定址 Item N 章節(AAPL/MSFT/WMT/CAT/KO/NEM/MRNA/NVDA…) | `pass`/`incorporated_by_reference`/`reserved`/`missing`/`ambiguous`/`partial` | 高;Item 8 另經 XBRL 認證 |
 | **cross_reference_index**(Intel/Citi/GE) | 主文件是交叉引用索引,正文以印刷頁碼分頁 | `partial`(resolved_from_page_anchor, needs_review)供有頁碼指標的 item;proxy-only 的 10–14 為 `incorporated_by_reference`;XBRL 矛盾或污染頁碼圖降為 `unsupported`;`missing`/`reserved` | 頁碼錨點還原 source-exact span(多段 body 以 `source_ranges[]` 串接);proxy 指標誠實標記,**不偽裝成內容**;無法可信解析者降 `unsupported` |
+| **part_level_incorporation**(Berkshire 類)| Part III 用**一句散文**打發掉整個 Part:「information required by this Part (Items 10, 11, 12, 13 and 14) is incorporated by reference from the …proxy statement」,**沒有逐 item 標題** | 涵蓋的 item 全標 `incorporated_by_reference`(provenance `cross_reference_pointer`)+ `needs_review` | 宣告句本身留 source-exact span;**絕不猜正文**。全 corpus 12 份文件命中 1 次、零誤報 |
 | **non_10k** | 找不到任何 item heading(結構不符) | 全部 `missing` + 警告 | 誠實標為不支援 |
 | **unsupported_scanned_or_binary** | 掃描 PDF / 非 HTML / binary(**code-enforced**:`%PDF` 開頭、含 NUL、或無 HTML tag) | 空(無 segments)+ 警告 | 明確拒絕,建議 OCR path |
 | **non_10k_filer**(resolver 層,20-F/40-F 外國私人發行人:TSM/SONY/BABA)| 公司 EDGAR 紀錄中**零筆** 10-K/10-K/A → 不進 pipeline,`NotA10KFilerError`(`sec_core/resolver.py`)| —(未抽取,typed exception)| **明確拒絕 + 指出實際 form**:訊息列出該公司真正申報的 form 分布(如 TSM:20-F×26、6-K×1320)並明講「僅支援 10-K item 抽取」;live evidence:`data/sec_eval/rejection/foreign_filer_rejection.json` |
 
-翻成一般人能懂的版本,由好到壞五種下場:①正常拆(standard);②主文件只是索引、正文在後面用頁碼分頁,我用頁碼把正文釣回來(cross_reference_index);③根本找不到章節標題,全標 missing(non_10k);④掃描檔/二進位,直接不收(unsupported_scanned_or_binary);⑤這家公司根本不申報 10-K,連 pipeline 都不進(non_10k_filer)。
+翻成一般人能懂的版本,由好到壞六種下場:①正常拆(standard);②主文件只是索引、正文在後面用頁碼分頁,我用頁碼把正文釣回來(cross_reference_index);③一整個 Part 被一句話打發掉,我把那句話的位置給你、不編內容(part_level_incorporation);④根本找不到章節標題,全標 missing(non_10k);⑤掃描檔/二進位,直接不收(unsupported_scanned_or_binary);⑥這家公司根本不申報 10-K,連 pipeline 都不進(non_10k_filer)。
 
-第⑤類值得多講一句,因為它是「拒絕的品質」示範:丟台積電進來,系統回的不是「找不到 10-K」,而是列出該公司真正申報的 form 分布(20-F×26、6-K×1320)並明講僅支援 10-K item 抽取。**不是拒絕,是拒絕時順手告訴你東西在哪。**
+**第③類是評審用 Berkshire 打出來的,所以我把它的來歷寫在表上。** 我原本的偵測是**逐 item 標題導向**——它會去找「Item 10.」再看底下寫什麼。Berkshire 沒有那些標題,它用一段 **Part 層級的散文**一次打發五個 item。結果:Items 10–14 全回 `missing` / confidence 0.0 / **needs_review=false**——沒把握,還不叫人看。現在除了修掉它,另外加了一張**與該偵測器完全獨立**的網:**任何 confidence 0 的 `missing` 一律強制 `needs_review`**(全 corpus 51 → 0)。**第二張網比第一個修復重要——它擋的是我還沒想到的那些。** 見 `failure_gallery.md` FG-SEC-010。
+
+第⑥類值得多講一句,因為它是「拒絕的品質」示範:丟台積電進來,系統回的不是「找不到 10-K」,而是列出該公司真正申報的 form 分布(20-F×26、6-K×1320)並明講僅支援 10-K item 抽取。**不是拒絕,是拒絕時順手告訴你東西在哪。**
 
 > `ItemStatus` 的 `unsupported` **現在會在單一 item 上 emit**:`certify_item8` 在 SEC XBRL 三項數字與 Item 8 span 矛盾時,把該 item 由 `pass`/`partial` 降為 `unsupported`(如 INTC FY2019 Item 8);污染頁碼圖(每頁字數低於守衛)解析出的 span 也降為 `unsupported`。**filing 級**不支援仍以 `filing_class`(unsupported_scanned_or_binary / non_10k)+ `missing` 表達——item 級與 filing 級並存,如實揭露。
 
@@ -51,14 +54,33 @@ pipeline 會先判定 filing class(`ExtractionResult.filing_class`),不同類走
 
 | Era | 實測樣本 | 行為 | coverage | 支援 |
 |---|---|---|---|---|
-| **text_pre2001**(純文字 SGML)| AAPL FY1996、KO FY1997 | normalize 正常但 heading detector 0 candidate,22 item 全 missing;partition invariant 仍成立(整份=單一 unclassified block,零 silent drop)| 0.0 | **Unsupported**(見 FG-SEC-009)|
+| **text_pre2001**(純文字 SGML)| AAPL FY1996、KO FY1997 | text-mode normalize(`NORMALIZATION_VERSION` **1.1**)保留行結構後正常抽取:**AAPL 7 pass / 2 partial / 6 IBR / 8 missing**、**KO 6 pass / 9 IBR / 8 missing**;那些 missing 是**該年代不存在的 item code**(AAPL:1A/1B/1C/7A/9A/9B/9C/16;KO:1A/1B/1C/9A/9B/9C/15/16——兩家清單不同),標 missing 正確且全部 needs_review;合併標題造成兩個 code 共用同一段者一律 needs_review | AAPL **0.6788** / KO **0.2126** | **分裂,不是一句話能講完**:AAPL FY1996 `supported=true`;**KO FY1997 仍在 `unsupported` 清單裡**(coverage 0.2126 < 0.30 門檻),但原因**完全不是抽不到**——見下方第三點。era-aware schema mapping 未實作(見 FG-SEC-009 / FG-SEC-011)|
 | html_2001_2008 | AAPL 2004(0001047469-04-035975)| 17 pass | 0.9824 | Supported |
 | xbrl_2009_2018 | AAPL 2013(0001193125-13-416534)| 15 pass + 5 IBR | 0.9592 | Supported |
 | ixbrl_2019plus | baseline 11 家 + Toppan 樣本 | 現行主路徑 | ≥0.91 | Supported |
 
-第一列是這張表最該被讀的一列,所以我把它拉到標題級:**text_pre2001 coverage 0.0,22 個 item 全部 missing,Unsupported——不改判、不軟化。** 但輸的方式很重要:heading detector 抓到 0 個候選,整份文件變成單一 unclassified block,**零 silent drop**。partition invariant(整份文件必須被完整切分、不准有字憑空消失)仍然成立。翻成人話:它沒抽到任何東西,但它也沒偷偷弄丟任何東西,而且它知道自己沒抽到。
+**第一列這份文件曾經寫錯過,而且錯得很體面,所以我把更正拉到標題級。**
 
-對照錨在下面三列:同一套 pipeline,2004 年 coverage 0.9824、2013 年 0.9592、2019 年後 ≥0.91。**所以 0.0 不是 pipeline 壞了,是這個年代的格式我根本沒寫對應的 normalizer**(修法見 [已知限制](#已知限制誠實揭露))。
+**舊版寫的是:「text_pre2001 coverage 0.0,22 個 item 全部 missing,Unsupported——不改判、不軟化」**,並解釋成「heading detector 是 HTML 導向的,這是時代邊界」。**那個 root cause 是假的,已被實測反證:** heading detector 從來沒壞,是 `normalize` 只在 block tag 產生換行,純文字節點裡的 `\n` 被當空白吃掉——AAPL FY1996 的 6,246 個換行塌成 51 個、最長一行 74,186 字元。**detector 拿到的是一坨,當然 0 candidate。** 把行結構還給它,**同一個 detector** 吐 16 個候選(KO 18 個)。逐條見 `failure_gallery.md` FG-SEC-009。
+
+**所以這一列現在該怎麼讀,界線畫清楚:**
+
+- **能宣稱**:這個年代的 filing **會抽**;而且 HTML 時代輸出**逐位不變**(5 個 HTML fixture + 3 個 HTML 測試檔的 text 與 `norm_to_raw` 逐 byte 相同)——**多抽幾個 item 沒有拿 source-exact 保證去換。**
+- **不能宣稱**:item 編號對得上現代 schema。**era-aware schema mapping 未實作**——FY1996 的 `Item 14. Exhibits…` 語意上對應現代的 Item 15,系統目前把該 span **同時給 14 和 15**,只標 needs_review,不猜、不消歧(見 FG-SEC-011)。
+- **KO 的 coverage 0.2126 為什麼這麼低?** 因為它那年真的有 **9 個 item 是 IBR stub**(指標段落本來就短),不是抽不到。**這正是 coverage 這把尺量不出「誠實指標」和「漏抽」差別的地方**——同一個低分,兩種完全不同的意思。
+
+**這個 bug 最難看的後果不在 coverage,在 `filing_class`。** `data/sec_eval/stratification/stratification.json` 已用 `tools/stratified_sample.py` 重生,前→後:
+
+| | 前(normalize bug) | 後 |
+|---|---|---|
+| AAPL FY1996 | `filing_class: non_10k` / `supported: false` / cov **0.0** / pass **0** | `standard` / **`true`** / **0.6788** / **7** |
+| KO FY1997 | `filing_class: non_10k` / cov **0.0** / pass **0** | `standard` / cov **0.2126** / pass **6** |
+| STRATS(trust filer)| cov 0.0 | cov 0.0716 |
+| warning | `no item heading candidates found — unsupported or non-10-K document` | (消失)|
+
+**兩份貨真價實的 10-K,被我的系統判成「這不是 10-K」。** 不是抽得少,是分類錯到根上——而 `non_10k` 正是本專案用來「誠實拒絕」的那個標籤。**一個把真 10-K 標成非 10-K 的誠實拒絕,不是誠實,是用誠實的語氣講錯話。** 上表 pre-2001 兩列的數字可由該 artifact 讀出,亦可對 tracked fixture(`data/sec_eval/fixtures/` 的 `AAPL_FY1996` / `KO_FY1997`)跑 `sec_core.pipeline.extract_from_html` + `sec_core.coverage.coverage_ratio` 重算;守它的是 `tests/test_text_mode_normalize.py`。
+
+對照錨在下面三列:同一套 pipeline,2004 年 coverage 0.9824、2013 年 0.9592、2019 年後 ≥0.91。
 
 ### Filing agent 會不會是隱藏變數?
 
@@ -116,7 +138,7 @@ pipeline 會先判定 filing class(`ExtractionResult.filing_class`),不同類走
 
 - **cross-reference-index 的正文已用印刷頁碼錨點還原**(Intel/Citi class):`resolve_page_ref`/`build_page_map` 跟著索引的頁碼範圍(如 "Risk Factors 49-62")定位到主文件內同一份 annual report 的 source-exact span,標 `partial` + needs_review(頁邊界對齊為啟發式,非逐字精確)。實測 Citi FY2025 解出 **9 個 item**(Risk Factors 88K、MD&A 86K、Market Risk 207K、Financials 577K 字)、INTC Item 8 span 經 XBRL 3/3 認證。指向**另外申報**的 proxy statement 的 Item 10–14 維持誠實 `incorporated_by_reference` pointer,不 join、不捏造。**碰撞防護**:同一 span 至多由一個 item 認領,後續 item 改用自己的替代頁碼範圍或降為 pointer,避免兩個 item 共用 body(如 INTC Item 15 導向自己的 exhibit index 而非 Item 8 財報)。**同檔附綁 wrapper(JPM/XOM)已還原**:`cross_ref.reassemble_wrapper_bodies`(commit 84ecea7),見 `failure_gallery.md` FG-SEC-007/008。
 - **掃描 PDF 老 filing**:標 `unsupported`;正確作法是 OCR path(非 LLM),見 insights §3。
-- **pre-2001 純文字 SGML**:Unsupported(見上方 format-era 表與 FG-SEC-009);修法是 text-mode normalizer,非本波範圍。
+- **pre-2001 純文字 SGML**:**會抽了,但不等於整個 era 都 supported**(text-mode normalize,`NORMALIZATION_VERSION` 1.1;見上方 format-era 表與 FG-SEC-009)。實測 AAPL FY1996 `supported=true`(cov 0.6788),**KO FY1997 與 STRATS 仍列在 artifact 的 `unsupported` 裡**(cov 0.2126 / 0.0716,低於 0.30 門檻)——KO 是 9 個真 IBR stub 壓低分數,不是漏抽,**但我不因此把它改判成 supported:改判就是改尺,而尺是我自己訂的。****舊版此處寫「Unsupported / 修法是 text-mode normalizer,非本波範圍」——那個 root cause 是假的,已被實測反證。** 殘留的是 **era-aware schema mapping 未實作**:該年代不存在的 item code 標 missing(正確)、合併標題造成兩個 code 共用同一段者一律 needs_review,**不猜哪個 item 才對**。
 - **boundary 精度已量化(2026-07-10)**:char-offset F1(建構性 gold,regression baseline;敏感度注入鎖在 `tests/test_scoring.py::test_sensitivity_injection_on_real_sweep3_aapl`,AAPL F1 1.0→0.9267)+ CYD 官方 iXBRL oracle(9/9 pass segment coverage 100%)。人工 token-level 標註(絕對正確率)仍列 backlog。見 `eval_report.md`「Eval 升級」段。
 
 把上面四條攤成一張「限制 | 這削弱了什麼、還能宣稱什麼」的表(第一條含兩個獨立限制,拆成兩列):
@@ -126,7 +148,8 @@ pipeline 會先判定 filing class(`ExtractionResult.filing_class`),不同類走
 | 頁邊界對齊是**啟發式**,非逐字精確 | 所以 status 標 `partial` + needs_review,不標 `pass`;能宣稱「source-exact span 位置」,不宣稱「頁界字字精準」 |
 | 指向**另外申報**的 proxy statement 的 Item 10–14 | 維持誠實 `incorporated_by_reference` pointer,**不 join、不捏造**;能宣稱「我知道它在哪」,不宣稱「我把它抽出來了」 |
 | 掃描 PDF 老 filing | 標 `unsupported`;正確作法是 OCR path(非 LLM),見 insights §3 |
-| pre-2001 純文字 SGML | Unsupported(見 [format-era 表](#2-不同年代的-10-k哪些真的能跑)與 FG-SEC-009);修法是 text-mode normalizer,非本波範圍 |
+| pre-2001 純文字 SGML 的 **era-aware schema mapping 未實作**(格式本身已支援,見 [format-era 表](#2-不同年代的-10-k哪些真的能跑)與 FG-SEC-009)| FY1996 的 `Item 14. Exhibits…` 語意上是現代的 Item 15,系統把該 span **同時給 14 和 15** 並標 needs_review;能宣稱「會抽、且共用 span 一定舉手」,**不能宣稱「item 編號對得上現代 schema」** |
+| 兩個 item 共用同一段 bytes 時,系統**只揭露不消歧** | 能宣稱「共用者全部 needs_review + warning 帶 span 與字元數」,**不能宣稱「哪個 item 才是那段的主人」**——同起點同寬度,連 boundary tie-break 都無從下手,擲硬幣不如交人。現代真實 filing 實測零共用 content span,但**那是實證結果不是結構保證**(已用測試釘住)|
 | char-offset F1 的 gold 是**建構性**的,只當 regression baseline | 人工 token-level 標註(絕對正確率)**仍列 backlog**;能宣稱「沒退步」,不能宣稱「絕對正確率是多少」 |
 
 第一條的自我攻擊值得展開,因為它是「元層思考:驗證驗證器」的實例。

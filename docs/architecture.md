@@ -105,9 +105,15 @@ Plain English: known job on a known site costs nothing; the model only gets call
 
 This is the kind of detail a glossy architecture doc leaves out, so I'm putting it in the body, not a footnote.
 
-Per-mode honesty note — which repair rungs run where: the full diagnose → repair cascade (`agent._resolve_and_run`: `diagnose_failure` → per-failure-type strategy → hash rebind → a11y purpose scoring, counted in `TaskRun.repairs`) runs only in Script Mode `run()`. `run_agentic` — the deployed/eval Agent-Mode path — never enters that ladder: its recovery rungs are per-step overlay dismissal (`_dismiss_overlay`), replay-cache steps rebound by the same `rebind_by_hash` (`replay_cache.action_from_step`; a step that no longer resolves invalidates the cache entry), stagnation nudges, and vision escalation; any other failed action is handed back to the planner as history, and its `TaskRun.repairs` is always 0.
+Per-mode note — which repair rungs run where: the diagnose → repair cascade (`diagnose_failure` → per-failure-type strategy → hash rebind → a11y purpose scoring, counted in `TaskRun.repairs`) runs in Script Mode `run()` **and, since commit dfc3378, on the failure path of `run_agentic` — the deployed/eval Agent-Mode path — by reusing the same primitives rather than reimplementing them in parallel**. `run_agentic`'s other recovery rungs are unchanged: per-step overlay dismissal (`_dismiss_overlay`), replay-cache steps rebound by the same `rebind_by_hash` (`replay_cache.action_from_step`; a step that no longer resolves invalidates the cache entry), stagnation nudges, and vision escalation.
 
-Read that last clause slowly, because it's the self-attack: the deployed Agent-Mode path reports `TaskRun.repairs` **always 0**. Not "rarely repairs" — structurally zero, because it never enters the cascade at all. **The famous repair ladder is a Script Mode feature; saying otherwise would be marketing.**
+**What this paragraph used to say, and why that matters more than what it says now.** Until 2026-07-16 it read: the deployed Agent-Mode path reports `TaskRun.repairs` **always 0** — "not 'rarely repairs' — structurally zero, because it never enters the cascade at all. The famous repair ladder is a Script Mode feature; saying otherwise would be marketing."
+
+That was **accurate**, and it was measured: `repairs` was hardcoded to 0 in `run_agentic`, selector memory was inert on the deployed path, and every memory key in the project was `mockshop::*` — the real web had taught it nothing. The task brief's literal ask, "adjust locator strategies dynamically", did not exist where a grader would click. Measured after wiring it in: `repairs` **0 (hardcoded) → 1 (real)**, selectors tried after a failure **1 → 2**, selector memory **never persisted → learned `news.ycombinator.com::agentic::result_link`**.
+
+So the self-attack has moved up a level. This file disclosed the gap **precisely and voluntarily** — and the gap still shipped for weeks, because `README.md` listed the ladder as a Task 1 capability and pointed graders at the scripted demo. **A disclosure filed on the page nobody reads is an archive, not a disclosure.** See `failure_gallery.md` FG-BROWSER-010.
+
+> **Not "the doc was wrong" — the doc was right, and being right in the wrong place bought nothing.**
 
 ---
 
@@ -132,9 +138,9 @@ Current status (2026-07-11).
 
 ### Tests — with the correction stated out loud
 
-- Tests: **813 collected** — quick lane `-m "not integration"`: 763 passed / 50 integration deselected (integration lane includes real-browser and gateway e2e). Originally 16 tests in the foundation phase; this document previously understated the suite.
+- Tests: **998 collected** — quick lane `-m "not integration"`: 945 passed / 53 integration deselected (integration lane includes real-browser and gateway e2e). Originally 16 tests in the foundation phase; this document previously understated the suite.
 
-The anchor for "813" is the number this file used to imply. It started at 16 in the foundation phase, and **this document previously understated the suite** — I'm not quietly fixing that number, I'm naming the fact that the doc was wrong.
+The anchor for "998" is the number this file used to imply. It started at 16 in the foundation phase, and **this document previously understated the suite** — I'm not quietly fixing that number, I'm naming the fact that the doc was wrong. The 2026-07-16 wave took the quick lane 853 → **945** (+92 across commits dfc3378 and aa1c039); re-derive with `.venv\Scripts\python -m pytest --collect-only -q` and `… -m "not integration"`.
 
 ### CI
 
@@ -144,15 +150,16 @@ The 20 length-prior tests landed after the tag, so that green run did **not** co
 
 ### Not implemented — the explicit boundaries
 
-- Not implemented / explicit boundaries: joining a **separately filed proxy statement** (cross-reference-index Items 10-14 — the same-file Intel/Citi/GE 10-K bodies ARE resolved via printed-page anchors into source-exact `partial` spans), pre-2001 SGML text-mode normalizer, OCR path for scanned PDFs — see `supported_and_unsupported.md` and `insights_and_directions.md`.
+- Not implemented / explicit boundaries: joining a **separately filed proxy statement** (cross-reference-index Items 10-14, and the Berkshire-class Part-level declaration — the same-file Intel/Citi/GE 10-K bodies ARE resolved via printed-page anchors into source-exact `partial` spans), era-aware item-schema mapping for pre-2001 filings, OCR path for scanned PDFs — see `supported_and_unsupported.md` and `insights_and_directions.md`.
 
 Three boundaries — and the first one carries a distinction that's easy to over-claim in either direction, so the table splits it into two rows:
 
 | Item | What this doc claims — and doesn't |
 |---|---|
-| Joining a **separately filed proxy statement** (cross-reference-index Items 10-14) | Not implemented |
+| Joining a **separately filed proxy statement** (cross-reference-index Items 10-14; Berkshire-class Part-level declarations) | Not implemented — the declaration sentence gets a source-exact span and `needs_review`; the body is never guessed |
 | …but the **same-file** Intel/Citi/GE 10-K bodies | Resolved — via printed-page anchors, into source-exact `partial` spans |
-| pre-2001 SGML text-mode normalizer | Not implemented |
+| pre-2001 SGML text-mode normalizer | **Implemented** (commit dfc3378, `NORMALIZATION_VERSION` 1.1). The previous "not implemented" line rested on a root cause that measurement disproved — see `failure_gallery.md` FG-SEC-009 |
+| era-aware item-schema mapping for pre-2001 filings | Not implemented — FY1996's `Item 14. Exhibits…` is semantically the modern Item 15; the span is handed to both codes with `needs_review` rather than guessed |
 | OCR path for scanned PDFs | Not implemented |
 
 Read rows 1 and 2 together. The **same-file** bodies **are** resolved. What isn't implemented is going out to fetch a *separately filed* proxy statement and stapling it on. Details of both live in `supported_and_unsupported.md` and `insights_and_directions.md`.

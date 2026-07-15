@@ -26,8 +26,8 @@
 | edgar-crawler | flat regex + 字距修復('I T E M 1');'Item No. 1' 仍是 open issue #37 | streaming char-flag normalizer(normalize.py)+ 4 detector(strict/loose regex、dom_heading、visual_layout);mid-word `<span>` 拆字 by construction 免疫;'Item No. 1'/roman 同樣不匹配 | 平(backlog 後轉優) |
 | edgartools | anchor/TOC 主路徑 + body-scan fallback、'<8 items → 換策略' 閘 | 主路徑即 body-scan;pipeline.py:74-77 已有 <8 → scan_bare_index 升級閘;cross_ref.py 處理 Intel/Citi/GE index 類 | 優 |
 | sec-parser | inline-CSS style-fingerprint 辨識 heading | 只有 tag-level flags;`<span style="font-weight:700">` 全盲;CSS margin-as-newline 也缺 | 劣(P1) |
-| sec-api.io | 自承 Citi Item 7、GE Item 1、Intel 為其 failure;pre-2002 不支援 | 同名 filer 已修復並有 fixture(FG-SEC-005);pre-2001 誠實標 unsupported | 優 |
-| EDGAR-CORPUS | remove_tables=True 的 regex 切分,1993+ 全覆蓋 | 保留 table 內文、offset+sha256 source-exact;pre-2001 SGML 不支援 | 平 |
+| sec-api.io | 自承 Citi Item 7、GE Item 1、Intel 為其 failure;pre-2002 不支援 | 同名 filer 已修復並有 fixture(FG-SEC-005);pre-2001 已支援(text-mode normalize,`NORMALIZATION_VERSION` 1.1,FG-SEC-009)—— **但 era-aware item schema mapping 未實作,不宣稱編號對得上現代 schema** | 優 |
+| EDGAR-CORPUS | remove_tables=True 的 regex 切分,1993+ 全覆蓋 | 保留 table 內文、offset+sha256 source-exact;pre-2001 SGML 已支援(FG-SEC-009),但**未做 1993+ 全覆蓋普查**——實測樣本只有 AAPL FY1996 / KO FY1997 兩份,**不與其 1993+ 全覆蓋對等宣稱** | 平 |
 
 > **`Item No. 1` 這一格我跟 edgar-crawler 一樣不會 —— 對方掛 issue #37 沒修,我也沒修,所以評「平」不評「優」。** 反過來,`<span style="font-weight:700">` 我是全盲,sec-parser 會,這格我認「劣」。
 ### 1.2 Self-verification without ground truth(無標註自我驗證):沒有標準答案,怎麼知道自己切錯?
@@ -121,7 +121,7 @@
 - P1-12 Longest-span-after-previous-end 第二選擇函數,與 score-rule 不一致時 flag hard case — boundary.py。
 ### P2
 - P2-1 Case-sensitive-first 兩段式 heading match(意圖已被 line-anchoring + is_uppercase 弱機制覆蓋)。
-- P2-2 Letter-spaced 修復('I T E M 1';病灶集中 pre-2001,現行宣告 unsupported)。
+- P2-2 Letter-spaced 修復('I T E M 1';病灶集中 pre-2001 —— 該世代已於 2026-07-16 支援(FG-SEC-009),故此項不再被「反正 unsupported」擋住,仍未實作)。
 - P2-3 PART divider 狀態機(本 repo 以 item code 唯一鍵,該 bug class 主後果結構性不成立)。
 - P2-4 ##TABLE_START/END sentinel 僅放 export/比對層,**絕不進 normalize.py**(會破壞 offset+sha256 source-exact 不變量)。
 - P2-5 detect_agent(Workiva/DFIN/Toppan)移入 sec_core 當 metadata 欄位。

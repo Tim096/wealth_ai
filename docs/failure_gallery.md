@@ -6,7 +6,7 @@
 
 ## 這份文件怎麼讀?
 
-**先畫地圖。本份分四段 ——**
+**先畫地圖。本份分五段 ——**
 
 | 段 | 內容 | 功能一句話 |
 |---|---|---|
@@ -14,6 +14,7 @@
 | 二 | 第一波:SEC 抽取器五起事故 FG-SEC-001~005 + 元層次(2)XBRL 外部驗證 | 「系統自己說 pass」為什麼不算數 |
 | 三 | Browser agent 第一起事故 FG-BROWSER-001 + 稽核方法本身 | 發現工具長什麼樣、它的證據限制在哪 |
 | 四 | 2026-07-10 eval 升級波新增:FG-SEC-006~009、FG-BROWSER-002~008 | 量測 → 修復 → 重新量測的完整收尾 |
+| 五 | 2026-07-16 自我攻擊波:FG-SEC-010~011、FG-BROWSER-009~010 | **文件說有、code 說沒有**;以及「誠實揭露」本身被驗出是假的 |
 
 ### 每個案例的骨架是什麼?
 
@@ -49,6 +50,9 @@
 | a11y 樹 | 無障礙樹:瀏覽器提供給輔助科技的頁面結構 |
 | selector | 定位網頁元素用的字串(例如 `#search-box`)|
 | decoy | 誘餌元素。長得像目標、點了什麼都不做 |
+| decoy 語料 | 一組「正確的 run 絕不會交出來」的文字。拿驗證條件去打它們——**打中越多,代表這條件越沒有鑑別力** |
+| vacuous pass | 空洞通過。條件確實成立了,但那個條件根本不排除任何東西——**什麼都沒證明,卻回 pass** |
+| span 互斥 | 兩個 item 不該拿到同一段 bytes。注意:partition invariant(零 silent drop)**不承諾**這件事 |
 | FP(false positive)| 偽陽性:該判 fail 卻判 pass。這份文件裡最該死的一類錯 |
 | sensitivity / specificity | 抓得到壞的能力 / 不冤枉好的能力 |
 | Rogan-Gladen | 用已知的 sensitivity/specificity 反推真實比例的修正法 |
@@ -383,41 +387,61 @@ GS:**沒修**。因為它是**另一個 class**——GS 的紙條指向的是**�
 
 ---
 
-## FG-SEC-009: pre-2001 純文字 SGML filing 完全不支援(誠實 unsupported,非 crash 非假 pass)
+## FG-SEC-009: pre-2001「不支援」的 root cause 是假的——normalize 把換行吃掉,而這條 FG 把它凍結成了規格
 
-**【系統的主張】** ——這次系統一句話都沒主張。
-**【去測】** 丟 1996 年的 AAPL 10-K 和 1997 年的 KO 10-K 進去。那個年代的申報是**純文字**,沒有 HTML 標籤。
-**【判定】** 22 個 item 全部 missing,coverage **0.0**。
+**這條原本是這份畫廊裡最漂亮的一條:「誠實 unsupported」。它現在是最丟臉的一條。**
 
-**這裡有三種可能的死法,我要指出系統死成哪一種:**
+**【系統的主張(這條 FG 的舊版本)】** 1996 的 AAPL 10-K 和 1997 的 KO 10-K,22 個 item 全 missing、coverage 0.0——但一個字都沒丟。**這是誠實的 unsupported,root cause 是「detection is HTML-oriented」。**
+**【我的自我攻擊】** 「誠實 unsupported」也是一種宣稱。那句 root cause,有人去驗過嗎?
+**【去測】** 同一個 detector,餵它一份**保留了行結構**的純文字。
+**【判定】** **root cause 是假的。** detector 從頭到尾沒壞。壞的是它上游:`normalize._emit_text` 只在 BLOCK_TAGS 產生換行,純文字節點裡的 `\n` 被當一般空白吃掉——AAPL FY1996 的 **6,246** 個換行塌成 **51** 個,最長一行 **74,186** 字元。detector 拿到的是一坨,當然 0 candidate。把行結構還給它,同一個 detector 吐 **16** 個候選。
 
-| 死法 | 會發生什麼 | 這次是嗎? |
+**前→後(全部由 tracked fixture 重算,見下方重跑指令):**
+
+| 量測 | 修復前 | 修復後 |
 |---|---|---|
-| crash | 程式炸掉,什麼都沒有 | 否——normalize 正常,256,658 / 315,036 chars 全部保留 |
-| 假 pass | 硬抽一些垃圾出來標 pass | 否——detect_candidates 誠實回 0 |
-| 誠實 unsupported | 說「這個格式我不會」,但**一個字都沒丟** | **是** |
+| AAPL FY1996 normalized newlines | 51(raw 有 6,246)| **4,724** |
+| AAPL FY1996 最長一行 | 74,186 字元 | **79** |
+| AAPL FY1996 heading candidates | 0 | **16** |
+| KO FY1997 heading candidates | 0 | **18** |
+| AAPL FY1996 item status | 22 missing + 1 reserved | **7 pass / 2 partial / 6 IBR / 8 missing** |
+| KO FY1997 item status | 22 missing + 1 reserved | **6 pass / 9 IBR / 8 missing** |
+| AAPL FY1996 coverage | 0.0 | **0.6788** |
+| KO FY1997 coverage | 0.0 | **0.2126** |
+| filing_class | non_10k | **standard** |
 
 | 欄位 | 內容 |
 |---|---|
 | Failure ID | FG-SEC-009 |
-| App | sec_extractor(format-source stratification)|
+| App | sec_extractor(normalize)|
 | Input | AAPL FY1996(0000320193-96-000023)、KO FY1997(0000021344-98-000004)pre-2001 純文字 SGML 10-K |
-| Expected | 切出 Item 1/1A/7/8 等 body span |
-| Actual | normalize 正常(256,658 / 315,036 chars 保留)但 detect_candidates 回 0(HTML-oriented,依賴 block-tag line 結構),22 item 全 missing + 1 reserved,coverage 0.0,filing_class 降為 non_10k |
-| Status | 誠實 unsupported;partition invariant 仍成立(tiled=true,整份為單一 unclassified block,零 silent drop)——「先全抓再分類」原則的正面示範 |
-| Failure Type | format-era 不支援(HTML normalizer 用在 plain-text SGML)|
-| Evidence | `data/sec_eval/stratification/stratification.json` era_strata_runs[text_pre2001] |
-| Root Cause | normalize 只在 BLOCK_TAG 邊界 emit newline,純文字的 `\n` 被 `_emit_text` 當一般空白折疊 → heading 不在 line start、無 bold/heading flag → 0 candidate |
-| Repair Attempt | 無(pre-2001 世代非本波範圍;正解是 text-mode normalizer,或維持 unsupported class)|
-| Related Commit | a55d773 |
+| Expected | 切出 Item 1/2/7/8 等 body span |
+| Actual(修復前) | detect_candidates 回 0,22 item 全 missing + 1 reserved,coverage 0.0,filing_class 降為 non_10k。**且本 FG 與 manifest 把這個狀態記載為「expected unsupported」** |
+| Status | **fixed**(commit dfc3378;`NORMALIZATION_VERSION` 1.0 → 1.1)|
+| Failure Type | `normalize_line_collapse`(**原記載為 format-era 不支援——那是假的 root cause**)|
+| Evidence | `tests/test_text_mode_normalize.py`;manifest `data/sec_eval/fixtures/manifest.json` FG-SEC-009(`failure_type: normalize_line_collapse` / `status: fixed`,checks 已改為釘住修復後的真實行為)|
+| Root Cause | `normalize._emit_text` 只在 BLOCK_TAGS 邊界 emit newline;純文字 filing 的**全部結構就在那些 `\n` 裡**,被當成一般空白折疊掉 → 整份塌成 52 行 → heading 不在行首 → 0 candidate。**detector 沒有任何問題** |
+| Repair | `normalize` 加 text mode(`looks_like_plain_text`):純文字/SGML 保留行結構。`norm_to_raw` offset map 仍逐字精確——**多抽幾個 item 不能拿 source-exact 保證去換** |
+| 回歸邊界 | HTML 時代輸出**逐位不變**:5 個 HTML fixture + 3 個 HTML 測試檔的 text 與 `norm_to_raw` 逐 byte 相同 |
+| 殘留 | 那 8 個 missing 是**該年代不存在的 item code**,標 missing 正確(AAPL:1A/1B/1C/7A/9A/9B/9C/16;KO:1A/1B/1C/9A/9B/9C/15/16——**兩家的清單不同,不是同一組**)。AAPL 的 14/15 共用同一段,見 FG-SEC-011。era-aware schema mapping 未實作 |
+| Related Commit | a55d773(引入並凍結)→ dfc3378(修復 + 重指 root cause)|
 
-**「partition invariant 仍成立」翻成人話:** 我把整份文件切成一塊一塊,這些塊拼起來必須**剛好等於原文,不多不少**(`tiled=true`)。這次雖然一個 item 都沒分類出來,但整份文件變成**一個「未分類」的大塊**——**零 silent drop,一個字都沒有偷偷消失。**
+**這條真正的教訓不是「pre-2001 很重要」,是下面這三層剛好互相對上:**
 
-**這就是「先全抓再分類」原則的正面示範:** 先保證全部抓進來,再談分類。分類失敗的代價是「不知道這是什麼」,而不是「這段不見了」。
+1. 一個假的 root cause(「detection is HTML-oriented」);
+2. 一條 **manifest check 把它凍結成 `all_items_status_in: [missing, reserved]`**,理由欄寫著 "detection is HTML-oriented",**由 CI 保護**;
+3. 一份對外文件把它解釋成時代邊界。
 
-**根因白話:** normalizer 是給 HTML 寫的,它靠 HTML 的區塊標籤決定哪裡換行。純文字檔裡真正的換行符 `\n`,被當成一般空白折疊掉了 → 標題不在行首、沒有粗體旗標 → 偵測器一個候選都找不到。**不是它笨,是我拿量身高的尺去量體重。**
+**三層全部一致,所以沒有人會發現。** `tests/test_landmines.py` 的 STRATS 測試同屬這一類凍結,已改寫成釘住它真正該守的不變量(零 pass/partial、全 needs_review、span 是真實 source-exact 目錄行、`text_sha256` 保持空)。
 
-> **不是「系統在 1996 年的檔案上失敗了」,是「系統在 1996 年的檔案上說『我不會』,而且沒弄丟任何一個字」。會做和知道自己不會做,是兩種能力。**
+**我要主動指出這件事最難堪的地方:「誠實揭露」本身也需要被驗證。** 一個沒被驗證過的 root cause,加上一個守著它的測試,再加上一段寫得很好聽的「誠實 unsupported」敘事——**它不會比一個 silent failure 更安全,它只是更難被抓到。**
+
+**還有一半我沒有推翻,照樣留著:** 修復前的 partition invariant 確實成立(tiled=true、零 silent drop),「先全抓再分類」原則確實接住了它——**那部分是真的。錯的只有「為什麼」。**
+
+- 重跑:`.venv\Scripts\python -m pytest tests/test_text_mode_normalize.py -q`
+- 重算上表:對 `data/sec_eval/fixtures/` 的 `AAPL_FY1996` / `KO_FY1997` fixture 跑 `sec_core.pipeline.extract_from_html` 與 `sec_core.headings.detect_candidates`
+
+> **不是「系統在 1996 年的檔案上說了『我不會』」,是「系統在 1996 年的檔案上會,但我先寫錯了原因、再用測試把那個錯誤原因鎖起來、然後對外宣布這是誠實」。**
 
 ---
 
@@ -692,6 +716,203 @@ second judge 判 no,而且它是對的。**但我還是不改判,理由三句話
 
 ---
 
+# 第五段:2026-07-16 自我攻擊波
+
+以下 4 條由一次「拿題目原文逐字對照 code」的自我攻擊抓出(commit dfc3378 + aa1c039,均已部署、CI 綠)。這一波跟前四段有一個性質差異,值得先講:
+
+**前面幾波抓的是「系統做錯了卻說做對」。這一波抓的是「文件說有、code 說沒有」——而且文件不是唬爛,是東西真的寫好了,只是沒接線。** 這種錯誤沒有任何 metric 會叫,因為每個零件單測都綠。
+
+同一波的 FG-SEC-009 已改寫在上一段(它的 root cause 被實測反證),請對照著讀。
+
+---
+
+## FG-SEC-010: Part 層級的一句散文打發掉整個 Part III(Berkshire 類),回 missing 且不叫人複核
+
+**【系統的主張】** Berkshire FY2025 的 Items 10–14:`missing`,confidence **0.0**,**needs_review=false**。
+**【我的自我攻擊】** confidence 0.0 是「我完全沒把握」。**完全沒把握,卻不叫人看?** 那正文到底寫了什麼?
+**【去測】** 打開 Part III。
+**【判定】** 它逐字寫著:「information required by this Part (Items 10, 11, 12, 13 and 14) is incorporated by reference from the Registrant's definitive proxy statement」。**答案就印在那裡,我沒看到。**
+
+**失手的原因很具體:我的既有偵測是逐 item heading 導向的**——它會找「Item 10.」「Item 11.」然後看那底下寫什麼。Berkshire 根本沒有那些標題,它用**一段 Part 層級的散文**把五個 item 一次打發掉。**我的尺是逐格量的,它是整排寫的。**
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-SEC-010 |
+| App | sec_extractor(cross_ref)|
+| Input | Berkshire Hathaway FY2025(CIK 1067983,accession 0001193125-26-083899)Items 10–14 |
+| Expected | 反映「本 Part 的內容以引用方式併入 proxy statement」 |
+| Actual(修復前) | Items 10–14 全部 `missing` / confidence **0.0** / **needs_review=false**——沒把握,卻不叫人看 |
+| Status | **fixed**(commit dfc3378)|
+| Failure Type | Part-level incorporation-by-reference 未偵測(+ 零信心卻不 flag)|
+| Evidence | `tests/test_part_level_incorporation.py`;fixture `tests/fixtures/BRK_FY2025_part3_excerpt.htm` |
+| Root Cause | 既有 IBR 偵測是逐 item heading 導向;此份是 **Part 層級的一段散文**,涵蓋的 item 沒有自己的標題,於是逐 item 掃描一個都打不到 → missing / conf 0.0 |
+| Repair | `cross_ref` 解析 Part 層級宣告 → 涵蓋的 item 標 `incorporated_by_reference` / provenance `cross_reference_pointer` / `needs_review=true`,**宣告句本身留 source-exact span**。**絕不猜正文** |
+| 前→後 | Items 10–14:`missing` / 0.0 / false → `incorporated_by_reference` / **0.25** / **true** |
+| 誤報量測 | 全 corpus **12 份文件命中 1 次,零誤報** |
+| Related Commit | dfc3378 |
+
+### 第二張網:零信心安全網(獨立於上面那個修復)
+
+**修掉 Berkshire 只是修掉「我這次沒想到的那一個」。所以我加了第二張網,而且它跟上面的偵測器完全獨立:**
+
+**任何 `status=missing` 且 `confidence=0.0` 的 item,一律強制 `needs_review=true`。**
+
+**前→後:全 corpus「confidence 0 卻不叫人複核」的 item **51 → 0**。**
+
+**為什麼第二張網比第一個修復重要?** 因為第一個修復擋的是 Berkshire 這一類——**我已經看見的**。第二張網擋的是「confidence 0.0 卻裝作有定論」這個**形狀**,不管底下是哪一種病。conf 0.0 的 missing 可能真的是該 item 不存在(例如該年代沒有這個 code),也可能是我沒找到——**這兩件事只有人分得出來,所以就該給人分。**
+
+> **不是「我修好了 Berkshire」,是「我修好了 Berkshire,然後假設還有一堆我沒看到的 Berkshire,所以加了一張不認得 Berkshire 也會響的網」。**
+
+---
+
+## FG-SEC-011: 兩個 item 解析到同一段 bytes,兩個都不叫人複核
+
+**【系統的主張】** AAPL FY1996 的 Item 14 和 Item 15 都抽到了。
+**【我的自我攻擊】** 都抽到了?那它們的 span 各是什麼?
+**【去測】** 印出來比對。
+**【判定】** **完全相同的 span `[167211, 178039)`(10,828 字元),而且兩個都 `needs_review=False`。** 讀 Item 15 的人拿到的是 Item 14 的 bytes,**系統一聲不吭。**
+
+**這裡有一個很容易誤讀的地方,我先自己講清楚:這不是 pre-2001 的病。**
+
+一個**普通的現代合併標題**——`Item 1. Business and Properties`,經 `boundary._infer_combined_headings`——**一樣會產生共用 span**。1996 只是剛好踩到。所以主測試是那個合成的現代案例,FY1996 只是佐證。**如果我把它寫成「老檔案的毛病」,就等於在現代 filing 上留了一個沒人看的洞。**
+
+**還有一個更該指出的:** `coverage.py` 的 partition invariant(整份文件被完整切分、零 silent drop)**不保證 item span 互斥**——所以它結構上不可能替這件事作證。**我有一個看起來很像在守這件事的不變量,但它守的是另一件事。**
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-SEC-011 |
+| App | sec_extractor(pipeline / boundary)|
+| Input | AAPL FY1996 Items 14/15;**主案例是合成的現代合併標題** `Item 1. Business and Properties`(`boundary._infer_combined_headings`)|
+| Expected | 共用同一段 bytes 的 item 必須揭露這件事 |
+| Actual(修復前) | Items 14/15 解析到**完全相同**的 span `[167211, 178039)`(10,828 chars),**兩個都 needs_review=False** |
+| Status | **fixed**(commit aa1c039)|
+| Failure Type | shared-span silent ambiguity |
+| Evidence | `tests/test_shared_span_guard.py`(主測試=合成現代合併標題;FY1996=佐證)|
+| Root Cause | 合併標題(一個 heading 涵蓋兩個 item code)使兩個 item 解析到同一 span;partition invariant **不承諾 item span 互斥**,故無法攔截 |
+| Repair | 共用同一 span 的 item **全部**強制 `needs_review` + warning(帶 item code、span、字元數)。**只揭露歧義,不消歧**——不猜哪個 item 才對、不刪 item、不動 era mapping |
+| 例外(刻意) | `cross_reference_pointer` 排除在此網外:Berkshire Items 10–14 **本來就共用同一句 Part-level 宣告**,那是 pointer text 不是 item content,且 pointer 路徑已無條件 needs_review(實測 5/5)。**不排除的話,系統會說一句假話** |
+| 全 corpus 受影響 | **2**(僅 AAPL FY1996 的 14/15)|
+| 現代 filing 實測 | AAPL/KO/MSFT/NEM/JPM FY2025 + BRK FY2025 + 線上 TSLA/PFE **零共用 content span**——**但這是實證結果,不是結構保證**,已用測試釘住,變了 CI 會講話 |
+| Related Commit | aa1c039 |
+
+**修法的邊界我要講死:這張網只揭露歧義,不消歧。** 它不猜哪個 item 才是那段 bytes 的主人、不刪掉任何一個 item、不碰 era mapping。**因為系統手上真的沒有資訊可以決定**——同一個起點、同一個寬度,連 boundary tie-break 都無從下手。**沒有資訊的時候,唯一誠實的動作是把問題交出去,不是擲硬幣。**
+
+**那個 `cross_reference_pointer` 例外,是這條裡我最想被質疑的一步,所以我先自己說:** 看起來像是「為了讓數字好看而開的後門」。它不是。Berkshire 的 Items 10–14 共用一句 Part-level 宣告是**那份文件的事實**,那句話是 pointer 不是內容;而且 pointer 路徑**已經無條件 needs_review**(實測 5/5)。**如果不排除,系統會對著一個它已經舉手的東西再舉一次手,並宣稱那是一個新發現的歧義——那是一句假話。**
+
+### 已知未解:era-aware schema mapping(不修,而且說清楚為什麼)
+
+FY1996 的 `Item 14. Exhibits… and Reports on Form 8-K` 在語意上對應**現代的 Item 15**;而現代的 Item 14(Principal Accountant Fees and Services)**1996 年根本不存在**。
+
+**系統目前把那一段 span 同時給了 14 和 15,只標 needs_review,不解決。**
+
+**為什麼不順手解掉?** 因為要解它就得引進一張「年代 → item schema」的對照表,而那張表的每一格都是我對法規沿革的**猜測**,沒有 oracle 可以驗。**用一個沒被驗證的假設去消滅一個已被誠實揭露的歧義,是把問題從『看得見』改成『看不見』。** 上面 FG-SEC-009 就是這麼來的。
+
+> **不是「兩個 item 都抽到了」,是「兩個 item 拿到同一段 bytes,而其中至少一個是錯的——我不知道是哪一個,所以我兩個都舉手」。**
+
+---
+
+## FG-BROWSER-009: LLM 自己寫的驗證條件 `answer_matches:.+` 對任何非空答案都成立 → pass / confidence 1.0
+
+**【系統的主張】** HN 第一名標題這題:**pass**,confidence **1.0**。滿分。
+**【我的自我攻擊】** 憑什麼滿分?那條驗證條件長什麼樣?
+**【去測】** 打開來看:`answer_matches:.+`。
+**【判定】** **這是專案自己定義的 vacuous pass。** `.+` 對**任何非空字串**都成立——agent 交回任何東西都會 pass。這個條件證明的不是「答案對」,是「答案不是空的」。而系統據此給了自己 **confidence 1.0**。
+
+**這一條最該被注意的不是它有多蠢,是它躲過了哪一道防線。** FG-BROWSER-007 的 baseline-subtraction 擋的是「**在 agent 動手前就成立**」的條件(premature landmark)。`.+` **在 t0 不成立**(那時還沒有 answer)——它完全合法地通過了那道門。**同一種病的另外一半:一個擋「一開始就成立」,擋不掉「對任何答案都成立」。**
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-BROWSER-009 |
+| App | browser_agent / verifier(answer_matches 條件品質)|
+| Input | 部署路徑上 planner 自選條件 `answer_matches:.+`(線上重現:HN #1 標題任務)|
+| Expected | 一個對任何答案都成立的條件不能當成證據 |
+| Actual(修復前) | 條件成立 → **pass / confidence 1.0**;該條件對答案內容零約束 |
+| Status | **fixed**(commit dfc3378)|
+| Failure Type | 非鑑別性條件 → vacuous pass(**專案自己定義的那一種**)|
+| Evidence | `tests/test_non_discriminative_condition.py` |
+| Root Cause | `answer_matches` 只問「regex 是否 match」,從不問「這條 regex 有沒有鑑別力」。**verifier 檢查了條件成不成立,沒檢查條件值不值得成立** |
+| Repair | `answer_matches:<regex>` 先對 **22 條 decoy 語料**(正確 run 絕不會交出的文字)測命中率;≥ **0.5**(`_MAX_DECOY_HIT_RATIO`)即判定 non-discriminative:**不計為 satisfied evidence、不能 latch、判決封頂 `unknown`**。verifier 訊息帶實測命中數(`N/22 decoys`),不是形容詞 |
+| **答案照常交付** | 判 unknown **不影響交付**——答案還是交到使用者手上,只是系統不再說「我確定它是對的」 |
+| Related Commit | dfc3378(修復)→ aa1c039(修復它自己造成的迴圈回歸,見下方「FG-BROWSER-009 的回歸」)|
+
+### 門檻 0.5 是拍腦袋的嗎?我把分離度量出來
+
+**這是全條最該被攻擊的一步:0.5 這個數字哪來的?** 所以我不辯護,我量:
+
+| regex | decoy 命中 | 比率 | 判定 |
+|---|---|---|---|
+| `.+` | 22/22 | 1.0000 | non-discriminative |
+| `(?s).+` | 22/22 | 1.0000 | non-discriminative |
+| `[0-9]+` | 12/22 | **0.5455** | non-discriminative |
+| `\$[0-9,]+(\.[0-9]{2})?`(美元金額)| 0/22 | 0.0000 | 保留 pass 能力 |
+| `(19\|20)[0-9]{2}`(四位年份)| 2/22 | **0.0909** | 保留 pass 能力 |
+| 具體答案片語(`Codex Micro`)| 0/22 | 0.0000 | 保留 pass 能力 |
+
+**門檻 0.5 落在 0.5455 與 0.0909 之間的真實間隙裡**——不是我挑一個好看的數字,是量完之後那裡剛好有一條縫。**而且我把最尷尬的那一列留在表上:`[0-9]+` 命中 12/22 = 0.5455,只比門檻高 0.0455。它離邊界很近,我不假裝它離很遠。**
+
+### 線上重現:一個變壞的數字
+
+`pass` / confidence **1.0** → `unknown` / confidence **0.4**,而**答案仍正確交付**(`Codex Micro`,與真實 HN #1 逐字相同)。
+
+**這個修復讓成績單變難看了,這正是重點:** frozen IR suite 的 self-certified 因此掉到 **5/10**(見 `eval_report.md`)。**能力一分沒變——變的是我不再拿一個空條件替自己背書。**
+
+> **不是「條件成立所以答案對」,是「這條件連垃圾都會放行,所以它成不成立都不構成證據」。一把量什麼都是滿分的尺,不叫尺。**
+
+---
+
+## FG-BROWSER-010: 自修復 cascade 只跑在 scripted demo,部署路徑上 `repairs` 硬寫死 0
+
+**這條是「文件說有、code 說沒有」裡最貴的一種——因為它不是唬爛,東西是真的寫好了,只是沒接線。**
+
+**【系統的主張】** 我有完整的自修復梯:診斷 → hash rebind → a11y purpose scoring,有 ablation(關掉 −3/18)、有 shadow check、有 selector memory。
+**【我的自我攻擊】** 那**評審在前端打的那個任務**,走的是哪條路?
+**【去測】** 讀 `run_agentic()`——部署路徑。
+**【判定】** **`repairs` 硬寫死 0。** `_resolve_and_run` 那條梯只在 scripted `run()` 裡跑。selector memory 在部署路徑上**完全惰性**:全專案的 memory key **100% 是 `mockshop::*`**——真實網站一個都沒學過。
+
+**題目逐字要求的 "adjust locator strategies dynamically",在部署路徑上不存在。**
+
+| 欄位 | 內容 |
+|---|---|
+| Failure ID | FG-BROWSER-010 |
+| App | browser_agent / agent(`run_agentic` 部署路徑)|
+| Input | 部署/eval 走的 Agent Mode 路徑(評審在前端打的每一個任務)|
+| Expected | 部署路徑上失敗的 action 進入既有的診斷 → rebind → a11y 評分 cascade |
+| Actual(修復前) | `run_agentic` 的 `repairs` **硬寫死 0**;cascade 只在 scripted `run()` 執行;selector memory 惰性(memory key 100% `mockshop::*`)|
+| Status | **fixed**(commit dfc3378)|
+| Failure Type | 能力未接上部署路徑(文件與 ablation 皆為 Script Mode 事實)|
+| Evidence | `tests/test_agentic_repair_cascade.py` |
+| Root Cause | cascade 寫在 `_resolve_and_run`,只被 scripted `run()` 呼叫;`run_agentic` 的失敗 action 一律交還 planner 當 history,從不進梯 |
+| Repair | **重用既有 primitive** 接進 `run_agentic` 失敗路徑(**非平行實作**——平行寫一套等於多一套要維護、且兩套行為會漂)|
+| 前→後 | `repairs` **0(硬寫死)→ 1(真實)**;失敗後試過的 selector **1 → 2**;selector memory **從未存檔 → 學到 `news.ycombinator.com::agentic::result_link`** |
+| Related Commit | dfc3378 |
+
+**這條要記帳的地方在文件層,不在 code 層:** `docs/architecture.md` 當時**精確地**揭露了「repair cascade 只在 Script Mode 跑、`TaskRun.repairs` 恆為 0」——那句話是對的,而且是自己寫上去的。**問題是 README 仍把它列成 Task 1 的能力,還導引評審去點那個 scripted demo。**
+
+> **揭露放在對的地方才叫揭露,放在沒人讀的那一頁叫存檔。**
+
+---
+
+## FG-BROWSER-009 的回歸:誠實的判決不該花 78 倍時間(同波修復,commit aa1c039)
+
+**這一段是 FG-BROWSER-009 的修復自己惹出來的禍——上線之後我重測,量到一個回歸。**
+
+**它排在這裡而不是被吸收進 FG-BROWSER-009,是因為它回答一個獨立的問題:「修復本身有沒有被重測?」** 答案是有,而且抓到了。
+
+**【去測】** 同一個 HN 任務,修完 vacuous pass 之後再跑一次。
+**【判定】** llm_calls **1 → 18**、latency **3.2s → 249s**、答案被重複 append **18 次**。
+
+**根因是兩個出口同時失效:** `run_agentic` 唯一的提早出口是 `verdict.status == "pass"`,而且 verdict 非 pass 時它會**駁回 planner 的 done**。非鑑別性條件**永遠不可能滿足**——於是 pass 出口永遠等不到,done 出口永遠被駁回,迴圈燒完 max_steps。
+
+**修法的分界線要講精確,因為這裡最容易修過頭:** 「駁回一個 done」只有在**剩下的步數還可能讓條件成真**的時候才買得到東西。所以新增 `VerifierResult.unverifiable`,**只**標記「unknown **純因**條件無鑑別力」這一種情形——**證據缺失的 unknown 不受影響,仍然驅動迴圈**(那種 unknown 是真的可能再做出來)。出口改為 pass 或(unverifiable 且交付物存在)。
+
+**修復後(線上實測):** llm_calls **1**、latency **3,775 ms**、判決**仍是 `unknown` / 0.4**、答案 `Codex Micro` 與真實 HN #1 逐字相同。
+
+**注意判決沒有變好——那正是重點。** 我修的是「燒掉 78 倍時間」,不是「把 unknown 變成 pass」。**如果修完之後那個 unknown 消失了,那就代表我偷偷把 FG-BROWSER-009 修回去了。**
+
+> **不是「誠實的代價是慢」,是「誠實跟慢之間本來就沒有關係,是我把出口寫在了判決上」。**
+
+---
+
 # 誠實限制:還沒解決的,一張表列完
 
 每一列都直說:**這削弱了什麼、我還能宣稱什麼。** 全部來自上面各條的 Next Fix / Remaining Fix / 殘留 / 證據限制欄,沒有一列是新的。
@@ -703,7 +924,10 @@ second judge 判 no,而且它是對的。**但我還是不改判,理由三句話
 | 頁邊界啟發式;proxy-only 的 Item 10–14 維持誠實 pointer | 削弱「cross-reference-index filing 完全還原」;還能宣稱「同檔內的還原有 XBRL 3/3 佐證,跨檔的誠實標 pointer 不編造」 | FG-SEC-005 |
 | 三角驗證無仲裁者 | 削弱「我方 span 正確」的宣稱力;還能宣稱「歧異一律扣 confidence + needs_review,不單方判自己贏」 | FG-SEC-006 |
 | GS Item 1C 的 intra-item subsection pointer 超出本 pass 範圍(**open**)| 削弱「CYD coverage 全解」;還能宣稱「JPM class 已解(0%→100%,corpus 9/11→10/11),GS 維持誠實 pointer 並標明是另一個 class」 | FG-SEC-008 |
-| pre-2001 純文字 SGML 世代**不支援**(無修復)| 削弱「任何年代的 10-K 都能抽」;還能宣稱「誠實 unsupported、partition invariant 成立(tiled=true)、零 silent drop」。正解是 text-mode normalizer 或維持 unsupported class | FG-SEC-009 |
+| **era-aware schema mapping 未實作**(FY1996 的 Item 14 語意上對應現代 Item 15;現代 Item 14 該年代不存在)| 削弱「pre-2001 的 item 編號對得上現代 schema」;還能宣稱「該年代不存在的 code 誠實標 missing、共用 span 一律 needs_review,不猜、不消歧」 | FG-SEC-009 / FG-SEC-011 |
+| shared-span 安全網**只揭露歧義、不消歧**;「現代 filing 零共用 content span」是**實證結果不是結構保證** | 削弱「每個 item 的 bytes 都獨立可用」;還能宣稱「共用者全部 needs_review + warning 帶 span 與字元數,且現況由測試釘住,變了 CI 會講話」 | FG-SEC-011 |
+| Part-level IBR 偵測的**零誤報是 12 份文件上的實測**,不是證明 | 削弱「這個偵測不會誤報」;還能宣稱「12 份命中 1 次、零誤報,且宣告句留 source-exact span、絕不猜正文」。另有獨立的零信心安全網(51→0)兜底 | FG-SEC-010 |
+| 非鑑別性門檻 **0.5** 是量出來的間隙,不是定理;`[0-9]+` 的 0.5455 離門檻只有 0.0455 | 削弱「這條線放在正確的位置」;還能宣稱「分離度已實測並公開(22/22、12/22 vs 0/22、2/22),且判 unknown 不影響答案交付」 | FG-BROWSER-009 |
 | selector 漂移是 local mock site 的注入式漂移(可控、可重現)| 削弱「真實網站泛化」;還能宣稱「真實網站有初步外部量測 33.3%→44.4%→61.1%(合成估計、n 小),且明標不可與官方 leaderboard 比較」 | FG-BROWSER-001 |
 | 對抗式稽核的 per-agent 逐一輸出未完整留存 | 削弱「agent 數量 / 內部投票統計」的一切 claim(**不可重現,一句都不能講**);還能宣稱「workflow 方法留存,FG-SEC-001~004 各有 accession-level evidence/tests」 | 稽核方法本身 |
 | verifier landmark/grounding 契約量的是「頁面對」而非「交付對」(**已知結構性弱點**)| 削弱「pass = 使用者拿到有價值的東西」;還能宣稱「已知 skip-link 規則已修 + regression test;false pass 如實計入 61.1% 分子,不扣掉美化」。Remaining:(1) gate 擴充需由新失敗樣本驅動 (2) scorer 納入 answer 內容 (3) live 契約升級答案軸 | FG-BROWSER-008 |

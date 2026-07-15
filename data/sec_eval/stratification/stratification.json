@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-07-10T11:23:05Z",
- "user_agent": "wealth-eval [REDACTED-email]",
+ "generated_at": "2026-07-15T17:30:27Z",
+ "user_agent": "wealth-sec [REDACTED-email]",
  "purpose": "T2-4 stratified sampling by format source (era x filing agent); fills era/agent gaps left by the all-iXBRL scored sweep.",
  "efts_note": "forms= is exact-match ('10-K' excludes '10-K/A'); pre-2001 not in FTS index so sourced from the submissions API instead.",
  "baseline_scored_sweep": {
@@ -23,27 +23,27 @@
    "main_document": "0000320193-96-000023.txt",
    "served_as_text": true,
    "raw_chars": 271212,
-   "normalized_chars": 256658,
+   "normalized_chars": 256659,
    "detected_agent": "unknown/in-house",
    "era": "text_pre2001",
    "format_detail": "plain-text/SGML full submission (no HTML block tags)",
-   "filing_class": "non_10k",
-   "supported": false,
+   "filing_class": "standard",
+   "supported": true,
    "invariants": {
     "items_extracted": 23,
     "partition_tiles_whole_document": true,
-    "partition_blocks": 1,
-    "coverage_ratio": 0.0,
+    "partition_blocks": 22,
+    "coverage_ratio": 0.6788,
     "statuses": {
-     "missing": 22,
-     "reserved": 1
+     "pass": 7,
+     "missing": 8,
+     "incorporated_by_reference": 6,
+     "partial": 2
     },
-    "needs_review": 0,
-    "pass_items": 0
+    "needs_review": 20,
+    "pass_items": 7
    },
-   "pipeline_warnings": [
-    "no item heading candidates found \u2014 unsupported or non-10-K document"
-   ],
+   "pipeline_warnings": [],
    "target_stratum": "text_pre2001"
   },
   {
@@ -57,27 +57,26 @@
    "main_document": "0000021344-98-000004.txt",
    "served_as_text": true,
    "raw_chars": 377407,
-   "normalized_chars": 315036,
+   "normalized_chars": 315037,
    "detected_agent": "unknown/in-house",
    "era": "text_pre2001",
    "format_detail": "plain-text/SGML full submission (no HTML block tags)",
-   "filing_class": "non_10k",
+   "filing_class": "standard",
    "supported": false,
    "invariants": {
     "items_extracted": 23,
     "partition_tiles_whole_document": true,
-    "partition_blocks": 1,
-    "coverage_ratio": 0.0,
+    "partition_blocks": 20,
+    "coverage_ratio": 0.2126,
     "statuses": {
-     "missing": 22,
-     "reserved": 1
+     "pass": 6,
+     "missing": 8,
+     "incorporated_by_reference": 9
     },
-    "needs_review": 0,
-    "pass_items": 0
+    "needs_review": 20,
+    "pass_items": 6
    },
-   "pipeline_warnings": [
-    "no item heading candidates found \u2014 unsupported or non-10-K document"
-   ],
+   "pipeline_warnings": [],
    "target_stratum": "text_pre2001"
   },
   {
@@ -106,7 +105,7 @@
      "pass": 17,
      "missing": 6
     },
-    "needs_review": 2,
+    "needs_review": 14,
     "pass_items": 17
    },
    "pipeline_warnings": [],
@@ -139,7 +138,7 @@
      "missing": 3,
      "incorporated_by_reference": 5
     },
-    "needs_review": 1,
+    "needs_review": 11,
     "pass_items": 15
    },
    "pipeline_warnings": [],
@@ -173,7 +172,7 @@
     "incorporated_by_reference": 7,
     "reserved": 1
    },
-   "needs_review": 0,
+   "needs_review": 9,
    "pass_items": 15
   },
   "pipeline_warnings": [],
@@ -210,10 +209,10 @@
  },
  "coverage_matrix": {
   "text_pre2001": {
-   "unknown/in-house": 2
+   "unknown/in-house": 3
   },
   "html_2001_2008": {
-   "unknown/in-house": 1
+   "unknown/in-house": 2
   },
   "xbrl_2009_2018": {
    "unknown/in-house": 1
@@ -227,21 +226,30 @@
  "unsupported": [
   {
    "stratum": "text_pre2001",
-   "ticker": "AAPL",
-   "accession": "0000320193-96-000023",
-   "era": "text_pre2001",
-   "reason": "plain-text/SGML full submission (no HTML block tags)",
-   "items_extracted": 23,
-   "coverage_ratio": 0.0
-  },
-  {
-   "stratum": "text_pre2001",
    "ticker": "KO",
    "accession": "0000021344-98-000004",
    "era": "text_pre2001",
    "reason": "plain-text/SGML full submission (no HTML block tags)",
    "items_extracted": 23,
-   "coverage_ratio": 0.0
+   "coverage_ratio": 0.2126
+  },
+  {
+   "stratum": "trust_filer",
+   "ticker": "CORTS",
+   "accession": "0001068238-03-000185",
+   "era": "html_2001_2008",
+   "reason": "first-generation HTML (pre-XBRL)",
+   "items_extracted": 23,
+   "coverage_ratio": 0.1914
+  },
+  {
+   "stratum": "trust_filer",
+   "ticker": "STRATS",
+   "accession": "0000905148-06-002999",
+   "era": "text_pre2001",
+   "reason": "plain-text/SGML full submission (no HTML block tags)",
+   "items_extracted": 23,
+   "coverage_ratio": 0.0716
   }
  ]
 }

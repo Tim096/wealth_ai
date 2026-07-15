@@ -63,13 +63,39 @@ dashboard is served at `/dashboard`。**不是「請你 clone 下來自己跑」
 | GET | `/api/jobs/{id}/item?code=1A` | source-exact 原文(亦支援 `gap:<a>-<b>`、`ex:<n>`) |
 | GET | `/api/jobs/{id}/find?q=...` | 全文搜尋(items + gaps + exhibits) |
 | GET | `/api/jobs/{id}/raw` | 原始 filing byte-for-byte 下載 |
+| GET | `/api/jobs/{id}/normalized` | **offset 與 sha256 真正指向的那份 normalized 文字**;帶 `X-Normalized-Sha256` 與 `X-Normalization-Version` header |
 
-兩個值得單獨拎出來講的設計:
+三個值得單獨拎出來講的設計:
 
 - `GET /api/jobs` **含失敗案例**。白話:失敗的 job 跟成功的 job 排在同一張清單裡。
   一個只列得出成功案例的系統,你沒辦法知道它失敗率多高。
 - `source-exact` 原文 = 我回給你的字,是從原始檔裡照抄出來的,不是模型改寫過的
   摘要。**不是「模型說這段在講風險」,是「原始檔第幾個位元組到第幾個位元組,你自己看」。**
+- `GET /api/jobs/{id}/normalized` 是**讓上一條真的驗得動**的那一塊。raw HTML 跟
+  offset 指向的字串**不是同一個字串** —— 拿 raw 照 offset 剪,剪出來是 tag soup,
+  sha 對不上。所以驗證配方是:下載這個檔 → 取 `text[start:end]`(多段 item 就把
+  `source_ranges` 每段切出來接起來)→ 對 utf-8 bytes 算 sha256 → 等於該 item 的
+  `normalized_sha`。**offset 是 Python str / code-point 索引,要切解碼後的文字,不要
+  byte-slice。**
+
+### `normalization_version`:offset 只在同一個 normalizer 版本下有效
+
+`normalized_sha` / `offsets` / `source_ranges` **只對產生它們的那一版 normalizer 成立**,
+所以每個回傳都掛著版本:`/api/jobs/{id}`(job meta 與 item 的 `normalization_version`
+欄位)、`/api/jobs/{id}/item`、以及 `/api/jobs/{id}/normalized` 的
+`X-Normalization-Version` header。
+
+**現行值:`NORMALIZATION_VERSION` = `1.1`**(`packages/sec_core/normalize.py`)。
+
+| 版本 | 變更 | 對 offset 的影響 |
+|---|---|---|
+| 1.0 | — | — |
+| **1.1** | 新增 text mode(`looks_like_plain_text`):純文字 / SGML filing 保留行結構 —— pre-2001 的結構**全部在那些 `\n` 裡**,舊版把它們當空白吃掉 | **HTML 時代逐位不變**(text 與 `norm_to_raw` 皆 byte-identical);**純文字 filing 的 normalized text 與 offset 會改變**,1.0 時期存下來的 pre-2001 offset/sha 不可跨版沿用 |
+
+**為什麼要把這件事寫在 API 契約裡,而不是 changelog?** 因為 offset 是這個服務的**產品本身**。
+一個拿著 1.0 時期 offset 的使用者,在 1.1 上重驗 pre-2001 filing 會對不上 sha ——
+**這時候他該看到的是「版本不同」,不是「你的資料錯了」。** 版本欄位就是為了讓這句話
+講得出口。緣由(1.0 的行為是 bug 不是時代邊界)見 `docs/failure_gallery.md` FG-SEC-009。
 
 ## 要設哪些環境變數?
 

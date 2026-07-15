@@ -40,7 +40,7 @@ In plain terms: the demo buttons need no API key and always do the same thing �
 so a grader can reproduce them. The refused categories are not a capability gap;
 they are a line I drew on purpose.
 
-### 最新一次線上實測長怎樣?(Latest deployed Task 1 evidence, 2026-07-14)
+### 最新一次線上實測長怎樣?(Latest deployed Task 1 evidence, 2026-07-16)
 
 第一件事 —— **這是外部託管的迴歸測試,不是 held-out 估計。** 我把這句話放在數字前面,
 因為順序反過來就是包裝。
@@ -49,9 +49,9 @@ The frozen `live-mixed-interaction-v1` regression suite covers ten reversible,
 no-account tasks on six public domains: dynamic controls and waits, form fill +
 submit, keyboard input, new-tab following, cross-site navigation, and category,
 tag, and hierarchical navigation. Its ten granular task labels map to eight
-operation families. One scored run on commit `f384843` recorded mixed-operation
-pass **10/10**, 18 LLM calls, median latency **6.160 s**, inclusive p95
-**40.237 s**, **79,497** total tokens, and **$0.042266** total model cost; no
+operation families. One scored run on commit `aa1c039` recorded mixed-operation
+pass **10/10**, 16 LLM calls, median latency **5.831 s**, inclusive p95
+**28.609 s**, **70,955** total tokens, and **$0.036847** total model cost; no
 task crossed 60 s. This is an externally hosted regression suite, not a
 held-out estimate: reachability and feasibility were probed before freeze. See
 the frozen [mixed task set](data/browser_eval/live_mixed_interaction/tasks.json)
@@ -60,15 +60,28 @@ and [per-task results](data/browser_eval/live_mixed_interaction/results.json).
 The frozen `live-information-retrieval-v2` suite runs ten read-only answer tasks
 against ten public documentation/reference domains. The deployed agent receives
 only a generic answer-shape contract; the runner applies hidden gold offline.
-One scored run on direct `x-ai/grok-4.5` passed **10/10** with one LLM call per
-task, median latency **4.505 s**, inclusive p95 **7.333 s**, **36,207** total
-tokens, and **$0.015917** total model cost. No task crossed the 60 s slow
-threshold. See the frozen [task set](data/browser_eval/live_information_retrieval/tasks.json),
+One scored run on commit `aa1c039` (direct `x-ai/grok-4.5`) recorded **two
+separate numbers, and the gap between them is the point**:
+gold-pass **10/10** — every delivered answer is correct against hidden gold —
+but self-certified **5/10**. The other five it delivered correctly and then
+honestly refused to vouch for. One LLM call per task, median latency
+**3.599 s**, inclusive p95 **5.821 s**, **35,822** total tokens, **$0.015147**
+total model cost, no task over the 60 s slow threshold.
+See the frozen [task set](data/browser_eval/live_information_retrieval/tasks.json),
 [per-task results](data/browser_eval/live_information_retrieval/results.json),
 and [runner](tools/live_information_retrieval_eval.py).
 
 白話:agent 只拿到「答案該長什麼形狀」的通用契約,正確答案(gold)留在 runner 手上、
 離線比對 —— 考生看不到答案卷。
+
+**那個 10/10 vs 5/10 的落差,是這一版最該讀的數字。** 之前這裡寫的是單一個 10/10 ——
+而那個數字是假的:runner 當時要求「agent 自己判 pass」才給分,等於把外部 gold 從屬於
+考生的自我宣稱。更糟的是,agent 判 pass 的依據是 LLM 自己寫給自己的條件
+`answer_matches:(?s).+` —— **對任何非空答案都成立**。答案對不對它根本沒驗,它驗的是
+「有沒有東西」。現在條件若對 decoy 語料的命中率過高就不算證據,判決封頂 unknown;
+gold 歸 gold、自我認證歸自我認證,兩個數字分開報。**能力沒有變,變的是我不再拿
+「有交付」冒充「有驗證」。** 順帶一提,誠實化之後 median latency 從 4.505 s 掉到
+3.599 s、成本從 $0.015917 掉到 $0.015147 —— 這件事沒有付出代價。
 
 Neither suite replaces the historical frozen Online-Mind2Web result: the strict
 advisory WebJudge figure remains `21/283`.
@@ -132,9 +145,9 @@ see [docs/deploy.md](docs/deploy.md).
 | Area | Works well — reproducible examples | Does not work well — why |
 |---|---|---|
 | Task 1: UI drift and recovery | The deployed **自我修復(v2 介面漂移)** demo changes element IDs, adds a blocking cookie dialog, and introduces a decoy search button. Grounded action history also moves a deterministic three-shape recovery probe from `0/3` to `3/3`. | Highly dynamic or anti-bot sites can become unreachable or invalidate observations between steps. Login, CAPTCHA, purchases, posting, and irreversible workflows are deliberately refused instead of being presented as supported. |
-| Task 1: silent-failure prevention | The injection demo reaches all five adversarial traps in the undefended control but records defended ASR `0/5`; impossible and open-ended tasks end as `fail`/`unknown`, not a fabricated pass. | Real-web generalization remains the main weakness. On the frozen 300-task Online-Mind2Web run, 17 tasks were environment failures; the strict advisory WebJudge accepted only `21/283` completed trajectories. The planner, verifier, and external judge still disagree materially on ambiguous completion evidence. |
-| Task 2: standard modern 10-K | `AAPL`, `MSFT`, `JPM`, `XOM`, and the other tracked modern filings extract source-addressable Items with offsets, hashes, confidence, provenance, partition checks, and independent XBRL/topic signals. Try `AAPL` in the deployed UI. | `Intel`/`Citi`/`GE` cross-reference-index filings scatter substantive sections across printed-page ranges. Page-anchored Item bodies are now reassembled into source-exact `partial` spans (multi-range aware), but page-boundary alignment stays heuristic, XBRL-contradicted years (e.g. INTC FY2019 Item 8) are demoted to `unsupported` rather than shipped as `partial`, and Items pointing to a **separately filed proxy statement** stay `incorporated_by_reference` — never guessed text. |
-| Task 2: format variance | Same-file wrappers such as tracked `JPM`/`XOM` cases are reconstructed with page/section anchors and checked against XBRL/CYD evidence. Unsupported binary/PDF input is rejected without inventing Items. | Pre-2001 plain-text SGML examples (`AAPL` FY1996, `KO` FY1997) have headings that the HTML-oriented detector cannot reliably segment, so they return missing/unsupported coverage. Scanned PDFs need a separate OCR pipeline and are not supported. |
+| Task 1: silent-failure prevention | The injection demo reaches all five adversarial traps in the undefended control but records defended ASR `0/5`; impossible and open-ended tasks end as `fail`/`unknown`, not a fabricated pass. A condition that the decoy corpus also satisfies is no longer evidence: `answer_matches:.+` (22/22 decoys) caps the verdict at `unknown` instead of passing at confidence 1.0. | Real-web generalization remains the main weakness. On the frozen 300-task Online-Mind2Web run, 17 tasks were environment failures; the strict advisory WebJudge accepted only `21/283` completed trajectories. The planner, verifier, and external judge still disagree materially on ambiguous completion evidence. The verdict now abstains where it used to overclaim, but abstaining is not the same as verifying: free-form answers are still checked by shape, never for correctness. |
+| Task 2: standard modern 10-K | `AAPL`, `MSFT`, `JPM`, `XOM`, and the other tracked modern filings extract source-addressable Items with offsets, hashes, confidence, provenance, partition checks, and independent XBRL/topic signals. Try `AAPL` in the deployed UI. Held-out filings behave the same: `TSLA` 0.9011, `PFE` 0.8072, `BRK-B` 0.7835 coverage, Item 8 XBRL-certified, all under 2 s. | `Intel`/`Citi`/`GE` cross-reference-index filings scatter substantive sections across printed-page ranges. Page-anchored Item bodies are now reassembled into source-exact `partial` spans (multi-range aware), but page-boundary alignment stays heuristic, XBRL-contradicted years (e.g. INTC FY2019 Item 8) are demoted to `unsupported` rather than shipped as `partial`, and Items pointing to a **separately filed proxy statement** stay `incorporated_by_reference` — never guessed text. |
+| Task 2: format variance | Same-file wrappers such as tracked `JPM`/`XOM` cases are reconstructed with page/section anchors and checked against XBRL/CYD evidence. Pre-2001 plain-text SGML now extracts too (`AAPL` FY1996 7 `pass` + 2 `partial`, `KO` FY1997 6 `pass`). Unsupported binary/PDF input is rejected without inventing Items. | Pre-2001 item codes that did not exist in that filing's year return `missing` — the set is per-year, not one list (`AAPL` FY1996 misses 7A, `KO` FY1997 has it and misses 15 instead). Era headings that combine two items (FY1996 `Item 14. Exhibits… and Reports on Form 8-K`) resolve both codes to one span — flagged `needs_review`, not silently split. Era-aware schema mapping is not implemented, so coverage reads low where that era incorporated core items from the annual report (`KO` FY1997 0.2126). Scanned PDFs need a separate OCR pipeline and are not supported. |
 
 白話三個關鍵詞:**ASR**(attack success rate,攻擊得手率 —— `0/5` = 五種注入攻擊全部沒得手);
 **XBRL**(公司自己申報給 SEC 的結構化財報資料,可以拿來當獨立裁判);
@@ -171,7 +184,7 @@ Known limitations and planned experiments: [TODO.md](TODO.md).
 
 | 題目 | 內容 | 狀態 |
 |---|---|---|
-| 題目一 Browser Agent | 受控 action space、**preflight task contract 凍結並揭露條件來源**、deterministic verifier、a11y selector 自修復、selector memory、**Agent Mode(LLM 驅動,預設接 Codex OAuth via gateway)**、**卡住時自動視覺升級(SoM 截圖 + gpt-5.5 視覺)**、**答案交付通道(查數字/問答)**、code-enforced capability guard | **可執行**:selector-repair killer demo(`tools/browser_killer_demo.py`)+ live LLM 驅動(`tools/browser_agent_live.py`) |
+| 題目一 Browser Agent | 受控 action space、**preflight task contract 凍結並揭露條件來源**、deterministic verifier、**條件鑑別力檢查(擋 vacuous pass)**、a11y selector 自修復 + selector memory(**2026-07-16 起才真的接進部署路徑**,見下)、**Agent Mode(LLM 驅動,預設接 Codex OAuth via gateway)**、**卡住時自動視覺升級(SoM 截圖 + gpt-5.5 視覺)**、**答案交付通道(查數字/問答)**、code-enforced capability guard | **可執行**:selector-repair killer demo(`tools/browser_killer_demo.py`)+ live LLM 驅動(`tools/browser_agent_live.py`) |
 | 題目二 SEC Extractor | 10-K Item 1–16 source-exact 抽取、TOC 防禦、cross-reference-index 偵測、**same-file wrapper page-anchor 還原**、**多段頁碼 body 重組(`source_ranges[]`)**、**XBRL 認證(Item 8)**、**topic-consistency oracle(全 item)** | **可執行**:11 家真實 10-K + Intel(`tools/eval_one.py INTC`)/Citi(pseudo-ticker,`tools/eval_one.py CITI --cik 831001 --accession <acc>`)、`tools/certify.py` |
 | 共用層 | evidence schema / library、三態 verdict、eval case、LLM 成本紀錄 | Browser deployed path 會寫 EvidenceStore；SEC deployed path 目前以 raw bytes + offsets/hash + job payload 稽核，尚未注入 JSONL store |
 | Eval Dashboard | 兩題 eval、XBRL 認證、browser repair trace(真實數據) | `apps/web/eval-dashboard/`,自包含 HTML |
@@ -264,9 +277,13 @@ Task 1 用你自己的 **Codex OAuth**(預設走 gateway)實測:見 [docs/setup_
 |---|---|
 | standard | offset-exact span 抽取;Item 8 另經 XBRL 認證 |
 | cross_reference_index(Intel/Citi/GE) | 自動偵測;可解析的 item body 由印刷頁碼錨點還原成 source-exact span(`partial` / `resolved_from_page_anchor`),body 被 index 拆成多段時以 `source_ranges[]` **多段重組**(如 Intel MD&A);頁碼圖被財報數字表污染或 XBRL 矛盾者**誠實降級 `unsupported`**,無錨點者留 `incorporated_by_reference`,一律 `needs_review`,**絕不偽裝成內容** |
+| part_level_incorporation(Berkshire 類) | Part III 用**一句散文**打發掉整個 Part:「information required by this Part (Items 10, 11, 12, 13 and 14) is incorporated by reference from the …proxy statement」,沒有逐 item 標題。宣告句被解析成 source-exact span,涵蓋的 item 全標 `incorporated_by_reference` / `cross_reference_pointer` / `needs_review`,**絕不猜正文**。全 corpus 12 份文件只命中 1 次,零誤報 |
+| plain_text_sgml(pre-2001) | text-mode normalize 保留行結構後正常抽取(`NORMALIZATION_VERSION` 1.1);該年代不存在的 item code 誠實標 `missing`,合併標題造成兩個 code 共用同一段者一律 `needs_review` |
 | non_10k | 誠實標 unsupported |
 
 輸入:ticker+year / CIK+year / accession / SEC URL / HTML upload / TXT upload。掃描 PDF:`unsupported`(正確作法是 OCR,見 insights)。
+
+白話 `part_level_incorporation`:**這一類是評審用 Berkshire 打我打出來的。** 我原本的偵測是逐 item 標題導向,遇到「一句話打發整個 Part III」就全部回 `missing` —— 而且 `needs_review=false`,錯了還不叫人看。現在除了修掉它,還加了一張獨立的網:**任何 confidence 0 的 `missing` 一律強制 `needs_review`**(全 corpus 51 → 0)。第二張網比第一個修復重要 —— 它擋的是我還沒想到的那些。
 
 白話 `cross_reference_index`:有些公司的 10-K 正文長得像一份索引 ——「本項內容請見後面某段印刷頁碼」。我照著那個印刷頁碼把正文撈回來、標成 `partial`;撈不回來的就承認撈不回來。**不是抽不到就寫空字串,是抽不到就說抽不到。**
 
@@ -309,8 +326,14 @@ tests/      quick + Playwright/integration lanes；實際數量由 pytest collec
 - **token-level boundary 已量化(2026-07-10)**:char-offset F1(建構性 gold,regression baseline,敏感度注入驗證 0.9853)+ CYD 官方 iXBRL oracle(9/9 pass segment coverage 100%);人工標註的絕對正確率仍列 backlog。見 `docs/eval_report.md`。
   白話:**F1**(把「我抽的範圍」和「正確範圍」的重疊程度算成一個分數,愈高愈準);**iXBRL**(SEC 官方把標記直接埋進網頁裡的財報格式,可以當標準答案)。「敏感度注入驗證 0.9853」是元層動作 —— 我故意把資料弄壞,看偵測器會不會叫;它叫了。**結論從「沒發現問題」升級成「有能力發現問題、而且沒發現」。** 但注意最後半句:人工標註的絕對正確率仍列 backlog,也就是說這個 gold 是我建構的,不是人標的。
 
-- **pre-2001 純文字 SGML filing:Unsupported**(heading detector 0 candidate,誠實全 missing,partition invariant 仍成立)。見 `docs/supported_and_unsupported.md` format-era 支援表。
-  白話:2001 年以前的純文字財報,我的標題偵測器一個候選都找不到 —— 0 candidate。**不是勉強抽個七成充數,是全部誠實標 missing。**
+- **pre-2001「不支援」是我自己的 bug,不是時代邊界 —— 而且我把它凍結成規格(2026-07-16 修正)**:舊版說法是「heading detector 0 candidate,誠實全 missing」。**那個 root cause 是假的。** 實測:`normalize_html` 只在 block tag 產生換行,純文字節點裡的 `\n` 被當空白吃掉,AAPL FY1996 的 6,246 個換行塌成 51 個、整份變成 52 行(最長一行 74,186 字元)—— detector 拿到的是一坨,當然 0 candidate。同一個 detector 餵進保留行結構的文字就吐 16 個候選。加了 text-mode 分支後 AAPL FY1996 抽出 **7 pass + 2 partial**、KO FY1997 **6 pass**,HTML 時代輸出逐位不變(`NORMALIZATION_VERSION` 1.0 → 1.1)。見 `docs/supported_and_unsupported.md` format-era 支援表。
+  白話:**最丟臉的不是這個 bug,是我用一個測試(FG-SEC-009)把它凍結成「預期不支援」,還讓 CI 保護它,然後在 README 寫成時代邊界。** 一個假的 root cause + 一個守著它的測試 + 一份對外解釋 —— 三層都對上了,所以沒人會發現。這條的教訓不是「pre-2001 很重要」,是**「誠實揭露」本身也需要被驗證,否則它只是一個講得比較好聽的宣稱**。
+
+- **答案型任務:agent 判 pass 的依據曾經是零證據(2026-07-16 修正)**:LLM 自己寫給自己的驗證條件 `answer_matches:.+` 對任何非空答案都成立,系統據此判 **pass、confidence 1.0**。現在條件要先過鑑別力檢查:對 22 條 decoy 語料命中率 ≥50% 就不算證據(`.+` 命中 22/22、`[0-9]+` 命中 12/22;真實 shape 條件如美元金額 0/22、四位年份 2/22),判決封頂 `unknown`,答案照常交付。frozen IR suite 因此從「10/10 pass」變成誠實的兩個數字:**gold 10/10、自我認證 5/10**。
+  白話:**這是使用者以外唯一一個「我自己抓到自己說謊」的案例,而它躲過了前面所有防線** —— 因為 t0 baseline-subtraction 只擋「一開始就成立」的條件,擋不掉「對任何答案都成立」的條件。同一種病的另外一半,我花了很久才看見。修完之後那個漂亮的 10/10 就沒了,剩下 5/10 —— **但那 5 個是真的。**
+
+- **自修復 cascade 曾經只跑在 mock site,沒接到部署路徑(2026-07-16 修正)**:診斷 → hash rebind → a11y purpose scoring 這條梯寫得完整、有 ablation、有 shadow check —— 然後只在 scripted `run()` 裡跑。評審在前端打的每一個任務走的是 `run_agentic()`,那裡 `repairs` **硬寫死 0**、selector memory 完全惰性:全專案的 memory key **100% 是 `mockshop::*`**,真實網站一個都沒學過。題目逐字要求的 "adjust locator strategies dynamically" 因此在部署路徑上不存在。現已接上(重用既有 primitive,非平行實作):repairs 真實計數、memory 學到 `news.ycombinator.com::agentic::result_link`。
+  白話:**這條是「文件說有、code 說沒有」裡最貴的一種 —— 因為它不是唬爛,是真的寫好了,只是沒接線。** `docs/architecture.md` 當時精確揭露了「它只在 Script Mode 跑」,但 README 仍把它列成 Task 1 能力、還導引評審去點那個 scripted demo。**揭露放在對的地方才叫揭露,放在沒人讀的那一頁叫存檔。**
 
 - **Browser 4 個 measure-first 弱點已於 2026-07-10 修復**(verifier filename-needle bypass、query-echo silent failure、repair fallback 到不可行元素、bait-field tie-break;commit bcdc9cf / d5481eb):校準 specificity 0.9583→1.0、FP rate 0.0417→0.0、impossible silent_failure_rate 0.1→0.0、perception degradation curve 尾端 0.0→1.0。原 `test_known_*` 已翻寫為 `test_fixed_*` 並重跑 artifact。另修復開放式(零條件)任務 crash → 誠實 unknown(FG-BROWSER-006,commit f535c93)。逐條前→後見 `docs/failure_gallery.md` FG-BROWSER-002~006 與 `docs/eval_report.md`「修復迭代」段。
   白話 measure-first:**先寫一個會失敗的測試把弱點釘死,再去修。** 所以每一條都有「前→後」兩個數字,不是修完才回頭補一個好看的數字。

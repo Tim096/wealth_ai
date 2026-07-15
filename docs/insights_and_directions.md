@@ -95,7 +95,35 @@ OpenClaw / Hermes 這類「LLM 自主驅動瀏覽器」的核心迴圈就是:看
 
 JPM 1C 的 CYD coverage **0%→100%** 是這波最乾淨的對照錨:同一個 item、同一把官方尺,重組前 0%、重組後 100%。**不是我自己說變好了,是 SEC 的 oracle 說的。**
 
+### 延伸二:Part 層級的一句話,打發掉整個 Part III(Berkshire 類)
+
+**上面兩條的共通前提是「有 Item N 的標題可以掛」。Berkshire 連標題都沒給。**
+
+Berkshire FY2025(CIK 1067983,accession 0001193125-26-083899)的 Part III 逐字寫著:「information required by this Part (Items 10, 11, 12, 13 and 14) is incorporated by reference from the Registrant's definitive proxy statement」——**一段 Part 層級的散文,一次打發五個 item,沒有任何逐 item 標題。**
+
+**失手的形狀很具體:我的偵測是逐 item heading 導向的,它一格一格量;這份文件是整排寫的。** 結果:Items 10–14 全部 `missing` / confidence **0.0** / **needs_review=false**——**沒把握,還不叫人看。**
+
+修法(commit dfc3378):解析 Part 層級宣告 → 涵蓋的 item 標 `incorporated_by_reference` / `cross_reference_pointer` / `needs_review=true`,**宣告句本身留 source-exact span**。前→後:`missing`/0.0/false → `incorporated_by_reference`/**0.25**/**true**。全 corpus **12 份文件命中 1 次,零誤報**。
+
+**這一條的紅線跟 §2 是同一條,而且更該守:** Berkshire 的正文**真的在另外申報的 proxy statement 裡**,不在這份文件內。所以這裡**沒有任何「還原正文」的動作**——page anchor 那一套在這裡完全不適用,硬套就是編造。**我能給的只有「那句話在第幾個字到第幾個字」,這也正是我給的全部。**
+
+**還有一張獨立的網,比上面那個修復重要:** 任何 `status=missing` 且 `confidence=0.0` 的 item **一律強制 `needs_review=true`**。全 corpus「conf 0 卻不叫人複核」的 item **51 → 0**。**第一個修復擋的是我已經看見的 Berkshire;這張網擋的是「conf 0.0 卻裝作有定論」這個形狀——不管底下是哪一種我還沒想到的病。**
+
 **剩餘方向**:GS class——stub 指向自身已抽出 item 的內部子節(無附綁區塊),維持誠實 pointer;頁界/節界對齊可再精修(目前 needs_review)。
+
+### 已知未解:era-aware schema mapping(列出來,而且說清楚為什麼不做)
+
+pre-2001 的 filing 現在會抽了(text-mode normalize,見 `failure_gallery.md` FG-SEC-009),但**item 編號對不上現代 schema,這件事沒解**:
+
+- FY1996 的 `Item 14. Exhibits… and Reports on Form 8-K` 語意上對應**現代的 Item 15**;
+- 現代的 Item 14(Principal Accountant Fees and Services)**1996 年不存在**;
+- 系統目前把該 span **同時給 14 和 15**,只標 needs_review,不解決(FG-SEC-011)。
+
+**為什麼不順手做掉?** 因為要做就得引進一張「年代 → item schema」對照表,而那張表的每一格都是我對法規沿革的**猜測,沒有 oracle 可以驗**。這跟 §2 拒絕 title-based 抽取是同一個判斷:**頁碼是印刷廠印上去的,schema 對照表是我編的。**
+
+**更硬的理由:用一個沒被驗證的假設,去消滅一個已被誠實揭露的歧義,等於把問題從「看得見」改成「看不見」。** FG-SEC-009 就是這麼來的——一個沒被驗證的 root cause + 一個守著它的測試 + 一份講得很好聽的對外解釋,三層互相對上,於是沒人發現。**我不想在同一個檔案上再做一次。**
+
+> **不是「我還沒做 era mapping」,是「我不會用猜的去蓋掉一個我已經舉手的問題」。**
 
 ---
 

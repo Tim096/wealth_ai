@@ -466,7 +466,8 @@ flowchart TB
 - health check 等於 end-to-end 可用。
 - dashboard 會即時反映 production traffic。
 - Browser Agent 對所有網站泛化良好；login、CAPTCHA、不可逆操作本來就不支援。
-- SEC 已 join 另外**跨檔申報**的 proxy statement 正文(cross-reference-index 的 Item 10–14 維持 pointer;同檔印刷頁碼錨點的 Intel/Citi 正文已還原為 `partial`,不在此列)、或已處理 pre-2001 plain-text SGML 與 scanned PDF OCR。
+- SEC 已 join 另外**跨檔申報**的 proxy statement 正文(cross-reference-index 的 Item 10–14、以及 Berkshire 類 Part 層級宣告涵蓋的 Item 10–14,一律維持 pointer;同檔印刷頁碼錨點的 Intel/Citi 正文已還原為 `partial`,不在此列)、或已處理 scanned PDF OCR。
+- pre-2001 plain-text SGML 的 **item 編號對得上現代 schema**(格式本身已於 2026-07-16 支援,`NORMALIZATION_VERSION` 1.1;但 era-aware schema mapping 未實作 —— FY1996 的 Item 14 語意上是現代 Item 15,系統把該 span 同時給兩個 code 並標 needs_review,不消歧。見 `failure_gallery.md` FG-SEC-009 / FG-SEC-011)。
 
 ## 出問題時，先看哪裡？
 

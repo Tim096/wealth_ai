@@ -152,6 +152,25 @@ adjudicator tier(白話:當兩個候選答案打平時,才叫 LLM 來當裁判�
 
 > **不是「我的 agent 不花錢」,是「離線那套 by construction 就沒有 LLM 可花;真的上網,一題 $0.0058,帳在 artifact 裡。」**
 
+### 部署服務上的兩個 frozen suite,實際花多少?(2026-07-15 重跑,commit `aa1c039`)
+
+上面兩筆是 eval 通道的帳。**這一筆是評審真的會打到的那個服務的帳**——部署版本 `aa1c039e4d697c193f5b244f008db8230867f66c`、direct `x-ai/grok-4.5`,`--require-build-sha` 通過(線上 `build_sha` 與 runner HEAD 完全相同才准送題)。
+
+| Suite | LLM calls(total / median / max)| tokens(total / median / max)| 成本合計 | latency median | inclusive p95 | max | >60s |
+|---|---|---|---|---|---|---|---|
+| `live-information-retrieval-v2`(10 題 / 10 domain)| 10 / 1 / 1 | 35,822 / 3,509.5 / 4,681 | **$0.015147** | **3,598.5 ms** | 5,820.5 ms | 5,909.6 ms | 0/10 |
+| `live-mixed-interaction-v1`(10 題 / 6 domain)| 16 / 1.5 / 3 | 70,955 / 6,337.5 / 15,428 | **$0.036847** | **5,831.25 ms** | 28,608.905 ms | 31,191.5 ms | 0/10 |
+
+**逢數字必問 why —— 為什麼 mixed 的 p95(28.6 s)是 IR 的五倍?** 因為 IR 是**讀**(打開一頁、把答案挑出來,每題 1 次 LLM call 就夠),mixed 是**動**(等動態控制項、填表送出、開新分頁、跨站)。**尾巴長的不是模型,是網站**——median 只差 2.2 秒,p95 差 22.8 秒,這個形狀就是「大部分很快、少數要等網站」。
+
+**舊值(本波取代):** IR median 4.505 s / p95 7.333 s / 36,207 tokens / $0.015917(部署版本 `abc2e19e`);mixed 18 calls / median 6.160 s / p95 40.237 s / 79,497 tokens / $0.042266(部署版本 `f384843`)。
+
+**這裡有一個數字變好了,而我要說清楚它不是效能優化的功勞:** mixed 的 LLM calls **18 → 16**、p95 **40.2 s → 28.6 s**。同一批凍結任務、同一個模型,差異來自 `aa1c039` 把**迴圈出口從判決上解耦**——舊 code 只在 `verdict.status == "pass"` 才提早退出,遇到無鑑別力條件時兩個出口同時失效、燒完 max_steps(線上重現過 llm_calls 1 → 18、latency 3.2 s → **249 s**)。修完後同一題 llm_calls **1**、latency **3,775 ms**,**判決仍是 unknown**。**省下來的不是「跑得比較快」,是「不再為了一個永遠不可能滿足的條件空轉」。** 見 `failure_gallery.md`「FG-BROWSER-009 的回歸」段。
+
+**這兩列是 live 單跑,不是 SLA**——同前註記,wall 受網路與站點狀態主導。Artifacts:`data/browser_eval/live_information_retrieval/results.json`、`data/browser_eval/live_mixed_interaction/results.json`(各帶 `source_commit` / `deployment_attested` / `taskset_sha256`)。重跑指令見 `eval_report.md` 對應兩節。
+
+> **不是「誠實的判決比較貴」,是「我曾經把出口寫在判決上,所以誠實看起來很貴 —— 那是我的 bug,不是誠實的價格。」**
+
 ### 一題到底等多久、一次成功要花多少?(2026-07-11 實算,逐題資料)
 
 先翻術語:**p50** = 中位數(一半的題比它快);**p95** = 前 95% 的分界(只有最慢的 5% 比它更慢,用來看尾巴多長)。**cost-per-success** = 花掉的總錢 ÷ 真正做對的題數 —— **這比「平均一題多少錢」誠實**,因為做錯的題也是花了錢的。

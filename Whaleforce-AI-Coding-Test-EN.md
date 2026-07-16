@@ -23,7 +23,7 @@ Two tasks below. **Complete at least one**; completing both is a significant plu
 1. **AI-assisted workflow** — use any AI coding tools you find effective. We care less about the specific tool and more about how you used it to reason, implement, evaluate, and iterate.
 2. **Git** — public repo with commit history that reflects your actual development process
 3. **Frontend presentation** — every submitted task must be presented through a publicly accessible web frontend. Zeabur ([https://zeabur.com/](https://zeabur.com/)) is one acceptable deployment option, but not required. Do not submit only an API; include a URL where we can operate or inspect the system from the browser.
-4. **Prompt records** — l
+4. **Prompt records** — keep a `prompts/` folder in the repo root with your key prompts — we will actually read them
 5. **README** — how to run, key design decisions, where AI helped you
 6. **Analysis report** — include your analysis of runtime performance, cost, scalability, and how you verify correctness
 7. Public or self-created material only.

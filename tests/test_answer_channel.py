@@ -33,7 +33,7 @@ def obs(text="", url="https://example.com/"):
 
 def contract(pattern=ANSWER_RE):
     return BrowserTaskContract(
-        task_id="t", natural_language_task="找出頁面上的營收數字",
+        task_id="t", natural_language_task="Find the revenue figure on the page",
         expected_outcome="營收數字",
         success_conditions=[SuccessCondition(type="answer_matches", value=pattern)])
 
@@ -136,7 +136,7 @@ def test_extract_delivers_answer_and_passes(tmp_path):
     root = Path(__file__).resolve().parents[1]
     if not (root / "data" / "mock_sites" / "answer" / "index.html").exists():
         pytest.skip("answer fixture missing")
-    task = {"task_id": "ans", "natural_language_task": "找出頁面上的營收數字",
+    task = {"task_id": "ans", "natural_language_task": "Find the revenue figure on the page",
             "success_conditions": [{"type": "answer_matches", "value": ANSWER_RE}]}
     with sync_playwright() as p:
         b = p.chromium.launch(headless=True)
@@ -168,7 +168,7 @@ def test_done_without_extract_fails_despite_visible_answer(tmp_path):
     root = Path(__file__).resolve().parents[1]
     if not (root / "data" / "mock_sites" / "answer" / "index.html").exists():
         pytest.skip("answer fixture missing")
-    task = {"task_id": "ans-claim", "natural_language_task": "找出頁面上的營收數字",
+    task = {"task_id": "ans-claim", "natural_language_task": "Find the revenue figure on the page",
             "success_conditions": [{"type": "answer_matches", "value": ANSWER_RE}]}
     with sync_playwright() as p:
         b = p.chromium.launch(headless=True)

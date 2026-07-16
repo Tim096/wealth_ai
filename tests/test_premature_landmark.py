@@ -23,7 +23,14 @@ from browser_agent.observer import Observation
 from browser_agent.planner import LLMPlanner, _task_echo
 from browser_agent.verifier import subtract_baseline, verify_contract
 
-INTC_TASK = "找到 intc 10-k 的財報 找到裡面的最新的營收數字給我"
+# The task the user actually typed was Chinese:
+#   "找到 intc 10-k 的財報 找到裡面的最新的營收數字給我"
+# Since 2026-07-16 the capability guard refuses task text it cannot screen, so
+# the verbatim original now stops at `refused` and never reaches the verifier.
+# This file locks baseline-subtraction, not the guard: keep the property that
+# made the bug bite — the task text carries the "intc" token that any EDGAR
+# page also shows — and carry it in a language that still runs.
+INTC_TASK = "Find the intc 10-k filing and give me the latest revenue figure in it"
 
 
 def obs(text="", url="https://example.com/"):

@@ -23,7 +23,7 @@ def test_build_accepts_zero_success_conditions():
     拋 ValidationError(min_length=1)。修復後:合法建構,零條件、forbidden 保留。"""
     task = {
         "task_id": "open-t", "site": "v1", "kind": "open_ended", "query": "widget",
-        "natural_language_task": "找找有什麼有趣的商品",
+        "natural_language_task": "Browse and see what looks interesting",
         "success_conditions": [],
         "forbidden_conditions": [{"type": "error_text_visible", "value": "server error"}],
     }

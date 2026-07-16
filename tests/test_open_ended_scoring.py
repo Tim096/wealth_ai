@@ -121,7 +121,7 @@ def test_hallucinated_span_is_demoted_so_unconfirmed_task_abstains():
 
 
 def test_offline_extractor_abstains_never_fabricates_a_pass():
-    r = sj.score_open_ended("逛商店", "user browsed", EVIDENCE, sj.OfflineExtractor())
+    r = sj.score_open_ended("Browse the shop", "user browsed", EVIDENCE, sj.OfflineExtractor())
     assert r["verdict"] == "abstain" and r["score"] is None
     assert r["cost_usd"] == 0.0
 
@@ -132,7 +132,7 @@ def test_no_key_points_falls_back_to_expected_outcome_judgment():
         key_points=[],
         judgments=[{"extracted": "Search results", "judgment": "satisfied",
                     "reason": "catalog visible"}])
-    r = sj.score_open_ended("逛商店", "the catalog is visible", EVIDENCE, _llm(client))
+    r = sj.score_open_ended("Browse the shop", "the catalog is visible", EVIDENCE, _llm(client))
     assert r["verdict"] == "yes" and r["score"] == 1.0
     assert r["key_points"] == []
     assert "no key points extracted" in r["reason"]
@@ -206,7 +206,7 @@ def test_verify_forbidden_violation_beats_scoring():
     # scorer client is never called
     client = _ScriptedClient(key_points=["x"], judgments=[])
     contract = BrowserTaskContract(
-        task_id="open-f", natural_language_task="逛商店", expected_outcome="browsed",
+        task_id="open-f", natural_language_task="Browse the shop", expected_outcome="browsed",
         success_conditions=[],
         forbidden_conditions=[ForbiddenCondition(type="error_text_visible",
                                                  value="server error")])
@@ -331,7 +331,7 @@ def _run_open_ended_live(tmp_path, page_html, client):
     from browser_agent.memory_store import MemoryStore
 
     contract = BrowserTaskContract(
-        task_id="open-live", natural_language_task="找找 MockShop 有什麼有趣的商品",
+        task_id="open-live", natural_language_task="Browse MockShop and see what looks interesting",
         expected_outcome="user browsed the catalog", success_conditions=[])
     with sync_playwright() as p:
         b = p.chromium.launch(headless=True)

@@ -1109,7 +1109,7 @@ def test_open_ended_task_runs_to_unknown_not_error(tmp_path):
     if not site.exists():
         pytest.skip("mock site missing")
     contract = BrowserTaskContract(
-        task_id="open-ended", natural_language_task="找找 MockShop 有什麼有趣的商品",
+        task_id="open-ended", natural_language_task="Browse MockShop and see what looks interesting",
         expected_outcome="open-ended: no machine-checkable outcome",
         success_conditions=[])                      # the honest preflight answer
     with sync_playwright() as p:

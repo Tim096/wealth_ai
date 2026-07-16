@@ -13,7 +13,7 @@
 2. **§2 Backlog** —— 差距翻成 P0/P1/P2 待辦;§2.1 是 form-type→item-schema 的一手普查規格。
 3. **§3 Per-criterion 定位** —— 每個維度我強在哪、破在哪。
 4. **§4 引用來源與使用限制** —— 誰的東西、什麼授權、能當票還是能當 gold。
-5. **§5 完整性批判 + 各波實測** —— 別人挑我的漏,加上五波前景實測:F1 我輸、gate 多數 MISS,原樣印在這裡。
+5. **§5 完整性批判 + 各波實測** —— 別人挑我的漏,加上各波前景實測,原樣印在這裡:gate 多數 MISS;**F1 我輸了五波,第六波(2026-07-16)贏了 0.0091 —— 而那一波證明我前五波的「輸」有兩個是報錯的**,見文末終判。
 
 ## 1. 對照表:本 repo vs 各巨人(依評分維度)—— 同一個坑,誰踩過、誰修了?
 評等:**優** / **平** / **劣**(對方有、本 repo 沒有)。
@@ -229,6 +229,8 @@
 > **pseudo_gold AUROC 0.4288,比丟銅板還差。** 不是「訊號比較弱」,是這個弱老師在這個任務上根本沒有辨識力 —— 所以它只准當煙霧偵測器,絕不准拿來調參。
 > 錯誤的形狀也講清楚:**121 筆是「起點找對了、不知道該停」** —— recall 幾乎滿分、precision 被拖垮。這是 capture-first 的帳單,不是找不到章節。
 ### 終判 2026-07-10 18:05(end-boundary fix `3ba717b` 之後,fresh foreground rerun):單軸 F1,我贏了嗎?
+> **本節為時點紀錄,不覆寫。** 本節末的「2 筆 no-items filings 為最高槓桿」**算對了槓桿、歸錯了因**(判為 heading-undetectable cascade,實為自己的 normalize bug),並且順手把 EC 那兩筆估成「~0.9–0.99」—— 2026-07-16 從 artifact 逐筆重算是 **0.8346 / 0.88**。見文末「終判 2026-07-16」。
+
 結論:**raw 單引擎 macro-F1 我們沒有贏**——ours 0.5964 < datamule 0.6244(差 0.0280)< edgar_crawler 0.6332(差 0.0368)。end-boundary fix 上線且 707 tests 全過,但 rescan cut 在 30-slice 觸發 0 次(A-bucket 案例 per-item delta 全 0)——修法落地但在量測 slice 上無效,實測事實照錄。adapter 未做任何 convention-trim。
 
 | 系統 | macro-F1(NTU 30-slice) | scored / failures | 多 oracle 驗證(XBRL/CYD/topic/2-of-N) | 誠實 needs_review / 棄權 | 覆蓋保證(capture-first) | mutation harness |
@@ -243,6 +245,8 @@
 > **我輸了 0.0368,寫在這裡,不改判、不軟化。** 而且注意那個修法:end-boundary fix 上線、707 tests 全過,但在量測 slice 上觸發 0 次 —— 修法落地不等於修法有用,兩件事分開記。
 > 這張表右邊四欄才是我要的差異化:false-pass 100 筆是**我自己量、自己公布的**;其他三個引擎的 false-pass rate 不是 0,是**未知**。
 ### 終判 2026-07-10 18:40(furniture-strip 對抗裁決後,F1 線收束):把 TOC 導覽列砍掉,追得回來嗎?
+> **本節為時點紀錄,不覆寫。** 這裡的「CLOSED」在 2026-07-16 被推翻 —— 見文末「終判 2026-07-16」:F1 這條線不是被 tuning 打開的,是被一個我自己的 normalize bug 修復撞開的,而**當時判 CLOSED 所依據的那個「輸 0.0088」本身就報錯了**(分母偏誤,真實差距 0.0503)。
+
 結論:即使套用合法 TOC-strip,F1 仍未反超——post-strip 0.6244(投影,後經 landed 節實測)追平 datamule(0.6244,非「贏」),仍輸 edgar_crawler 0.0088;**F1 tuning 就此 CLOSED**,敘事轉可靠性/可驗證性差異化。
 錯誤更正(誠實記帳):18:05 點 3 判 furniture-fp「對雙方對稱、公平」**是錯的**,per-item probe 拆帳為混合——`Table of Contents` 導覽 backlink 一類**非對稱**(EC strip 掉、我們留著;典型 2713014 item14 一個 315-char span 因 doc-wide substring containment 灌 fp=100);非-TOC recurring furniture(公司頁眉)兩引擎逐筆相同,對稱;高-fp item(item15 fp=402、10216298 item2 fp=284)是真過抽,非 scorer artifact——殘餘 0.0088 是真 boundary bleed。
 
@@ -258,6 +262,8 @@
 > **我自己 18:05 的判斷是錯的,錯在哪、怎麼查出來的,寫在上面。** 這不是謙虛,是記帳:「對稱、公平」是我沒拆帳就下的結論,per-item probe 一拆就破。
 > 還有一條線我踩住了:broad furniture strip 能讓數字好看,但它會吃掉真實財務內容 —— **能漲分但非法,所以不採用**,連拒絕的理由都留了檔。
 ### 終判 2026-07-10 landed(TOC-navigation-backlink stripping 出貨,投影→實測):投影兌現了嗎?
+> **本節為時點紀錄,不覆寫。** 下表的 **ours 0.6245 / 輸 0.0087** 是本 repo 對外引用最久的一組 F1 數字,**兩個數字都錯**:0.6245 是我沒炸掉的 28 份平均、對手是 30 份平均(分母偏誤);共同基準下當時是輸 **0.0503**。現行值 ours **0.6423**(30/30,零失敗)、贏 edgar_crawler **0.0091**。見文末「終判 2026-07-16」。
+
 結論:TOC-strip 從投影升級為 shipped 兩層特性 + 實測——`normalize.py` `clean_slice()`(delivery 層;`_is_toc_backlink_line()` 要求整行 ∈ `_TOC_BACKLINK_PHRASES` 且整行非空白字元皆在 `FLAG_TOC_LINK` 錨點內)+ `pipeline.py` `clean_text_of()`;provenance 層 `slice()`/offsets/sha256/coverage 不動;head_to_head OURS adapter 改吃交付輸出(非 adapter-only trim;EC 自身就 strip,故對 EC no-op)。
 
 | 系統 | before(raw / pre-landing) | after(shipped clean delivery) | 對 ours 的落差 |
@@ -348,3 +354,45 @@ Pairing 更正(process-fix 首次執行):§gate 表引用的 before(AUROC 0.6307
 > **攔截 65.3% 首次 PASS,但 AUROC 0.6667 仍未通過 0.75 —— 不改判、不軟化。** 而且我要把攔截這個 PASS 的來源拆開講:**它幾乎全靠 IBR 那一側**(+35 錯全是 Part III proxy stub),margin 側只貢獻一點點。一個 gate 過了,不代表整個機制都行。
 > 三個候選訊號,**出貨兩個、判死一個** —— floor 在 held-out 上 20 發打中 18 發是正確的(誤傷),照 anchor-distance 的前例整段刪掉。炫技的正確姿勢不是把三個都留著報喜,是讓多數技巧誠實地失敗、只留站得住的那幾個。
 > 最後一句是給下一波的:**AUROC 0.75 在「封頂到 ~0.74」的機制下數學上已近不可達(模擬上限 ≈0.747)** —— 這不是找藉口,是承認我可能一開始就選錯了主指標:needs_review 通道(攔截 / false-pass)才是這個驗證器的主軸,AUROC 只是排序副指標。
+### 終判 2026-07-16(`36d42eb`,CI success):F1 這條線我判它 CLOSED,結果它自己開了 —— 而它開的方式,反證了我三個說法
+
+結論:**ours 0.6423 > edgar_crawler 0.6332,30/30 對 30/30,雙方零失敗 —— 六波以來第一次反超,而且我沒有為它寫過任何一行 F1 的 code。** 這一節不是勝利宣言,是三個更正。**先講更正,再講數字。**
+
+**時序讀,不要只讀最後一格:**
+
+| 我當時說 | 實際上 | 差在哪 |
+|---|---|---|
+| 「我輸 **0.0087**」(0.6245 vs 0.6332,上方 landed 節) | **我輸 0.0503**(0.5829 vs 0.6332) | 0.6245 是**我沒炸掉的 28 份**平均;0.6332 是對手**全部 30 份**平均。我拿自己的成功率去比對手的總平均。 |
+| 「**F1 tuning 就此 CLOSED**,敘事轉可靠性差異化」(18:40 節) | **我贏 0.0091**(0.6423 vs 0.6332) | 開這條線的不是 tuning,是 `dfc3378` 的 normalize text-mode 修復。**CLOSED 的判決本身是對的(tuning 確實榨不出來),但它遮住了一個不是 tuning 的槓桿。** |
+| 「2 筆 no-items filings 為最高槓桿」(18:05 節,判為 heading-undetectable cascade) | **是我自己的 normalize bug**,不是 cascade | 這一句離答案只差一步 —— **我算出了槓桿在哪,然後把它歸因給一個假 root cause,再用 FG-SEC-009 把那個假 root cause 凍結成規格、交給 CI 保護。** |
+
+#### 現行表(artifact `data/sec_eval/scoring/head_to_head.json`,30-slice)
+
+| 系統 | macro-F1(scored only) | macro-F1(全 30,失敗計 0) | scored / failures | 多 oracle 驗證 | 誠實 needs_review | mutation harness |
+|---|---|---|---|---|---|---|
+| **ours** | **0.6423** | **0.6423** | **30 / 0** | **有** | **有**(false-pass 自己量、自己公布) | recall 六類 1.0 |
+| edgar_crawler | 0.6332 | 0.6332 | 30 / 0 | 無 | 無(silent) | 無 |
+| datamule | 0.6244 | **0.5828** | 28 / 2 | 無 | 無 | 無 |
+| edgartools (5.42.0) | 0.4386 | **0.3802** | 26 / 4 | 無 | 無 | 無 |
+
+**為什麼要兩欄:`macro_f1_filings`(左)的分母是「引擎自己有辦法解析的 filing」—— 引擎自己的失敗會從自己的分數裡消失,愈脆弱的引擎排名愈高。** 舊版只報左欄,而舊版的我有 2 個失敗,**所以那張表在替我美化 —— 美化的位置正好在我寫著「誠實揭露輸」的段落底下。** 右欄分母固定 30,失敗計 0.0。**這個偏誤是在它對我不利時被我發現的**(它把我的真實差距 0.0503 縮成 0.0087,看起來只差一點點);現在它對我有利(datamule 0.6244→0.5828),**那更沒有理由不修。**
+
+#### 贏在哪:兩個 filing,兩個我親手判死的 filing
+
+不是 F1 tuning,是 `dfc3378` 消掉兩個 `no items extracted`:
+
+| filing | ours | edgar_crawler | 對照 |
+|---|---|---|---|
+| HNET NET(2001/04/30)| **0.9023** | 0.8346 | 我自己其他 28 份平均僅 0.6245 |
+| Integrated Electric Systems(2013/07/16)| **0.88** | 0.88 | 同上 |
+
+**兩份都遠高於我自己的平均,因為它們是純文字排版 —— 行結構最乾淨、最好切的檔。我凍結的不是一個時代邊界,是我自己的最佳表現。**
+
+#### 這一波最難看的一句
+
+**勝利在 artifact 裡躺了整整一天沒被發現。** `head_to_head.json` 最後寫入於 `69af928`,是 `dfc3378` 的祖先 —— **code 早就贏了,數字還在報輸。** 這是同一個病的第三次發作:寫好了沒接線、修好了沒重測。
+
+> **不是「我們終於贏了 edgar_crawler」,是「我贏了,而贏的過程證明我先前三個說法都有問題:報錯的分母、判錯的 root cause、過期的 artifact」。**
+> 而且要講清楚那個「差異化仍在驗證軸」的老說法現在該怎麼讀:我原本寫「我輸了 0.0087,但我是全場唯一能告訴你自己哪裡錯的人」。**那句話現在很諷刺 —— 我「唯一能自我審計」的那個能力,正好三件事都沒告訴我。** 差異化(多 oracle、needs_review、capture-first、mutation harness)還是真的,edgar_crawler 的 0.6332 依然是一個無法自我審計的數字;**但「能自我審計」這件事本身,現在也需要證據,不能靠宣稱。**
+> 軸差異聲明不變:NTU 論文的 BERT4ItemSeg **0.9825** 是 per-line BIO 監督式分類,本表是 zero-training 的 item 全文抽取 F1 —— **0.6423 反超 edgar_crawler 不代表接近 0.9825,兩者不同軸**(見上方「NTU benchmark 軸差異聲明」)。
+> 重跑:`SEC_EDGAR_USER_AGENT=<contact> .venv/Scripts/python tools/head_to_head.py --slice 30 --engines ours,edgartools,edgar_crawler,datamule`(cache-first,filing 已快取則無新網路);canonical 敘事見 `docs/eval_report.md` head-to-head 段。

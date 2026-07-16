@@ -410,6 +410,19 @@ GS:**沒修**。因為它是**另一個 class**——GS 的紙條指向的是**�
 | KO FY1997 coverage | 0.0 | **0.2126** |
 | filing_class | non_10k | **standard** |
 
+**這個 bug 有第二個後果,而我是一天後才發現的:它同時壓著 NTU head-to-head。**
+
+NTU 30-slice 裡有兩份純文字/SGML 檔,同一個 bug 讓它們回 `no items extracted` —— 我當時把這 2 個失敗記成「引擎失敗」,沒去問為什麼。修完之後兩份都有分,而且**分數遠高於我自己其他 28 份的平均 0.6245**:
+
+| filing | ours | edgar_crawler |
+|---|---|---|
+| HNET NET(2001/04/30)| **0.9023** | 0.8346 |
+| Integrated Electric Systems(2013/07/16)| **0.88** | 0.88 |
+
+連帶把 30-slice macro-F1 從 0.6245(28 份,2 失敗)推到 **0.6423**(30 份,零失敗),反超 edgar_crawler 的 0.6332。**這不是「修 bug 順便贏了」值得慶祝,是「我把兩份自己最擅長的檔案親手判死,還把死因寫成時代邊界」。** 那兩份是 pre-2001 與早期純文字排版 —— **正是行結構最乾淨、最好切的檔**,所以修好之後分數最高。**我凍結的不是一個邊界,是我自己的最佳表現。**
+
+而且這個翻盤在 artifact 裡躺了一天沒被發現:`head_to_head.json` 最後寫入於 `69af928`,是 `dfc3378` 的祖先 —— **code 早就贏了,數字還在報輸**(重生於 `36d42eb`)。逐筆數字與分母偏誤見 `eval_report.md` head-to-head 段。
+
 | 欄位 | 內容 |
 |---|---|
 | Failure ID | FG-SEC-009 |
@@ -424,7 +437,7 @@ GS:**沒修**。因為它是**另一個 class**——GS 的紙條指向的是**�
 | Repair | `normalize` 加 text mode(`looks_like_plain_text`):純文字/SGML 保留行結構。`norm_to_raw` offset map 仍逐字精確——**多抽幾個 item 不能拿 source-exact 保證去換** |
 | 回歸邊界 | HTML 時代輸出**逐位不變**:5 個 HTML fixture + 3 個 HTML 測試檔的 text 與 `norm_to_raw` 逐 byte 相同 |
 | 殘留 | 那 8 個 missing 是**該年代不存在的 item code**,標 missing 正確(AAPL:1A/1B/1C/7A/9A/9B/9C/16;KO:1A/1B/1C/9A/9B/9C/15/16——**兩家的清單不同,不是同一組**)。AAPL 的 14/15 共用同一段,見 FG-SEC-011。era-aware schema mapping 未實作 |
-| Related Commit | a55d773(引入並凍結)→ dfc3378(修復 + 重指 root cause)|
+| Related Commit | a55d773(引入並凍結)→ dfc3378(修復 + 重指 root cause)→ 36d42eb(重跑 NTU head-to-head,量出這個 bug 的第二個後果)|
 
 **這條真正的教訓不是「pre-2001 很重要」,是下面這三層剛好互相對上:**
 

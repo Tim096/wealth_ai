@@ -329,6 +329,13 @@ tests/      quick + Playwright/integration lanes；實際數量由 pytest collec
 - **pre-2001「不支援」是我自己的 bug,不是時代邊界 —— 而且我把它凍結成規格(2026-07-16 修正)**:舊版說法是「heading detector 0 candidate,誠實全 missing」。**那個 root cause 是假的。** 實測:`normalize_html` 只在 block tag 產生換行,純文字節點裡的 `\n` 被當空白吃掉,AAPL FY1996 的 6,246 個換行塌成 51 個、整份變成 52 行(最長一行 74,186 字元)—— detector 拿到的是一坨,當然 0 candidate。同一個 detector 餵進保留行結構的文字就吐 16 個候選。加了 text-mode 分支後 AAPL FY1996 抽出 **7 pass + 2 partial**、KO FY1997 **6 pass**,HTML 時代輸出逐位不變(`NORMALIZATION_VERSION` 1.0 → 1.1)。見 `docs/supported_and_unsupported.md` format-era 支援表。
   白話:**最丟臉的不是這個 bug,是我用一個測試(FG-SEC-009)把它凍結成「預期不支援」,還讓 CI 保護它,然後在 README 寫成時代邊界。** 一個假的 root cause + 一個守著它的測試 + 一份對外解釋 —— 三層都對上了,所以沒人會發現。這條的教訓不是「pre-2001 很重要」,是**「誠實揭露」本身也需要被驗證,否則它只是一個講得比較好聽的宣稱**。
 
+- **這個 bug 的帳單在 2026-07-16 才結出來,而它翻掉了我對外講最久的一個結論(commit 36d42eb)**:同一個 bug 讓 NTU ItemSeg 30-slice(外部人工標註 gold)裡的兩份純文字檔回 `no items extracted`,我把它們記成「引擎失敗」就沒再追。修完之後那兩份是 HNET **0.9023**(edgar_crawler 0.8346)、Integrated Electric Systems **0.88** —— **都遠高於我自己其他 28 份的平均 0.6245**。30-slice macro-F1 因此 0.6245 → **0.6423**,在 30/30 對 30/30、雙方零失敗下高過 edgar_crawler 的 **0.6332**、datamule **0.6244**、edgartools **0.4386**。這是本 repo 在唯一一組外部人工標註 gold 上第一次贏過全部 vendored baseline。**但這個數字不能單獨引用,否則它就是過度宣稱 —— 三件事必須跟它一起講:**
+  1. **我不是靠演算法贏的,是靠修掉自己的 bug 贏的。** F1 這條線我在 2026-07-10 親手判過 CLOSED、認過輸;開它的不是 tuning,是 `dfc3378` 的 normalize 修復。**而且我凍結掉的那一層,正是我表現最好的那一層**(純文字排版的行結構最乾淨、最好切)。
+  2. **我先前報的「輸 0.0087」是假的,共同基準下是輸 0.0503。** `tools/head_to_head.py` 舊版只報 `macro_f1_filings`,分母是「引擎自己解析得動的 filing」—— **引擎自己的失敗會從自己的分數裡消失,愈脆弱的引擎排名愈高**。當時我有 2 個失敗,所以那張表在替我美化(0.5829 vs 0.6332 才是共同基準)。現在兩種分母並列。**這個偏誤是我在它對我不利時發現的;現在它對我有利(datamule 0.6244→0.5828),那更沒有理由不修。**
+  3. **這個勝利在 artifact 裡躺了整整一天沒被發現。** `head_to_head.json` 最後寫入於 `69af928`,是 `dfc3378` 的祖先 —— **code 早就贏了,數字還在報輸。**
+
+  白話:**這條為什麼留在「哪裡還不行」,而不是搬到前面當賣點?** 因為它證明的不是我的 parser 比較強,是**我的自我審計連續漏掉三件事**:報錯的分母、判錯的 root cause、過期的 artifact。而「能自我審計」正是這個專案的賣點 —— **一個審計不到自己計分方式的系統,那句「能自我審計」就只是一句好聽的話。** 兩欄分母表、逐筆數字與時序見 `docs/eval_report.md` head-to-head 段;重跑 `SEC_EDGAR_USER_AGENT=<contact> .venv\Scripts\python tools\head_to_head.py --slice 30 --engines ours,edgartools,edgar_crawler,datamule`。
+
 - **答案型任務:agent 判 pass 的依據曾經是零證據(2026-07-16 修正)**:LLM 自己寫給自己的驗證條件 `answer_matches:.+` 對任何非空答案都成立,系統據此判 **pass、confidence 1.0**。現在條件要先過鑑別力檢查:對 22 條 decoy 語料命中率 ≥50% 就不算證據(`.+` 命中 22/22、`[0-9]+` 命中 12/22;真實 shape 條件如美元金額 0/22、四位年份 2/22),判決封頂 `unknown`,答案照常交付。frozen IR suite 因此從「10/10 pass」變成誠實的兩個數字:**gold 10/10、自我認證 5/10**。
   白話:**這是使用者以外唯一一個「我自己抓到自己說謊」的案例,而它躲過了前面所有防線** —— 因為 t0 baseline-subtraction 只擋「一開始就成立」的條件,擋不掉「對任何答案都成立」的條件。同一種病的另外一半,我花了很久才看見。修完之後那個漂亮的 10/10 就沒了,剩下 5/10 —— **但那 5 個是真的。**
 

@@ -66,6 +66,7 @@ pipeline 會先判定 filing class(`ExtractionResult.filing_class`),不同類走
 **所以這一列現在該怎麼讀,界線畫清楚:**
 
 - **能宣稱**:這個年代的 filing **會抽**;而且 HTML 時代輸出**逐位不變**(5 個 HTML fixture + 3 個 HTML 測試檔的 text 與 `norm_to_raw` 逐 byte 相同)——**多抽幾個 item 沒有拿 source-exact 保證去換。**
+- **這個 bug 的第二個後果,2026-07-16 才量出來:它同時壓著外部 benchmark。** NTU 30-slice 裡兩份純文字/SGML 檔被同一個 bug 判成 `no items extracted`,修完後 HNET **0.9023**(edgar_crawler 0.8346)、Integrated Electric Systems **0.88** —— **都遠高於我自己其他 28 份的平均 0.6245**,因為純文字排版的行結構最乾淨、最好切。**我當初標 Unsupported 的那一層,是我表現最好的那一層。** 連帶把 30-slice macro-F1 從 0.6245(28 份/2 失敗)推到 **0.6423**(30 份/零失敗),反超 edgar_crawler 0.6332(commit `36d42eb`,見 `eval_report.md` head-to-head 段)。**這不能當成本節的加分項** —— 它的意思是「一份寫著 Unsupported 的支援表,把自己最強的一格寫成了最弱的一格,而且有測試保護了它好幾天」。
 - **不能宣稱**:item 編號對得上現代 schema。**era-aware schema mapping 未實作**——FY1996 的 `Item 14. Exhibits…` 語意上對應現代的 Item 15,系統目前把該 span **同時給 14 和 15**,只標 needs_review,不猜、不消歧(見 FG-SEC-011)。
 - **KO 的 coverage 0.2126 為什麼這麼低?** 因為它那年真的有 **9 個 item 是 IBR stub**(指標段落本來就短),不是抽不到。**這正是 coverage 這把尺量不出「誠實指標」和「漏抽」差別的地方**——同一個低分,兩種完全不同的意思。
 

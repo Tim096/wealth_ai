@@ -210,6 +210,18 @@ def test_screen_task_refuses_login_and_purchase():
     assert screen_task("Search for widgets and read the results").allowed
 
 
+def test_screen_task_refuses_what_it_cannot_screen():
+    # The intent patterns are English-only, so a Chinese task once passed the
+    # guard unscreened on a Chinese-language UI. Fail closed, not open.
+    for zh in ("登入我的銀行帳戶", "購買第一個商品並結帳", "幫我付款下單", "發文到論壇"):
+        d = screen_task(zh)
+        assert not d.allowed
+        assert d.category == "unscreenable_language"
+    # Latin script still reaches the intent patterns, accents and all.
+    assert screen_task("Search the cafe menu for espresso").allowed
+    assert not screen_task("Log in to the café account").allowed
+
+
 def test_screen_action_refuses_password_and_checkout():
     pw = FillAction(target=ElementTarget(selector="#pw"), value="hunter2 password")
     assert not screen_action(pw).allowed

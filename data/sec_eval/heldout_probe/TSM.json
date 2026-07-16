@@ -1,0 +1,9 @@
+{
+  "ok": false,
+  "job_id": "984b19148703",
+  "kind": "extract",
+  "label": "TSM",
+  "status": "error",
+  "error": "NotA10KFilerError: TSM(TAIWAN SEMICONDUCTOR MANUFACTURING CO LTD) 未申報 10-K;該公司以 20-F(外國私人發行人年報)申報。實際 form 分布:6-K×1321, 4×135, SC 13G/A×44, 3×42, 20-F×26, SC 13G×13。本系統僅支援 10-K item 抽取,誠實拒絕而非硬抽。",
+  "trace": "Traceback (most recent call last):\n  File \"/src/apps/services/sec/jobs.py\", line 105, in _run\n    job.payload, job.state = fn()\n                             ^^^^\n  File \"/src/apps/services/sec/main.py\", line 375, in <lambda>\n    lambda: _run_extract(query, accession), memo_key=accession)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/src/apps/services/sec/main.py\", line 155, in _run_extract\n    annual = [f for f in resolver.annual_filings(cik) if not f.is_amendment]\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/src/packages/sec_core/resolver.py\", line 120, in annual_filings\n    raise NotA10KFilerError(\nsec_core.resolver.NotA10KFilerError: TSM(TAIWAN SEMICONDUCTOR MANUFACTURING CO LTD) 未申報 10-K;該公司以 20-F(外國私人發行人年報)申報。實際 form 分布:6-K×1321, 4×135, SC 13G/A×44, 3×42, 20-F×26, SC 13G×13。本系統僅支援 10-K item 抽取,誠實拒絕而非硬抽。\n"
+}

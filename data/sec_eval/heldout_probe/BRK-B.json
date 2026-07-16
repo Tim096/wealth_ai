@@ -1,0 +1,579 @@
+{
+  "ok": true,
+  "job_id": "a61405f70172",
+  "status": "done",
+  "meta": {
+    "source": "BRK-B",
+    "form": "10-K",
+    "report_date": "2025-12-31",
+    "accession": "0001193125-26-083899",
+    "filing_class": "standard",
+    "xbrl_item8": "certified",
+    "latency_ms": 2666,
+    "coverage": 0.7835,
+    "supported": true,
+    "pipeline_warnings": [],
+    "normalized_sha256": "5b758b86dbfbfb4d4acb66274c65aa25f145555733044674b079857f247140ec",
+    "normalization_version": "1.1"
+  },
+  "items": [
+    {
+      "code": "1",
+      "title": "Business",
+      "status": "pass",
+      "confidence": 0.68,
+      "risk_band": {
+        "band": "medium",
+        "label": "中風險",
+        "false_pass_rate": 0.2419,
+        "lo": 0.6,
+        "hi": 0.9,
+        "n": 124
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": true,
+      "chars": 126374,
+      "normalized_sha": "7791dd4503e85740ad4d7726a1c353dacf07ce6d33c9f121de3033e0c9a289c0",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "consistent",
+      "warnings": 1
+    },
+    {
+      "code": "1A",
+      "title": "Risk Factors",
+      "status": "pass",
+      "confidence": 0.72,
+      "risk_band": {
+        "band": "medium",
+        "label": "中風險",
+        "false_pass_rate": 0.2419,
+        "lo": 0.6,
+        "hi": 0.9,
+        "n": 124
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": true,
+      "chars": 21790,
+      "normalized_sha": "e35ba03eef231715bc03243181bf97c432c4bfbf5406b7506c1b602aa6b586aa",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "consistent",
+      "warnings": 1
+    },
+    {
+      "code": "1B",
+      "title": "Unresolved Staff Comments",
+      "status": "pass",
+      "confidence": 0.97,
+      "risk_band": {
+        "band": "low",
+        "label": "低風險",
+        "false_pass_rate": 0.1538,
+        "lo": 0.9,
+        "hi": 1.0,
+        "n": 273
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": false,
+      "chars": 41,
+      "normalized_sha": "4c494422dbacaf8985f876321dea32dd02ad7e05848bba081fdd78260d8132cc",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "boilerplate",
+      "warnings": 0
+    },
+    {
+      "code": "1C",
+      "title": "Cybersecurity",
+      "status": "pass",
+      "confidence": 0.72,
+      "risk_band": {
+        "band": "medium",
+        "label": "中風險",
+        "false_pass_rate": 0.2419,
+        "lo": 0.6,
+        "hi": 0.9,
+        "n": 124
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": true,
+      "chars": 3412,
+      "normalized_sha": "1f578031b5e138424802e9c308df171876fa406d05520cd92b7eda87382017f3",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "consistent",
+      "warnings": 1
+    },
+    {
+      "code": "2",
+      "title": "Properties",
+      "status": "pass",
+      "confidence": 0.92,
+      "risk_band": {
+        "band": "low",
+        "label": "低風險",
+        "false_pass_rate": 0.1538,
+        "lo": 0.9,
+        "hi": 1.0,
+        "n": 273
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": false,
+      "chars": 8482,
+      "normalized_sha": "0472dac4c76ba3567f03e23714968c95f3d49564da166b1b696bcd3c5d83f2d1",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "consistent",
+      "warnings": 1
+    },
+    {
+      "code": "3",
+      "title": "Legal Proceedings",
+      "status": "pass",
+      "confidence": 0.97,
+      "risk_band": {
+        "band": "low",
+        "label": "低風險",
+        "false_pass_rate": 0.1538,
+        "lo": 0.9,
+        "hi": 1.0,
+        "n": 273
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": false,
+      "chars": 1050,
+      "normalized_sha": "1f105294a5d6afb77e8068119e8157bf13c40fe9a74f6a4a4b0e5a3cdc7b932c",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "consistent",
+      "warnings": 0
+    },
+    {
+      "code": "4",
+      "title": "Mine Safety Disclosures",
+      "status": "pass",
+      "confidence": 0.72,
+      "risk_band": {
+        "band": "medium",
+        "label": "中風險",
+        "false_pass_rate": 0.2419,
+        "lo": 0.6,
+        "hi": 0.9,
+        "n": 124
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": true,
+      "chars": 3639,
+      "normalized_sha": "bce2073b984d8636ef1b278ff894ab000201e960d51dffb148cc9202830c40a5",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "consistent",
+      "warnings": 3
+    },
+    {
+      "code": "5",
+      "title": "Market for Registrant's Common Equity, Related Stockholder Matters and Issuer Purchases of Equity Securities",
+      "status": "pass",
+      "confidence": 0.96,
+      "risk_band": {
+        "band": "low",
+        "label": "低風險",
+        "false_pass_rate": 0.1538,
+        "lo": 0.9,
+        "hi": 1.0,
+        "n": 273
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": false,
+      "chars": 2884,
+      "normalized_sha": "33f213d5e9fea3ef86ee46c3d44415d6687d3e651af07f8eb385f72d4d3de386",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "consistent",
+      "warnings": 0
+    },
+    {
+      "code": "6",
+      "title": "[Reserved]",
+      "status": "reserved",
+      "confidence": 0.97,
+      "risk_band": {
+        "band": "low",
+        "label": "低風險",
+        "false_pass_rate": 0.1538,
+        "lo": 0.9,
+        "hi": 1.0,
+        "n": 273
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": false,
+      "chars": 24,
+      "normalized_sha": "cde4e2701720da422caa54dd3a85461e3600f4269a8bc62b5c37757f9c55c7f9",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "inconsistent",
+      "warnings": 0
+    },
+    {
+      "code": "7",
+      "title": "Management's Discussion and Analysis of Financial Condition and Results of Operations",
+      "status": "pass",
+      "confidence": 0.97,
+      "risk_band": {
+        "band": "low",
+        "label": "低風險",
+        "false_pass_rate": 0.1538,
+        "lo": 0.9,
+        "hi": 1.0,
+        "n": 273
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": false,
+      "chars": 119378,
+      "normalized_sha": "fa4ccc070115e3da294e79fd26d5cb74b79d71e72028ab9461be9795224103c0",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "consistent",
+      "warnings": 0
+    },
+    {
+      "code": "7A",
+      "title": "Quantitative and Qualitative Disclosures About Market Risk",
+      "status": "pass",
+      "confidence": 0.97,
+      "risk_band": {
+        "band": "low",
+        "label": "低風險",
+        "false_pass_rate": 0.1538,
+        "lo": 0.9,
+        "hi": 1.0,
+        "n": 273
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": false,
+      "chars": 1527,
+      "normalized_sha": "88a08c0d3607375bdfd2caea3dacbbd04b597299dd85b42a9e7d36c90f28b3d8",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "weak",
+      "warnings": 0
+    },
+    {
+      "code": "8",
+      "title": "Financial Statements and Supplementary Data",
+      "status": "pass",
+      "confidence": 0.72,
+      "risk_band": {
+        "band": "medium",
+        "label": "中風險",
+        "false_pass_rate": 0.2419,
+        "lo": 0.6,
+        "hi": 0.9,
+        "n": 124
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": true,
+      "chars": 177009,
+      "normalized_sha": "b85db0fa0fbff04467dffae143f62d951be857231e345a6f6bd7a462a74404cd",
+      "source_ranges": [],
+      "xbrl": "certified",
+      "topic": "consistent",
+      "warnings": 1
+    },
+    {
+      "code": "9",
+      "title": "Changes in and Disagreements with Accountants on Accounting and Financial Disclosure",
+      "status": "pass",
+      "confidence": 0.97,
+      "risk_band": {
+        "band": "low",
+        "label": "低風險",
+        "false_pass_rate": 0.1538,
+        "lo": 0.9,
+        "hi": 1.0,
+        "n": 273
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": false,
+      "chars": 98,
+      "normalized_sha": "b91a7cc514fb83bd943b2f16b5927df216f5a5da4c5a998fbfaff1b69a3ae4f6",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "boilerplate",
+      "warnings": 0
+    },
+    {
+      "code": "9A",
+      "title": "Controls and Procedures",
+      "status": "pass",
+      "confidence": 0.97,
+      "risk_band": {
+        "band": "low",
+        "label": "低風險",
+        "false_pass_rate": 0.1538,
+        "lo": 0.9,
+        "hi": 1.0,
+        "n": 273
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": false,
+      "chars": 1537,
+      "normalized_sha": "23fe5e0e40ec82d2d25a7c205bfaa040f84711d8f0acbc019c053757f1dfdb0c",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "consistent",
+      "warnings": 0
+    },
+    {
+      "code": "9B",
+      "title": "Other Information",
+      "status": "pass",
+      "confidence": 0.97,
+      "risk_band": {
+        "band": "low",
+        "label": "低風險",
+        "false_pass_rate": 0.1538,
+        "lo": 0.9,
+        "hi": 1.0,
+        "n": 273
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": false,
+      "chars": 356,
+      "normalized_sha": "eda79b1923d823b7da67608136c00ce8dbe1e6de8e5ccfd8bf06a37eda3fba0d",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "consistent",
+      "warnings": 0
+    },
+    {
+      "code": "9C",
+      "title": "Disclosure Regarding Foreign Jurisdictions that Prevent Inspections",
+      "status": "incorporated_by_reference",
+      "confidence": 0.49,
+      "risk_band": {
+        "band": "review",
+        "label": "需人工",
+        "false_pass_rate": 0.4,
+        "lo": 0.0,
+        "hi": 0.6,
+        "n": 115
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": true,
+      "chars": 520,
+      "normalized_sha": "02d34985014f448791842e7a4d24c15d64e506bee8b9a15b98db82ba038448cf",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "weak",
+      "warnings": 3
+    },
+    {
+      "code": "10",
+      "title": "Directors, Executive Officers and Corporate Governance",
+      "status": "incorporated_by_reference",
+      "confidence": 0.25,
+      "risk_band": {
+        "band": "review",
+        "label": "需人工",
+        "false_pass_rate": 0.4,
+        "lo": 0.0,
+        "hi": 0.6,
+        "n": 115
+      },
+      "provenance": "cross_reference_pointer",
+      "needs_review": true,
+      "chars": 418,
+      "normalized_sha": "94700c7343459c3cc6b5c2e51e640ad7ccbde212105ac2d4c448df03dfc012b8",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "consistent",
+      "warnings": 2
+    },
+    {
+      "code": "11",
+      "title": "Executive Compensation",
+      "status": "incorporated_by_reference",
+      "confidence": 0.25,
+      "risk_band": {
+        "band": "review",
+        "label": "需人工",
+        "false_pass_rate": 0.4,
+        "lo": 0.0,
+        "hi": 0.6,
+        "n": 115
+      },
+      "provenance": "cross_reference_pointer",
+      "needs_review": true,
+      "chars": 418,
+      "normalized_sha": "94700c7343459c3cc6b5c2e51e640ad7ccbde212105ac2d4c448df03dfc012b8",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "consistent",
+      "warnings": 2
+    },
+    {
+      "code": "12",
+      "title": "Security Ownership of Certain Beneficial Owners and Management and Related Stockholder Matters",
+      "status": "incorporated_by_reference",
+      "confidence": 0.25,
+      "risk_band": {
+        "band": "review",
+        "label": "需人工",
+        "false_pass_rate": 0.4,
+        "lo": 0.0,
+        "hi": 0.6,
+        "n": 115
+      },
+      "provenance": "cross_reference_pointer",
+      "needs_review": true,
+      "chars": 418,
+      "normalized_sha": "94700c7343459c3cc6b5c2e51e640ad7ccbde212105ac2d4c448df03dfc012b8",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "consistent",
+      "warnings": 2
+    },
+    {
+      "code": "13",
+      "title": "Certain Relationships and Related Transactions, and Director Independence",
+      "status": "incorporated_by_reference",
+      "confidence": 0.25,
+      "risk_band": {
+        "band": "review",
+        "label": "需人工",
+        "false_pass_rate": 0.4,
+        "lo": 0.0,
+        "hi": 0.6,
+        "n": 115
+      },
+      "provenance": "cross_reference_pointer",
+      "needs_review": true,
+      "chars": 418,
+      "normalized_sha": "94700c7343459c3cc6b5c2e51e640ad7ccbde212105ac2d4c448df03dfc012b8",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "consistent",
+      "warnings": 2
+    },
+    {
+      "code": "14",
+      "title": "Principal Accountant Fees and Services",
+      "status": "incorporated_by_reference",
+      "confidence": 0.25,
+      "risk_band": {
+        "band": "review",
+        "label": "需人工",
+        "false_pass_rate": 0.4,
+        "lo": 0.0,
+        "hi": 0.6,
+        "n": 115
+      },
+      "provenance": "cross_reference_pointer",
+      "needs_review": true,
+      "chars": 418,
+      "normalized_sha": "94700c7343459c3cc6b5c2e51e640ad7ccbde212105ac2d4c448df03dfc012b8",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "consistent",
+      "warnings": 2
+    },
+    {
+      "code": "15",
+      "title": "Exhibits, Financial Statement Schedules",
+      "status": "pass",
+      "confidence": 0.96,
+      "risk_band": {
+        "band": "low",
+        "label": "低風險",
+        "false_pass_rate": 0.1538,
+        "lo": 0.9,
+        "hi": 1.0,
+        "n": 273
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": false,
+      "chars": 13082,
+      "normalized_sha": "4357a1d858d4a2e1ec7b8f6edf2e6f7fc81333c64733149673c8bf595335cf2e",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "consistent",
+      "warnings": 0
+    },
+    {
+      "code": "16",
+      "title": "Form 10-K Summary",
+      "status": "missing",
+      "confidence": 0.0,
+      "risk_band": {
+        "band": "review",
+        "label": "需人工",
+        "false_pass_rate": 0.4,
+        "lo": 0.0,
+        "hi": 0.6,
+        "n": 115
+      },
+      "provenance": "offset_exact_span",
+      "needs_review": true,
+      "chars": 0,
+      "normalized_sha": "",
+      "source_ranges": [],
+      "xbrl": "",
+      "topic": "skipped",
+      "warnings": 2
+    }
+  ],
+  "gaps": [
+    {
+      "code": "gap:0-131147",
+      "title": "未分類內容 (Item 1 之前)",
+      "chars": 131147,
+      "preview": "0.000667false00010679830.000667--12-310.000667FYhttp://fasb.org/us-gaa",
+      "after": "",
+      "before": "1",
+      "start": 0
+    },
+    {
+      "code": "gap:612371-614173",
+      "title": "未分類內容 (Item 15 之後)",
+      "chars": 1802,
+      "preview": "SIGNATURES",
+      "after": "15",
+      "before": "",
+      "start": 612371
+    }
+  ],
+  "exhibits": [
+    {
+      "code": "ex:19",
+      "title": "Exhibit 19",
+      "file": "brka-ex19.htm",
+      "chars": 14096
+    },
+    {
+      "code": "ex:21",
+      "title": "Exhibit 21 · List of Subsidiaries",
+      "file": "brka-ex21.htm",
+      "chars": 11510
+    },
+    {
+      "code": "ex:23",
+      "title": "Exhibit 23 · Consent of Accountants",
+      "file": "brka-ex23.htm",
+      "chars": 841
+    },
+    {
+      "code": "ex:95",
+      "title": "Exhibit 95",
+      "file": "brka-ex95.htm",
+      "chars": 3792
+    },
+    {
+      "code": "ex:97",
+      "title": "Exhibit 97 · Clawback Policy",
+      "file": "brka-ex97.htm",
+      "chars": 2575
+    }
+  ]
+}

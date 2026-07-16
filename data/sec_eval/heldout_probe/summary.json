@@ -1,0 +1,106 @@
+{
+  "base_url": "https://wealth-sec-ncku.zeabur.app",
+  "note": "tickers outside every tracked sweep; no code was repaired against these",
+  "probed": 7,
+  "unflagged_weak_total": 2,
+  "min_coverage": 0.3725,
+  "rows": [
+    {
+      "ticker": "O",
+      "ok": true,
+      "filing_class": "standard",
+      "coverage": 0.8299,
+      "supported": true,
+      "xbrl_item8": "certified",
+      "latency_ms": 1176,
+      "pipeline_warnings": 0,
+      "items": 23,
+      "needs_review": 8,
+      "unflagged_weak": []
+    },
+    {
+      "ticker": "SPG",
+      "ok": true,
+      "filing_class": "standard",
+      "coverage": 0.8428,
+      "supported": true,
+      "xbrl_item8": "certified",
+      "latency_ms": 2928,
+      "pipeline_warnings": 0,
+      "items": 23,
+      "needs_review": 10,
+      "unflagged_weak": [
+        {
+          "code": "9B",
+          "chars": 477,
+          "confidence": 1.0,
+          "topic": "weak"
+        }
+      ]
+    },
+    {
+      "ticker": "PLD",
+      "ok": true,
+      "filing_class": "standard",
+      "coverage": 0.3725,
+      "supported": true,
+      "xbrl_item8": "contradicted",
+      "latency_ms": 2471,
+      "pipeline_warnings": 0,
+      "items": 23,
+      "needs_review": 9,
+      "unflagged_weak": []
+    },
+    {
+      "ticker": "BRK-B",
+      "ok": true,
+      "filing_class": "standard",
+      "coverage": 0.7835,
+      "supported": true,
+      "xbrl_item8": "certified",
+      "latency_ms": 2666,
+      "pipeline_warnings": 0,
+      "items": 23,
+      "needs_review": 12,
+      "unflagged_weak": [
+        {
+          "code": "7A",
+          "chars": 1527,
+          "confidence": 0.97,
+          "topic": "weak"
+        }
+      ]
+    },
+    {
+      "ticker": "VTR",
+      "ok": true,
+      "filing_class": "standard",
+      "coverage": 0.8992,
+      "supported": true,
+      "xbrl_item8": "certified",
+      "latency_ms": 1324,
+      "pipeline_warnings": 0,
+      "items": 23,
+      "needs_review": 7,
+      "unflagged_weak": []
+    },
+    {
+      "ticker": "SEB",
+      "ok": true,
+      "filing_class": "standard",
+      "coverage": 0.8178,
+      "supported": true,
+      "xbrl_item8": "certified",
+      "latency_ms": 1598,
+      "pipeline_warnings": 0,
+      "items": 23,
+      "needs_review": 5,
+      "unflagged_weak": []
+    },
+    {
+      "ticker": "TSM",
+      "ok": false,
+      "error": "NotA10KFilerError: TSM(TAIWAN SEMICONDUCTOR MANUFACTURING CO LTD) 未申報 10-K;該公司以 20-F(外國私人發行人年報)申報。實際 form 分布:6-K×1321, 4×135, SC 13G/A×44, 3×42, 20-F×26, SC 13G×13。本系統僅支援 10-K item 抽取,誠實拒絕而非硬抽。"
+    }
+  ]
+}

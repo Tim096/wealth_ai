@@ -34,7 +34,8 @@ No installation or account is required for the deployed demos.
 The Task 1 deployment currently has an LLM configured. The **示範任務** buttons
 listed by [`GET /api/demo`](https://wealth-agent-ncku.zeabur.app/api/demo) remain
 deterministic and keyless. Login, CAPTCHA, purchases, posting, and other
-irreversible tasks are refused by design.
+irreversible tasks are refused by design — **for English task text, which is
+why non-English task text is now refused outright rather than run unscreened.**
 
 In plain terms: the demo buttons need no API key and always do the same thing —
 so a grader can reproduce them. The refused categories are not a capability gap;
@@ -93,7 +94,10 @@ advisory WebJudge figure remains `21/283`.
 
 Deployment provenance is public and machine-checked: [`/api/health`](https://wealth-agent-ncku.zeabur.app/api/health)
 returns the deployed 40-character `build_sha`. The live runner aborts before
-submitting any task unless that value exactly equals local `git HEAD`. A separate
+submitting any task unless that value exactly equals local `git HEAD` — **but
+only under `--require-build-sha`; the flag is off by default, so runs 7 and 8 of
+the reviewer path below are unattested, and only run 9 asserts the identity.**
+A separate
 two-domain smoke recorded deployment-attested **true** and `2/2` pass; see its
 [task set](data/browser_eval/live_attested_smoke/tasks.json) and
 [result](data/browser_eval/live_attested_smoke/results.json).
@@ -146,7 +150,7 @@ see [docs/deploy.md](docs/deploy.md).
 |---|---|---|
 | Task 1: UI drift and recovery | The deployed **自我修復(v2 介面漂移)** demo changes element IDs, adds a blocking cookie dialog, and introduces a decoy search button. Grounded action history also moves a deterministic three-shape recovery probe from `0/3` to `3/3`. | Highly dynamic or anti-bot sites can become unreachable or invalidate observations between steps. Login, CAPTCHA, purchases, posting, and irreversible workflows are deliberately refused instead of being presented as supported. |
 | Task 1: silent-failure prevention | The injection demo reaches all five adversarial traps in the undefended control but records defended ASR `0/5`; impossible and open-ended tasks end as `fail`/`unknown`, not a fabricated pass. A condition that the decoy corpus also satisfies is no longer evidence: `answer_matches:.+` (22/22 decoys) caps the verdict at `unknown` instead of passing at confidence 1.0. | Real-web generalization remains the main weakness. On the frozen 300-task Online-Mind2Web run, 17 tasks were environment failures; the strict advisory WebJudge accepted only `21/283` completed trajectories. The planner, verifier, and external judge still disagree materially on ambiguous completion evidence. The verdict now abstains where it used to overclaim, but abstaining is not the same as verifying: free-form answers are still checked by shape, never for correctness. |
-| Task 2: standard modern 10-K | `AAPL`, `MSFT`, `JPM`, `XOM`, and the other tracked modern filings extract source-addressable Items with offsets, hashes, confidence, provenance, partition checks, and independent XBRL/topic signals. Try `AAPL` in the deployed UI. Held-out filings behave the same: `TSLA` 0.9011, `PFE` 0.8072, `BRK-B` 0.7835 coverage, Item 8 XBRL-certified, all under 2 s. | `Intel`/`Citi`/`GE` cross-reference-index filings scatter substantive sections across printed-page ranges. Page-anchored Item bodies are now reassembled into source-exact `partial` spans (multi-range aware), but page-boundary alignment stays heuristic, XBRL-contradicted years (e.g. INTC FY2019 Item 8) are demoted to `unsupported` rather than shipped as `partial`, and Items pointing to a **separately filed proxy statement** stay `incorporated_by_reference` — never guessed text. |
+| Task 2: standard modern 10-K | `AAPL`, `MSFT`, `JPM`, `XOM`, and the other tracked modern filings extract source-addressable Items with offsets, hashes, confidence, provenance, partition checks, and independent XBRL/topic signals. Try `AAPL` in the deployed UI. Held-out REITs stay upright but fray at the edges — see the right-hand column and `data/sec_eval/heldout_probe/`. | `Intel`/`Citi`/`GE` cross-reference-index filings scatter substantive sections across printed-page ranges. Page-anchored Item bodies are now reassembled into source-exact `partial` spans (multi-range aware), but page-boundary alignment stays heuristic, XBRL-contradicted years (e.g. INTC FY2019 Item 8) are demoted to `unsupported` rather than shipped as `partial`, and Items pointing to a **separately filed proxy statement** stay `incorporated_by_reference` — never guessed text. |
 | Task 2: format variance | Same-file wrappers such as tracked `JPM`/`XOM` cases are reconstructed with page/section anchors and checked against XBRL/CYD evidence. Pre-2001 plain-text SGML now extracts too (`AAPL` FY1996 7 `pass` + 2 `partial`, `KO` FY1997 6 `pass`). Unsupported binary/PDF input is rejected without inventing Items. | Pre-2001 item codes that did not exist in that filing's year return `missing` — the set is per-year, not one list (`AAPL` FY1996 misses 7A, `KO` FY1997 has it and misses 15 instead). Era headings that combine two items (FY1996 `Item 14. Exhibits… and Reports on Form 8-K`) resolve both codes to one span — flagged `needs_review`, not silently split. Era-aware schema mapping is not implemented, so coverage reads low where that era incorporated core items from the annual report (`KO` FY1997 0.2126). Scanned PDFs need a separate OCR pipeline and are not supported. |
 
 白話三個關鍵詞:**ASR**(attack success rate,攻擊得手率 —— `0/5` = 五種注入攻擊全部沒得手);
@@ -267,9 +271,16 @@ Task 1 用你自己的 **Codex OAuth**(預設走 gateway)實測:見 [docs/setup_
 | 類型 | 支援狀態 |
 |---|---|
 | 公開網站搜尋、多頁導航、資料擷取、公開文件下載 | 支援 |
-| 答案型任務(查數字 / 問答,如「NVDA 現在股價多少」) | 支援:答案顯示於結果(📋 擷取內容);抓不到 → 誠實 **fail / unknown**,絕不無交付卻判 pass |
+| 答案型任務(查數字 / 問答,如 `What is NVDA's current stock price?`) | 支援:答案顯示於結果(📋 擷取內容);抓不到 → 誠實 **fail / unknown**,絕不無交付卻判 pass |
 | 表單填寫 | 部分支援:僅公開、可逆、無登入、無金流 |
 | 登入、CAPTCHA、購買/下單、發文/正式表單、付費資料 | **不支援**(責任邊界) |
+| 非英文任務描述 | **不支援**:guard 的意圖比對只認英文,非英文任務**拒絕執行**(`unscreenable_language`),不會未經檢查就跑 |
+
+**這張表的 refusal 只在英文輸入下成立,所以非英文輸入現在直接拒絕。** 2026-07-16 前這是一個 fail-open:
+`screen_task("登入我的銀行帳戶")` 回 `allowed=True` —— 一個中文介面的 agent,它的責任邊界只守得住英文。
+我沒有補中文關鍵字(那只是把同一條窄規則再抄一份到第二個語言),而是讓 guard 對「自己檢查不了的東西」
+誠實拒絕。代價是中文任務不能用了,這寫在輸入框上方,不藏在這裡。見 `packages/browser_agent/capability.py`
+的 `_UNSCREENABLE_SCRIPT` 與 `tests/test_browser_agent.py::test_screen_task_refuses_what_it_cannot_screen`。
 
 ## SEC filing 分成哪幾類?(誠實邊界)
 
@@ -317,6 +328,12 @@ tests/      quick + Playwright/integration lanes；實際數量由 pytest collec
 
 這一段是整份 README 我最不想寫、但最該寫的。**負面結果放在這裡,不放附錄;不改判、不軟化、不包裝。**
 
+- **Task 2 的「11 家 held-out」是假的,而真的 held-out 現在有一份 probe(2026-07-16,未修)**:sweep1→3 那 11 家正是 FG-SEC-002/003/004 **被發現並修好的那批** —— 對一份 filing 修過之後它就不是 held-out,誠實的 held-out 數是 0。`tools/heldout_probe.py` 打 7 個從未調校過的 ticker(REIT 為主,因為 Item 16 `None.` 後面接印表索引的形狀,`refine.py` 的切割器只被 XOM/JPM 餵過),結果留在 `data/sec_eval/heldout_probe/`:
+  - **`PLD` coverage 0.3725、`supported: true`、`pipeline_warnings: []`** —— 63% 的文件沒被分類,而系統一句話都沒說。coverage 低到這個程度卻不觸發任何警告,是 threshold 沒接線,不是判斷。
+  - **`BRK-B` Item 7A 1,527 字 conf 0.97 `needs_review: false`,而它自己的 topic oracle 已經說 `weak`** —— 這是全 probe 唯二漏網的:oracle 叫了,沒有人接。`SPG` Item 9B(477 字、conf 1.0、topic weak)同理。
+  - 好消息是 needs_review 那張網大致有效:`SPG` Item 16 吞掉整份 exhibit index(23,883 字)、`PLD` Item 16 吞進財報索引、`O` Item 2 只有 87 字的指路句 —— **三個都 `needs_review: true`**,沒有偽裝成乾淨結果。`TSM` 誠實回 `NotA10KFilerError`(20-F filer)。
+  - 根因不用猜,`refine.py:190-200` 的註解自己寫了:`_HARD_BREAK_RE = ^\s*financial\s+section\s*$`「(XOM binds a "FINANCIAL SECTION"...)」、`_SOFT_BREAK_RE` 的 `index to financial statements`「(JPM binds the annual report...)」。`PLD` 的 `INDEX TO **THE CONSOLIDATED** FINANCIAL STATEMENTS` 中間多兩個字就漏掉,`SPG` 的 `EXHIBIT INDEX` 根本不在列舉裡。**這正是 FG-SEC-002 我自己寫下「不是規則寫錯,是用一條窄規則去接一個開放世界這個設計本身錯」、標了 Status: fixed,然後在隔壁函式重新出貨的同一個 bug。** 我把它留在這裡沒修,因為交件前改抽取核心比留著這條誠實的更危險。
+
 - **同檔正文已還原(wrapper + cross-reference-index 頁碼錨點);僅跨檔 proxy statement 未 join**:JPM/XOM 的本檔附綁正文已由 page/section-anchor 重組(Item 8 獲 XBRL 3/3 認證);2026-07-11 page-top section anchoring 收尾 GS/JPM Item 1C,官方 CYD oracle 現為 **11 agree / 0 disagree**(kill-switch `SEC_WRAPPER_SECTION_ANCHOR=0`;見 `docs/eval_report.md` T2-3)。Intel/Citi 的 cross-reference-index 正文亦已由**同檔印刷頁碼錨點**重組為 source-exact `partial`(多段以 `source_ranges[]` 串接,needs_review;頁邊界對齊為 heuristic,XBRL 矛盾年度如 INTC FY2019 Item 8 誠實降 `unsupported`);僅指向**另外申報 proxy statement** 的 Item 10–14 維持誠實指標,刻意不 join、不出貨脆弱猜測(見 `docs/insights_and_directions.md` §2)。
   白話:**不是我 join 不起來那份 proxy statement,是我拒絕出貨一個脆弱的猜測。** 這是一筆交易 —— 用「少幾個 Item 的覆蓋率」換「零編造」。
 
@@ -339,7 +356,7 @@ tests/      quick + Playwright/integration lanes；實際數量由 pytest collec
 - **答案型任務:agent 判 pass 的依據曾經是零證據(2026-07-16 修正)**:LLM 自己寫給自己的驗證條件 `answer_matches:.+` 對任何非空答案都成立,系統據此判 **pass、confidence 1.0**。現在條件要先過鑑別力檢查:對 22 條 decoy 語料命中率 ≥50% 就不算證據(`.+` 命中 22/22、`[0-9]+` 命中 12/22;真實 shape 條件如美元金額 0/22、四位年份 2/22),判決封頂 `unknown`,答案照常交付。frozen IR suite 因此從「10/10 pass」變成誠實的兩個數字:**gold 10/10、自我認證 5/10**。
   白話:**這是使用者以外唯一一個「我自己抓到自己說謊」的案例,而它躲過了前面所有防線** —— 因為 t0 baseline-subtraction 只擋「一開始就成立」的條件,擋不掉「對任何答案都成立」的條件。同一種病的另外一半,我花了很久才看見。修完之後那個漂亮的 10/10 就沒了,剩下 5/10 —— **但那 5 個是真的。**
 
-- **自修復 cascade 曾經只跑在 mock site,沒接到部署路徑(2026-07-16 修正)**:診斷 → hash rebind → a11y purpose scoring 這條梯寫得完整、有 ablation、有 shadow check —— 然後只在 scripted `run()` 裡跑。評審在前端打的每一個任務走的是 `run_agentic()`,那裡 `repairs` **硬寫死 0**、selector memory 完全惰性:全專案的 memory key **100% 是 `mockshop::*`**,真實網站一個都沒學過。題目逐字要求的 "adjust locator strategies dynamically" 因此在部署路徑上不存在。現已接上(重用既有 primitive,非平行實作):repairs 真實計數、memory 學到 `news.ycombinator.com::agentic::result_link`。
+- **自修復 cascade 曾經只跑在 mock site,沒接到部署路徑(2026-07-16 修正)**:診斷 → hash rebind → a11y purpose scoring 這條梯寫得完整、有 ablation、有 shadow check —— 然後只在 scripted `run()` 裡跑。評審在前端打的每一個任務走的是 `run_agentic()`,那裡 `repairs` **硬寫死 0**、selector memory 完全惰性:全專案的 memory key **100% 是 `mockshop::*`**,真實網站一個都沒學過。題目逐字要求的 "adjust locator strategies dynamically" 因此在部署路徑上不存在。現已接上(重用既有 primitive,非平行實作):repairs 真實計數。**但 selector memory 只接了一半,這是本條現在的誠實版本**:`worker.py:354` 把 `site` 寫死成字面值 `"web"`,而 memory key 是 `{site}::{task_type}::{purpose}`(`memory_store.py:25`)—— 所以部署路徑學到的 key 只可能是 `web::agentic::*`,**整個網際網路共用一個 bucket**,arxiv 學到的 `search_box` 會在別的站被當首選試打。加上 `RUNS` 落在 Zeabur 的 ephemeral disk、容器重啟即歸零、repo 內 committed 的 selector memory 檔是 0 個 —— **「修好一次之後永遠免費」的 cross-run payoff 在 production 沒有證據,而且結構上不成立。** 這行只值一個 registrable-domain 的改動,我沒在交件前動它:`site` 同時是 ablation 的 memory-transfer key(v1 學、v2 重用),改成動態 domain 會讓 v1/v2 落到不同 bucket、打斷既有的 repair ablation 證據鏈。**先誠實揭露,不趕在死線前動抽取以外的核心。**
   白話:**這條是「文件說有、code 說沒有」裡最貴的一種 —— 因為它不是唬爛,是真的寫好了,只是沒接線。** `docs/architecture.md` 當時精確揭露了「它只在 Script Mode 跑」,但 README 仍把它列成 Task 1 能力、還導引評審去點那個 scripted demo。**揭露放在對的地方才叫揭露,放在沒人讀的那一頁叫存檔。**
 
 - **Browser 4 個 measure-first 弱點已於 2026-07-10 修復**(verifier filename-needle bypass、query-echo silent failure、repair fallback 到不可行元素、bait-field tie-break;commit bcdc9cf / d5481eb):校準 specificity 0.9583→1.0、FP rate 0.0417→0.0、impossible silent_failure_rate 0.1→0.0、perception degradation curve 尾端 0.0→1.0。原 `test_known_*` 已翻寫為 `test_fixed_*` 並重跑 artifact。另修復開放式(零條件)任務 crash → 誠實 unknown(FG-BROWSER-006,commit f535c93)。逐條前→後見 `docs/failure_gallery.md` FG-BROWSER-002~006 與 `docs/eval_report.md`「修復迭代」段。

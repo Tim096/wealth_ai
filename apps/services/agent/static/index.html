@@ -225,8 +225,13 @@
   <section class="panel">
     <div class="grid2">
       <div>
-        <label>Task / 任務(自然語言,中英皆可)</label>
-        <textarea id="aTask" placeholder="例:Search Wikipedia for &quot;Reliability engineering&quot; and open the article;或:找 INTC 最新 10-K 並下載"></textarea>
+        <label>Task / 任務(自然語言,<b>English only / 僅限英文</b>)</label>
+        <textarea id="aTask" placeholder="e.g. Search Wikipedia for &quot;Reliability engineering&quot; and open the article"></textarea>
+        <div class="hint">The capability guard (no login / purchase / checkout / formal submit)
+          matches English only. Non-English tasks are <b>refused, not run unscreened</b> —
+          the boundary must hold in every language the box accepts, and today it holds in one.
+          <br>能力邊界(不登入 / 不購買 / 不結帳 / 不送出正式表單)的檢查只認英文。
+          非英文任務一律<b>拒絕</b>,不會未經檢查就跑 —— 守不住的語言就不收。</div>
         <div class="row">
           <div class="grow">
             <label>Start URL / 起始 URL(可留空 → LLM 自行規畫;mock:v1 / mock:v2 / mock:v3 / mock:adv 用內建示範站)</label>

@@ -1,11 +1,11 @@
 {
   "suite": "live-attested-smoke-v1",
   "taskset_sha256": "dc9e1f62e16820f7e8b008081a24afbb968ce50ff7c4eb98e28f8328cf02ea8c",
-  "source_commit": "d062c0ed9d2091be0d3589bbbde3a33f6a696494",
+  "source_commit": "a3a02a7749f9bf912fc1f162f34594d47a47a990",
   "deployment_attested": true,
   "base_url": "https://wealth-agent-ncku.zeabur.app",
-  "started_at": "2026-07-14T07:16:28.286949Z",
-  "completed_at": "2026-07-14T07:16:38.766321Z",
+  "started_at": "2026-07-16T04:48:19.072487Z",
+  "completed_at": "2026-07-16T04:48:29.639190Z",
   "service_health": {
     "ok": true,
     "service": "wealth-agent",
@@ -14,7 +14,7 @@
     "mode": "direct",
     "llm_ok": true,
     "model": "x-ai/grok-4.5",
-    "build_sha": "d062c0ed9d2091be0d3589bbbde3a33f6a696494",
+    "build_sha": "a3a02a7749f9bf912fc1f162f34594d47a47a990",
     "build_attested": true,
     "queue_depth": 0,
     "demo_tasks": 5
@@ -24,6 +24,8 @@
     "passed": 2,
     "total": 2,
     "pass_rate": 1.0,
+    "self_certified": 2,
+    "self_certified_rate": 1.0,
     "domains": 2,
     "task_types": [
       "cross_site_navigation",
@@ -33,20 +35,20 @@
     "llm_calls_total": 2,
     "llm_calls_median": 1.0,
     "llm_calls_max": 1,
-    "llm_tokens_total": 6634,
-    "llm_tokens_median": 3317.0,
-    "llm_tokens_max": 3325,
-    "llm_cost_usd_total": 0.0024425000000000002,
-    "latency_ms_median": 3335.8,
-    "latency_ms_p95_inclusive": 3532.81,
-    "latency_ms_max": 3554.7
+    "llm_tokens_total": 6427,
+    "llm_tokens_median": 3213.5,
+    "llm_tokens_max": 3281,
+    "llm_cost_usd_total": 0.0020285,
+    "latency_ms_median": 2823.8999999999996,
+    "latency_ms_p95_inclusive": 3185.5199999999995,
+    "latency_ms_max": 3225.7
   },
   "results": [
     {
       "id": "attested-001-add-element",
       "domain": "the-internet.herokuapp.com",
       "task_type": "dynamic_click",
-      "task_id": "t4013389490-0",
+      "task_id": "t4177300210-0",
       "status": "pass",
       "confidence": 1.0,
       "answer": "",
@@ -55,18 +57,19 @@
       "gold_match": null,
       "gold_pass": null,
       "scored_pass": true,
+      "self_certified": true,
       "slow": false,
       "planner_steps": 2,
       "llm_calls": 1,
-      "llm_tokens": 3325,
-      "llm_cost_usd": 0.001274,
-      "total_latency_ms": 3116.9
+      "llm_tokens": 3146,
+      "llm_cost_usd": 0.000916,
+      "total_latency_ms": 2422.1
     },
     {
       "id": "attested-002-cross-site-navigation",
       "domain": "example.com",
       "task_type": "cross_site_navigation",
-      "task_id": "t4013394286-1",
+      "task_id": "t4177305034-1",
       "status": "pass",
       "confidence": 1.0,
       "answer": "",
@@ -75,12 +78,13 @@
       "gold_match": null,
       "gold_pass": null,
       "scored_pass": true,
+      "self_certified": true,
       "slow": false,
       "planner_steps": 2,
       "llm_calls": 1,
-      "llm_tokens": 3309,
-      "llm_cost_usd": 0.0011685,
-      "total_latency_ms": 3554.7
+      "llm_tokens": 3281,
+      "llm_cost_usd": 0.0011125,
+      "total_latency_ms": 3225.7
     }
   ]
 }

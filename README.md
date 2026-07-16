@@ -34,8 +34,9 @@ No installation or account is required for the deployed demos.
 The Task 1 deployment currently has an LLM configured. The **示範任務** buttons
 listed by [`GET /api/demo`](https://wealth-agent-ncku.zeabur.app/api/demo) remain
 deterministic and keyless. Login, CAPTCHA, purchases, posting, and other
-irreversible tasks are refused by design — **for English task text, which is
-why non-English task text is now refused outright rather than run unscreened.**
+irreversible tasks are refused by design — **for English task text only. The
+same intents phrased in Chinese are not screened at all; see the support table
+and TODO V-14.**
 
 In plain terms: the demo buttons need no API key and always do the same thing —
 so a grader can reproduce them. The refused categories are not a capability gap;
@@ -188,7 +189,7 @@ Known limitations and planned experiments: [TODO.md](TODO.md).
 
 | 題目 | 內容 | 狀態 |
 |---|---|---|
-| 題目一 Browser Agent | 受控 action space、**preflight task contract 凍結並揭露條件來源**、deterministic verifier、**條件鑑別力檢查(擋 vacuous pass)**、a11y selector 自修復 + selector memory(**2026-07-16 起才真的接進部署路徑**,見下)、**Agent Mode(LLM 驅動,預設接 Codex OAuth via gateway)**、**卡住時自動視覺升級(SoM 截圖 + gpt-5.5 視覺)**、**答案交付通道(查數字/問答)**、code-enforced capability guard | **可執行**:selector-repair killer demo(`tools/browser_killer_demo.py`)+ live LLM 驅動(`tools/browser_agent_live.py`) |
+| 題目一 Browser Agent | 受控 action space、**preflight task contract 凍結並揭露條件來源**、deterministic verifier、**條件鑑別力檢查(擋 vacuous pass)**、a11y selector 自修復 + selector memory(**2026-07-16 起才真的接進部署路徑**,見下)、**Agent Mode(LLM 驅動,預設接 Codex OAuth via gateway)**、**卡住時自動視覺升級(SoM 截圖 + gpt-5.5 視覺)**、**答案交付通道(查數字/問答)**、code-enforced capability guard(**僅英文任務描述;中文 fail-open,見支援範圍表與 TODO V-14**) | **可執行**:selector-repair killer demo(`tools/browser_killer_demo.py`)+ live LLM 驅動(`tools/browser_agent_live.py`) |
 | 題目二 SEC Extractor | 10-K Item 1–16 source-exact 抽取、TOC 防禦、cross-reference-index 偵測、**same-file wrapper page-anchor 還原**、**多段頁碼 body 重組(`source_ranges[]`)**、**XBRL 認證(Item 8)**、**topic-consistency oracle(全 item)** | **可執行**:11 家真實 10-K + Intel(`tools/eval_one.py INTC`)/Citi(pseudo-ticker,`tools/eval_one.py CITI --cik 831001 --accession <acc>`)、`tools/certify.py` |
 | 共用層 | evidence schema / library、三態 verdict、eval case、LLM 成本紀錄 | Browser deployed path 會寫 EvidenceStore；SEC deployed path 目前以 raw bytes + offsets/hash + job payload 稽核，尚未注入 JSONL store |
 | Eval Dashboard | 兩題 eval、XBRL 認證、browser repair trace(真實數據) | `apps/web/eval-dashboard/`,自包含 HTML |
@@ -271,16 +272,18 @@ Task 1 用你自己的 **Codex OAuth**(預設走 gateway)實測:見 [docs/setup_
 | 類型 | 支援狀態 |
 |---|---|
 | 公開網站搜尋、多頁導航、資料擷取、公開文件下載 | 支援 |
-| 答案型任務(查數字 / 問答,如 `What is NVDA's current stock price?`) | 支援:答案顯示於結果(📋 擷取內容);抓不到 → 誠實 **fail / unknown**,絕不無交付卻判 pass |
+| 答案型任務(查數字 / 問答,如「NVDA 現在股價多少」) | 支援:答案顯示於結果(📋 擷取內容);抓不到 → 誠實 **fail / unknown**,絕不無交付卻判 pass |
 | 表單填寫 | 部分支援:僅公開、可逆、無登入、無金流 |
 | 登入、CAPTCHA、購買/下單、發文/正式表單、付費資料 | **不支援**(責任邊界) |
-| 非英文任務描述 | **不支援**:guard 的意圖比對只認英文,非英文任務**拒絕執行**(`unscreenable_language`),不會未經檢查就跑 |
 
-**這張表的 refusal 只在英文輸入下成立,所以非英文輸入現在直接拒絕。** 2026-07-16 前這是一個 fail-open:
-`screen_task("登入我的銀行帳戶")` 回 `allowed=True` —— 一個中文介面的 agent,它的責任邊界只守得住英文。
-我沒有補中文關鍵字(那只是把同一條窄規則再抄一份到第二個語言),而是讓 guard 對「自己檢查不了的東西」
-誠實拒絕。代價是中文任務不能用了,這寫在輸入框上方,不藏在這裡。見 `packages/browser_agent/capability.py`
-的 `_UNSCREENABLE_SCRIPT` 與 `tests/test_browser_agent.py::test_screen_task_refuses_what_it_cannot_screen`。
+**這張表只在英文任務描述下成立 —— 中文說「幫我登入」它會照跑。** `_FORBIDDEN_INTENT` 是英文
+keyword 比對,中文一條都不匹配:`screen_task("登入我的銀行帳戶")` 回 `allowed=True`。**這是一個
+現在還開著的洞,不是已修的往事**,而諷刺的是這個 agent 的前端是中文介面。我 2026-07-16 修過一版
+(非英文一律拒絕),但那個修法會砍掉中文任務能力 —— 包含 FG-BROWSER-007 那個使用者親測的中文
+INTC 案 —— 所以**回退了,選擇留著洞而不是留著一個假的邊界**。正確修法是補中文 intent 關鍵字
+(見 TODO V-14),不是把使用者趕走。洞的形狀鎖在
+`tests/test_browser_agent.py::test_screen_task_is_blind_to_non_english_intents` —— **測試斷言的是
+它會放行**,所以這裡寫的是量出來的行為,不是宣稱。
 
 ## SEC filing 分成哪幾類?(誠實邊界)
 

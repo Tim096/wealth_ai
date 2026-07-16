@@ -233,7 +233,6 @@ README 與前端必須明確列出。
 | 購買 / 下單 | 不支援 | 高風險不可逆操作 |
 | 發文 / 送出正式表單 | 預設不支援 | 有 side effect |
 | 付費資料 | 不支援 | 題目要求公開或自建資料 |
-| 非英文任務描述 | 不支援 | **上面每一條「不支援」都是英文 keyword 比對**(`capability.py:_FORBIDDEN_INTENT`)。非英文任務不匹配任何一條,2026-07-16 前因此 fail-open 放行(`screen_task("登入我的銀行帳戶") → allowed=True`)。現改為 fail-closed:`_UNSCREENABLE_SCRIPT` 命中即拒(`unscreenable_language`)。**這張表只在英文輸入下成立,所以只收英文輸入。** |
 
 ### 6.5 Browser Action Schema
 

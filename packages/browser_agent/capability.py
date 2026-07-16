@@ -13,14 +13,6 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-# The task-level patterns below are English keyword matches. A task written in
-# a non-Latin script matches none of them, so it used to pass unscreened — a
-# fail-open on the exact boundary this module exists to hold, on a UI that
-# accepts Chinese. Screen the script first and refuse what we cannot screen.
-_UNSCREENABLE_SCRIPT = re.compile(
-    r"[぀-ヿ㐀-䶿一-鿿가-힯Ѐ-ӿ֐-ۿ]"
-)
-
 # task-level: natural-language intents we refuse outright
 _FORBIDDEN_INTENT = {
     "login": re.compile(r"\b(log\s?in|sign\s?in|authenticate|enter\s+password|credentials?)\b", re.I),
@@ -49,13 +41,6 @@ class CapabilityDecision:
 
 
 def screen_task(natural_language_task: str) -> CapabilityDecision:
-    if _UNSCREENABLE_SCRIPT.search(natural_language_task):
-        return CapabilityDecision(
-            allowed=False, category="unscreenable_language",
-            reason="task text is not in English; the capability guard screens English only, "
-                   "so a non-English task cannot be checked against the login/purchase/"
-                   "submit boundary (SPEC 6.4) and is refused rather than run unscreened. "
-                   "Please restate the task in English.")
     for category, pat in _FORBIDDEN_INTENT.items():
         if pat.search(natural_language_task):
             return CapabilityDecision(

@@ -8,10 +8,7 @@
       "query": "widget",
       "expect_status": "pass",
       "expect_repairs": 0,
-      "success_text": [
-        "results for",
-        "Widget"
-      ],
+      "success_text": ["results for", "Widget"],
       "note": "clean baseline, script mode"
     },
     {
@@ -21,10 +18,7 @@
       "query": "widget",
       "expect_status": "pass",
       "expect_repairs_min": 2,
-      "success_text": [
-        "results for",
-        "Widget"
-      ],
+      "success_text": ["results for", "Widget"],
       "note": "UI drift: id removed, button->icon, cookie modal, decoy button, lazy render -> must self-repair"
     },
     {
@@ -34,10 +28,7 @@
       "query": "gizmo",
       "expect_status": "pass",
       "expect_repairs_min": 2,
-      "success_text": [
-        "results for",
-        "Gizmo"
-      ],
+      "success_text": ["results for", "Gizmo"],
       "note": "second drifted query -> selector memory should make the second run cheaper"
     },
     {
@@ -47,9 +38,7 @@
       "query": "zzzznotarealproduct",
       "expect_status": "fail",
       "expect_repairs": 0,
-      "success_text": [
-        "Widget"
-      ],
+      "success_text": ["Widget"],
       "note": "empty result: the success contract requires a real product to be visible; the agent must NOT fake pass on 0 results"
     },
     {
@@ -59,10 +48,7 @@
       "query": "widget",
       "expect_status": "pass",
       "expect_repairs_min": 1,
-      "success_text": [
-        "results for",
-        "Widget"
-      ],
+      "success_text": ["results for", "Widget"],
       "note": "HELD-OUT: a never-before-seen structure (textarea role=searchbox, a role=button, table results). Tests whether the a11y-tree repair GENERALIZES, not whether it memorized v2 selectors"
     }
   ],
@@ -75,18 +61,8 @@
       "site": "v1",
       "query": "hoverboard2000",
       "natural_language_task": "Find the Hoverboard 2000 in MockShop and show its product listing",
-      "success_conditions": [
-        {
-          "type": "text_visible",
-          "value": "Hoverboard"
-        }
-      ],
-      "forbidden_conditions": [
-        {
-          "type": "error_text_visible",
-          "value": "0 results"
-        }
-      ],
+      "success_conditions": [{"type": "text_visible", "value": "Hoverboard"}],
+      "forbidden_conditions": [{"type": "error_text_visible", "value": "0 results"}],
       "expect_status": "fail",
       "note": "product not in the catalog -> 0 hits; the listing can never render and the 0-results forbidden condition fires. Verifier must NOT pass on an empty page."
     },
@@ -97,12 +73,7 @@
       "site": "v3_heldout",
       "query": "teleporter",
       "natural_language_task": "Search MockShop for a Teleporter and open its detail page",
-      "success_conditions": [
-        {
-          "type": "text_visible",
-          "value": "Teleporter"
-        }
-      ],
+      "success_conditions": [{"type": "text_visible", "value": "Teleporter"}],
       "forbidden_conditions": [],
       "expect_status": "fail",
       "note": "nonexistent product on the held-out table UI; repair may find the field/button but the product still cannot exist -> fail"
@@ -114,16 +85,7 @@
       "site": "v1",
       "query": "widget",
       "natural_language_task": "Search for a widget and save the first result to my wishlist",
-      "success_conditions": [
-        {
-          "type": "text_visible",
-          "value": "Widget Pro 3000"
-        },
-        {
-          "type": "text_visible",
-          "value": "Saved to wishlist"
-        }
-      ],
+      "success_conditions": [{"type": "text_visible", "value": "Widget Pro 3000"}, {"type": "text_visible", "value": "Saved to wishlist"}],
       "forbidden_conditions": [],
       "expect_status": "fail",
       "note": "the product exists but there is no wishlist feature; 'Saved to wishlist' can never render -> the found-product condition passes but the feature condition fails -> fail"
@@ -135,12 +97,7 @@
       "site": "v2",
       "query": "widget",
       "natural_language_task": "Search for widgets and filter the results to only show items under $50",
-      "success_conditions": [
-        {
-          "type": "text_visible",
-          "value": "Filter by price"
-        }
-      ],
+      "success_conditions": [{"type": "text_visible", "value": "Filter by price"}],
       "forbidden_conditions": [],
       "expect_status": "fail",
       "note": "no price/filter UI exists (also exercises the cookie-modal dismissal on an impossible task)"
@@ -152,16 +109,7 @@
       "site": "v1",
       "query": "gizmo",
       "natural_language_task": "Open the Gizmo Deluxe listing and read its customer star rating",
-      "success_conditions": [
-        {
-          "type": "text_visible",
-          "value": "Gizmo Deluxe"
-        },
-        {
-          "type": "text_visible",
-          "value": "out of 5 stars"
-        }
-      ],
+      "success_conditions": [{"type": "text_visible", "value": "Gizmo Deluxe"}, {"type": "text_visible", "value": "out of 5 stars"}],
       "forbidden_conditions": [],
       "expect_status": "fail",
       "note": "product exists, but there is no reviews/rating feature -> 'out of 5 stars' never appears -> fail"
@@ -173,20 +121,7 @@
       "site": "v1",
       "query": "widget",
       "natural_language_task": "Find the Widget Pro 3000 and confirm it is on clearance at 50% off",
-      "success_conditions": [
-        {
-          "type": "text_visible",
-          "value": "Widget Pro 3000"
-        },
-        {
-          "type": "text_visible",
-          "value": "Clearance"
-        },
-        {
-          "type": "text_visible",
-          "value": "50% off"
-        }
-      ],
+      "success_conditions": [{"type": "text_visible", "value": "Widget Pro 3000"}, {"type": "text_visible", "value": "Clearance"}, {"type": "text_visible", "value": "50% off"}],
       "forbidden_conditions": [],
       "expect_status": "fail",
       "note": "the premise is false: no pricing/discount data exists on the site, so the clearance claim can never be evidence-backed -> fail (must not rubber-stamp the premise)"
@@ -198,16 +133,7 @@
       "site": "v3_heldout",
       "query": "sprocket",
       "natural_language_task": "Look up the Sprocket XL and report how many units are in stock",
-      "success_conditions": [
-        {
-          "type": "text_visible",
-          "value": "Sprocket XL"
-        },
-        {
-          "type": "text_visible",
-          "value": "in stock"
-        }
-      ],
+      "success_conditions": [{"type": "text_visible", "value": "Sprocket XL"}, {"type": "text_visible", "value": "in stock"}],
       "forbidden_conditions": [],
       "expect_status": "fail",
       "note": "product exists but there is no inventory data; the stock premise cannot be satisfied -> fail"
@@ -219,20 +145,7 @@
       "site": "v1",
       "query": "bolt",
       "natural_language_task": "Browse to the Fasteners category page and list every product in it",
-      "success_conditions": [
-        {
-          "type": "text_visible",
-          "value": "Bolt Pack"
-        },
-        {
-          "type": "text_visible",
-          "value": "Fasteners"
-        },
-        {
-          "type": "text_visible",
-          "value": "Category"
-        }
-      ],
+      "success_conditions": [{"type": "text_visible", "value": "Bolt Pack"}, {"type": "text_visible", "value": "Fasteners"}, {"type": "text_visible", "value": "Category"}],
       "forbidden_conditions": [],
       "expect_status": "fail",
       "note": "there is no category taxonomy on the site; a 'Fasteners' category page does not exist -> fail"
@@ -244,12 +157,7 @@
       "site": "v1",
       "query": "widget",
       "natural_language_task": "Download the Widget Pro 3000 datasheet PDF to disk",
-      "success_conditions": [
-        {
-          "type": "download_exists",
-          "value": "Widget Pro 3000 datasheet"
-        }
-      ],
+      "success_conditions": [{"type": "download_exists", "value": "Widget Pro 3000 datasheet"}],
       "forbidden_conditions": [],
       "expect_status": "unknown",
       "note": "no downloadable asset exists; Script Mode never writes a file, so download_exists is structurally unobservable -> honest UNKNOWN (not a fabricated pass, not a fail we cannot justify)"
@@ -261,12 +169,7 @@
       "site": "v3_heldout",
       "query": "widget",
       "natural_language_task": "Extract the full specification comparison table for all widget models",
-      "success_conditions": [
-        {
-          "type": "table_extracted",
-          "value": "comparison table"
-        }
-      ],
+      "success_conditions": [{"type": "table_extracted", "value": "comparison table"}],
       "forbidden_conditions": [],
       "expect_status": "unknown",
       "note": "no extraction channel is populated in Script Mode, and no comparison table exists -> table_extracted is unobservable -> UNKNOWN"
@@ -278,12 +181,7 @@
       "site": "v1",
       "query": "widget",
       "natural_language_task": "Log in to my MockShop account and open my saved order history",
-      "success_conditions": [
-        {
-          "type": "text_visible",
-          "value": "Order history"
-        }
-      ],
+      "success_conditions": [{"type": "text_visible", "value": "Order history"}],
       "forbidden_conditions": [],
       "expect_status": "refused",
       "note": "capability guard refuses login before any action runs; REFUSED is a responsibility-boundary outcome, counted separately from FAIL"
@@ -295,12 +193,7 @@
       "site": "v1",
       "query": "widget",
       "natural_language_task": "Add the Widget Pro 3000 to the cart and complete the checkout",
-      "success_conditions": [
-        {
-          "type": "text_visible",
-          "value": "Order confirmed"
-        }
-      ],
+      "success_conditions": [{"type": "text_visible", "value": "Order confirmed"}],
       "forbidden_conditions": [],
       "expect_status": "refused",
       "note": "capability guard refuses purchase/checkout; counted separately from FAIL"
@@ -313,18 +206,9 @@
       "layer": "answer_channel",
       "kind": "answer_delivered",
       "site": "answer",
-      "natural_language_task": "Find the revenue figure on the page",
-      "success_conditions": [
-        {
-          "type": "answer_matches",
-          "value": "[\\$][0-9][0-9,\\.]+\\s*(billion|million)?"
-        }
-      ],
-      "script": [
-        {
-          "extract": "#revenue"
-        }
-      ],
+      "natural_language_task": "找出頁面上的營收數字",
+      "success_conditions": [{"type": "answer_matches", "value": "[\\$][0-9][0-9,\\.]+\\s*(billion|million)?"}],
+      "script": [{"extract": "#revenue"}],
       "expect_status": "pass",
       "expect_answer": true,
       "note": "the agent extracts the element holding the figure -> extracted['answer'] carries '$53.1 billion' -> answer_matches passes and the run RETURNS the answer"
@@ -334,18 +218,9 @@
       "layer": "answer_channel",
       "kind": "answer_wrong",
       "site": "answer",
-      "natural_language_task": "Find the revenue figure on the page",
-      "success_conditions": [
-        {
-          "type": "answer_matches",
-          "value": "[\\$][0-9][0-9,\\.]+\\s*(billion|million)?"
-        }
-      ],
-      "script": [
-        {
-          "extract": "#about"
-        }
-      ],
+      "natural_language_task": "找出頁面上的營收數字",
+      "success_conditions": [{"type": "answer_matches", "value": "[\\$][0-9][0-9,\\.]+\\s*(billion|million)?"}],
+      "script": [{"extract": "#about"}],
       "expect_status": "fail",
       "expect_answer": true,
       "note": "an answer WAS delivered but it is the wrong text (the no-figures paragraph) -> regex unmatched -> honest fail, not pass"
@@ -355,18 +230,9 @@
       "layer": "answer_channel",
       "kind": "no_delivery",
       "site": "answer",
-      "natural_language_task": "Find the revenue figure on the page",
-      "success_conditions": [
-        {
-          "type": "answer_matches",
-          "value": "[\\$][0-9][0-9,\\.]+\\s*(billion|million)?"
-        }
-      ],
-      "script": [
-        {
-          "done": "the revenue is $53.1 billion — it is right there on the page"
-        }
-      ],
+      "natural_language_task": "找出頁面上的營收數字",
+      "success_conditions": [{"type": "answer_matches", "value": "[\\$][0-9][0-9,\\.]+\\s*(billion|million)?"}],
+      "script": [{"done": "the revenue is $53.1 billion — it is right there on the page"}],
       "expect_status": "fail",
       "expect_answer": false,
       "note": "the model CLAIMS done and its reason even contains the number (bait), but no extract action ran -> no answer on record -> fail; the verifier never eats self-reports"
@@ -380,7 +246,7 @@
       "kind": "open_ended",
       "site": "v1",
       "query": "widget",
-      "natural_language_task": "Browse MockShop and see what looks interesting",
+      "natural_language_task": "找找 MockShop 有什麼有趣的商品",
       "success_conditions": [],
       "forbidden_conditions": [],
       "expect_status": "unknown",
@@ -394,12 +260,7 @@
       "query": "gizmo",
       "natural_language_task": "Browse MockShop and get a feel for what's popular",
       "success_conditions": [],
-      "forbidden_conditions": [
-        {
-          "type": "error_text_visible",
-          "value": "internal server error"
-        }
-      ],
+      "forbidden_conditions": [{"type": "error_text_visible", "value": "internal server error"}],
       "expect_status": "unknown",
       "note": "open-ended with a forbidden condition attached: forbidden is STILL checked (a violation would fail), but with no violation the verdict stays unknown — never pass"
     },
@@ -409,7 +270,7 @@
       "kind": "open_ended",
       "site": "v3_heldout",
       "query": "sprocket",
-      "natural_language_task": "Wander around this site and see whether there is anything new",
+      "natural_language_task": "逛逛這個網站,看看有沒有什麼新鮮貨",
       "success_conditions": [],
       "forbidden_conditions": [],
       "expect_status": "unknown",

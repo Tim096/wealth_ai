@@ -113,16 +113,29 @@
   },
   {
     "claim_id": "task2_h2h_ours_macro_f1",
-    "description": "NTU itemseg 30-slice head-to-head: ours macro-F1 over filings (line-level per-item F1, lower bound).",
+    "description": "NTU itemseg 30-slice head-to-head: ours macro-F1 (line-level per-item F1, lower bound). Now 30/30 with zero engine failures, so the scored-only and all-filings denominators coincide; see task2_h2h_ours_macro_f1_all.",
     "doc_locations": [
       "docs/eval_report.md"
     ],
     "doc_evidence": [
-      "現行可複核值即 0.6245"
+      "現行可複核值即 0.6423"
     ],
-    "expected": 0.6245,
+    "expected": 0.6423,
     "artifact": "data/sec_eval/scoring/head_to_head.json",
     "rule": "json_field:summary.ours.macro_f1_filings"
+  },
+  {
+    "claim_id": "task2_h2h_ours_macro_f1_all",
+    "description": "Same slice, common denominator: an engine failure counts 0.0 over all 30 filings. Reporting only the scored-only mean is how an engine's own failures leave its score; ours had 2 failures when that table said we lost by 0.0087 (真相 0.0503).",
+    "doc_locations": [
+      "docs/eval_report.md"
+    ],
+    "doc_evidence": [
+      "**0.6423** | **30 / 0**"
+    ],
+    "expected": 0.6423,
+    "artifact": "data/sec_eval/scoring/head_to_head.json",
+    "rule": "json_field:summary.ours.macro_f1_all"
   },
   {
     "claim_id": "task2_h2h_edgar_crawler_macro_f1",
@@ -131,7 +144,7 @@
       "docs/eval_report.md"
     ],
     "doc_evidence": [
-      "| edgar_crawler | **0.6332** |"
+      "| edgar_crawler | 0.6332 | 0.6332 | 30 / 0 |"
     ],
     "expected": 0.6332,
     "artifact": "data/sec_eval/scoring/head_to_head.json",

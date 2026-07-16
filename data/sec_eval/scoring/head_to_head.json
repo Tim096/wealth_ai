@@ -5,25 +5,37 @@
  "slice": 30,
  "summary": {
   "ours": {
-   "filings_scored": 28,
-   "engine_failures": 2,
-   "macro_f1_filings": 0.6245,
-   "verifier_false_pass_items": 33
+   "filings_scored": 30,
+   "engine_failures": 0,
+   "macro_f1_filings": 0.6423,
+   "macro_f1_all": 0.6423,
+   "scored_denominator": 30,
+   "all_denominator": 30,
+   "verifier_false_pass_items": 29
   },
   "edgartools": {
    "filings_scored": 26,
    "engine_failures": 4,
-   "macro_f1_filings": 0.4386
+   "macro_f1_filings": 0.4386,
+   "macro_f1_all": 0.3802,
+   "scored_denominator": 26,
+   "all_denominator": 30
   },
   "edgar_crawler": {
    "filings_scored": 30,
    "engine_failures": 0,
-   "macro_f1_filings": 0.6332
+   "macro_f1_filings": 0.6332,
+   "macro_f1_all": 0.6332,
+   "scored_denominator": 30,
+   "all_denominator": 30
   },
   "datamule": {
    "filings_scored": 28,
    "engine_failures": 2,
-   "macro_f1_filings": 0.6244
+   "macro_f1_filings": 0.6244,
+   "macro_f1_all": 0.5828,
+   "scored_denominator": 28,
+   "all_denominator": 30
   }
  },
  "filings": [
@@ -33,10 +45,251 @@
    "company": "HNET NET",
    "date_filed": "2001/04/30",
    "link": "https://www.sec.gov/Archives/edgar/data/831232/000092838501500540/d10k.txt",
-   "fetch_ms": 1.1,
+   "fetch_ms": 1.0,
    "engines": {
     "ours": {
-     "error": "no items extracted"
+     "items": {
+      "1": {
+       "tp": 938,
+       "fp": 13,
+       "fn": 0,
+       "precision": 0.9863,
+       "recall": 1.0,
+       "f1": 0.9931
+      },
+      "2": {
+       "tp": 16,
+       "fp": 5,
+       "fn": 0,
+       "precision": 0.7619,
+       "recall": 1.0,
+       "f1": 0.8649
+      },
+      "3": {
+       "tp": 18,
+       "fp": 24,
+       "fn": 0,
+       "precision": 0.4286,
+       "recall": 1.0,
+       "f1": 0.6
+      },
+      "4": {
+       "tp": 1,
+       "fp": 0,
+       "fn": 0,
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0
+      },
+      "5": {
+       "tp": 10,
+       "fp": 0,
+       "fn": 0,
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0
+      },
+      "6": {
+       "tp": 5,
+       "fp": 6,
+       "fn": 0,
+       "precision": 0.4545,
+       "recall": 1.0,
+       "f1": 0.625
+      },
+      "7": {
+       "tp": 99,
+       "fp": 17,
+       "fn": 0,
+       "precision": 0.8534,
+       "recall": 1.0,
+       "f1": 0.9209
+      },
+      "8": {
+       "tp": 2,
+       "fp": 0,
+       "fn": 0,
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0
+      },
+      "9": {
+       "tp": 5,
+       "fp": 0,
+       "fn": 0,
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0
+      },
+      "10": {
+       "tp": 36,
+       "fp": 4,
+       "fn": 0,
+       "precision": 0.9,
+       "recall": 1.0,
+       "f1": 0.9474
+      },
+      "11": {
+       "tp": 44,
+       "fp": 12,
+       "fn": 0,
+       "precision": 0.7857,
+       "recall": 1.0,
+       "f1": 0.88
+      },
+      "12": {
+       "tp": 34,
+       "fp": 4,
+       "fn": 0,
+       "precision": 0.8947,
+       "recall": 1.0,
+       "f1": 0.9444
+      },
+      "13": {
+       "tp": 10,
+       "fp": 2,
+       "fn": 0,
+       "precision": 0.8333,
+       "recall": 1.0,
+       "f1": 0.9091
+      },
+      "14": {
+       "tp": 0,
+       "fp": 287,
+       "fn": 0,
+       "precision": 0.0,
+       "recall": 0.0,
+       "f1": 0.0
+      },
+      "15": {
+       "tp": 258,
+       "fp": 29,
+       "fn": 0,
+       "precision": 0.899,
+       "recall": 1.0,
+       "f1": 0.9468
+      }
+     },
+     "macro_f1": 0.9023,
+     "gold_lines_scored": 1535,
+     "verifier": {
+      "1": {
+       "status": "pass",
+       "confidence": 0.671604938271605,
+       "needs_review": true
+      },
+      "1A": {
+       "status": "missing",
+       "confidence": 0.0,
+       "needs_review": true
+      },
+      "1B": {
+       "status": "missing",
+       "confidence": 0.0,
+       "needs_review": true
+      },
+      "1C": {
+       "status": "missing",
+       "confidence": 0.0,
+       "needs_review": true
+      },
+      "2": {
+       "status": "pass",
+       "confidence": 0.9666666666666666,
+       "needs_review": false
+      },
+      "3": {
+       "status": "pass",
+       "confidence": 0.9666666666666666,
+       "needs_review": false
+      },
+      "4": {
+       "status": "pass",
+       "confidence": 0.8986666666666666,
+       "needs_review": true
+      },
+      "5": {
+       "status": "pass",
+       "confidence": 0.932562620423892,
+       "needs_review": false
+      },
+      "6": {
+       "status": "pass",
+       "confidence": 0.8909090909090909,
+       "needs_review": true
+      },
+      "7": {
+       "status": "pass",
+       "confidence": 0.9576923076923076,
+       "needs_review": true
+      },
+      "7A": {
+       "status": "missing",
+       "confidence": 0.0,
+       "needs_review": true
+      },
+      "8": {
+       "status": "pass",
+       "confidence": 0.7160493827160493,
+       "needs_review": true
+      },
+      "9": {
+       "status": "pass",
+       "confidence": 0.7054673721340388,
+       "needs_review": true
+      },
+      "9A": {
+       "status": "missing",
+       "confidence": 0.0,
+       "needs_review": true
+      },
+      "9B": {
+       "status": "missing",
+       "confidence": 0.0,
+       "needs_review": true
+      },
+      "9C": {
+       "status": "missing",
+       "confidence": 0.0,
+       "needs_review": true
+      },
+      "10": {
+       "status": "pass",
+       "confidence": 0.9276190476190477,
+       "needs_review": false
+      },
+      "11": {
+       "status": "pass",
+       "confidence": 0.9644444444444444,
+       "needs_review": false
+      },
+      "12": {
+       "status": "pass",
+       "confidence": 0.7004796728788236,
+       "needs_review": true
+      },
+      "13": {
+       "status": "pass",
+       "confidence": 0.9433333333333334,
+       "needs_review": true
+      },
+      "14": {
+       "status": "partial",
+       "confidence": 0.8293851132686084,
+       "needs_review": true
+      },
+      "15": {
+       "status": "partial",
+       "confidence": 0.7293851132686084,
+       "needs_review": true
+      },
+      "16": {
+       "status": "missing",
+       "confidence": 0.0,
+       "needs_review": true
+      }
+     },
+     "verifier_false_pass": []
     },
     "edgartools": {
      "error": "no items extracted"
@@ -178,7 +431,7 @@
    "company": "DOBSON COMMUNICATIONS CORP",
    "date_filed": "2002/04/01",
    "link": "https://www.sec.gov/Archives/edgar/data/1035985/000095013402003064/d94706e10-k.htm",
-   "fetch_ms": 3.5,
+   "fetch_ms": 3.4,
    "engines": {
     "ours": {
      "items": {
@@ -322,17 +575,17 @@
       "1A": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1B": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -382,17 +635,17 @@
       "9A": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "9B": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "partial",
@@ -417,23 +670,22 @@
       "14": {
        "status": "partial",
        "confidence": 0.7631372549019607,
-       "needs_review": false
+       "needs_review": true
       },
       "15": {
        "status": "partial",
        "confidence": 0.7631372549019607,
-       "needs_review": false
+       "needs_review": true
       },
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": [
       "2",
       "10",
-      "15",
       "7A"
      ]
     },
@@ -839,7 +1091,7 @@
    "company": "HALF ROBERT INTERNATIONAL INC /DE/",
    "date_filed": "2003/03/26",
    "link": "https://www.sec.gov/Archives/edgar/data/315213/000104746903010372/a2095565z10-k.htm",
-   "fetch_ms": 1.5,
+   "fetch_ms": 1.6,
    "engines": {
     "ours": {
      "items": {
@@ -959,17 +1211,17 @@
       "1A": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1B": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -1019,37 +1271,37 @@
       "9A": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "9B": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "11": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "12": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "13": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "14": {
        "status": "pass",
@@ -1064,7 +1316,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": []
@@ -1415,7 +1667,7 @@
    "company": "EON COMMUNICATIONS CORP",
    "date_filed": "2003/10/29",
    "link": "https://www.sec.gov/Archives/edgar/data/1084752/000119312503069303/d10k.htm",
-   "fetch_ms": 2.7,
+   "fetch_ms": 3.0,
    "engines": {
     "ours": {
      "items": {
@@ -1567,17 +1819,17 @@
       "1A": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1B": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -1632,12 +1884,12 @@
       "9B": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "pass",
@@ -1672,7 +1924,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": []
@@ -2111,7 +2363,7 @@
    "company": "ISIS PHARMACEUTICALS INC",
    "date_filed": "2004/03/15",
    "link": "https://www.sec.gov/Archives/edgar/data/874015/000104746904007808/a2130713z10-k.htm",
-   "fetch_ms": 2.2,
+   "fetch_ms": 2.3,
    "engines": {
     "ours": {
      "items": {
@@ -2263,17 +2515,17 @@
       "1A": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1B": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -2328,17 +2580,17 @@
       "9B": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
-       "status": "pass",
-       "confidence": 0.9609523809523809,
-       "needs_review": false
+       "status": "incorporated_by_reference",
+       "confidence": 0.4895943562610229,
+       "needs_review": true
       },
       "11": {
        "status": "incorporated_by_reference",
@@ -2368,12 +2620,10 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
-     "verifier_false_pass": [
-      "10"
-     ]
+     "verifier_false_pass": []
     },
     "edgartools": {
      "items": {
@@ -2809,7 +3059,7 @@
    "company": "CATERPILLAR INC",
    "date_filed": "2005/02/24",
    "link": "https://www.sec.gov/Archives/edgar/data/18230/000001823005000218/form10k_2004.htm",
-   "fetch_ms": 2.3,
+   "fetch_ms": 2.0,
    "engines": {
     "ours": {
      "items": {
@@ -2966,12 +3216,12 @@
       "1B": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -2986,7 +3236,7 @@
       "4": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "5": {
        "status": "pass",
@@ -3016,7 +3266,7 @@
       "9": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "9A": {
        "status": "pass",
@@ -3026,12 +3276,12 @@
       "9B": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "pass",
@@ -3066,7 +3316,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": []
@@ -3505,7 +3755,7 @@
    "company": "ESSENTIAL GROUP INC",
    "date_filed": "2005/03/30",
    "link": "https://www.sec.gov/Archives/edgar/data/1088000/000119312505064965/d10k.htm",
-   "fetch_ms": 2.4,
+   "fetch_ms": 2.2,
    "engines": {
     "ours": {
      "items": {
@@ -3665,17 +3915,17 @@
       "1A": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1B": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -3735,7 +3985,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "incorporated_by_reference",
@@ -3770,7 +4020,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": [
@@ -4236,7 +4486,7 @@
    "company": "GENERAL CABLE CORP /DE/",
    "date_filed": "2006/03/15",
    "link": "https://www.sec.gov/Archives/edgar/data/886035/000095015206002081/l18783ae10vk.htm",
-   "fetch_ms": 3.7,
+   "fetch_ms": 4.0,
    "engines": {
     "ours": {
      "items": {
@@ -4422,7 +4672,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -4482,7 +4732,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "pass",
@@ -4517,7 +4767,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": []
@@ -5028,7 +5278,7 @@
    "company": "CITIZENS & NORTHERN CORP",
    "date_filed": "2007/03/02",
    "link": "https://www.sec.gov/Archives/edgar/data/810958/000095015207001718/l24216ae10vk.htm",
-   "fetch_ms": 3.1,
+   "fetch_ms": 2.9,
    "engines": {
     "ours": {
      "items": {
@@ -5214,7 +5464,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -5274,7 +5524,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "incorporated_by_reference",
@@ -5309,7 +5559,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": [
@@ -5822,7 +6072,7 @@
    "company": "PARKVALE FINANCIAL CORP",
    "date_filed": "2007/09/10",
    "link": "https://www.sec.gov/Archives/edgar/data/820907/000095015207007451/l27900ae10vk.htm",
-   "fetch_ms": 1.4,
+   "fetch_ms": 1.3,
    "engines": {
     "ours": {
      "items": {
@@ -6008,7 +6258,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -6068,7 +6318,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "incorporated_by_reference",
@@ -6103,7 +6353,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": []
@@ -6614,7 +6864,7 @@
    "company": "KODIAK ENERGY, INC.",
    "date_filed": "2008/03/17",
    "link": "https://www.sec.gov/Archives/edgar/data/1109553/000109690608000449/kodiak10k123107.htm",
-   "fetch_ms": 5.3,
+   "fetch_ms": 5.1,
    "engines": {
     "ours": {
      "items": {
@@ -6800,7 +7050,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -6845,12 +7095,12 @@
       "9": {
        "status": "partial",
        "confidence": 0.8424299065420561,
-       "needs_review": false
+       "needs_review": true
       },
       "9A": {
        "status": "partial",
        "confidence": 0.7424299065420561,
-       "needs_review": false
+       "needs_review": true
       },
       "9B": {
        "status": "pass",
@@ -6860,7 +7110,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "pass",
@@ -6895,7 +7145,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": []
@@ -7398,7 +7648,7 @@
    "company": "AUDIOVOX CORP",
    "date_filed": "2008/05/14",
    "link": "https://www.sec.gov/Archives/edgar/data/807707/000080770708000022/form10k.htm",
-   "fetch_ms": 8.4,
+   "fetch_ms": 8.7,
    "engines": {
     "ours": {
      "items": {
@@ -7544,7 +7794,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -7604,32 +7854,32 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "11": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "12": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "13": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "14": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "15": {
        "status": "pass",
@@ -7639,7 +7889,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": [
@@ -8204,7 +8454,7 @@
       "1": {
        "status": "partial",
        "confidence": 0.8610256410256409,
-       "needs_review": false
+       "needs_review": true
       },
       "1A": {
        "status": "pass",
@@ -8219,12 +8469,12 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "partial",
        "confidence": 0.761025641025641,
-       "needs_review": false
+       "needs_review": true
       },
       "3": {
        "status": "pass",
@@ -8279,7 +8529,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "pass",
@@ -8314,11 +8564,10 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": [
-      "2",
       "5",
       "10",
       "9A"
@@ -9016,7 +9265,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -9076,7 +9325,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "pass",
@@ -9111,7 +9360,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": []
@@ -9622,7 +9871,7 @@
    "company": "GOLF ROUNDS COM INC",
    "date_filed": "2009/10/26",
    "link": "https://www.sec.gov/Archives/edgar/data/319016/000095012309053146/y02446e10vk.htm",
-   "fetch_ms": 1.2,
+   "fetch_ms": 1.3,
    "engines": {
     "ours": {
      "items": {
@@ -9774,17 +10023,17 @@
       "1A": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1B": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -9819,7 +10068,7 @@
       "7A": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "8": {
        "status": "pass",
@@ -9844,7 +10093,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "pass",
@@ -9879,7 +10128,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": []
@@ -10318,7 +10567,7 @@
    "company": "TERADATA CORP /DE/",
    "date_filed": "2010/02/26",
    "link": "https://www.sec.gov/Archives/edgar/data/816761/000119312510043063/d10k.htm",
-   "fetch_ms": 3.2,
+   "fetch_ms": 3.4,
    "engines": {
     "ours": {
      "items": {
@@ -10504,7 +10753,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "ambiguous",
@@ -10564,7 +10813,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "pass",
@@ -10599,7 +10848,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": [
@@ -11112,7 +11361,7 @@
    "company": "Optelecom-NKF, Inc.",
    "date_filed": "2010/03/30",
    "link": "https://www.sec.gov/Archives/edgar/data/275858/000104746910002965/a2197673z10-k.htm",
-   "fetch_ms": 2.6,
+   "fetch_ms": 2.5,
    "engines": {
     "ours": {
      "items": {
@@ -11298,7 +11547,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -11333,7 +11582,7 @@
       "7A": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "8": {
        "status": "pass",
@@ -11348,17 +11597,17 @@
       "9A": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "9B": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "incorporated_by_reference",
@@ -11388,12 +11637,12 @@
       "15": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": [
@@ -11898,7 +12147,7 @@
    "company": "SK Shasta Acquisition Corp. 4",
    "date_filed": "2010/08/13",
    "link": "https://www.sec.gov/Archives/edgar/data/1439240/000114420410043781/v193300_10k.htm",
-   "fetch_ms": 1.9,
+   "fetch_ms": 2.1,
    "engines": {
     "ours": {
      "items": {
@@ -12084,7 +12333,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -12144,7 +12393,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "pass",
@@ -12179,7 +12428,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": []
@@ -12876,7 +13125,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -12936,7 +13185,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "pass",
@@ -12971,7 +13220,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": [
@@ -13672,7 +13921,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -13732,7 +13981,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "partial",
@@ -13767,7 +14016,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": [
@@ -14283,7 +14532,7 @@
    "company": "Abtech Holdings, Inc.",
    "date_filed": "2012/03/30",
    "link": "https://www.sec.gov/Archives/edgar/data/1405858/000114420412018496/v307123_10k.htm",
-   "fetch_ms": 3.0,
+   "fetch_ms": 2.3,
    "engines": {
     "ours": {
      "items": {
@@ -14469,7 +14718,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -14529,7 +14778,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "incorporated_by_reference",
@@ -14564,7 +14813,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": []
@@ -14912,7 +15161,7 @@
    "company": "Carrier Alliance Holdings, Inc.",
    "date_filed": "2013/02/21",
    "link": "https://www.sec.gov/Archives/edgar/data/1027484/000101905613000267/carrier_10k11.htm",
-   "fetch_ms": 1.7,
+   "fetch_ms": 1.9,
    "engines": {
     "ours": {
      "items": {
@@ -15098,7 +15347,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -15158,7 +15407,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "pass",
@@ -15193,7 +15442,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": [
@@ -15706,10 +15955,275 @@
    "company": "Integrated Electric Systems Corp.",
    "date_filed": "2013/07/16",
    "link": "https://www.sec.gov/Archives/edgar/data/1402486/000116552713000641/g6936a.txt",
-   "fetch_ms": 0.8,
+   "fetch_ms": 0.9,
    "engines": {
     "ours": {
-     "error": "no items extracted"
+     "items": {
+      "1": {
+       "tp": 48,
+       "fp": 41,
+       "fn": 0,
+       "precision": 0.5393,
+       "recall": 1.0,
+       "f1": 0.7007
+      },
+      "2": {
+       "tp": 8,
+       "fp": 2,
+       "fn": 0,
+       "precision": 0.8,
+       "recall": 1.0,
+       "f1": 0.8889
+      },
+      "3": {
+       "tp": 3,
+       "fp": 0,
+       "fn": 0,
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0
+      },
+      "4": {
+       "tp": 1,
+       "fp": 0,
+       "fn": 0,
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0
+      },
+      "5": {
+       "tp": 72,
+       "fp": 2,
+       "fn": 0,
+       "precision": 0.973,
+       "recall": 1.0,
+       "f1": 0.9863
+      },
+      "6": {
+       "tp": 3,
+       "fp": 2,
+       "fn": 0,
+       "precision": 0.6,
+       "recall": 1.0,
+       "f1": 0.75
+      },
+      "7": {
+       "tp": 79,
+       "fp": 39,
+       "fn": 0,
+       "precision": 0.6695,
+       "recall": 1.0,
+       "f1": 0.802
+      },
+      "8": {
+       "tp": 262,
+       "fp": 11,
+       "fn": 0,
+       "precision": 0.9597,
+       "recall": 1.0,
+       "f1": 0.9794
+      },
+      "9": {
+       "tp": 32,
+       "fp": 5,
+       "fn": 0,
+       "precision": 0.8649,
+       "recall": 1.0,
+       "f1": 0.9275
+      },
+      "10": {
+       "tp": 75,
+       "fp": 15,
+       "fn": 0,
+       "precision": 0.8333,
+       "recall": 1.0,
+       "f1": 0.9091
+      },
+      "11": {
+       "tp": 27,
+       "fp": 4,
+       "fn": 0,
+       "precision": 0.871,
+       "recall": 1.0,
+       "f1": 0.931
+      },
+      "12": {
+       "tp": 9,
+       "fp": 16,
+       "fn": 0,
+       "precision": 0.36,
+       "recall": 1.0,
+       "f1": 0.5294
+      },
+      "13": {
+       "tp": 9,
+       "fp": 5,
+       "fn": 0,
+       "precision": 0.6429,
+       "recall": 1.0,
+       "f1": 0.7826
+      },
+      "14": {
+       "tp": 7,
+       "fp": 0,
+       "fn": 0,
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0
+      },
+      "15": {
+       "tp": 9,
+       "fp": 0,
+       "fn": 0,
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0
+      },
+      "1A": {
+       "tp": 46,
+       "fp": 6,
+       "fn": 0,
+       "precision": 0.8846,
+       "recall": 1.0,
+       "f1": 0.9388
+      },
+      "7A": {
+       "tp": 3,
+       "fp": 2,
+       "fn": 0,
+       "precision": 0.6,
+       "recall": 1.0,
+       "f1": 0.75
+      },
+      "9A": {
+       "tp": 80,
+       "fp": 6,
+       "fn": 0,
+       "precision": 0.9302,
+       "recall": 1.0,
+       "f1": 0.9639
+      }
+     },
+     "macro_f1": 0.88,
+     "gold_lines_scored": 855,
+     "verifier": {
+      "1": {
+       "status": "pass",
+       "confidence": 1.0,
+       "needs_review": true
+      },
+      "1A": {
+       "status": "pass",
+       "confidence": 1.0,
+       "needs_review": true
+      },
+      "1B": {
+       "status": "missing",
+       "confidence": 0.0,
+       "needs_review": true
+      },
+      "1C": {
+       "status": "missing",
+       "confidence": 0.0,
+       "needs_review": true
+      },
+      "2": {
+       "status": "pass",
+       "confidence": 1.0,
+       "needs_review": false
+      },
+      "3": {
+       "status": "pass",
+       "confidence": 1.0,
+       "needs_review": true
+      },
+      "4": {
+       "status": "pass",
+       "confidence": 0.9,
+       "needs_review": false
+      },
+      "5": {
+       "status": "pass",
+       "confidence": 0.7136404697380307,
+       "needs_review": true
+      },
+      "6": {
+       "status": "pass",
+       "confidence": 0.9242424242424242,
+       "needs_review": true
+      },
+      "7": {
+       "status": "pass",
+       "confidence": 0.9910256410256411,
+       "needs_review": true
+      },
+      "7A": {
+       "status": "pass",
+       "confidence": 1.0,
+       "needs_review": true
+      },
+      "8": {
+       "status": "pass",
+       "confidence": 0.9634920634920634,
+       "needs_review": false
+      },
+      "9": {
+       "status": "pass",
+       "confidence": 0.5824682814302191,
+       "needs_review": true
+      },
+      "9A": {
+       "status": "pass",
+       "confidence": 0.7407407407407407,
+       "needs_review": true
+      },
+      "9B": {
+       "status": "missing",
+       "confidence": 0.0,
+       "needs_review": true
+      },
+      "9C": {
+       "status": "missing",
+       "confidence": 0.0,
+       "needs_review": true
+      },
+      "10": {
+       "status": "pass",
+       "confidence": 0.7149009474590869,
+       "needs_review": true
+      },
+      "11": {
+       "status": "pass",
+       "confidence": 1.0,
+       "needs_review": false
+      },
+      "12": {
+       "status": "pass",
+       "confidence": 0.9794871794871796,
+       "needs_review": false
+      },
+      "13": {
+       "status": "pass",
+       "confidence": 0.977310924369748,
+       "needs_review": true
+      },
+      "14": {
+       "status": "pass",
+       "confidence": 0.9947368421052631,
+       "needs_review": true
+      },
+      "15": {
+       "status": "incorporated_by_reference",
+       "confidence": 0.4696611505122143,
+       "needs_review": true
+      },
+      "16": {
+       "status": "missing",
+       "confidence": 0.0,
+       "needs_review": true
+      }
+     },
+     "verifier_false_pass": []
     },
     "edgartools": {
      "error": "no items extracted"
@@ -15875,7 +16389,7 @@
    "company": "NEOGENOMICS INC",
    "date_filed": "2014/02/24",
    "link": "https://www.sec.gov/Archives/edgar/data/1077183/000119312514064714/d647097d10k.htm",
-   "fetch_ms": 4.7,
+   "fetch_ms": 3.1,
    "engines": {
     "ours": {
      "items": {
@@ -16061,7 +16575,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -16121,7 +16635,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "incorporated_by_reference",
@@ -16156,7 +16670,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": []
@@ -16667,7 +17181,7 @@
    "company": "FIRST BANCORP /PR/",
    "date_filed": "2014/03/17",
    "link": "https://www.sec.gov/Archives/edgar/data/1057706/000105770614000004/fbp12312013x10k.htm",
-   "fetch_ms": 31.0,
+   "fetch_ms": 29.7,
    "engines": {
     "ours": {
      "items": {
@@ -16853,7 +17367,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -16913,7 +17427,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "incorporated_by_reference",
@@ -16948,7 +17462,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": [
@@ -17300,7 +17814,7 @@
    "company": "Diversified Resources Inc.",
    "date_filed": "2015/02/13",
    "link": "https://www.sec.gov/Archives/edgar/data/1509692/000112785515000064/diversified10103114.htm",
-   "fetch_ms": 4.2,
+   "fetch_ms": 3.8,
    "engines": {
     "ours": {
      "items": {
@@ -17486,7 +18000,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "incorporated_by_reference",
@@ -17546,7 +18060,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "pass",
@@ -17581,7 +18095,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": []
@@ -18278,7 +18792,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -18338,7 +18852,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "pass",
@@ -18373,7 +18887,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": []
@@ -18884,7 +19398,7 @@
    "company": "Diplomat Pharmacy, Inc.",
    "date_filed": "2016/02/29",
    "link": "https://www.sec.gov/Archives/edgar/data/1610092/000110465916101031/a16-5240_110k.htm",
-   "fetch_ms": 5.8,
+   "fetch_ms": 5.9,
    "engines": {
     "ours": {
      "items": {
@@ -19060,17 +19574,17 @@
       "1A": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1B": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -19130,7 +19644,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "incorporated_by_reference",
@@ -19165,7 +19679,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": [
@@ -19737,42 +20251,42 @@
       "1": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1A": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1B": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "3": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "4": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "5": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "6": {
        "status": "reserved",
@@ -19782,37 +20296,37 @@
       "7": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "7A": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "8": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "9": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "9A": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "9B": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "pass",
@@ -19847,7 +20361,7 @@
       "16": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       }
      },
      "verifier_false_pass": []
@@ -20022,7 +20536,7 @@
    "company": "WATTS WATER TECHNOLOGIES INC",
    "date_filed": "2017/02/24",
    "link": "https://www.sec.gov/Archives/edgar/data/795403/000155837017000970/wts-20161231x10k.htm",
-   "fetch_ms": 13.2,
+   "fetch_ms": 12.6,
    "engines": {
     "ours": {
      "items": {
@@ -20216,7 +20730,7 @@
       "1C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "2": {
        "status": "pass",
@@ -20276,7 +20790,7 @@
       "9C": {
        "status": "missing",
        "confidence": 0.0,
-       "needs_review": false
+       "needs_review": true
       },
       "10": {
        "status": "pass",
@@ -20284,9 +20798,9 @@
        "needs_review": false
       },
       "11": {
-       "status": "pass",
-       "confidence": 0.9977777777777778,
-       "needs_review": false
+       "status": "incorporated_by_reference",
+       "confidence": 0.516872427983539,
+       "needs_review": true
       },
       "12": {
        "status": "pass",
@@ -20316,7 +20830,6 @@
      },
      "verifier_false_pass": [
       "10",
-      "11",
       "12",
       "1A",
       "7A"

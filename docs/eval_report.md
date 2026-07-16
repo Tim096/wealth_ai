@@ -16,7 +16,7 @@
 在你往下讀之前,我先把三個最難看的數字放在最前面 —— 它們不藏在附錄:
 
 - **我的 pass rate 掉了,而我把它當成進步。** SEC sweep 的 pass 從 75.9%(192)掉到 70.0%(177)。掉的那 15 個是假 pass,被誠實重新分類。
-- **單軸跑分我輸了。** NTU 30-slice 的 macro-F1,我 0.6245,輸給外部引擎 edgar_crawler 的 0.6332。輸就是輸 —— 不改判、不軟化、不寫成「接近」。
+- **單軸跑分:我先報錯兩次,現在贏 0.0091。** NTU 30-slice macro-F1,現行 **0.6423**(30/30 零失敗)對 edgar_crawler **0.6332**(30/30)。但這個數字的價值在它的來歷:我曾宣稱「輸 0.0087」,**真相是輸 0.0503**(舊表把我自己失敗的 2 份踢出分母);翻盤也不是靠 F1 tuning,是修掉一個**我自己凍結成規格、還寫進 README 當時代邊界**的 normalize bug。**贏的是數字,丟臉的是過程,兩個都寫在這裡。**
 - **我的信心校準沒過門檻。** AUROC 0.6667,gate 要求 ≥0.75,**MISS**。不包裝成「接近通過的邊界」。
 
 > 炫技的正確姿勢不是把技巧堆滿報喜,是讓多數技巧誠實地失敗、只留站得住的那一個。
@@ -198,7 +198,7 @@ SEC 對 FY ≥ 2024-12-15 強制 Item 1C 的 CYD taxonomy iXBRL block-tag——*
 
    其餘 9 家(AAPL/MSFT/NVDA/WMT/CAT/XOM/NEM/MRNA/KO)coverage/containment/chars/verdict 數字逐位不變;artifact diff 中 MSFT/MRNA 的 `needs_review_after` false→true 為 length-prior(commit 34d31b9)所致——上次 regen 基線在 84ecea7,較舊;kill-switch 驗證與 section-anchor 無關。kill-switch 實檔驗證 `SEC_WRAPPER_SECTION_ANCHOR=0` 完整還原 before 數字(GS 0%/247、JPM 33.3%/20,610)。通用結構規則,無 ticker 特例。
 
-**連帶效應誠實記錄**:GS 7A 曾被首版解析到「Risk Management」章節總覽(13k chars,wrong-body 風險),已由 item-topic guard 擋回 honest pointer;JPM 7/7A/8 page-anchor span 逐位不變。**F1 side-effect = 零**:head-to-head 30-slice 前景重跑,四引擎 macro-F1 逐位不變(ours 0.6245 / edgar_crawler 0.6332 / datamule 0.6244 / edgartools 0.4386;`verifier_false_pass_items` 68 不變;json diff 僅 fetch_ms 計時雜訊)——NTU slice 為 2001–2019 年檔,無 CYD 時代 wrapper 1C stub,無交集符合預期。Calibration 重生:AUROC/ECE/false-pass 全部逐位不變(ntu_human_labeled 0.6621/0.1133/0.2048;**該波時點值**——其後 topic prior(margin+IBR)波現行為 0.6667/0.1235/0.1358,見下方 NTU 校準 bullet),diff 僅 generated_at。守門:pytest `-m "not integration"` **772 passed**(before 763;+9 = `tests/test_section_anchor.py`;topic prior 波後現行 **788 passed**,+16 = `tests/test_topic_prior.py`)、mutation harness 六類 recall 全 1.0、clean false-alarm 0.0000/0.0056 不變。
+**連帶效應誠實記錄**:GS 7A 曾被首版解析到「Risk Management」章節總覽(13k chars,wrong-body 風險),已由 item-topic guard 擋回 honest pointer;JPM 7/7A/8 page-anchor span 逐位不變。**F1 side-effect = 零**:head-to-head 30-slice 前景重跑,四引擎 macro-F1 逐位不變(**以下為該波時點值**;ours 其後於 2026-07-16 因 normalize text-mode 修復升至 **0.6423**、失敗 2→0,見下方 head-to-head 段:ours 0.6245 / edgar_crawler 0.6332 / datamule 0.6244 / edgartools 0.4386;`verifier_false_pass_items` 68 不變;json diff 僅 fetch_ms 計時雜訊)——NTU slice 為 2001–2019 年檔,無 CYD 時代 wrapper 1C stub,無交集符合預期。Calibration 重生:AUROC/ECE/false-pass 全部逐位不變(ntu_human_labeled 0.6621/0.1133/0.2048;**該波時點值**——其後 topic prior(margin+IBR)波現行為 0.6667/0.1235/0.1358,見下方 NTU 校準 bullet),diff 僅 generated_at。守門:pytest `-m "not integration"` **772 passed**(before 763;+9 = `tests/test_section_anchor.py`;topic prior 波後現行 **788 passed**,+16 = `tests/test_topic_prior.py`)、mutation harness 六類 recall 全 1.0、clean false-alarm 0.0000/0.0056 不變。
 
 > 這一段最值得看的不是「11 agree / 0 disagree」,是那句 **wrong body 比 honest pointer 更糟** —— 我寧可老實說「內容不在這裡」,也不要接一段看起來很像、其實是別章的正文給你。
 
@@ -225,24 +225,39 @@ baseline 11 家全是 iXBRL(10 Workiva + 1 DFIN)——覆蓋缺口用分層抽�
 - 重跑:`.venv/Scripts/python -m pytest tests/test_landmines.py -q`
 - Artifact:`data/sec_eval/landmines/landmines.json`(header 曾有 total_tests=16 off-by-one,已修正為 15,commit `470b8b9`;10 條 landmine 全數覆蓋)
 
-#### 外部 human-labeled benchmark:NTU itemseg 30-slice head-to-head(2026-07-10,誠實揭露輸)
+#### 外部 human-labeled benchmark:NTU itemseg 30-slice head-to-head(2026-07-16 重跑)
 
-**這一節我輸。先講結論:單軸 macro-F1,我 0.6245,edgar_crawler 0.6332,我輸 0.0087。**
+**這一節的三個數字,前兩個我都報錯過。按時序讀:**
 
-白話:macro-F1 就是「抓得準 + 抓得全」的綜合平均分。我拿一份台大團隊人工標註的答案卷,跟三個我 vendored 進來的開源引擎在同一份題目上對跑 —— 結果我不是第一名。
-
-與三個 vendored 開源引擎在同一份 NTU 人工標註 gold(30-filing slice)上對跑:
-
-| 系統 | macro-F1(NTU 30-slice) | scored / failures |
+| 我當時說 | 實際上 | 差在哪 |
 |---|---|---|
-| edgar_crawler | **0.6332** | 30 / 0 |
-| **ours**(合法 TOC-strip 落地後;TOC-strip 前 raw 0.5964 為歷史過程值,該次 run 的 artifact 未保存——現行可複核值即 0.6245) | **0.6245** | 28 / 2 |
-| datamule | 0.6244 | 28 / 2 |
-| edgartools 5.42.0 | 0.4386 | 26 / 4 |
+| 「我輸 **0.0087**」(0.6245 vs 0.6332) | **我輸 0.0503**(0.5829 vs 0.6332) | 0.6245 是**我沒炸掉的那 28 份**的平均;對手的 0.6332 是**全部 30 份**的平均。我拿自己的成功率去比對手的總平均。 |
+| 「F1 tuning 已 CLOSED,我認輸」 | **我贏 0.0091**(0.6423 vs 0.6332,30/30 對 30/30) | 那兩份炸掉的,被 `normalize` text-mode 修好了——**而我把那個 bug 當成時代邊界寫進 README、還用測試凍結起來。** |
 
-**單軸 F1 我們沒有贏**:輸 edgar_crawler 0.0087、追平 datamule(0.6245 ≈ 0.6244,非「贏」)——如實記錄,F1 tuning 已 CLOSED。差異化在驗證軸:全場唯一有多 oracle 驗證(XBRL/CYD/topic/2-of-N)、誠實 needs_review/棄權(false-pass 是自己量出來自己公布的:TOC-strip 落地前 **100/397**(歷史 artifact,`git show v1.0-submission:data/sec_eval/calibration/calibration.json` 的 `strata.ntu_human_labeled.verifier_false_pass`);TOC-strip 落地後 **79**;length prior 上線後 **68/332**(coverage 0.6484);topic prior(margin+IBR)上線後 **33/243 = 0.1358**(coverage 0.4746,現行 `calibration.json`——54+ pointer stub 改走 review,review 負載上升是真實代價,如實列帳)——交付層移除的 TOC-bleed fp 不再計)、capture-first 覆蓋保證與 mutation harness 的系統——edgar_crawler 的 0.6332 是無法自我審計的數字。
+**現行可複核值即 0.6423,30 份全部有分、零失敗。**
 
-> 不是「我跑分比較高」,是「我輸了那 0.0087,但我是全場唯一能告訴你自己哪裡錯的人」。這句話不能拿來換分數 —— 輸就是輸,寫在標題。
+白話:macro-F1 就是「抓得準 + 抓得全」的綜合平均分。我拿台大團隊人工標註的答案卷,跟三個 vendored 進來的開源引擎在同一份題目上對跑。
+
+| 系統 | macro-F1(scored only) | macro-F1(全 30 份,失敗計 0) | scored / failures |
+|---|---|---|---|
+| **ours** | **0.6423** | **0.6423** | **30 / 0** |
+| edgar_crawler | 0.6332 | 0.6332 | 30 / 0 |
+| datamule | 0.6244 | 0.5828 | 28 / 2 |
+| edgartools 5.42.0 | 0.4386 | 0.3802 | 26 / 4 |
+
+**這張表為什麼有兩欄?因為只報左欄,是引擎自己的失敗從自己分數裡消失的機制。** 左欄回答「它會做的時候做得多好」,分母隨失敗變小——**愈脆弱的引擎看起來愈好**。右欄回答「它到底扛不扛得住這批格式變異」,大家分母一樣。舊版只報左欄,而舊版的我有 2 個失敗——**所以那張表在替我美化,美化的位置正好是我寫著「誠實揭露輸」的標題底下。**
+
+**我是在這個偏誤對我不利時發現它的**(它讓我的真實差距從 0.0503 縮小成 0.0087,看起來只差一點點)。現在它對我有利(datamule 從 0.6244 掉到 0.5828)——**那更沒有理由不修。**
+
+**贏的方式要講清楚,不然這個數字沒有意義:我不是靠 F1 tuning 贏的。** 我贏是因為修掉兩個 `no items extracted`——而那個 bug 是我自己 `normalize` 把純文字的換行吃掉造成的,我卻把它寫成「HTML-oriented detector 的時代邊界」、用 FG-SEC-009 凍結成「預期不支援」、讓 CI 保護了它好幾天。**修好之後 HNET 拿 0.9023(edgar_crawler 只有 0.8346)、IES 拿 0.88,兩份都遠高於我自己 28 份的平均。**
+
+**而且這個勝利在 artifact 裡躺了整整一天沒被發現**——`head_to_head.json` 最後寫入於 `69af928`,是 `dfc3378`(normalize 修復)的祖先。**code 早就贏了,數字還在報輸。** 這是同一個病的第三次發作:寫好了沒接線、修好了沒重測。
+
+差異化仍在驗證軸:全場唯一有多 oracle 驗證(XBRL/CYD/topic/2-of-N)、誠實 needs_review/棄權(false-pass 是自己量出來自己公布的:TOC-strip 落地前 **100/397**(歷史 artifact,`git show v1.0-submission:data/sec_eval/calibration/calibration.json` 的 `strata.ntu_human_labeled.verifier_false_pass`);TOC-strip 落地後 **79**;length prior 上線後 **68/332**(coverage 0.6484);topic prior(margin+IBR)上線後 **33/243 = 0.1358**(coverage 0.4746,現行 `calibration.json`——54+ pointer stub 改走 review,review 負載上升是真實代價,如實列帳)——交付層移除的 TOC-bleed fp 不再計)、capture-first 覆蓋保證與 mutation harness 的系統——edgar_crawler 的 0.6332 是無法自我審計的數字。
+
+> 舊版這裡寫著:「不是『我跑分比較高』,是『我輸了那 0.0087,但我是全場唯一能告訴你自己哪裡錯的人』。」
+>
+> **那句話現在讀起來很諷刺,所以我留著它。** 我當時輸的不是 0.0087 是 0.0503;而我「唯一能告訴你自己哪裡錯」的那個能力,**正好沒能告訴我這件事** —— 它沒抓到分母偏誤、沒抓到 artifact 過期、也沒抓到那兩個失敗是我自己的 normalize bug 造成的。**一個能自我審計的系統,審計不到自己的計分方式,那個「能自我審計」就只是一句好聽的話。**
 
 **軸差異聲明(NTU ItemSeg 論文 vs 本表)**:NTU 論文(arXiv 2502.08875)報的 BERT4ItemSeg macro-F1 **0.9825** 是 **per-line BIO 邊界分段分類 F1**、在 3,737 份標註 filing 上**監督式訓練**;本表的 0.62x 是 **item 全文抽取 F1**(30-filing slice、**zero-training**,未在該 gold 上調參)。兩者量的不是同一件事,不可直接比較——0.9825 不是本表的同軸天花板。NTU gold 在本 repo 的角色是**外部弱老師(一票),不是 gold 真值**(引用原則見 `docs/research/giants_task2.md` §4)。
 
@@ -673,7 +688,7 @@ llm_calls total **10**(median 1、max 1)；總 tokens **35,822**(median 3,509.5�
 
 | 我能宣稱 | 我不能宣稱 |
 |---|---|
-| 11 家 253 items 裡,沒有任何 item 被偽裝成 extracted/ok | 不能宣稱單軸 macro-F1 贏過 edgar_crawler —— **我輸了** |
+| 11 家 253 items 裡,沒有任何 item 被偽裝成 extracted/ok | 單軸 macro-F1 現在贏 edgar_crawler 0.0091(0.6423 vs 0.6332,30/30 對 30/30)——**但不能宣稱那是 F1 tuning 的功勞**,那是修掉自己 normalize bug 的副產物,而該 bug 曾被自己凍結成規格 |
 | CYD 官方 iXBRL oracle 現行 11 agree / 0 disagree,是真正外部的 span 錨點 | 不能宣稱 confidence 校準通過 gate —— **AUROC 主 gate MISS** |
 | mutation harness 六類 detection recall 全 1.0 —— 我有能力發現問題,而且確實沒發現 | 不能宣稱 char-offset F1 是絕對正確率 —— 那是建構性 gold、regression baseline |
 | verifier 在校準範圍內 sensitivity/specificity 皆滿分、FP rate 為零,且不吃 agent 自述 | 不能宣稱校準涵蓋全部條件型別 —— table_extracted / screenshot_region_changed / field_value_equals 排除在外 |

@@ -258,10 +258,25 @@ def main() -> None:  # pragma: no cover — network harness; pieces unit-tested
         failures = sum(1 for f in filings if "error" in f["engines"].get(name, {}))
         fp_count = sum(len(f["engines"][name].get("verifier_false_pass", []))
                        for f in filings if name == "ours" and "items" in f["engines"].get(name, {}))
+        # Two denominators, both reported, because they answer different
+        # questions and quoting only the first is how an engine's own failures
+        # disappear from its score:
+        #   macro_f1_filings  — mean over the filings this engine MANAGED to
+        #     parse. Answers "when it works, how good is it". Its denominator
+        #     shrinks as the engine fails more, so a fragile engine can look
+        #     better than a robust one.
+        #   macro_f1_all      — mean over the whole slice, an engine failure
+        #     counting as 0.0. Answers "can this engine handle the format
+        #     variance in this slice at all". Same denominator for everyone.
+        # These were identical for every engine with zero failures and diverged
+        # for the rest; the comparison table quoted only the first.
         summary[name] = {
             "filings_scored": len(macros),
             "engine_failures": failures,
             "macro_f1_filings": round(sum(macros) / len(macros), 4) if macros else None,
+            "macro_f1_all": round(sum(macros) / len(filings), 4) if filings else None,
+            "scored_denominator": len(macros),
+            "all_denominator": len(filings),
         }
         if name == "ours":
             summary[name]["verifier_false_pass_items"] = fp_count
@@ -278,11 +293,12 @@ def main() -> None:  # pragma: no cover — network harness; pieces unit-tested
     out_path.write_text(json.dumps(artifact, indent=1), encoding="utf-8")
 
     print()
-    print("| engine | filings scored | engine failures | macro F1 (filings) |")
-    print("|---|---|---|---|")
+    print("| engine | filings scored | engine failures | macro F1 (scored only) "
+          "| macro F1 (all, failure=0) |")
+    print("|---|---|---|---|---|")
     for name, s in summary.items():
         print(f"| {name} | {s['filings_scored']} | {s['engine_failures']} "
-              f"| {s['macro_f1_filings']} |")
+              f"| {s['macro_f1_filings']} | {s['macro_f1_all']} |")
     print(f"\nartifact -> {out_path}")
 
 

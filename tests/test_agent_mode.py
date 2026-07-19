@@ -973,7 +973,7 @@ def test_agent_mode_loop_with_mock_planner(tmp_path):
         task_id="agentic", natural_language_task="Search MockShop for widget",
         expected_outcome="results shown",
         success_conditions=[SuccessCondition(type="text_visible", value="results for"),
-                            SuccessCondition(type="text_visible", value="Widget")])
+                            SuccessCondition(type="text_visible", value="Widget Pro 3000")])
     with sync_playwright() as p:
         b = p.chromium.launch(headless=True)
         page = b.new_page()

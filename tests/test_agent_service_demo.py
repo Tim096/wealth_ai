@@ -83,6 +83,31 @@ def test_submit_demo_forces_mock_planner():
     assert worker.submit_demo("nope") is None
 
 
+def test_refused_task_never_reaches_planner_or_browser_queue(monkeypatch):
+    def fail_if_queued(*_args, **_kwargs):
+        raise AssertionError("refused task crossed the service boundary")
+
+    monkeypatch.setattr(worker._JOBS, "put_nowait", fail_if_queued)
+    rec = worker.submit("登入我的帳戶並購買商品", "https://example.com", [])
+    assert rec["status"] == "refused"
+    assert rec["confidence"] == 0.0
+    assert rec["contract"]["frozen"] is True
+    assert "login" in rec["verifier"] or "purchase" in rec["verifier"]
+
+
+def test_task_record_is_published_before_worker_is_notified(monkeypatch):
+    def inspect_before_enqueue(job):
+        task_id = job[0]
+        assert task_id in worker._TASKS
+        assert task_id in worker._ORDER
+
+    monkeypatch.setattr(worker._JOBS, "put_nowait", inspect_before_enqueue)
+    rec = worker.submit("Read the public result", "https://example.com",
+                        ["text_visible:Result"])
+    worker._TASKS.pop(rec["task_id"], None)
+    worker._ORDER.remove(rec["task_id"])
+
+
 def test_task_contract_snapshot_is_write_once_and_copied():
     rec = worker.submit("Find the result", "https://example.com",
                         ["text_visible:Result"])

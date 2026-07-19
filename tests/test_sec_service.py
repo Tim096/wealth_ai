@@ -14,6 +14,9 @@ from fastapi.testclient import TestClient
 
 import apps.services.sec.main as sec_main
 from apps.services.sec.jobs import JobStore
+from observability_core import sha256_bytes
+from sec_core.normalize import normalize_html
+from sec_core.resolver import FilingFile, FilingRef
 
 
 # ----------------------------------------------------------- health provenance
@@ -183,3 +186,177 @@ def test_items_payload_flags_standard_filing_supported():
         _result("standard", [_seg()], "x" * 100), {"source": "AAPL"}, [])
     assert payload["items"]
     assert payload["meta"]["supported"] is True
+    assert "servable" in payload["meta"] and "servability" in payload
+
+
+def test_short_gap_is_hidden_from_ui_but_present_in_audit():
+    text = "A" * 50 + "short gap" + "B" * 50
+    payload = sec_main._items_payload(
+        _result("standard", [
+            _seg(start_offset=0, end_offset=50),
+            _seg(item_code="2", start_offset=59, end_offset=len(text)),
+        ], text), {"source": "SHORT"}, [])
+
+    assert payload["gaps"] == []  # UI keeps the existing 120-char folding threshold
+    ranges = payload["audit"]["partition"]["unclassified_ranges"]
+    assert ranges == [{"start": 50, "end": 59, "chars": 9, "preview": "short gap",
+                       "after": "1", "before": "2"}]
+
+
+def test_upload_raw_replays_non_utf8_bytes_exactly(monkeypatch):
+    monkeypatch.setattr(sec_main, "JOBS", sec_main.JobStore(max_workers=1))
+    client = TestClient(sec_main.app)
+    blob = b"<html><body><p>legacy byte: \x96</p></body></html>"
+
+    uploaded = client.post(
+        "/api/upload", files={"file": ("legacy.htm", blob, "text/html")}).json()
+    raw = client.get(f"/api/jobs/{uploaded['job_id']}/raw")
+
+    assert uploaded["status"] == "done"
+    assert raw.content == blob
+    assert raw.headers["x-raw-sha256"] == sha256_bytes(blob)
+    assert uploaded["audit"]["raw"] == {
+        "replayable": True,
+        "sha256": sha256_bytes(blob),
+        "bytes": len(blob),
+        "decode": {"encoding": "utf-8", "errors": "replace"},
+        "decode_replacement_chars": 1,
+    }
+    assert uploaded["meta"]["servable"] is False
+    assert "DECODE_REPLACEMENT" in uploaded["servability"]["blocking_reason_codes"]
+
+
+def test_decode_replacement_count_excludes_literal_replacement_character():
+    text, replacements = sec_main._decode_utf8("literal �".encode() + b"\x96")
+    assert text == "literal ��"
+    assert replacements == 1
+
+
+def test_low_coverage_supported_filing_is_not_servable_clean():
+    payload = sec_main._items_payload(
+        _result("standard", [_seg(start_offset=0, end_offset=50)], "x" * 1000),
+        {"source": "PLD-LIKE"}, [], raw_bytes=b"source",
+        audit_context={"xbrl": {"status": "certified", "detail": "fixture"}},
+    )
+
+    assert payload["meta"]["supported"] is True  # compatibility field is unchanged
+    assert payload["meta"]["servable"] is False
+    assert payload["servability"]["level"] == "blocked"
+    assert "LOW_ITEM_COVERAGE" in payload["servability"]["blocking_reason_codes"]
+
+
+def test_audit_omissions_are_reason_coded():
+    raw = b"<html><script>excluded source text</script><p>body text</p></html>"
+    doc = normalize_html(raw.decode("utf-8"))
+    result = types.SimpleNamespace(
+        filing_class="standard", segments=[_seg(end_offset=len(doc.text))],
+        doc=doc, warnings=[],
+    )
+    payload = sec_main._items_payload(
+        result, {"source": "AUDIT"}, [], raw_bytes=raw,
+        audit_context={"xbrl": {"status": "unavailable",
+                                "reason_code": "XBRL_UNAVAILABLE", "detail": "fixture"}},
+    )
+
+    omissions = payload["audit"]["omissions"]
+    assert omissions and all(row.get("reason_code") for row in omissions)
+    assert {row["reason_code"] for row in omissions} >= {
+        "NORMALIZATION_EXCLUDED_CONTENT", "XBRL_UNAVAILABLE",
+    }
+    assert payload["servability"]["level"] == "degraded"
+
+
+def test_extract_audit_explains_main_document_selection(monkeypatch):
+    ref = FilingRef(cik=123, accession="0000000123-26-000001", form="10-K",
+                    report_date="2025-12-31", primary_document="acme-10k.htm")
+    ref.files = [
+        FilingFile(name="acme-10k.htm", doc_type="10-K", size=1000),
+        FilingFile(name="cover.htm", size=100),
+    ]
+    amendment = FilingRef(cik=123, accession="0000000123-26-000002", form="10-K/A",
+                          report_date="2025-12-31", is_amendment=True)
+    raw = b"<html><body><p>annual filing body</p></body></html>"
+
+    class Fetcher:
+        def __init__(self, **_):
+            pass
+
+        def get(self, _url):
+            return types.SimpleNamespace(content=raw, sha256=sha256_bytes(raw))
+
+    class Resolver:
+        def __init__(self, _fetcher):
+            pass
+
+        def cik_for_ticker(self, _ticker):
+            return 123
+
+        def annual_filings(self, _cik):
+            return [amendment, ref]
+
+        def load_files(self, _ref):
+            pass
+
+    monkeypatch.setattr(sec_main, "EdgarFetcher", Fetcher)
+    monkeypatch.setattr(sec_main, "FilingResolver", Resolver)
+    payload, state = sec_main._run_extract("ACME", "")
+
+    selection = payload["audit"]["selection"]
+    main = selection["main_document"]
+    assert main["selected"]["name"] == "acme-10k.htm"
+    rejected = next(row for row in main["candidates"] if not row["selected"])
+    assert "reasons" in rejected and rejected["rejection_reasons"]
+    assert selection["package_files"] == [
+        {"name": "acme-10k.htm", "doc_type": "10-K", "size": 1000,
+         "listed_primary_document": True, "selected_main_document": True},
+        {"name": "cover.htm", "doc_type": "", "size": 100,
+         "listed_primary_document": False, "selected_main_document": False},
+    ]
+    assert selection["amendments_excluded"][0]["accession"] == amendment.accession
+    assert selection["history_fetch_observability"]["reason_code"] == (
+        "HISTORY_FETCH_NOT_OBSERVABLE")
+    assert {"AMENDMENT_EXCLUDED", "HISTORY_FETCH_NOT_OBSERVABLE"} <= set(
+        payload["servability"]["reason_codes"])
+    assert payload["servability"]["level"] != "clean"
+    assert state["raw"] == raw
+
+    filings = TestClient(sec_main.app).get("/api/filings?query=ACME").json()
+    assert filings["audit"]["history_fetch_observability"] == {
+        "status": "not_observable",
+        "reason_code": "HISTORY_FETCH_NOT_OBSERVABLE",
+        "detail": "resolver does not expose per-page historical submissions fetch failures",
+    }
+
+
+def test_exhibit_audit_records_cap_fetch_parse_and_skips(monkeypatch):
+    files = [
+        FilingFile(name="bad-ex231.htm"),
+        FilingFile(name="parse-ex241.htm"),
+        FilingFile(name="good-ex211.htm"),
+        FilingFile(name="capped-ex311.htm"),
+    ]
+    ref = types.SimpleNamespace(files=files, file_url=lambda name: f"https://example/{name}")
+
+    class Fetcher:
+        def get(self, url):
+            if "bad-ex231" in url:
+                raise RuntimeError("fetch failed")
+            content = b"<p>PARSE</p>" if "parse-ex241" in url else b"<p>exhibit body</p>"
+            return types.SimpleNamespace(content=content, sha256=sha256_bytes(content))
+
+    real_normalize = sec_main.normalize_html
+
+    def parse(raw):
+        if "PARSE" in raw:
+            raise ValueError("parse failed")
+        return real_normalize(raw)
+
+    monkeypatch.setattr(sec_main, "normalize_html", parse)
+    monkeypatch.setattr(sec_main, "_MAX_EXHIBITS", 1)
+    exhibits, audit = sec_main._fetch_exhibits(Fetcher(), ref)
+
+    assert len(exhibits) == 1 and audit["eligible"] == 4
+    assert audit["fetch_errors"][0]["reason_code"] == "EXHIBIT_FETCH_ERROR"
+    assert audit["parse_errors"][0]["reason_code"] == "EXHIBIT_PARSE_ERROR"
+    assert audit["skipped"] == [{"file": "capped-ex311.htm",
+                                 "reason_code": "EXHIBIT_CAP_REACHED"}]

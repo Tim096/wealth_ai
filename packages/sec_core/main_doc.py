@@ -65,8 +65,9 @@ def score_files(ref: FilingRef, content_peeks: dict[str, str] | None = None) -> 
     return scores
 
 
-def pick_main_document(ref: FilingRef, content_peeks: dict[str, str] | None = None) -> DocScore:
-    scores = score_files(ref, content_peeks)
+def pick_main_document(ref: FilingRef, content_peeks: dict[str, str] | None = None,
+                       *, scores: list[DocScore] | None = None) -> DocScore:
+    scores = scores if scores is not None else score_files(ref, content_peeks)
     if not scores:
         raise LookupError(f"filing {ref.accession} has no files to score")
     best = scores[0]

@@ -129,7 +129,7 @@ def test_trajectory_metrics_on_real_run(tmp_path):
     if not (root / "data" / "mock_sites" / "v1" / "index.html").exists():
         pytest.skip("mock sites not present")
     task = {"task_id": "search-v1-widget", "site": "v1", "layer": "mock_baseline",
-            "query": "widget", "success_text": ["results for", "Widget"]}
+            "query": "widget", "success_text": ["results for", "Widget Pro 3000"]}
     mem = MemoryStore(tmp_path / "mem.json")
     with sync_playwright() as p:
         b = p.chromium.launch(headless=True)

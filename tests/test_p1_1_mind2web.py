@@ -163,7 +163,7 @@ def _mock_entry(site: str) -> dict:
         "natural_language_task": "Search MockShop for 'widget' and see the results",
         "website": (ROOT / "data" / "mock_sites" / site / "index.html").resolve().as_uri(),
         "success_conditions": [{"type": "text_visible", "value": "results for"},
-                               {"type": "text_visible", "value": "Widget"}],
+                               {"type": "text_visible", "value": "Widget Pro 3000"}],
     }
 
 

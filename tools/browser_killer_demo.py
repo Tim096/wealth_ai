@@ -42,8 +42,8 @@ def search_task(site: str):
         natural_language_task="Search MockShop for 'widget' and see the results",
         expected_outcome="A results list containing widget products is shown",
         success_conditions=[
-            SuccessCondition(type="text_visible", value="results for"),
-            SuccessCondition(type="text_visible", value="Widget"),
+            SuccessCondition(type="text_visible", value="results for widget"),
+            SuccessCondition(type="text_visible", value="Widget Pro"),
         ],
         forbidden_conditions=[
             ForbiddenCondition(type="error_text_visible", value="no results"),

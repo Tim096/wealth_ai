@@ -8,7 +8,7 @@
       "query": "widget",
       "expect_status": "pass",
       "expect_repairs": 0,
-      "success_text": ["results for", "Widget"],
+      "success_text": ["results for", "Widget Pro 3000"],
       "note": "clean baseline, script mode"
     },
     {
@@ -18,7 +18,7 @@
       "query": "widget",
       "expect_status": "pass",
       "expect_repairs_min": 2,
-      "success_text": ["results for", "Widget"],
+      "success_text": ["results for", "Widget Pro 3000"],
       "note": "UI drift: id removed, button->icon, cookie modal, decoy button, lazy render -> must self-repair"
     },
     {
@@ -28,7 +28,7 @@
       "query": "gizmo",
       "expect_status": "pass",
       "expect_repairs_min": 2,
-      "success_text": ["results for", "Gizmo"],
+      "success_text": ["results for", "Gizmo Deluxe"],
       "note": "second drifted query -> selector memory should make the second run cheaper"
     },
     {
@@ -48,7 +48,7 @@
       "query": "widget",
       "expect_status": "pass",
       "expect_repairs_min": 1,
-      "success_text": ["results for", "Widget"],
+      "success_text": ["results for", "Widget Pro 3000"],
       "note": "HELD-OUT: a never-before-seen structure (textarea role=searchbox, a role=button, table results). Tests whether the a11y-tree repair GENERALIZES, not whether it memorized v2 selectors"
     }
   ],
@@ -74,7 +74,7 @@
       "query": "teleporter",
       "natural_language_task": "Search MockShop for a Teleporter and open its detail page",
       "success_conditions": [{"type": "text_visible", "value": "Teleporter"}],
-      "forbidden_conditions": [],
+      "forbidden_conditions": [{"type": "error_text_visible", "value": "0 results"}],
       "expect_status": "fail",
       "note": "nonexistent product on the held-out table UI; repair may find the field/button but the product still cannot exist -> fail"
     },

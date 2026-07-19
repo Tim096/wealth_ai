@@ -225,7 +225,7 @@
   <section class="panel">
     <div class="grid2">
       <div>
-        <label>Task / 任務(自然語言,中英皆可)</label>
+        <label>Task / 任務(受支援的中英文 public-web 任務)</label>
         <textarea id="aTask" placeholder="例:Search Wikipedia for &quot;Reliability engineering&quot; and open the article;或:找 INTC 最新 10-K 並下載"></textarea>
         <div class="row">
           <div class="grow">
@@ -243,7 +243,7 @@
             <input type="password" id="aTok">
           </div>
         </div>
-        <div class="hint">💡 只輸入任務即可。開場由 LLM 規劃「起點網址 + 可驗證成功條件」;遇彈窗先關、遇 CAPTCHA / 登入 / 購買類任務由 capability guard 誠實拒絕(REFUSED)。無可驗證條件的開放式任務照跑,結果誠實標示 UNKNOWN。</div>
+        <div class="hint">💡 只輸入任務即可。capability guard 先於 planner / browser side effect 拒絕 CAPTCHA、登入、購買、上傳或正式送出；之後才由 LLM 規劃起點與成功條件。整份 contract 缺乏鑑別力時直接標 UNKNOWN，不拿弱 landmark 冒充完成。</div>
         <div style="margin-top:.9rem;display:flex;gap:.7rem;align-items:center">
           <button class="btn" id="aRun">Run / 派工 ▶</button>
           <span class="hint">任務進入單一 worker 佇列,依序執行(headless Chromium)。</span>
@@ -287,9 +287,9 @@ fetch('/api/health').then(r=>r.json()).then(d=>{
   $('#plannerName').textContent=d.planner||'?';
   const b=$('#modeBanner');b.style.display='';
   if(d.llm_ok){b.className='banner llm';
-    b.textContent='🤖 LLM 模式('+(d.mode||'')+' · '+(d.model||'')+'):可執行任意自然語言任務;下方「示範任務」仍以內建網站 + 確定性 planner 執行,便於穩定展示。';}
+    b.textContent='🤖 LLM 模式('+(d.mode||'')+' · '+(d.model||'')+'):支援受控、可驗證的 public-web 任務;登入、購買、上傳與正式送出會在規畫前拒絕。下方示範仍走確定性 planner。';}
   else{b.className='banner';
-    b.textContent='🧪 示範模式:未設定 LLM key,以內建網站展示自我修正機制;設定 OPENAI_API_KEY(搭配 AGENT_LLM_MODE=direct、OPENAI_BASE_URL、OPENAI_MODEL,支援 OpenRouter)後可執行任意自然語言任務。';}
+    b.textContent='🧪 示範模式:未設定 LLM key,以內建網站展示自我修正與 verifier;設定 LLM 後仍只執行受控、可驗證的 public-web 任務。';}
 });
 setInterval(()=>fetch('/api/health').then(r=>r.json())
   .then(d=>{$('#plannerName').textContent=d.planner||'?';}).catch(()=>{}),5000);
@@ -426,7 +426,6 @@ function watch(id){
       clearInterval(pollTimer);$('#aRun').disabled=false;lockInputs(false);
       const ok=s.status==='pass';
       $('#aVerdict').innerHTML=pill(s.status)
-        +(s.confidence!=null?` <span class="mono">confidence ${s.confidence.toFixed(2)}</span>`:'')
         +` <span class="sub">${esc(s.verifier||'')}</span>`
         +(s.answer?`<div style="margin-top:.3rem;white-space:pre-wrap;word-break:break-word">📋 擷取內容:${esc(s.answer.slice(0,1200))}${s.answer.length>1200?'…':''}</div>`:'')
         +(s.download?`<div class="mono" style="margin-top:.3rem">📁 <a href="${withTok('/api/tasks/'+id+'/artifacts/'+s.download)}" target="_blank">${esc(s.download)}</a></div>`:'');

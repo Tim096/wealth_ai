@@ -115,6 +115,9 @@ class NormalizedDocument:
     flags: bytearray  # FLAG_* bits per normalized char
     anchor_targets: dict[str, int]  # element id/name -> normalized offset
     lines: list[Line] = field(default_factory=list)
+    # Actual source text omitted because it was inside an excluded element. This
+    # is audit metadata only; normalized offsets still index `text` exactly.
+    normalization_exclusions: list[dict] = field(default_factory=list)
 
     def raw_offset(self, norm_offset: int) -> int:
         if norm_offset >= len(self.norm_to_raw):
@@ -186,6 +189,8 @@ class _Normalizer(HTMLParser):
         self._bold_depth = 0
         self._heading_depth = 0
         self._anchor_href_stack: list[str] = []
+        self._skip_tag_stack: list[str] = []
+        self._excluded_text: dict[str, dict[str, int]] = {}
         self._pending_space = False
         self._at_line_start = True
 
@@ -225,6 +230,10 @@ class _Normalizer(HTMLParser):
 
     def _emit_text(self, decoded: str, raw_offset: int) -> None:
         if self._skip_depth:
+            tag = self._skip_tag_stack[-1] if self._skip_tag_stack else "unknown"
+            observed = self._excluded_text.setdefault(tag, {"chunks": 0, "decoded_chars": 0})
+            observed["chunks"] += 1
+            observed["decoded_chars"] += len(decoded)
             return
         for i, c in enumerate(decoded):
             # In text mode the document's structure IS its newlines: emit the
@@ -261,6 +270,7 @@ class _Normalizer(HTMLParser):
             self.anchor_targets.setdefault(anchor_id, len(self.chars))
         if tag in SKIP_TAGS:
             self._skip_depth += 1
+            self._skip_tag_stack.append(tag)
         elif tag in BLOCK_TAGS:
             self._emit_newline()
         if tag in BOLD_TAGS:
@@ -277,6 +287,8 @@ class _Normalizer(HTMLParser):
     def handle_endtag(self, tag: str) -> None:
         if tag in SKIP_TAGS:
             self._skip_depth = max(0, self._skip_depth - 1)
+            if self._skip_tag_stack:
+                self._skip_tag_stack.pop()
         elif tag in BLOCK_TAGS:
             self._emit_newline()
         elif tag in CELL_TAGS:
@@ -310,6 +322,10 @@ def normalize_html(raw_html: str) -> NormalizedDocument:
         norm_to_raw=parser.offsets,
         flags=parser.flags,
         anchor_targets=parser.anchor_targets,
+        normalization_exclusions=[
+            {"kind": "excluded_element_text", "tag": tag, **counts}
+            for tag, counts in sorted(parser._excluded_text.items())
+        ],
     )
     start = 0
     for i, c in enumerate(text):

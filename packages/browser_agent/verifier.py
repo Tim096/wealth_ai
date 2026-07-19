@@ -28,6 +28,75 @@ _QUERY_ECHO_RE = re.compile(
     r"|找不到|查無|沒有(?:結果|符合)|无结果|没有结果",
     re.IGNORECASE)
 
+_UBIQUITOUS_TEXT = {
+    "home", "search", "result", "results", "menu", "next", "back", "continue",
+    "submit", "welcome", "loading", "login", "sign", "in", "page", "for",
+    "首頁", "主页", "搜尋", "搜索", "結果", "结果", "選單", "菜单", "下一步",
+    "返回", "繼續", "继续", "提交", "歡迎", "欢迎", "載入中", "加载中", "登入",
+}
+_WEAK_URL_ROUTE_RE = re.compile(
+    r"(?:^|[/_.?=&-])(search|results?|browse|index|home|query|list)(?:$|[/_.?=&-])",
+    re.IGNORECASE)
+_ANSWER_TASK_RE = re.compile(
+    r"\b(?:report|tell\s+me|return|give\s+me|what(?:'s|\s+is)|how\s+many|look\s+up|find|get|retrieve)\b"
+    r".{0,100}\b(?:title|price|date|number|value|amount|revenue|answer|name|time|duration|rate|figure)\b"
+    r"|(?:告訴我|告诉我|給我|给我|回答|找出|找到).{0,60}"
+    r"(?:數字|数字|價格|价格|日期|標題|标题|名稱|名称|營收|营收|金額|金额|答案|多少|時間|时间|比率)"
+    r"|(?:數字|数字|價格|价格|日期|標題|标题|名稱|名称|營收|营收|金額|金额|時間|时间|比率)"
+    r".{0,20}(?:是多少|多少|是什麼|是什么|為何|为何)",
+    re.IGNORECASE | re.DOTALL)
+
+
+def is_task_echo(value: str, task: str) -> bool:
+    """A short condition copied from the task is an input echo, not proof."""
+    v = " ".join(value.lower().split())
+    return bool(v) and len(v.split()) <= 3 and v in " ".join(task.lower().split())
+
+
+def _weak_text_visible(value: str) -> bool:
+    tokens = re.findall(r"[^\W_]+", value.lower())
+    return bool(tokens) and len(tokens) <= 3 and all(t in _UBIQUITOUS_TEXT for t in tokens)
+
+
+def _weak_url_contains(value: str) -> bool:
+    v = value.strip().lower().rstrip("/")
+    domain_only = bool(re.fullmatch(r"(?:https?://)?[a-z0-9.-]+\.[a-z]{2,}", v))
+    return domain_only or bool(_WEAK_URL_ROUTE_RE.search(v))
+
+
+def lint_contract(contract: BrowserTaskContract) -> list[str]:
+    """Return blocking structural defects, not warnings about one weak helper.
+
+    A contract is unverifiable when every positive condition is weak. One weak
+    auxiliary condition must not poison independent discriminative evidence.
+    """
+    weak_notes: list[str] = []
+    strong_conditions = 0
+    for cond in contract.success_conditions:
+        key = f"{cond.type}:{cond.value}"
+        note = ""
+        if cond.type == "text_visible" and is_task_echo(
+                cond.value, contract.natural_language_task):
+            note = f"task-echo condition is not completion evidence: {key}"
+        elif cond.type == "text_visible" and _weak_text_visible(cond.value):
+            note = f"ubiquitous text_visible condition has no discriminative power: {key}"
+        elif cond.type == "url_contains" and _weak_url_contains(cond.value):
+            note = f"weak url_contains condition proves only an intermediate page: {key}"
+        if note:
+            weak_notes.append(note)
+        else:
+            strong_conditions += 1
+
+    notes = (weak_notes if contract.success_conditions and strong_conditions == 0 else [])
+    has_answer_channel = any(c.type == "answer_matches" for c in contract.success_conditions)
+    has_structured_delivery = any(c.type in {
+        "download_exists", "table_extracted", "field_value_equals",
+    } for c in contract.success_conditions)
+    if (contract.success_conditions and _ANSWER_TASK_RE.search(contract.natural_language_task)
+            and not has_answer_channel and not has_structured_delivery):
+        notes.append("answer task has no observed answer_matches delivery channel")
+    return notes
+
 
 def _text_visible_hit(needle: str, visible_text: str) -> bool:
     """True only when the needle appears OUTSIDE zero-result echo lines."""
@@ -290,6 +359,7 @@ def verify_contract(contract: BrowserTaskContract, obs: Observation,
     evidence trail records which step the latch banked."""
     extracted = extracted or {}
     latched = latched or {}
+    lint_notes = lint_contract(contract)
     checks: list[ConditionCheck] = []
     # Conditions with no power to tell a right answer from a wrong one. They are
     # collected here so the verdict can be capped and the trail can say why.
@@ -322,6 +392,13 @@ def verify_contract(contract: BrowserTaskContract, obs: Observation,
         result = combine_checks(checks)
         if result.status == "fail":
             return result
+        if lint_notes:
+            return result.model_copy(update={
+                "status": "unknown",
+                "unverifiable": True,
+                "reason": "; ".join(lint_notes),
+                "missing_evidence": list(result.missing_evidence) + lint_notes,
+            })
         if open_ended_extractor is not None:
             # Scorable-open-ended path (BUCKET 1): route the zero-condition task
             # through evidence-grounded WebJudge scoring instead of a blanket
@@ -340,6 +417,16 @@ def verify_contract(contract: BrowserTaskContract, obs: Observation,
                               "trace attached for human review"],
         )
     result = combine_checks(checks)
+    forbidden_failed = any(not c.required and c.observed == "fail" for c in checks)
+    if forbidden_failed:
+        return result
+    if lint_notes:
+        return result.model_copy(update={
+            "status": "unknown",
+            "unverifiable": True,
+            "reason": "; ".join(lint_notes),
+            "missing_evidence": list(result.missing_evidence) + lint_notes,
+        })
     if nd_notes and result.status != "fail":
         # Cap at `unknown`, never below: a real violation stays a fail (capping
         # must not LAUNDER a fail into an unknown), and a pass built on a

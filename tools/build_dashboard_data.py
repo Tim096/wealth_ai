@@ -5,15 +5,12 @@ and the browser killer-demo trace. No fabricated numbers.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections import Counter
 from pathlib import Path
 
-from sec_core.fetcher import EdgarFetcher
-from sec_core.resolver import FilingRef
-from sec_core.pipeline import extract_from_html
 from sec_core.scoring import tristate
-from sec_core.xbrl import fetch_company_facts, key_facts_for_accession, validate_span
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "apps" / "web" / "eval-dashboard" / "data.json"
@@ -22,71 +19,81 @@ SWEEP = ROOT / "data" / "sec_eval" / "records" / "sweep3"
 LAYER = {"AAPL": "big tech", "MSFT": "big tech", "NVDA": "big tech", "JPM": "financial",
          "GS": "financial", "WMT": "retail/mfg", "CAT": "retail/mfg", "XOM": "energy/mining",
          "NEM": "energy/mining", "MRNA": "biotech", "KO": "consumer"}
-HELD_OUT = {"MSFT", "NVDA", "GS", "WMT", "CAT", "NEM", "MRNA", "KO"}
-XBRL_CIK = {"AAPL": 320193, "MSFT": 789019, "NVDA": 1045810, "JPM": 19617, "GS": 886982,
-            "WMT": 104169, "CAT": 18230, "XOM": 34088, "NEM": 1164727, "MRNA": 1682852,
-            "KO": 21344}
-WRAPPER = {"INTC": ("50863", "0000050863-26-000011", "intc-20251227.htm"),
-           "CITI": ("831001", "0000831001-26-000011", "c-20251231.htm")}
+CERTIFICATION = ROOT / "data" / "sec_eval" / "certification" / "item8_certification.json"
+CURRENT = ROOT / "data" / "sec_eval" / "records" / "current"
+BROWSER_TRACE = ROOT / "data" / "browser_eval" / "artifacts" / "killer_demo_trace.json"
+_JSON_INPUTS: dict[Path, object] = {}
+
+
+def _read_json(path: Path, encoding: str = "utf-8"):
+    if path not in _JSON_INPUTS:
+        _JSON_INPUTS[path] = json.loads(path.read_text(encoding=encoding))
+    return _JSON_INPUTS[path]
+
+
+def artifact_manifest() -> dict:
+    entries = []
+    for path, value in sorted(_JSON_INPUTS.items()):
+        canonical = json.dumps(
+            value, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()
+        entries.append({"path": path.relative_to(ROOT).as_posix(),
+                        "sha256": hashlib.sha256(canonical).hexdigest()})
+    canonical = json.dumps(entries, separators=(",", ":"), sort_keys=True).encode()
+    return {"generator": "tools/build_dashboard_data.py",
+            "input_manifest_sha256": hashlib.sha256(canonical).hexdigest(),
+            "inputs": entries}
 
 
 def sec_section() -> dict:
-    fetcher = EdgarFetcher(cache_dir=ROOT / "data" / "raw_filings")
-    records = {p.stem: json.loads(p.read_text(encoding="utf-8-sig")) for p in sorted(SWEEP.glob("*.json"))}
+    records = {p.stem: _read_json(p, encoding="utf-8-sig")
+               for p in sorted(SWEEP.glob("*.json"))}
+    certification = _read_json(CERTIFICATION)
+    cert_by_ticker = {r["ticker"]: r for r in certification["records"]}
     status_counts: Counter[str] = Counter()
     tri_counts: Counter[str] = Counter()
     conf_pass, conf_stub = [], []
     tickers = []
-    for t, rec in records.items():
+    for ticker, rec in records.items():
         items = rec["items"]
-        c = Counter(v["status"] for v in items.values())
-        status_counts.update(c)
+        counts = Counter(v["status"] for v in items.values())
+        status_counts.update(counts)
         tri_counts.update(tristate(v["status"], bool(v.get("toc_listed", False)))
                           for v in items.values())
         conf_pass += [v["confidence"] for v in items.values() if v["status"] == "pass"]
-        conf_stub += [v["confidence"] for v in items.values() if v["status"] == "incorporated_by_reference"]
-        # XBRL certify item 8
-        cert = None
-        try:
-            facts = key_facts_for_accession(fetch_company_facts(fetcher, XBRL_CIK[t]), rec["accession"])
-            ref = FilingRef(cik=XBRL_CIK[t], accession=rec["accession"], primary_document=rec["main_document"])
-            raw = fetcher.get(ref.file_url(rec["main_document"])).content.decode("utf-8", errors="replace")
-            res = extract_from_html(raw, t)
-            cert = validate_span(res.text_of("8"), facts).verdict
-        except Exception as e:  # noqa: BLE001
-            cert = f"error:{type(e).__name__}"
+        conf_stub += [v["confidence"] for v in items.values()
+                      if v["status"] == "incorporated_by_reference"]
+        item8_status = items["8"]["status"]
+        cert = cert_by_ticker.get(ticker)
+        cert_matches = (cert is not None and cert["accession"] == rec["accession"]
+                        and cert["item8_status"] == item8_status)
         tickers.append({
-            "ticker": t, "layer": LAYER.get(t, "?"), "held_out": t in HELD_OUT,
+            "ticker": ticker, "layer": LAYER.get(ticker, "?"),
             "report_date": rec["report_date"], "raw_chars": rec["raw_chars"],
-            "latency_ms": rec["latency_ms"], "pass": c["pass"],
-            "incorporated_by_reference": c["incorporated_by_reference"],
-            "missing": c["missing"], "reserved": c["reserved"],
-            "item8_status": items["8"]["status"], "item8_xbrl": cert,
+            "latency_ms": rec["latency_ms"], "pass": counts["pass"],
+            "incorporated_by_reference": counts["incorporated_by_reference"],
+            "missing": counts["missing"], "reserved": counts["reserved"],
+            "item8_status": item8_status,
+            "item8_xbrl": cert["verdict"] if cert_matches else "unavailable",
         })
 
-    # wrapper / cross-reference-index filings (Intel/Citi)
     wrappers = []
-    for t, (cik, acc, doc) in WRAPPER.items():
-        try:
-            ref = FilingRef(cik=int(cik), accession=acc, primary_document=doc)
-            raw = fetcher.get(ref.file_url(doc)).content.decode("utf-8", errors="replace")
-            res = extract_from_html(raw, t)
-            nr = [s.item_code for s in res.segments if s.needs_review]
-            wrappers.append({
-                "ticker": t, "filing_class": res.filing_class,
-                "item14_status": res.segment("14").status,
-                "item14_provenance": res.segment("14").provenance,
-                "needs_review_count": len(nr),
-                "reason": (res.warnings[0] if res.warnings else "")[:200],
-            })
-        except Exception as e:  # noqa: BLE001
-            wrappers.append({"ticker": t, "filing_class": f"error:{type(e).__name__}"})
+    for ticker in ("INTC", "CITI"):
+        rec = _read_json(CURRENT / f"{ticker}.json")
+        item14 = rec["items"]["14"]
+        wrappers.append({
+            "ticker": ticker, "filing_class": rec["filing_class"],
+            "item14_status": item14["status"],
+            "item14_provenance": item14["provenance"],
+            "needs_review_count": len(rec["needs_review_items"]),
+            "reason": (rec["pipeline_warnings"][0] if rec["pipeline_warnings"] else "")[:200],
+        })
 
     total = sum(status_counts.values())
     return {
         "filings": len(records), "total_items": total,
-        "status_distribution": [{"status": s, "count": n, "share": round(n / total, 4)}
-                                for s, n in status_counts.most_common()],
+        "status_distribution": [{"status": status, "count": count,
+                                 "share": round(count / total, 4)}
+                                for status, count in status_counts.most_common()],
         "confidence": {
             "substantive_pass_mean": round(sum(conf_pass) / len(conf_pass), 3),
             "substantive_pass_min": round(min(conf_pass), 3),
@@ -102,7 +109,7 @@ def sec_section() -> dict:
 
 
 def _load(rel: str) -> dict:
-    return json.loads((ROOT / rel).read_text(encoding="utf-8"))
+    return _read_json(ROOT / rel)
 
 
 def _guarded(builder) -> dict:
@@ -201,7 +208,7 @@ def status_reclassification_section() -> dict:
         status: Counter[str] = Counter()
         filings = 0
         for path in sorted(folder.glob("*.json")):
-            record = json.loads(path.read_text(encoding="utf-8-sig"))
+            record = _read_json(path, encoding="utf-8-sig")
             status.update(item["status"] for item in record["items"].values())
             filings += 1
         return {"filings": filings, "items": sum(status.values()), **dict(status)}
@@ -210,21 +217,25 @@ def status_reclassification_section() -> dict:
 
 
 def browser_section() -> dict:
-    trace_path = ROOT / "runs" / "browser_demo" / "trace.json"
-    if trace_path.exists():
-        return json.loads(trace_path.read_text(encoding="utf-8"))
-    return {"runs": []}
+    return _read_json(BROWSER_TRACE)
 
 
 def main() -> None:
     OUT.parent.mkdir(parents=True, exist_ok=True)
+    _JSON_INPUTS.clear()
+    sec = sec_section()
+    status_reclassification = status_reclassification_section()
+    browser = browser_section()
+    browser_evals = browser_evals_section()
+    sec_evals = sec_evals_section()
     data = {
-        "generated_note": "assembled from real run artifacts by tools/build_dashboard_data.py",
-        "sec": sec_section(),
-        "status_reclassification": status_reclassification_section(),
-        "browser": browser_section(),
-        "browser_evals": browser_evals_section(),
-        "sec_evals": sec_evals_section(),
+        "generated_note": "deterministically assembled from tracked run artifacts",
+        "provenance": artifact_manifest(),
+        "sec": sec,
+        "status_reclassification": status_reclassification,
+        "browser": browser,
+        "browser_evals": browser_evals,
+        "sec_evals": sec_evals,
     }
     OUT.write_text(json.dumps(data, indent=1), encoding="utf-8")
     print(f"wrote {OUT} ({OUT.stat().st_size:,} bytes)")

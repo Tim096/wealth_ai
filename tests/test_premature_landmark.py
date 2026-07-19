@@ -58,16 +58,16 @@ def test_all_conditions_t0_true_leads_to_unknown_not_pass():
     assert dropped == ["text_visible:intc"]
     v = verify_contract(filtered, obs("intc still visible later"), {})
     assert v.status == "unknown"
-    assert "open-ended" in v.reason
+    assert "no machine-checkable success condition" in v.reason
 
 
-def test_t0_false_then_true_still_passes():
-    # 正常路徑不受影響:條件開場不成立 → 保留;之後成立 → 正常 pass。
+def test_t0_false_then_true_answer_landmark_is_still_unverifiable():
+    # 答案型任務即使 landmark 後來成立,沒走 observed answer channel 仍不能 pass。
     c = contract(("text_visible", "Total revenue"))
     filtered, dropped = subtract_baseline(c, obs("EDGAR search page"))
     assert dropped == [] and filtered is c
     v = verify_contract(filtered, obs("Total revenue was $53.1 billion"), {})
-    assert v.status == "pass"
+    assert v.status == "unknown" and v.unverifiable is True
 
 
 def test_url_contains_true_at_start_url_is_vacuous_too():

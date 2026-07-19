@@ -229,6 +229,7 @@
     </div>
     <div class="case-boundary">能力邊界：<button class="chip" data-q="TSM">TSM · 20-F</button> 會明確拒絕；這是做得好的 failure handling，不是 extraction strong case。</div>
     <div class="case-boundary">✓ <b>可獨立重驗（做得好）</b>：offsets／sha256 是對 <b>normalized text</b> 計算的。抽完後可下載 normalized 全文（<span class="mono">/api/jobs/{id}/normalized</span>，回傳 X-Normalized-Sha256 與版本），對 <span class="mono">source_ranges</span>（多段 item）或 offsets 切片後自行 sha256 比對 <span class="mono">normalized_sha</span> —— raw HTML 無法重現，這是刻意的重驗鏈。部署版本可從 <span class="mono">/api/health</span> 的 <span class="mono">build_sha</span>／<span class="mono">pipeline_rev</span> 追溯（deploy 前強制對齊 git HEAD）。</div>
+    <div class="case-boundary">Current API semantics：<span class="mono">source-exact</span> 指 normalized-source offsets，不是 raw byte offsets；raw filing 由原始 bytes + <span class="mono">X-Raw-Sha256</span> 獨立重播。XBRL 僅是 value cross-check，尚不證明 period / unit / currency identity。</div>
   </section>
 
   <section class="panel">
@@ -277,11 +278,11 @@
             <tbody><tr><td colspan="6" class="sub" style="padding:1rem">Enter a ticker and click Extract, or upload a local 10-K HTML file. / 輸入代號按「開始抽取」,或上傳本機 10-K HTML。</td></tr></tbody>
           </table>
         </div>
-        <div class="hint">⚠ = needs_review(失敗/可疑案例,點進去看 warnings)。未分類 gap 與獨立 exhibit 也列出 —— 完整優先於分類,整份 filing 無一處不可達。</div>
-        <div class="hint">校準 AUROC 0.6667 未達 gate(≥0.75),故 Risk band 欄顯示各信心區間在 NTU 人工 gold 上的<b>實測 false-pass rate</b>(低風險 15.4% / 中風險 24.2% / 需人工 40.0%),<b>不宣稱 probability</b>;raw confidence 降為次要顯示。依據見 <a href="https://github.com/Tim096/wealth/blob/main/docs/eval_report.md" target="_blank">docs/eval_report.md</a>。</div>
+        <div class="hint">⚠ = needs_review。Item 與 UI gap 是閱讀介面；完整 audit manifest 另揭露所有非空 unclassified ranges、package files、normalization exclusions、exhibit skips/errors 與不可觀測項目。</div>
+        <div class="hint">Risk band 只顯示 NTU 人工 gold 上的實測 false-pass rate，是 servability gate 的一個輸入，不是 probability 或乾淨出貨判定。依據見 <a href="https://github.com/Tim096/wealth_ai/blob/main/docs/eval_report.md" target="_blank">docs/eval_report.md</a>。</div>
       </div>
       <div>
-        <div class="doc" id="sDoc"><span style="color:var(--muted)">點左側任一 Item,這裡顯示 source-exact 抽取原文(offset + sha256 定址,非 AI 生成)。錯誤的 job 會在此顯示原因與 traceback。</span></div>
+        <div class="doc" id="sDoc"><span style="color:var(--muted)">點左側任一 Item，這裡顯示 normalized-source 原文（code-point offsets + sha256，非 AI 生成）；raw bytes 由下載端點與 X-Raw-Sha256 重播。</span></div>
       </div>
     </div>
   </section>
@@ -301,7 +302,7 @@ const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 // Risk band chip (TODO.md L15): calibration AUROC 0.6667 < 0.75 gate → show the
 // MEASURED false-pass rate of the item's confidence band on NTU human gold, not
 // a probability. Numbers come from packages/sec_core/risk_band.py per item.
-const BAND_PILL={low:'p-pass',medium:'p-warn',review:'p-fail'};
+const BAND_PILL={low:'p-warn',medium:'p-warn',review:'p-fail'};
 function bandChip(rb){
   if(!rb)return '<span class="sub">–</span>';
   const cls=BAND_PILL[rb.band]||'p-grey';
@@ -330,11 +331,18 @@ function renderSec(d){
   // body — never render that as a 100% success. Gate coverage% on m.supported and
   // show an explicit 未支援 banner instead.
   const supported=m.supported!==false;
-  const cov=(supported&&m.coverage!=null)?`<span>本文覆蓋 <b class="mono">${(m.coverage*100).toFixed(1)}%</b>${(d.gaps||[]).length?` · 未分類 ${d.gaps.length} 段`:''}${(d.exhibits||[]).length?` · 附件 ${d.exhibits.length} 份`:''}</span>`:'';
+  const hasServability=typeof m.servable==='boolean';
+  const servable=m.servable===true;
+  const cov=(supported&&m.coverage!=null)?`<span>本文覆蓋 <b class="mono">${(m.coverage*100).toFixed(1)}%</b>${(d.gaps||[]).length?` · UI 未分類 ${d.gaps.length} 段`:''}${(d.exhibits||[]).length?` · 附件 ${d.exhibits.length} 份`:''}</span>`:'';
   const bound=supported?'':`<span class="pill p-fail">未支援</span><span class="sub">未抽取任何可定址 Item — 這是誠實邊界,非 100% 完成(見 filing_class)</span>`;
+  const reasons=(m.servability_reason_codes||[]).join(' · ');
+  const gate=hasServability
+    ?`<span class="pill ${servable?'p-pass':'p-fail'}" title="${esc(reasons||m.service_level||'')}">${servable?'servable':'not servable'}</span>`
+    :'<span class="pill p-warn">servability unavailable</span>';
   $('#sMeta').innerHTML=`<span><b>${esc(m.source)}</b> · ${esc(m.form)} ${esc(m.report_date)}</span>
     <span>filing_class ${supported?`<b class="mono">${esc(m.filing_class)}</b>`:`<span class="pill p-fail">${esc(m.filing_class)}</span>`}</span>
-    ${m.xbrl_item8?`<span>Item 8 XBRL ${pill(m.xbrl_item8)}</span>`:''}
+    ${gate}${reasons?`<span class="sub mono">${esc(reasons)}</span>`:''}
+    ${m.xbrl_item8?`<span>Item 8 XBRL value check ${pill(m.xbrl_item8)}</span>`:''}
     ${cov}${bound}
     <span>parse <b>${m.latency_ms} ms</b></span>
     ${(m.pipeline_warnings||[]).length?`<span class="pill p-warn" title="${esc((m.pipeline_warnings||[]).join(' | '))}">pipeline warnings ${(m.pipeline_warnings||[]).length}</span>`:''}`;

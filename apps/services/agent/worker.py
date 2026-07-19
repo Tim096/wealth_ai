@@ -73,7 +73,9 @@ DEMO_TASKS = [
 ]
 
 MAX_QUEUE = int(os.environ.get("AGENT_QUEUE_LIMIT", "10"))
+MAX_TASK_RECORDS = int(os.environ.get("AGENT_TASK_RECORD_LIMIT", "100"))
 MAX_STEPS_CAP = 30
+_TERMINAL = {"pass", "fail", "unknown", "refused", "error"}
 
 _SEQ = itertools.count()
 _TASKS: dict[str, dict] = {}
@@ -94,6 +96,18 @@ def task_dir(task_id: str) -> Path:
     return RUNS / task_id
 
 
+def _remember(rec: dict) -> None:
+    task_id = rec["task_id"]
+    _TASKS[task_id] = rec
+    _ORDER.append(task_id)
+    while len(_ORDER) > MAX_TASK_RECORDS:
+        old = next((tid for tid in _ORDER if _TASKS[tid]["status"] in _TERMINAL), None)
+        if old is None:
+            break
+        _ORDER.remove(old)
+        _TASKS.pop(old, None)
+
+
 def submit(task: str, url: str = "", success: list[str] | None = None,
            max_steps: int = 18, planner_mode: str = "") -> dict:
     # ms timestamp alone collides when several tasks (e.g. demo buttons) are
@@ -103,7 +117,7 @@ def submit(task: str, url: str = "", success: list[str] | None = None,
     rec = {
         "task_id": task_id, "status": "queued", "task": task,
         "url": url or "(開場由 LLM 規畫)",
-        "success": success or ["(開場由 LLM 規畫)"],
+        "success": list(success) if success is not None else ["(開場由 LLM 規畫)"],
         "contract": {
             "frozen": False,
             "start_url": url,
@@ -121,14 +135,23 @@ def submit(task: str, url: str = "", success: list[str] | None = None,
         "llm_cost_usd": 0.0, "llm_tokens": 0, "llm_calls": 0, "latency_ms": 0.0,
         "created": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
+    from browser_agent.capability import screen_task
+    cap = screen_task(task)
+    if not cap.allowed:
+        rec["contract"]["frozen"] = True
+        rec.update(status="refused", verifier=cap.reason, confidence=0.0,
+                   missing_evidence=[cap.reason])
+        _remember(rec)
+        return rec
+    _remember(rec)
     try:
         _JOBS.put_nowait((task_id, task, url.strip(),
                           success, max(1, min(int(max_steps), MAX_STEPS_CAP)),
                           planner_mode))
     except queue.Full:
+        _TASKS.pop(task_id, None)
+        _ORDER.remove(task_id)
         raise QueueFull(f"queue full ({MAX_QUEUE} pending tasks)") from None
-    _TASKS[task_id] = rec
-    _ORDER.append(task_id)
     return rec
 
 
@@ -256,6 +279,7 @@ def _worker() -> None:
     from browser_agent.memory_store import MemoryStore
     from browser_agent.nl import derive_success
     from browser_agent.planner import LLMPlanner, MockPlanner
+    from browser_agent.verifier import lint_contract
     from llm_core.config import load_llm_config
     from llm_core.openai_client import OpenAIClient
     from observability_core import EvidenceStore
@@ -274,7 +298,8 @@ def _worker() -> None:
     RUNS.mkdir(parents=True, exist_ok=True)
 
     with sync_playwright() as p:
-        # container: no sandbox user namespaces, small /dev/shm
+        # Browser process startup is local; the task-level guard in submit()
+        # still runs before planner calls, contexts, navigation, or page actions.
         browser = p.chromium.launch(
             headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"])
         INFO["ready"] = True
@@ -333,12 +358,6 @@ def _worker() -> None:
                 rec["steps"].append(f"🧭 規畫:起點 {url}" + (
                     f" · 成功條件 {' / '.join(conds)}" if conds else " · 無可驗證條件 → 誠實 UNKNOWN"))
 
-                ctx = browser.new_context(
-                    viewport={"width": 1200, "height": 820}, accept_downloads=True,
-                    user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                                "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"))
-                page = ctx.new_page()
-                page.goto(url, wait_until="domcontentloaded", timeout=30000)
                 # "forbidden:<type>:<value>" entries become ForbiddenCondition
                 # (verifier fails the run if observed — e.g. an injection trap)
                 contract = BrowserTaskContract(
@@ -351,6 +370,20 @@ def _worker() -> None:
                     forbidden_conditions=[
                         ForbiddenCondition(type=c.split(":", 2)[1], value=c.split(":", 2)[2])
                         for c in conds if c.startswith("forbidden:") and c.count(":") >= 2])
+                lint_failures = lint_contract(contract)
+                if lint_failures:
+                    reason = "; ".join(lint_failures)
+                    rec["steps"].append(f"🚫 合約不可驗證:{reason}")
+                    rec.update(status="unknown", verifier=reason, confidence=0.4,
+                               missing_evidence=lint_failures)
+                    continue
+
+                ctx = browser.new_context(
+                    viewport={"width": 1200, "height": 820}, accept_downloads=True,
+                    user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                                "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"))
+                page = ctx.new_page()
+                page.goto(url, wait_until="domcontentloaded", timeout=30000)
                 agent = BrowserAgent(page, MemoryStore(RUNS / "mem.json"), "web", "agentic",
                                      artifact_dir=base / "shots",
                                      evidence_store=EvidenceStore(base / "evidence"),

@@ -21,6 +21,7 @@ from browser_core.actions import (
     KeyboardAction, MouseAction, PressAction,
 )
 from browser_agent.observer import Observation
+from browser_agent.verifier import is_task_echo as _task_echo
 from llm_core.openai_client import LLMConfigError, LLMResponse, OpenAIClient
 
 _SYSTEM = """You are the planner of a verified browser agent. Each turn you see the current page state (URL, title, visible text excerpt, candidate elements) and must return EXACTLY ONE JSON object choosing the next action. You never write code and never invent CSS selectors — you target an element ONLY by its numeric "aid" from the candidate list. An external verifier — not you — decides task success, so be truthful.
@@ -262,11 +263,14 @@ def _build_action(decision: dict, obs: Observation):
     target = None
     aid_error = ""
     if aid is not None:
-        known = {c.index for c in obs.candidates}
+        candidates = {c.index: c for c in obs.candidates}
         if (isinstance(aid, (int, float)) and not isinstance(aid, bool)
-                and int(aid) in known):
+                and int(aid) in candidates):
+            candidate = candidates[int(aid)]
+            description = " ".join(str(getattr(candidate, field, "") or "") for field in (
+                "tag", "type", "id", "name", "role", "aria_label", "placeholder", "text"))
             target = ElementTarget(selector=f'[data-aid="{int(aid)}"]', selector_type="css",
-                                   description=f"aid {int(aid)}")
+                                   description=f"aid {int(aid)} {description}".strip())
         else:
             aid_error = f"hallucinated aid: {aid!r} is not in the observed candidate list"
     # only actions that CONSUME the target are gated; a spurious aid on e.g.
@@ -335,18 +339,6 @@ Return EXACTLY ONE JSON object, nothing else:
      NEVER echo the task sentence: a condition must describe the state of the DELIVERABLE (the answer text, the destination page's landmark, the downloaded content), not repeat an entity name/ticker/word the task itself contains. A token like "intc" from the task is visible on any search/results page long before anything is done, so it proves nothing — such short task-echo text_visible values are rejected by a code guard. For submitting a form, the completion landmark is the POST-SUBMIT page: use url_contains of the response URL (a Google Form lands on ".../formResponse") or the confirmation text the form shows after submit ("已送出" / "response has been recorded"), never a value copied from the form's link.
 
 Rules: pick conditions that are SUFFICIENT (met => task genuinely done) and NECESSARY (task done => met). If the task is a search/read, the condition is the answer text or a landmark of the destination page. If it downloads a document to inspect, prefer download_exists carrying the section/heading to confirm. For an open-ended task ("find the most popular X", "找找有什麼有趣的商品", "播放某首歌"), still TRY a best-effort weak condition — text_visible of a query keyword, or a landmark of the destination page (its title/section). But if nothing observable would truthfully prove completion, return an empty array [] — the run then ends as an honest `unknown` for human review. NEVER invent a condition just to have one: a fabricated condition that fails on a genuinely-completed task is worse than none. Do not require login/CAPTCHA text. Never fabricate a value you don't expect to literally appear."""
-
-
-def _task_echo(value: str, task: str) -> bool:
-    """Task-echo guard (premature-landmark source reduction): a SHORT
-    text_visible value lifted verbatim from the task sentence — an entity
-    name/ticker like "intc" — is rendered by any search/results page the moment
-    the agent types it, i.e. it can be true before the task has done anything
-    (the observed INTC 10-K false PASS). Normalised (lowercase, collapsed
-    whitespace) substring match, ≤3 whitespace tokens; longer quoted phrases
-    usually describe the real deliverable and are kept."""
-    v = " ".join(value.lower().split())
-    return bool(v) and len(v.split()) <= 3 and v in " ".join(task.lower().split())
 
 
 class LLMPlanner:

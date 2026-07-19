@@ -74,3 +74,13 @@ def test_partition_attributes_overlap_to_the_tightest_item():
     assert region_at(350, partition_document(text, segs)).code == "2"
     assert region_at(100, partition_document(text, segs)).code == "1"
     assert region_at(950, partition_document(text, segs)).code == ""  # unclassified tail
+
+
+def test_coverage_uses_actual_multi_ranges_not_bounding_envelope():
+    text = "m" * 1000
+    seg = _Seg("7", 0, 1000)
+    seg.source_ranges = [(0, 100), (900, 1000)]
+
+    assert coverage_ratio(text, [seg]) == 0.2
+    gaps = compute_gaps(text, [seg], min_chars=1)
+    assert [(g.start, g.end) for g in gaps] == [(100, 900)]

@@ -463,7 +463,7 @@ def test_unwrap_leaves_direct_payloads_untouched():
 def test_extractor_ignored_when_conditions_present():
     client = _ScriptedClient(key_points=["x"], judgments=[])
     contract = BrowserTaskContract(
-        task_id="c1", natural_language_task="find UltraBook",
+        task_id="c1", natural_language_task="find a laptop",
         expected_outcome="UltraBook visible",
         success_conditions=[SuccessCondition(type="text_visible", value="UltraBook")],
         forbidden_conditions=[])

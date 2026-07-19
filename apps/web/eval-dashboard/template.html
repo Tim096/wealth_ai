@@ -130,7 +130,7 @@
     <h1>Does the system know when it&rsquo;s right, wrong, or unsure?</h1>
     <p class="lede">One evidence-first platform, proven on two hard tasks. Every result is
       <b>pass</b>, <b>fail</b>, or <b>unknown</b> — lack of evidence can never become success.
-      All numbers below come from real runs, not self-report.</p>
+      This is a deterministic snapshot of tracked artifacts, not live telemetry or a held-out estimate.</p>
   </header>
 
   <section class="tiles" id="tiles"></section>
@@ -155,10 +155,10 @@
     </div>
 
     <div class="panel" style="margin-top:1rem">
-      <h2 style="font-size:1rem">Independent oracle · Item 8 vs SEC XBRL facts</h2>
-      <p class="sub">The answer to &ldquo;how do you ensure status is trustworthy?&rdquo; — not an LLM
-        judging itself, but SEC&rsquo;s own structured numbers. A real Item 8 must contain the reported
-        revenue / net income / assets; a wrapper stub cannot.</p>
+      <h2 style="font-size:1rem">Independent check · Item 8 vs SEC XBRL facts</h2>
+      <p class="sub">A deterministic cross-check against SEC structured facts, not an LLM
+        judging itself. The tracked check tests whether accession-matched headline values appear in
+        the extracted span; it does not yet prove fiscal-period, unit, currency, or whole-filing accuracy.</p>
       <div class="scroll"><table id="secTable"></table></div>
     </div>
 
@@ -222,8 +222,8 @@
       </div>
       <div class="panel">
         <h2 style="font-size:1rem">Format-source coverage · era × filing agent</h2>
-        <p class="sub" id="eraSub">Where the pipeline is proven vs honestly unsupported —
-          pre-2001 plain-text SGML fails cleanly (0 fabricated items).</p>
+        <p class="sub" id="eraSub">Tracked format coverage, including the repaired pre-2001
+          plain-text path. Era-specific schemas and low-coverage filings remain explicit limitations.</p>
         <div class="scroll" style="margin-top:.5rem"><table id="eraTable"></table></div>
         <div class="arterr" id="eraErr"></div>
       </div>
@@ -258,9 +258,10 @@ function cvar(v){return getComputedStyle(document.documentElement).getPropertyVa
 // tiles
 const s=DATA.sec, r=DATA.status_reclassification;
 const cert=s.xbrl_summary.certified||0, contra=s.xbrl_summary.contradicted||0;
+const xbrlOther=(s.xbrl_summary.inconclusive||0)+(s.xbrl_summary.unavailable||0);
 const tiles=[
-  {n:s.total_items, k:'10-K items extracted', note:s.filings+' filings, 8 held-out'},
-  {n:cert+'/'+(cert+contra), k:'Item 8 XBRL-certified', note:'0 disagreements w/ pipeline'},
+  {n:s.total_items, k:'10-K items extracted', note:s.filings+' tracked filings · 0 untouched held-out'},
+  {n:cert+'/'+s.filings, k:'Item 8 XBRL value checks', note:contra+' contradicted · '+xbrlOther+' unavailable/inconclusive'},
   {n:r.before.pass+'→'+r.after.pass, k:'pass status shift', note:'tracked sweep1 → sweep2 artifacts'},
   {n:DATA.browser.runs.length?DATA.browser.runs[DATA.browser.runs.length-1].repairs:'—',
     k:'browser self-repairs', note:'UI drift → still PASS'},
@@ -276,7 +277,7 @@ if(aapl){
   const head=el('div','runhead');
   head.append(el('div',null,'<h2 style="font-size:.98rem">AAPL · Item 8 source span</h2>'),
     el('div',null,'<span class="pill p-pass">目前做得好 · 限定</span>'));
-  p.append(head,el('p','sub','Committed evaluation supports this tracked Item 8 source span; it does not certify the whole filing.'));
+  p.append(head,el('p','sub','Committed evaluation supports this normalized-source span; it does not certify the whole filing or raw byte offsets.'));
   const proof=el('div','step ok');
   proof.append(el('div','h','<span class="name">Independent evidence</span><span class="mode">SEC XBRL</span>'),
     el('div','why',`Item 8 status <code>${aapl.item8_status}</code> · oracle <code>${aapl.item8_xbrl}</code> · source-bound extraction, not generated prose.`));
@@ -289,7 +290,7 @@ const weak=el('article','panel');
 const weakHead=el('div','runhead');
 weakHead.append(el('div',null,'<h2 style="font-size:.98rem">INTC / Citi · cross-reference body via page anchors</h2>'),
   el('div',null,'<span class="pill p-warn">partial · needs_review</span>'));
-weak.append(weakHead,el('p','sub','The pointer index is detected AND the bound annual-report body is now resolved to source-exact spans via printed page-number anchors (Citi: 9 items incl. Risk Factors / MD&A / Financials) — each marked partial + needs_review, never a fabricated body.'));
+weak.append(weakHead,el('p','sub','The pointer index is detected and tracked bodies may resolve to normalized-source spans via printed page-number anchors — each remains partial + needs_review, never a fabricated body.'));
 s.wrappers.forEach(w=>{
   const d=el('div','step repair');
   d.append(el('div','h',`<span class="name">${w.ticker}</span><span class="mode">${w.filing_class}</span>`),
@@ -317,10 +318,10 @@ $('#confBox').append(
 
 // sec table
 const tbl=$('#secTable');
-tbl.append((()=>{const tr=el('tr');['Ticker','Layer','Item 8','XBRL oracle','Items pass','IBR','Parse'].forEach(h=>tr.append(el('th',null,h)));return tr;})());
+tbl.append((()=>{const tr=el('tr');['Ticker','Layer','Item 8','XBRL value check','Items pass','IBR','Parse'].forEach(h=>tr.append(el('th',null,h)));return tr;})());
 s.tickers.forEach(t=>{
   const tr=el('tr');
-  tr.append(el('td','t-mono',t.ticker+(t.held_out?'<span class="held">held-out</span>':'')));
+  tr.append(el('td','t-mono',t.ticker));
   tr.append(el('td',null,t.layer));
   tr.append(el('td',null,`<span class="pill ${PILL[t.item8_status]||'p-grey'}">${t.item8_status}</span>`));
   tr.append(el('td',null,`<span class="pill ${PILL[t.item8_xbrl]||'p-grey'}">${t.item8_xbrl}</span>`));
@@ -505,7 +506,10 @@ showErr('#eraErr',strat);
 
 $('#reclassNote').innerHTML=`Tracked sweep artifacts contain ${r.before.items} items across ${r.before.filings} filings. Status counts moved from <b>${r.before.pass} pass / ${r.before.incorporated_by_reference} incorporated-by-reference</b> to <b>${r.after.pass} / ${r.after.incorporated_by_reference}</b>; accession fixtures and regression tests lock the three documented failure classes.`;
 
-$('#foot').innerHTML=DATA.generated_note+' · <a href="https://github.com/Tim096/wealth">github.com/Tim096/wealth</a>';
+const prov=DATA.provenance||{};
+$('#foot').innerHTML=DATA.generated_note
+  +' · input manifest <span class="t-mono">'+(prov.input_manifest_sha256||'unknown').slice(0,12)+'</span>'
+  +' · <a href="https://github.com/Tim096/wealth_ai">github.com/Tim096/wealth_ai</a>';
 
 // theme toggle
 const root=document.documentElement, tg=$('#themeToggle');

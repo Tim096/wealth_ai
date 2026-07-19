@@ -59,7 +59,7 @@ def _search_contract(cid: str, product: str) -> dict:
         "expected_outcome": "results page shows the product",
         "success_conditions": [
             {"type": "text_visible", "value": "results for"},
-            {"type": "text_visible", "value": product.title()},
+            {"type": "text_visible", "value": f"{product.title()} Pro"},
             {"type": "url_contains", "value": "/results"},
         ],
         "forbidden_conditions": [

@@ -3,7 +3,9 @@ embed exactly the committed data.json — the hand-pasted snapshot can no longer
 go silently stale — and data.json must carry the eval-hardening sections read
 from committed artifacts, error-free."""
 
+import hashlib
 import json
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -38,6 +40,8 @@ def test_task2_case_cards_are_explicit_and_scoped():
     assert "AAPL · Item 8 source span" in template
     assert "目前做得好 · 限定" in template
     assert "It is not whole-filing accuracy" in template
+    assert "normalized-source span" in template
+    assert "raw byte offsets" in template
     # cross-reference body is now resolved via page anchors (partial + needs_review)
     assert "INTC / Citi · cross-reference body via page anchors" in template
     assert "partial · needs_review" in template
@@ -45,6 +49,8 @@ def test_task2_case_cards_are_explicit_and_scoped():
     # the genuine remaining work + the self-audited status false-pass fix
     assert "Still needs work" in template
     assert "positive-evidence" in template
+    assert "0 untouched held-out" in template
+    assert "pre-2001 plain-text SGML fails cleanly" not in template
 
 
 def test_render_roundtrip_and_script_safety():
@@ -69,6 +75,19 @@ def test_extract_rejects_html_without_data():
 
 def test_data_schema_sections_present_and_error_free():
     data = _data()
+    provenance = data["provenance"]
+    assert provenance["generator"] == "tools/build_dashboard_data.py"
+    assert len(provenance["input_manifest_sha256"]) == 64
+    assert provenance["inputs"]
+    assert all(len(entry["sha256"]) == 64 for entry in provenance["inputs"])
+    paths = {entry["path"] for entry in provenance["inputs"]}
+    assert "data/browser_eval/artifacts/killer_demo_trace.json" in paths
+    assert not any(path.startswith("runs/") for path in paths)
+    cal_path = ROOT / "data" / "browser_eval" / "calibration" / "calibration_results.json"
+    semantic = json.dumps(json.loads(cal_path.read_text(encoding="utf-8")),
+                          ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()
+    by_path = {entry["path"]: entry["sha256"] for entry in provenance["inputs"]}
+    assert by_path[cal_path.relative_to(ROOT).as_posix()] == hashlib.sha256(semantic).hexdigest()
     be, se = data["browser_evals"], data["sec_evals"]
     assert set(be) == {"calibration", "impossible", "passk", "degradation",
                        "trajectory", "false_success"}
@@ -86,6 +105,12 @@ def test_data_matches_source_artifacts():
                       "triangulation.json").read_text(encoding="utf-8"))
     assert data["sec_evals"]["triangulation"]["verdict_totals"] == tri["verdict_totals"]
     assert data["sec"]["sweep"] == "sweep3"
+    tickers = data["sec"]["tickers"]
+    assert data["sec"]["xbrl_summary"] == dict(Counter(
+        row["item8_xbrl"] for row in tickers))
+    by_ticker = {row["ticker"]: row for row in tickers}
+    assert by_ticker["JPM"]["item8_xbrl"] == "unavailable"
+    assert by_ticker["XOM"]["item8_xbrl"] == "unavailable"
     dg = data["browser_evals"]["degradation"]
     assert set(dg) == {"perception", "action", "execution"}
     assert all(len(points) == 4 for points in dg.values())

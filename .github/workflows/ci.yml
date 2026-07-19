@@ -68,6 +68,12 @@ jobs:
         # from their evidence.
         run: python tools/verify_claims.py
 
+      - name: Regenerate eval dashboard from tracked artifacts
+        run: |
+          python tools/build_dashboard_data.py
+          python tools/render_dashboard.py
+          git diff --exit-code -- apps/web/eval-dashboard/data.json apps/web/eval-dashboard/index.html
+
       - name: Verify prompt provenance against Git history
         run: python tools/verify_prompt_provenance.py
 

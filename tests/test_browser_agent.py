@@ -8,6 +8,7 @@ from browser_core.actions import ClickAction, FillAction
 from browser_agent.capability import screen_action, screen_task
 from browser_agent.executor import ActionOutcome
 from browser_agent.observer import ElementCandidate, Observation
+from browser_agent.planner import _build_action
 from browser_agent.repair import diagnose_failure, repair_target
 from browser_agent.verifier import verify_contract
 
@@ -26,8 +27,8 @@ def obs(cands, url="http://site/results", text="3 results for widget: Widget Pro
 # --- verifier three-state ---
 def test_verifier_pass_when_conditions_met():
     c = BrowserTaskContract(task_id="t", natural_language_task="x", expected_outcome="x",
-                            success_conditions=[SuccessCondition(type="text_visible", value="results for")])
-    assert verify_contract(c, obs([])).status == "pass"
+                            success_conditions=[SuccessCondition(type="text_visible", value="results for widget")])
+    assert verify_contract(c, obs([], text="results for widget")).status == "pass"
 
 
 def test_verifier_fail_on_forbidden():
@@ -41,6 +42,69 @@ def test_verifier_unknown_when_unobservable():
     c = BrowserTaskContract(task_id="t", natural_language_task="x", expected_outcome="x",
                             success_conditions=[SuccessCondition(type="screenshot_region_changed", value="x")])
     assert verify_contract(c, obs([])).status == "unknown"
+
+
+@pytest.mark.parametrize(("task", "condition", "text", "url"), [
+    ("Find the INTC filing", SuccessCondition(type="text_visible", value="INTC"),
+     "INTC filings", "https://example.com"),
+    ("Open the product page", SuccessCondition(type="text_visible", value="Search"),
+     "Search", "https://example.com"),
+    ("Open the filing", SuccessCondition(type="url_contains", value="sec.gov"),
+     "filing", "https://www.sec.gov/search"),
+    ("Report the exact title", SuccessCondition(type="text_visible", value="Hacker News"),
+     "Hacker News", "https://news.ycombinator.com"),
+])
+def test_weak_contract_cannot_pass(task, condition, text, url):
+    c = BrowserTaskContract(task_id="t", natural_language_task=task, expected_outcome="x",
+                            success_conditions=[condition])
+    result = verify_contract(c, obs([], text=text, url=url))
+    assert result.status == "unknown"
+    assert result.unverifiable is True
+
+
+def test_two_weak_conditions_cannot_validate_each_other():
+    c = BrowserTaskContract(
+        task_id="t", natural_language_task="Open the Acme product page",
+        expected_outcome="product page",
+        success_conditions=[
+            SuccessCondition(type="text_visible", value="Acme"),
+            SuccessCondition(type="text_visible", value="Results"),
+        ],
+    )
+    result = verify_contract(c, obs([], text="Search Results\nAcme"))
+    assert result.status == "unknown"
+    assert result.unverifiable is True
+
+
+def test_missing_weak_condition_is_still_unverifiable_not_fail():
+    c = BrowserTaskContract(
+        task_id="t", natural_language_task="Open the product page", expected_outcome="x",
+        success_conditions=[SuccessCondition(type="text_visible", value="Search")],
+    )
+    result = verify_contract(c, obs([], text="No matching landmark"))
+    assert result.status == "unknown"
+    assert result.unverifiable is True
+
+
+def test_weak_auxiliary_condition_does_not_poison_strong_evidence():
+    c = BrowserTaskContract(
+        task_id="t", natural_language_task="Search for Widget and see the results",
+        expected_outcome="results shown",
+        success_conditions=[
+            SuccessCondition(type="text_visible", value="results for widget"),
+            SuccessCondition(type="text_visible", value="Widget"),
+        ],
+    )
+    assert verify_contract(c, obs([], text="results for widget: Widget Pro")).status == "pass"
+
+
+def test_contract_lint_never_launders_a_forbidden_failure():
+    c = BrowserTaskContract(
+        task_id="t", natural_language_task="Open the product page", expected_outcome="x",
+        success_conditions=[SuccessCondition(type="text_visible", value="Search")],
+        forbidden_conditions=[ForbiddenCondition(type="error_text_visible", value="blocked")],
+    )
+    assert verify_contract(c, obs([], text="Search\nblocked")).status == "fail"
 
 
 # --- FIX-1: open-ended tasks (zero success conditions) ---
@@ -207,17 +271,31 @@ def test_diagnose_wrong_page():
 def test_screen_task_refuses_login_and_purchase():
     assert not screen_task("Log in to my bank account").allowed
     assert not screen_task("Buy the first product and checkout").allowed
+    assert not screen_task("Checkout with the saved address").allowed
     assert screen_task("Search for widgets and read the results").allowed
 
 
-def test_screen_task_is_blind_to_non_english_intents():
-    # Known, deliberately unfixed hole (TODO V-14): the intent patterns are
-    # English keyword matches, so the same refusals sail through in Chinese on
-    # a Chinese-language UI. Locked as a test so the boundary's real shape is
-    # measured rather than asserted in prose — fail-open, not "code-enforced".
-    for zh in ("登入我的銀行帳戶", "購買第一個商品並結帳", "幫我付款下單"):
-        assert screen_task(zh).allowed          # NOT refused — this is the hole
-    assert not screen_task("Log in to my bank account").allowed
+def test_screen_task_refuses_chinese_side_effects():
+    for zh in ("登入我的銀行帳戶", "購買第一個商品並結帳", "幫我付款下單",
+               "上傳附件並提交表單", "在文章下方留言"):
+        assert not screen_task(zh).allowed
+
+
+def test_screen_task_allows_read_only_mentions():
+    for task in ("Read the login documentation", "Find an article about checkout UX",
+                 "Read documentation about upload security", "Read purchase documentation",
+                 "閱讀 login 文件", "找 checkout UX 的文章", "閱讀購買流程的文件"):
+        assert screen_task(task).allowed
+    for task in (
+        "Read the login page and then sign in",
+        "Find an article and upload it",
+        "Find checkout UX article, submit the form",
+        "Read the checkout UX article, then buy the product",
+        "Complete the payment flow with the saved card",
+        "Go to the login page and use my credentials",
+        "完成結帳流程並付款",
+    ):
+        assert not screen_task(task).allowed
 
 
 def test_screen_action_refuses_password_and_checkout():
@@ -227,6 +305,17 @@ def test_screen_action_refuses_password_and_checkout():
     assert not screen_action(buy).allowed
     ok = FillAction(target=ElementTarget(selector="#q"), value="widget")
     assert screen_action(ok).allowed
+
+
+def test_grounded_action_preserves_sensitive_target_semantics():
+    password = cand(index=9, tag="input", type="password", id="password",
+                    aria_label="Password")
+    fill = _build_action({"action": "fill", "aid": 9, "value": "hunter2"}, obs([password]))
+    assert not screen_action(fill).allowed
+
+    pay = cand(index=10, tag="button", id="pay-now", text="Pay now")
+    click = _build_action({"action": "click", "aid": 10}, obs([pay]))
+    assert not screen_action(click).allowed
 
 
 # --- integration: the killer demo flow ---

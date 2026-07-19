@@ -105,12 +105,8 @@ def region_at(offset: int, blocks: list[Block]) -> Block | None:
     return None
 
 
-def compute_gaps(text: str, segments, min_chars: int = 120) -> list[Gap]:
-    """Every unclassified run of the document, derived from the clean partition
-    (partition_document), so items + gaps always tile the whole body with no
-    overlap. Gaps below min_chars (whitespace / furniture between adjacent
-    items) are skipped."""
-    blocks = partition_document(text, segments)
+def gaps_from_blocks(text: str, blocks: list[Block], min_chars: int = 120) -> list[Gap]:
+    """Return unclassified runs from an existing document partition."""
     gaps: list[Gap] = []
     for i, blk in enumerate(blocks):
         if blk.code != "":
@@ -124,6 +120,11 @@ def compute_gaps(text: str, segments, min_chars: int = 120) -> list[Gap]:
     return gaps
 
 
+def compute_gaps(text: str, segments, min_chars: int = 120) -> list[Gap]:
+    """Every unclassified run, with items + gaps tiling the whole body."""
+    return gaps_from_blocks(text, partition_document(text, segments), min_chars)
+
+
 def _preview(text: str, start: int, end: int, limit: int = 70) -> str:
     for line in text[start:end].splitlines():
         line = line.strip()
@@ -132,15 +133,8 @@ def _preview(text: str, start: int, end: int, limit: int = 70) -> str:
     return text[start:end].strip()[:limit]
 
 
-def coverage_ratio(text: str, segments) -> float:
+def coverage_ratio(text: str, segments, blocks: list[Block] | None = None) -> float:
     if not text:
         return 1.0
-    spans = sorted((s.start_offset, s.end_offset)
-                   for s in segments if s.end_offset > s.start_offset)
-    covered, hi = 0, -1
-    for a, b in spans:
-        a = max(a, hi)
-        if b > a:
-            covered += b - a
-            hi = b
-    return covered / len(text)
+    partition = blocks if blocks is not None else partition_document(text, segments)
+    return sum(block.chars for block in partition if block.code) / len(text)

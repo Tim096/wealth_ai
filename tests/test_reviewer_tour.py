@@ -90,6 +90,19 @@ def test_sec_frontend_shows_scoped_strong_and_unresolved_cases():
     assert "20-F" in html and "failure handling" in html
 
 
+def test_public_claims_match_runtime_boundaries():
+    agent = _agent()
+    assert "可執行任意自然語言任務" not in agent
+    assert "confidence ${s.confidence.toFixed(2)}" not in agent
+    assert "capability guard 先於 planner / browser side effect" in agent
+
+    sec = _sec()
+    assert "not servable" in sec and "servability_reason_codes" in sec
+    assert "完整 audit manifest" in sec
+    assert "github.com/Tim096/wealth_ai/blob/main/docs/eval_report.md" in sec
+    assert "const BAND_PILL={low:'p-warn'" in sec
+
+
 def test_cross_page_hash_handoff_is_wired_both_ways():
     # each page reads #tour=KEY on arrival and flashes the local target
     assert "match(/tour=([\\w-]+)/)" in _agent()

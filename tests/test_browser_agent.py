@@ -318,6 +318,36 @@ def test_grounded_action_preserves_sensitive_target_semantics():
     assert not screen_action(click).allowed
 
 
+def test_screen_action_refuses_grounded_press_onto_checkout():
+    # PressAction is as irreversible as a click on a checkout control: Enter on a
+    # pay/checkout button submits the order, so a grounded press onto such a
+    # target must go through the SAME _FORBIDDEN_TARGET_WORDS gate click/download
+    # use. The target here (id="pay-now", no visible "pay now" text) is matched
+    # ONLY by _FORBIDDEN_TARGET_WORDS ("pay[-_ ]?now"), NOT by the value-list's
+    # space-form "pay now" — so this exercises the new press→target-word gate,
+    # not the pre-existing value check.
+    pay = cand(index=7, tag="button", id="pay-now", aria_label="Confirm")
+    press = _build_action({"action": "press", "aid": 7, "value": "Enter"}, obs([pay]))
+    assert press.type == "press"
+    assert not screen_action(press).allowed
+    # a normal press (Enter in a search box) must STILL be allowed
+    box = cand(index=8, tag="input", type="search", id="q", aria_label="Search")
+    ok = _build_action({"action": "press", "aid": 8, "value": "Enter"}, obs([box]))
+    assert ok.type == "press" and screen_action(ok).allowed
+
+
+def test_mouse_coordinate_click_is_not_target_judgeable_task_guard_is_primary():
+    # HONEST residual (documented, not papered over): a MouseAction is pure x,y
+    # with no element identity, so screen_action cannot judge it against a named
+    # forbidden control — it passes the action guard. The PRIMARY defense for a
+    # mouse click onto a checkout is the TASK guard, which refuses the forbidden
+    # task before any side effect ever runs.
+    from browser_core.actions import MouseAction
+    m = MouseAction(x=100, y=200)
+    assert screen_action(m).allowed                       # documents the gap, no fake block
+    assert not screen_task("Buy the Widget Pro 3000 and checkout").allowed
+
+
 # --- integration: the killer demo flow ---
 @pytest.mark.integration
 def test_killer_demo_v1_pass_v2_repairs_and_passes(tmp_path):

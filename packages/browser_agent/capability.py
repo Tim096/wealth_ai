@@ -91,7 +91,10 @@ def screen_action(action) -> CapabilityDecision:
         if _FORBIDDEN_VALUE.search(typed):
             return CapabilityDecision(False, "sensitive_input",
                                       f"keyboard would enter sensitive/credential data ('{typed.strip()[:20]}...') — refused")
-    if at in ("click", "download") and _FORBIDDEN_TARGET_WORDS.search(target_blob):
+    # press is as irreversible as click on a checkout/place-order control (Enter
+    # on a pay button submits the order), so the grounded target must go through
+    # the same forbidden-word gate — not only the value check above.
+    if at in ("click", "download", "press") and _FORBIDDEN_TARGET_WORDS.search(target_blob):
         return CapabilityDecision(False, "irreversible_action",
                                   f"action targets an irreversible control ('{target_blob.strip()[:40]}') — refused")
     return CapabilityDecision(True, "ok", "action is reversible and within capabilities")

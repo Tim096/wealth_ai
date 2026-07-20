@@ -346,6 +346,10 @@ class LLMPlanner:
 
     def __init__(self, client: OpenAIClient | None = None) -> None:
         self.client = client or OpenAIClient()
+        # the LLMResponse of the most recent plan_preflight call, so its
+        # cost/tokens can be accounted for (a successful preflight IS a real LLM
+        # call and must not be dropped from task telemetry). None until called.
+        self.preflight_llm: LLMResponse | None = None
 
     def available(self) -> bool:
         return self.client.available()
@@ -370,7 +374,7 @@ class LLMPlanner:
         empty/oversized condition is dropped, plan strings are bounded."""
         user = (f"TASK: {task}\nThink it through, then return the JSON "
                 "(analysis, obstacles, steps, start_url, success_conditions).")
-        decision, _ = self.client.complete_json(_PREFLIGHT_SYSTEM, user)
+        decision, self.preflight_llm = self.client.complete_json(_PREFLIGHT_SYSTEM, user)
         start = str(decision.get("start_url", "") or "").strip()
         if not start.lower().startswith(("http://", "https://")):
             start = ""

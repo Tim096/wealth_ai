@@ -255,11 +255,17 @@ class _CountingPlanner:
     is only counted when the returned decision carries `.llm` — exactly the
     decisions whose tokens land in TaskRun.llm_tokens — so calls and tokens stay
     consistent. MockPlanner never sets `.llm`, so keyless demos report 0 calls.
-    All other attributes (client / available / plan_preflight) delegate through."""
+    All other attributes (client / available) delegate through. plan_preflight is
+    wrapped, not delegated: a successful preflight is one real LLM call whose
+    cost/tokens the inner planner discards from next_action's running totals, so
+    it is counted here (llm_calls) and its usage banked (preflight_*) for the
+    worker to fold into the task's cost/token totals."""
 
     def __init__(self, inner) -> None:
         self._inner = inner
         self.llm_calls = 0
+        self.preflight_cost_usd = 0.0
+        self.preflight_tokens = 0
 
     def __getattr__(self, name):
         return getattr(self._inner, name)
@@ -269,6 +275,17 @@ class _CountingPlanner:
         if getattr(decision, "llm", None) is not None:
             self.llm_calls += 1
         return decision
+
+    def plan_preflight(self, *args, **kwargs):
+        result = self._inner.plan_preflight(*args, **kwargs)
+        # count + bank the preflight LLM spend only when the call actually hit
+        # the model (offline/mock planners leave preflight_llm None).
+        llm = getattr(self._inner, "preflight_llm", None)
+        if llm is not None:
+            self.llm_calls += 1
+            self.preflight_cost_usd += llm.cost_usd
+            self.preflight_tokens += llm.input_tokens + llm.output_tokens
+        return result
 
 
 def _worker() -> None:
@@ -401,7 +418,8 @@ def _worker() -> None:
                            trace=run_dict,
                            observed_evidence=list(run.verifier.observed_evidence),
                            missing_evidence=list(run.verifier.missing_evidence),
-                           llm_cost_usd=run.llm_cost_usd, llm_tokens=run.llm_tokens,
+                           llm_cost_usd=run.llm_cost_usd + planner.preflight_cost_usd,
+                           llm_tokens=run.llm_tokens + planner.preflight_tokens,
                            llm_calls=planner.llm_calls, latency_ms=run.total_latency_ms)
             except Exception as e:  # noqa: BLE001 — a bad task must not kill the worker
                 rec.update(status="error", verifier=f"{type(e).__name__}: {e}")

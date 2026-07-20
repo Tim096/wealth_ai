@@ -189,6 +189,47 @@ def test_task_record_exposes_verdict_telemetry_fields():
     assert worker.get(rec["task_id"])["observed_evidence"] == []
 
 
+def test_counting_planner_accounts_for_preflight_llm_call():
+    """A successful plan_preflight is one real LLM call whose cost/tokens the
+    inner planner discards from next_action's running totals. _CountingPlanner
+    must count it (llm_calls) and bank its usage (preflight_*) so the task
+    record is not understated by the whole preflight turn."""
+    from llm_core.openai_client import LLMResponse
+
+    class _FakeInner:
+        def __init__(self):
+            self.preflight_llm = None
+
+        def plan_preflight(self, task):
+            # mirror LLMPlanner: a live preflight banks its LLMResponse
+            self.preflight_llm = LLMResponse(
+                text="{}", input_tokens=120, output_tokens=30, cost_usd=0.0004,
+                latency_ms=12.0, model="fake", prompt_sha256="x")
+            return "https://x", ["text_visible:Y"], {"analysis": "", "obstacles": [], "steps": []}
+
+    planner = worker._CountingPlanner(_FakeInner())
+    url, conds, _plan = planner.plan_preflight("some task")
+    assert url == "https://x" and conds == ["text_visible:Y"]
+    assert planner.llm_calls >= 1                 # preflight is counted, not dropped
+    assert planner.preflight_cost_usd > 0         # its cost is banked
+    assert planner.preflight_tokens == 150        # input+output folded in
+
+
+def test_counting_planner_ignores_preflight_without_llm_call():
+    """An offline/mock preflight (preflight_llm stays None) banks nothing — the
+    keyless demos must still report 0 calls / $0."""
+    class _FakeInner:
+        preflight_llm = None
+
+        def plan_preflight(self, task):
+            return "", [], {"analysis": "", "obstacles": [], "steps": []}
+
+    planner = worker._CountingPlanner(_FakeInner())
+    planner.plan_preflight("t")
+    assert planner.llm_calls == 0
+    assert planner.preflight_cost_usd == 0.0 and planner.preflight_tokens == 0
+
+
 def test_task_status_response_includes_cost_chip_fields():
     """GET /api/tasks/{id} surfaces the cost-chip inputs; for a keyless demo
     they are present and zero (the chip renders $0.0000 · 0 calls · 0 tok)."""

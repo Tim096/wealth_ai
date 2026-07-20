@@ -315,8 +315,13 @@ def test_extract_audit_explains_main_document_selection(monkeypatch):
     assert selection["amendments_excluded"][0]["accession"] == amendment.accession
     assert selection["history_fetch_observability"]["reason_code"] == (
         "HISTORY_FETCH_NOT_OBSERVABLE")
-    assert {"AMENDMENT_EXCLUDED", "HISTORY_FETCH_NOT_OBSERVABLE"} <= set(
-        payload["servability"]["reason_codes"])
+    reason_codes = payload["servability"]["reason_codes"]
+    assert "HISTORY_FETCH_NOT_OBSERVABLE" in reason_codes
+    # amendment history is informational selection metadata, not an omission of
+    # THIS extraction — it must not pollute the servability reasons.
+    assert "AMENDMENT_EXCLUDED" not in reason_codes
+    assert not any(row["reason_code"] == "AMENDMENT_EXCLUDED"
+                   for row in payload["audit"]["omissions"])
     assert payload["servability"]["level"] != "clean"
     assert state["raw"] == raw
 
@@ -360,3 +365,131 @@ def test_exhibit_audit_records_cap_fetch_parse_and_skips(monkeypatch):
     assert audit["parse_errors"][0]["reason_code"] == "EXHIBIT_PARSE_ERROR"
     assert audit["skipped"] == [{"file": "capped-ex311.htm",
                                  "reason_code": "EXHIBIT_CAP_REACHED"}]
+
+
+# ------------------------------------------------ (1) coverage round bleed-through
+def test_raw_coverage_below_gate_is_low_even_when_it_rounds_to_080():
+    """79996/100000 = 0.79996 rounds to 0.8000 for display, but the servability
+    gate must consume the RAW ratio and still flag LOW_ITEM_COVERAGE."""
+    payload = sec_main._items_payload(
+        _result("standard", [_seg(start_offset=0, end_offset=79996)], "x" * 100000),
+        {"source": "ROUND"}, [], raw_bytes=b"src",
+        audit_context={"xbrl": {"status": "certified", "detail": "fixture"}},
+    )
+    assert payload["meta"]["coverage"] == 0.8            # display figure rounds up
+    assert payload["meta"]["servable"] is False
+    assert "LOW_ITEM_COVERAGE" in payload["servability"]["blocking_reason_codes"]
+
+
+# ------------------------------------------ (2) partition tiling is genuinely checkable
+def test_partition_audit_flags_broken_tiling_as_fatal():
+    """tiles_document is a real structural invariant: false only when the blocks
+    fail to union to [0,N). PARTITION_NOT_TILED then fires as a defensive fatal."""
+    from sec_core.coverage import Block
+
+    text = "z" * 100
+    assert sec_main._partition_audit(text, [Block(0, 100, "1")], [])["tiles_document"] is True
+
+    broken = [Block(0, 40, "1"), Block(60, 100, "2")]   # gap [40,60): contract violated
+    part = sec_main._partition_audit(text, broken, [])
+    assert part["tiles_document"] is False
+    omissions = sec_main._audit_omissions({
+        "partition": part,
+        "raw": {"decode_replacement_chars": 0, "replayable": True},
+        "normalized": {"sha256": "s", "version": "v", "exclusions": []},
+        "exhibits": {}, "selection": {}, "xbrl": {}})
+    assert any(o["reason_code"] == "PARTITION_NOT_TILED" and o["fatal"] for o in omissions)
+
+
+# ------------------------------------------------ (3) clean is reachable; defects block
+def test_observability_notice_alone_stays_clean_but_defects_block():
+    clean = sec_main._items_payload(
+        _result("standard", [_seg(start_offset=0, end_offset=1000)], "x" * 1000),
+        {"source": "CLEAN"}, [], raw_bytes=b"src",
+        audit_context={
+            "xbrl": {"status": "certified", "detail": "fixture"},
+            "selection": {"history_fetch_observability": {
+                "status": "not_observable", "reason_code": "HISTORY_FETCH_NOT_OBSERVABLE",
+                "detail": "fixture"}},
+        },
+    )
+    assert clean["meta"]["servable"] is True
+    assert clean["servability"]["level"] == "clean"      # a notice does not degrade
+    assert "HISTORY_FETCH_NOT_OBSERVABLE" in clean["servability"]["reason_codes"]
+
+    blocked = sec_main._items_payload(
+        _result("standard", [_seg(start_offset=0, end_offset=50)], "x" * 1000),
+        {"source": "LOWCOV"}, [], raw_bytes=b"src",
+        audit_context={"xbrl": {"status": "contradicted", "detail": "fixture"}},
+    )
+    assert blocked["servability"]["level"] == "blocked"
+    assert {"LOW_ITEM_COVERAGE", "XBRL_CONTRADICTED"} <= set(
+        blocked["servability"]["blocking_reason_codes"])
+
+
+# --------------------------------------------- (4) amendment of another year isn't ours
+def test_amendment_of_another_year_is_not_an_omission():
+    payload = sec_main._items_payload(
+        _result("standard", [_seg(start_offset=0, end_offset=1000)], "x" * 1000),
+        {"source": "AMEND"}, [], raw_bytes=b"src",
+        audit_context={
+            "xbrl": {"status": "certified", "detail": "fixture"},
+            "selection": {"amendments_excluded": [
+                {"accession": "0000-24-000009", "form": "10-K/A",
+                 "report_date": "2019-12-31"}]},
+        },
+    )
+    # kept for inspection, but never an omission / servability reason / degrade cause
+    assert payload["audit"]["selection"]["amendments_excluded"][0][
+        "accession"] == "0000-24-000009"
+    assert not any(o["reason_code"] == "AMENDMENT_EXCLUDED"
+                   for o in payload["audit"]["omissions"])
+    assert "AMENDMENT_EXCLUDED" not in payload["servability"]["reason_codes"]
+    assert payload["servability"]["level"] == "clean"
+
+
+# ------------------------------------------- (5) no silent omission of package files
+def test_unmatched_package_file_gets_explicit_disposition_not_silent():
+    files = [FilingFile(name="exhibit21.htm"), FilingFile(name="acme-ex231.htm"),
+             FilingFile(name="acme-10k.htm"), FilingFile(name="logo.jpg"),
+             FilingFile(name="R1.htm")]
+    ref = types.SimpleNamespace(files=files, file_url=lambda n: f"https://example/{n}")
+
+    class Fetcher:
+        def get(self, _url):
+            content = b"<p>consent body</p>"
+            return types.SimpleNamespace(content=content, sha256=sha256_bytes(content))
+
+    _, audit = sec_main._fetch_exhibits(Fetcher(), ref, main_name="acme-10k.htm")
+    # exhibit21.htm matches no -ex\d regex but is clearly a package file: it must
+    # not vanish — it gets a machine-readable UNCLASSIFIED_PACKAGE_FILE disposition.
+    assert {r["file"] for r in audit["unclassified"]} == {"exhibit21.htm"}
+    assert audit["unclassified"][0]["reason_code"] == "UNCLASSIFIED_PACKAGE_FILE"
+    # main doc, XBRL render and image are dispositioned, not silently dropped
+    assert {r["file"] for r in audit["assets"]} == {"R1.htm", "logo.jpg"}
+    assert "acme-10k.htm" not in {
+        r["file"] for r in audit["assets"] + audit["unclassified"]}
+    omissions = sec_main._audit_omissions({
+        "partition": {"unclassified_ranges": [], "tiles_document": True},
+        "raw": {"decode_replacement_chars": 0, "replayable": True},
+        "normalized": {"sha256": "s", "version": "v", "exclusions": []},
+        "exhibits": audit, "selection": {}, "xbrl": {}})
+    assert any(o["reason_code"] == "UNCLASSIFIED_PACKAGE_FILE"
+               and o["file"] == "exhibit21.htm" for o in omissions)
+
+
+# ------------------------------------------------- (6) non-ASCII filename download
+def test_non_ascii_filename_download_headers_do_not_500(monkeypatch):
+    monkeypatch.setattr(sec_main, "JOBS", sec_main.JobStore(max_workers=1))
+    client = TestClient(sec_main.app)
+    blob = b"<html><body><p>body</p></body></html>"
+
+    uploaded = client.post(
+        "/api/upload", files={"file": ("台積電年報.htm", blob, "text/html")}).json()
+    jid = uploaded["job_id"]
+    raw = client.get(f"/api/jobs/{jid}/raw")
+    norm = client.get(f"/api/jobs/{jid}/normalized")
+
+    assert raw.status_code == 200 and norm.status_code == 200
+    assert "filename*=UTF-8''" in raw.headers["content-disposition"]
+    assert "filename*=UTF-8''" in norm.headers["content-disposition"]

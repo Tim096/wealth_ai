@@ -22,6 +22,7 @@ import re
 import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import Depends, FastAPI, File, Header, HTTPException, Query, UploadFile
 from fastapi.middleware.gzip import GZipMiddleware
@@ -52,6 +53,14 @@ MAX_UPLOAD_BYTES = 40 * 1024 * 1024
 JOBS = JobStore()
 
 
+def _content_disposition(name: str) -> str:
+    """RFC 5987 attachment header: a Latin-1-safe ASCII fallback plus a UTF-8
+    filename*, so a non-ASCII (e.g. Chinese) filename does not raise
+    UnicodeEncodeError when Starlette Latin-1-encodes the response header."""
+    fallback = name.encode("ascii", "ignore").decode("ascii").replace('"', "") or "filing"
+    return f"attachment; filename=\"{fallback}\"; filename*=UTF-8''{quote(name)}"
+
+
 def _decode_utf8(blob: bytes) -> tuple[str, int]:
     """Decode once and count replacement characters introduced by invalid bytes."""
     text = blob.decode("utf-8", errors="replace")
@@ -77,6 +86,9 @@ AUTH = [Depends(require_token)]
 # Real exhibits (21.1 Subsidiaries, 23.1 Consent, 31/32 Certifications, 97.1
 # Clawback) are SEPARATE files of the filing — fetched too, for completeness.
 _EXHIBIT_RE = re.compile(r"-ex(\d+)\.htm?l?$", re.I)
+# Known package assets (rendering/data/media) — a real disposition, not an
+# omission: they are recorded but not fetched as prose exhibits.
+_ASSET_RE = re.compile(r"\.(xml|xsd|jpe?g|png|gif|svg|css|js|json|zip|pdf)$", re.I)
 _EXHIBIT_NAMES = {"21": "List of Subsidiaries", "23": "Consent of Accountants",
                   "31": "Certification (Sec. 302)", "32": "Certification (Sec. 906)",
                   "24": "Power of Attorney", "97": "Clawback Policy", "10": "Material Contract",
@@ -93,12 +105,25 @@ def _exhibit_meta(name: str) -> tuple[str, str]:
     return f"ex:{d}", title
 
 
-def _fetch_exhibits(fetcher: EdgarFetcher, ref) -> tuple[list[dict], dict]:
+def _fetch_exhibits(fetcher: EdgarFetcher, ref, main_name: str = "") -> tuple[list[dict], dict]:
     out: list[dict] = []
-    audit = {"cap": _MAX_EXHIBITS, "eligible": 0, "included": [],
-             "skipped": [], "fetch_errors": [], "parse_errors": []}
+    audit = {"cap": _MAX_EXHIBITS, "eligible": 0, "included": [], "skipped": [],
+             "fetch_errors": [], "parse_errors": [], "assets": [], "unclassified": []}
     for fl in ref.files:
-        if not _EXHIBIT_RE.search(fl.name) or re.match(r"R\d+\.htm", fl.name, re.I):
+        # No silent omissions: EVERY package file gets an explicit disposition —
+        # selected main doc / XBRL render / known asset / fetchable exhibit, else
+        # a machine-readable UNCLASSIFIED_PACKAGE_FILE omission.
+        if main_name and fl.name == main_name:
+            continue                                        # selected main doc (see selection.package_files)
+        if re.match(r"R\d+\.htm", fl.name, re.I):
+            audit["assets"].append({"file": fl.name, "reason_code": "XBRL_RENDER_FILE"})
+            continue
+        if _ASSET_RE.search(fl.name):
+            audit["assets"].append({"file": fl.name, "reason_code": "KNOWN_PACKAGE_ASSET"})
+            continue
+        if not _EXHIBIT_RE.search(fl.name):
+            audit["unclassified"].append({"file": fl.name,
+                                          "reason_code": "UNCLASSIFIED_PACKAGE_FILE"})
             continue
         audit["eligible"] += 1
         if len(out) >= _MAX_EXHIBITS:
@@ -139,15 +164,25 @@ def _fetch_exhibits(fetcher: EdgarFetcher, ref) -> tuple[list[dict], dict]:
 
 
 def _partition_audit(text: str, blocks, gaps) -> dict:
-    complete = ((not text and not blocks) or (
-        bool(blocks) and blocks[0].start == 0 and blocks[-1].end == len(text)
-        and all(blocks[i].end == blocks[i + 1].start for i in range(len(blocks) - 1))))
+    # A STRUCTURAL tiling invariant, not an extraction-completeness claim: the
+    # blocks must union to exactly [0, len(text)) with no gap or overlap. Verified
+    # by independently walking the blocks — false only if partition_document broke
+    # its contract, which is why PARTITION_NOT_TILED is a defensive fatal gate. It
+    # does NOT assert every character got classified; that honest signal is the
+    # UNCLASSIFIED_CONTENT omissions built from unclassified_ranges below.
+    cursor, tiles = 0, True
+    for blk in blocks:
+        if blk.start != cursor:
+            tiles = False
+            break
+        cursor = blk.end
+    tiles = tiles and cursor == len(text)
     ranges = [{
         "start": gap.start, "end": gap.end, "chars": gap.chars, "preview": gap.preview,
         "after": gap.after_code, "before": gap.before_code,
     } for gap in gaps]
     return {"document_chars": len(text), "block_count": len(blocks),
-            "complete": complete, "unclassified_ranges": ranges}
+            "tiles_document": tiles, "unclassified_ranges": ranges}
 
 
 def _audit_omissions(audit: dict) -> list[dict]:
@@ -159,6 +194,9 @@ def _audit_omissions(audit: dict) -> list[dict]:
     omissions.extend({**row, "fatal": False} for row in exhibit_audit.get("skipped", []))
     omissions.extend({**row, "fatal": False} for row in exhibit_audit.get("fetch_errors", []))
     omissions.extend({**row, "fatal": False} for row in exhibit_audit.get("parse_errors", []))
+    omissions.extend({"reason_code": "UNCLASSIFIED_PACKAGE_FILE", "fatal": False,
+                      "file": row["file"]}
+                     for row in exhibit_audit.get("unclassified", []))
     omissions.extend({"reason_code": "EXHIBIT_DECODE_REPLACEMENT", "fatal": False,
                       "file": row["file"], "count": row["decode_replacement_chars"]}
                      for row in exhibit_audit.get("included", [])
@@ -170,9 +208,9 @@ def _audit_omissions(audit: dict) -> list[dict]:
         omissions.append({"reason_code": "NORMALIZATION_EXCLUDED_CONTENT", "fatal": False,
                           **row})
     selection = audit.get("selection", {})
-    for ref in selection.get("amendments_excluded", []):
-        omissions.append({"reason_code": "AMENDMENT_EXCLUDED", "fatal": False,
-                          "accession": ref["accession"]})
+    # amendments_excluded is informational SELECTION metadata (the issuer amended
+    # some OTHER year), not an omission of THIS extraction — it stays in
+    # selection.amendments_excluded for inspection but never enters omissions.
     history = selection.get("history_fetch_observability", {})
     if history.get("reason_code"):
         omissions.append({"reason_code": history["reason_code"], "fatal": False,
@@ -185,9 +223,21 @@ def _audit_omissions(audit: dict) -> list[dict]:
         omissions.append({"reason_code": "RAW_NOT_REPLAYABLE", "fatal": True})
     if not audit["normalized"]["sha256"] or not audit["normalized"]["version"]:
         omissions.append({"reason_code": "NORMALIZED_PROVENANCE_MISSING", "fatal": True})
-    if not audit["partition"]["complete"]:
-        omissions.append({"reason_code": "PARTITION_INCOMPLETE", "fatal": True})
+    if not audit["partition"]["tiles_document"]:
+        omissions.append({"reason_code": "PARTITION_NOT_TILED", "fatal": True})
     return omissions
+
+
+# Audit reasons that record what we could NOT observe or DELIBERATELY excluded —
+# transparency notices, not quality defects. They are still listed in reason_codes
+# but must NOT by themselves drop a filing below `clean`, so a fully-covered,
+# no-review, XBRL-certified filing carrying only such a notice stays cleanly
+# servable. Real defects (low coverage, severe review, XBRL contradicted, decode
+# replacement, non-replayable raw...) are NOT here and still degrade/block.
+_SERVABILITY_NOTICES = frozenset({
+    "HISTORY_FETCH_NOT_OBSERVABLE",    # can't observe historical-submissions fetch failures
+    "NORMALIZATION_EXCLUDED_CONTENT",  # expected script/style/policy exclusions by the normalizer
+})
 
 
 def _servability(result, supported: bool, coverage: float | None, audit: dict) -> dict:
@@ -217,8 +267,10 @@ def _servability(result, supported: bool, coverage: float | None, audit: dict) -
         blocking.add("XBRL_CONTRADICTED")
     reason_codes = list(dict.fromkeys(reasons))
     servable = not blocking
+    # Only genuine defects drop below clean; transparency notices don't degrade.
+    degrading = [code for code in reason_codes if code not in _SERVABILITY_NOTICES]
     return {"servable": servable,
-            "level": "blocked" if not servable else ("degraded" if reason_codes else "clean"),
+            "level": "blocked" if not servable else ("degraded" if degrading else "clean"),
             "minimum_clean_coverage": 0.80,
             "reason_codes": reason_codes,
             "blocking_reason_codes": [code for code in reason_codes if code in blocking]}
@@ -265,7 +317,10 @@ def _items_payload(result, meta: dict, exhibits: list[dict], *, raw_bytes: bytes
     supported = result.filing_class in ("standard", "cross_reference_index") and len(items) > 0
     # coverage over an empty/unextractable body is a vacuous 1.0 — omit it entirely
     # for an unsupported filing so no grader or view can read it as a real figure.
-    coverage = round(coverage_ratio(text, result.segments, blocks), 4) if supported else None
+    # The servability gate consumes the RAW ratio; only the payload figure is
+    # rounded, so a 0.79996 body cannot round up to 0.80 and slip past the gate.
+    raw_coverage = coverage_ratio(text, result.segments, blocks) if supported else None
+    coverage = round(raw_coverage, 4) if raw_coverage is not None else None
     normalized_sha = sha256_text(text)
     context = audit_context or {}
     audit = {
@@ -292,6 +347,7 @@ def _items_payload(result, meta: dict, exhibits: list[dict], *, raw_bytes: bytes
         "exhibits": context.get("exhibits", {
             "cap": _MAX_EXHIBITS, "eligible": len(exhibits),
             "included": [], "skipped": [], "fetch_errors": [], "parse_errors": [],
+            "assets": [], "unclassified": [],
         }),
         "xbrl": context.get("xbrl", {
             "status": "unavailable", "reason_code": "XBRL_UNAVAILABLE",
@@ -301,7 +357,7 @@ def _items_payload(result, meta: dict, exhibits: list[dict], *, raw_bytes: bytes
     audit["omissions"] = _audit_omissions(audit)
     audit["fatal_omissions"] = [row for row in audit["omissions"] if row["fatal"]]
     audit["fatal_omission_free"] = not audit["fatal_omissions"]
-    gate = _servability(result, supported, coverage, audit)
+    gate = _servability(result, supported, raw_coverage, audit)
     meta = {**meta, "coverage": coverage, "supported": supported,
             "servable": gate["servable"], "service_level": gate["level"],
             "servability_reason_codes": gate["reason_codes"],
@@ -346,7 +402,7 @@ def _run_extract(query: str, accession: str) -> tuple[dict, dict]:
         except Exception as e:  # noqa: BLE001 — certification is best-effort enrichment
             xbrl_audit = {"status": "unavailable", "reason_code": "XBRL_UNAVAILABLE",
                           "detail": f"{type(e).__name__}: {e}"}
-    exhibits, exhibit_audit = _fetch_exhibits(fetcher, ref)
+    exhibits, exhibit_audit = _fetch_exhibits(fetcher, ref, main_name=best.name)
     selection = {
         "main_document": {
             "selected": {"name": best.name, "score": best.score, "reasons": best.reasons},
@@ -686,7 +742,7 @@ def job_raw(job_id: str) -> Response:
     name = job.state.get("raw_name", "filing.htm")
     raw_sha = (((job.payload or {}).get("audit") or {}).get("raw") or {}).get("sha256")
     return Response(content=raw, media_type="application/octet-stream",
-                    headers={"Content-Disposition": f'attachment; filename="{name}"',
+                    headers={"Content-Disposition": _content_disposition(name),
                              "X-Raw-Sha256": raw_sha or sha256_bytes(raw)})
 
 
@@ -709,7 +765,7 @@ def job_normalized(job_id: str) -> Response:
     name = job.state.get("raw_name", "filing") + ".normalized.txt"
     return Response(content=body.encode("utf-8"),
                     media_type="text/plain; charset=utf-8",
-                    headers={"Content-Disposition": f'attachment; filename="{name}"',
+                    headers={"Content-Disposition": _content_disposition(name),
                              "X-Normalized-Sha256": sha256_text(body),
                              "X-Normalization-Version": NORMALIZATION_VERSION})
 
